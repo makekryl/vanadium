@@ -5,6 +5,7 @@
     "davidfreer.go-to-character-position",
     "ms-python.python",
 		"dbaeumer.vscode-eslint",
-		"ms-vscode.extension-test-runner"
+    "ms-vscode.extension-test-runner",
+    "tamasfe.even-better-toml"
   ]
 }
