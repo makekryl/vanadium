@@ -6,7 +6,7 @@
   },
   "features": {
     "ghcr.io/devcontainers/features/python:1": {
-      "toolsToInstall": "virtualenv,poetry"
+      "toolsToInstall": "uv"
     },
     "ghcr.io/devcontainers/features/node:1": {
       "version": "lts",
