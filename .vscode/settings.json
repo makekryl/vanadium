@@ -1,0 +1,19 @@
+{
+  "[cpp]": {
+    "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd",
+    "editor.formatOnSave": true
+  },
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.formatOnSave": true
+  },
+  "C_Cpp.codeAnalysis.clangTidy.enabled": true,
+  "C_Cpp.codeAnalysis.clangTidy.useBuildPath": true,
+  "C_Cpp.intelliSenseEngine": "disabled",
+  "cmake.buildDirectory": "${workspaceFolder}/build/${buildType}",
+  "cmake.copyCompileCommands": "${workspaceFolder}/compile_commands.json",
+  "files.associations": {
+    // "*.inc": "cpp"
+  },
+  "python.analysis.autoImportCompletions": true
+}

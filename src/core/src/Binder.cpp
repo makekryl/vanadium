@@ -1,0 +1,541 @@
+#include <cassert>
+#include <memory>
+#include <ranges>
+#include <string_view>
+#include <type_traits>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
+
+#include "ASTNodes.h"
+#include "ASTTypes.h"
+#include "Program.h"
+#include "Semantic.h"
+#include "utils/ASTUtils.h"
+
+namespace vanadium::core {
+namespace semantic {
+
+class ExternalsTracker {
+ public:
+  ExternalsTracker() : active_(&top_level_) {}
+
+  std::vector<UnresolvedExternalsGroup> Build() {
+    std::vector<UnresolvedExternalsGroup> result;
+    result.reserve(mapping_.size() + (top_level_.idents.empty() ? 0 : 1));
+    if (!top_level_.idents.empty()) {
+      result.push_back(std::move(top_level_));
+    }
+    for (auto& group : mapping_ | std::ranges::views::values) {
+      result.push_back(std::move(group));
+    }
+    return result;
+  }
+
+  void Augmented(std::string_view provider, Scope* scope, std::invocable auto f) {
+    auto* upper = active_;
+
+    auto [group_it, _] = mapping_.try_emplace(provider, provider, std::vector<const ast::nodes::Ident*>{}, scope);
+    active_ = &group_it->second;
+    //
+    f();
+    //
+    active_ = upper;
+  }
+
+  UnresolvedExternalsGroup* operator->() {
+    return active_;
+  }
+  UnresolvedExternalsGroup& operator*() {
+    return *active_;
+  }
+
+ private:
+  UnresolvedExternalsGroup top_level_{.augmentation_provider = "", .scope = nullptr};
+  std::unordered_map<std::string_view, UnresolvedExternalsGroup> mapping_;
+
+  UnresolvedExternalsGroup* active_;
+};
+
+class Binder {
+ public:
+  explicit Binder(SourceFile& sf) : sf_(sf), inspector_(ast::NodeInspector::create<Binder, &Binder::Inspect>(this)) {}
+
+  void Bind() {
+    scope_ = nullptr;
+    sf_.ast.root.Accept(inspector_);
+  }
+
+ private:
+  void Visit(const ast::Node* n) {
+    if (Inspect(n)) {
+      n->Accept(inspector_);
+    }
+  }
+
+  template <class ConcreteNode>
+    requires std::is_base_of_v<ast::Node, ConcreteNode>
+  void Visit(const std::vector<ConcreteNode*>& nodes) {
+    for (const auto* n : nodes) {
+      Visit(n);
+    }
+  }
+
+  void MaybeVisit(const ast::Node* n) {
+    if (n != nullptr) {
+      Visit(n);
+    }
+  }
+
+  Scope* Scoped(const ast::Node* container, std::invocable auto f) {
+    auto* parent = scope_;
+    auto* child = sf_.arena.Alloc<Scope>(container, parent);
+    scope_ = child;
+
+    //
+    f();
+    //
+
+    if (parent != nullptr) [[likely]] {
+      parent->AddChild(child);
+    }
+    scope_ = parent;
+
+    return child;
+  }
+
+  [[nodiscard]] SymbolTable& NewSymbolTable() {
+    return *sf_.arena.Alloc<SymbolTable>();
+  }
+
+  void AddSymbol(SymbolTable& table, Symbol&& sym) {
+    if (table.Has(sym.GetName())) {
+      sf_.semantic_errors.emplace_back(SemanticError{
+          .range = sym.Declaration()->nrange,
+          .type = SemanticError::Type::kRedefinition,
+      });
+      return;
+    }
+    table.Add(std::move(sym));
+  }
+
+  void AddSymbol(Symbol&& sym) {
+    AddSymbol(scope_->symbols, std::move(sym));
+  }
+
+  void EmitError(SemanticError&& err) {
+    sf_.semantic_errors.emplace_back(std::move(err));
+  }
+
+  bool Inspect(const ast::Node*);
+
+  std::string_view Lit(const ast::nodes::Ident* ident) const {
+    return ident->On(sf_.ast.src);
+  }
+
+  void BindReference(const ast::nodes::Ident* ident) {
+    const auto name = Lit(ident);
+    if (const auto* sym = scope_->Resolve(name); sym) {
+      if (sym->Flags() & SymbolFlags::kImportedName) [[unlikely]] {
+        required_imports_.insert(sym->GetName());
+      }
+      // sym->references.push_back(ident);
+      // PASS
+    } else {
+      externals_->idents.emplace_back(ident);
+    }
+  }
+
+  std::unordered_multimap<std::string_view, ImportDescriptor> imports_;
+  std::unordered_set<std::string_view> required_imports_;
+  ExternalsTracker externals_;
+
+  Scope* scope_;
+
+  SourceFile& sf_;
+  const ast::NodeInspector inspector_;
+};
+
+bool Binder::Inspect(const ast::Node* n) {
+  switch (n->nkind) {
+    case ast::NodeKind::Module: {
+      if (sf_.module.name != "") [[unlikely]] {
+        EmitError(SemanticError{
+            .range = n->nrange,
+            .type = SemanticError::Type::kToDo,  // 1 module per file
+        });
+        return false;
+      }
+
+      const auto* m = n->As<ast::nodes::Module>();
+
+      scope_ = nullptr;
+      Scoped(m, [&] {
+        Visit(m->defs);
+        if (m->name) {
+          const auto name = Lit(std::addressof(*m->name));
+          sf_.module = ModuleDescriptor{
+              .name = name,
+              .sf = &sf_,
+              .scope = scope_,
+              .imports = std::move(imports_),
+              .required_imports = std::move(required_imports_),
+              .externals = externals_.Build(),
+          };
+          imports_ = {};
+          externals_ = {};
+          required_imports_ = {};
+        }
+      });
+
+      return false;
+    }
+
+    case ast::NodeKind::ImportDecl: {
+      const auto* m = n->As<ast::nodes::ImportDecl>();
+
+      if (m->module) {
+        // TODO: stored well-known tokens as enums
+        const auto* visibility = m->parent->As<ast::nodes::ModuleDef>()->visibility;
+        const bool transit = !m->list.empty() && m->list[0]->kind.On(sf_.ast.src) == "import";
+        imports_.emplace(Lit(std::addressof(*m->module)),
+                         ImportDescriptor{
+                             .transit = transit,
+                             .is_public = (visibility != nullptr) && visibility->On(sf_.ast.src) == "public",
+                             .declaration = m,
+                         });
+
+        // TODO
+        if (!transit) {
+          AddSymbol({
+              Lit(std::addressof(*m->module)),
+              m,
+              SymbolFlags::kImportedName,
+          });
+        }
+      }
+
+      return false;
+    }
+
+    case ast::NodeKind::ComponentTypeDecl: {
+      const auto* m = n->As<ast::nodes::ComponentTypeDecl>();
+
+      auto& members = NewSymbolTable();
+      for (const auto* stmt : m->body->stmts) {
+        if (stmt->nkind == ast::NodeKind::DeclStmt) {
+          const auto* d = stmt->As<ast::nodes::DeclStmt>();
+          if (d->decl->nkind == ast::NodeKind::ValueDecl) {
+            const auto* vd = d->decl->As<ast::nodes::ValueDecl>();
+            for (const auto* declarator : vd->decls) {
+              if (declarator->name) {
+                AddSymbol(members, {
+                                       Lit(std::addressof(*declarator->name)),
+                                       declarator,
+                                       SymbolFlags::kField,
+                                   });
+              }
+            }
+          }
+        }
+      }
+
+      if (m->name) {
+        AddSymbol({
+            Lit(std::addressof(*m->name)),
+            m,
+            SymbolFlags::kStructure,
+            &members,
+        });
+        // TODO
+      }
+
+      return false;
+    }
+
+    case ast::NodeKind::StructTypeDecl: {
+      const auto* m = n->As<ast::nodes::StructTypeDecl>();
+
+      auto& members = NewSymbolTable();
+      for (const auto* field : m->fields) {
+        if (!field->name) {
+          continue;
+        }
+        Visit(field->type);
+        AddSymbol(members, {
+                               Lit(std::addressof(*field->name)),
+                               field,
+                               SymbolFlags::kField,
+                           });
+      }
+
+      if (m->name) {
+        AddSymbol({
+            Lit(std::addressof(*m->name)),
+            m,
+            SymbolFlags::kStructure,
+            &members,
+        });
+        // TODO
+      }
+
+      return false;
+    }
+
+    case ast::NodeKind::FuncDecl: {
+      const auto* m = n->As<ast::nodes::FuncDecl>();
+
+      auto* originated_scope = Scoped(m, [&] {
+        Visit(m->params);
+        const auto process = [&] {
+          if (m->body) {
+            Visit(m->body);
+          }
+        };
+        if (m->runs_on) {
+          Visit(m->runs_on);
+        }
+        if (m->system) {
+          Visit(m->system);
+        }
+        if (m->ret) {
+          Visit(m->ret);
+        }
+
+        const bool augmenting = !!m->runs_on;
+        if (augmenting) {
+          const auto augment_by = Lit(m->runs_on->comp);
+          if (const auto* sym = scope_->Resolve(augment_by)) {
+            if (sym->Flags() & SymbolFlags::kStructure) {
+              scope_->augmentation.push_back(sym->Members());
+            } else {
+              // TODO: emit error
+            }
+            process();
+          } else {
+            externals_.Augmented(augment_by, scope_, process);
+          }
+        } else {
+          process();
+        }
+      });
+
+      if (m->name) {
+        AddSymbol({
+            Lit(std::addressof(*m->name)),
+            m,
+            SymbolFlags::kFunction,
+            originated_scope,
+        });
+      }
+
+      return false;
+    }
+
+    case ast::NodeKind::BlockStmt: {
+      const auto* m = n->As<ast::nodes::BlockStmt>();
+
+      Scoped(m, [&] {
+        Visit(m->stmts);
+      });
+
+      return false;
+    }
+
+    case ast::NodeKind::ForStmt: {
+      const auto* m = n->As<ast::nodes::ForStmt>();
+
+      Scoped(m, [&] {
+        Visit(m->init);
+        Visit(m->cond);
+        Visit(m->post);
+        Visit(m->body);
+      });
+
+      return false;
+    }
+
+    case ast::NodeKind::TemplateDecl: {
+      const auto* m = n->As<ast::nodes::TemplateDecl>();
+
+      Visit(m->type);
+      auto* originated_scope = Scoped(m, [&] {
+        MaybeVisit(m->params);  // really maybe?
+        const auto process = [&] {
+          Visit(m->value);
+        };
+        if (m->base && m->base->nkind == ast::NodeKind::Ident) {
+          Visit(m->base);
+          externals_.Augmented(Lit(m->base->As<ast::nodes::Ident>()), scope_, process);
+        } else {
+          process();
+        }
+      });
+
+      if (m->name) {
+        AddSymbol({
+            Lit(std::addressof(*m->name)),
+            m,
+            SymbolFlags::kTemplate,
+            originated_scope,
+        });
+      }
+
+      return false;
+    }
+
+    case ast::NodeKind::FormalPar: {
+      const auto* m = n->As<ast::nodes::FormalPar>();
+      Visit(m->type);
+      MaybeVisit(m->value);
+      if (m->name) {
+        AddSymbol({
+            Lit(std::addressof(*m->name)),
+            std::addressof(*m->name),
+            SymbolFlags::kArgument,
+        });
+      }
+      return false;
+    }
+
+    case ast::NodeKind::Declarator: {
+      const auto* m = n->As<ast::nodes::Declarator>();
+
+      MaybeVisit(m->value);
+
+      if (m->name) {
+        AddSymbol({
+            Lit(std::addressof(*m->name)),
+            std::addressof(*m->name),
+            SymbolFlags::kVariable,
+        });
+      }
+
+      return false;
+    }
+
+    case ast::NodeKind::SubTypeDecl: {
+      const auto* m = n->As<ast::nodes::SubTypeDecl>();
+
+      // todo: why is it stored as a Field?!
+      const auto* field = m->field;
+      Visit(field->type);
+      if (field->name) {
+        AddSymbol(semantic::Symbol{
+            Lit(std::addressof(*field->name)),
+            m,
+            SymbolFlags::kSubType,
+        });
+      }
+
+      return false;
+    }
+
+    case ast::NodeKind::EnumTypeDecl: {
+      const auto* m = n->As<ast::nodes::EnumTypeDecl>();
+
+      auto& members = NewSymbolTable();
+      for (const auto* item : m->enums) {
+        if (item->nkind == ast::NodeKind::Ident) {
+          // TODO flags
+          AddSymbol(members, semantic::Symbol{
+                                 Lit(item->As<ast::nodes::Ident>()),
+                                 item,
+                                 SymbolFlags::kField,
+                             });
+        }
+      }
+
+      if (m->name) {
+        AddSymbol({
+            Lit(std::addressof(*m->name)),
+            m,
+            SymbolFlags::kStructure,
+            &members,
+        });
+      }
+
+      return false;
+    }
+
+    case ast::NodeKind::ClassTypeDecl: {
+      const auto* m = n->As<ast::nodes::ClassTypeDecl>();
+
+      auto& members = NewSymbolTable();
+      // !!! TODO !!!
+      // bind properly and remove the visits below - it is just a stub
+      Scoped(m, [&] {
+        Visit(m->defs);
+      });
+
+      if (m->name) {
+        AddSymbol({
+            Lit(std::addressof(*m->name)),
+            m,
+            SymbolFlags::kStructure,
+            &members,
+        });
+      }
+
+      return true;
+    }
+
+      // case ast::NodeKind::Field: {
+      //   const auto* m = n->As<ast::nodes::Field>();
+
+      //   if (m->name) {
+      //     members_->Add({
+      //         Lit(std::addressof(*m->name)),
+      //         m,
+      //         SymbolFlags::kField,
+      //     });
+      //   }
+      //   return false;
+      // }
+
+    case ast::NodeKind::CompositeLiteral: {
+      const auto* m = n->As<ast::nodes::CompositeLiteral>();
+      for (const auto* e : m->list) {
+        if (e->nkind != ast::NodeKind::AssignmentExpr) {
+          Visit(e);
+          continue;
+        }
+        const auto* ae = e->As<ast::nodes::AssignmentExpr>();
+        if (ae->property->nkind != ast::NodeKind::Ident) {
+          Visit(ae->property);
+        }
+        Visit(ae->value);
+      }
+      return false;
+    }
+
+    case ast::NodeKind::SelectorExpr: {
+      const auto* se = n->As<ast::nodes::SelectorExpr>();
+      Visit(ast::utils::TraverseSelectorExpressionStart(se));
+      return false;
+    }
+
+    case ast::NodeKind::Ident: {
+      const auto* m = n->As<ast::nodes::Ident>();
+
+      BindReference(m);
+
+      return true;
+    }
+
+    default:
+      break;
+  }
+
+  return true;
+}
+
+}  // namespace semantic
+
+//
+
+void Bind(SourceFile& sf) {
+  semantic::Binder(sf).Bind();
+}
+
+}  // namespace vanadium::core

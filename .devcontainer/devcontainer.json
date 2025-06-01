@@ -1,0 +1,25 @@
+// https://aka.ms/devcontainer.json
+{
+  "name": "Vanadium",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/python:1": {
+      "toolsToInstall": "virtualenv,poetry"
+    }
+  },
+  "postCreateCommand": "bash .devcontainer/postinstall.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "EditorConfig.EditorConfig",
+        "llvm-vs-code-extensions.vscode-clangd",
+        "ms-vscode.cmake-tools",
+        "ms-vscode.cpptools",
+        "ms-python.python",
+        "charliermarsh.ruff"
+      ]
+    }
+  }
+}

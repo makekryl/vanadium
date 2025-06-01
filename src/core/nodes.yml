@@ -1,0 +1,309 @@
+---
+Module:
+  name: Ident
+  language: LanguageSpec*?
+  defs: ModuleDef*[]
+  with: WithSpec*?
+Field:
+  default_tok: Token*?
+  type: TypeSpec*
+  name: Ident
+  arraydef: ParenExpr*[]?
+  pars: FormalPars*?
+  value_constraint: ParenExpr*?
+  length_constraint: LengthExpr*?
+  optional: bool
+RefSpec:
+  x: Expr*
+StructSpec:
+  kind: Token
+  fields: Field*[]
+ListSpec:
+  length: LengthExpr*?
+  elemtype: TypeSpec*
+MapSpec:
+  from: TypeSpec*
+  to: TypeSpec*
+EnumSpec:
+  enums: Expr*[]
+BehaviourSpec:
+  kind: Token
+  params: FormalPars*
+  runs_on: RunsOnSpec*?
+  system: SystemSpec*?
+  ret: ReturnSpec*?
+ValueDecl:
+  kind: Token*?
+  template_restriction: RestrictionSpec*?
+  modif: Token*?
+  type: Expr*
+  decls: Declarator*[]
+  with: WithSpec*?
+Declarator:
+  name: Ident
+  arraydef: ParenExpr*[]?
+  value: Expr*?
+TemplateDecl:
+  restriction: RestrictionSpec*?
+  modif: Token*?
+  type: Expr*
+  name: Ident
+  pars: FormalPars*?
+  params: FormalPars*?
+  base: Expr*?
+  value: Expr*
+  with: WithSpec*?
+ModuleParameterGroup:
+  decls: ValueDecl*[]
+  with: WithSpec*?
+FuncDecl:
+  external: bool
+  kind: Token
+  name: Ident
+  modif: Token*?
+  pars: FormalPars*?
+  params: FormalPars*
+  runs_on: RunsOnSpec*?
+  mtc: MtcSpec*?
+  system: SystemSpec*?
+  ret: ReturnSpec*?
+  body: BlockStmt*?
+  with: WithSpec*?
+ConstructorDecl:
+  params: FormalPars*
+  body: BlockStmt*
+SignatureDecl:
+  name: Ident
+  pars: FormalPars*?
+  params: FormalPars*
+  noblock: bool
+  ret: ReturnSpec*?
+  exception: ParenExpr*?
+  with: WithSpec*?
+BlockStmt:
+  stmts: Stmt*[]
+BranchStmt:
+  kind: Token
+  label: Ident*?
+ReturnStmt:
+  result: Expr*?
+AltStmt:
+  kind: Token
+  no_default: Token*?
+  body: BlockStmt*
+CallStmt:
+  stmt: Stmt*
+  body: BlockStmt*
+ForStmt:
+  init: Stmt*
+  cond: Expr*
+  post: Stmt*
+  body: BlockStmt*
+ForRangeStmt:
+  init: Stmt*
+  range: Expr*
+  body: BlockStmt*
+WhileStmt:
+  cond: Expr*
+  body: BlockStmt*
+DoWhileStmt:
+  body: BlockStmt*
+  cond: Expr*
+IfStmt:
+  cond: Expr*
+  consequent: BlockStmt*
+  alternate: Stmt*?
+SelectStmt:
+  is_union: bool
+  tag: ParenExpr*
+  clauses: CaseClause*[]
+CaseClause:
+  cond: ParenExpr*?
+  body: BlockStmt*
+CommClause:
+  is_else: bool
+  x: Expr*?
+  comm: Stmt*
+  body: BlockStmt*?
+LanguageSpec:
+  list: Token[]
+ModuleDef:
+  visibility: Token*?
+  def: Node*
+WithSpec:
+  list: WithStmt*[]
+WithStmt:
+  kind: Token
+  overrides: bool
+  list: Expr*[]
+  value: Expr*
+ValueLiteral:
+  tok: Token
+SelectorExpr:
+  x: Expr*
+  sel: Expr*
+DefKindExpr:
+  kind: Token
+  list: Expr*[]
+ExceptExpr:
+  x: Expr*
+  list: Expr*[]
+FromExpr:
+  kind: Token
+  from: Token
+  x: Expr*
+ModifiesExpr:
+  x: Expr*
+  y: Expr*
+ParenExpr:
+  list: Expr*[]
+PostExpr:
+  x: Expr*
+  op: Token
+BinaryExpr:
+  x: Expr*
+  op: Token
+  y: Expr*
+UnaryExpr:
+  op: Token
+  x: Expr*
+ValueExpr:
+  x: Expr*
+  y: Expr*
+ParamExpr:
+  x: Expr*
+  y: Expr*
+ImportDecl:
+  module: Ident
+  language: LanguageSpec*?
+  list: DefKindExpr*[]
+  with: WithSpec*?
+GroupDecl:
+  name: Ident
+  defs: ModuleDef*[]
+  with: WithSpec*?
+FriendDecl:
+  module: Ident
+  with: WithSpec*?
+SubTypeDecl:
+  field: Field*
+  with: WithSpec*?
+StructTypeDecl:
+  kind: Token
+  name: Ident
+  pars: FormalPars*?
+  fields: Field*[]
+  with: WithSpec*?
+ClassTypeDecl:
+  modif: Token*?
+  name: Ident
+  extends: Expr*[]?
+  runs_on: RunsOnSpec*?
+  mtc: MtcSpec*?
+  system: SystemSpec*?
+  defs: ModuleDef*[]
+  with: WithSpec*?
+MapTypeDecl:
+  spec: MapSpec*
+  name: Ident
+  pars: FormalPars*?
+  with: WithSpec*?
+EnumTypeDecl:
+  name: Ident
+  pars: FormalPars*?
+  enums: Expr*[]
+  with: WithSpec*?
+BehaviourTypeDecl:
+  kind: Token
+  name: Ident
+  pars: FormalPars*?
+  params: FormalPars*
+  runs_on: RunsOnSpec*?
+  system: SystemSpec*?
+  ret: ReturnSpec*?
+  with: WithSpec*?
+PortTypeDecl:
+  name: Ident
+  pars: FormalPars*?
+  realtime: bool
+  attrs: Node*[]
+  with: WithSpec*?
+PortAttribute:
+  kind: Token
+  types: Expr*[]
+PortMapAttribute:
+  kind: Token
+  params: FormalPars*
+ComponentTypeDecl:
+  name: Ident
+  pars: FormalPars*?
+  extends: Expr*[]?
+  body: BlockStmt*
+  with: WithSpec*?
+FormalPars:
+  list: FormalPar*[]
+FormalPar:
+  direction: Token*?
+  restriction: RestrictionSpec*?
+  modif: Token*?
+  type: Expr*
+  name: Ident
+  arraydef: ParenExpr*[]?
+  value: Expr*?
+LengthExpr:
+  x: Expr*?
+  size: ParenExpr*
+RunsOnSpec:
+  comp: Ident*
+SystemSpec:
+  comp: Ident*
+MtcSpec:
+  comp: Ident*
+ReturnSpec:
+  restriction: RestrictionSpec*?
+  modif: Token*?
+  type: Expr*
+RestrictionSpec:
+  is_template: bool
+  type: Token
+IndexExpr:
+  x: Expr*?
+  index: Expr*
+CallExpr:
+  fun: Expr*
+  args: ParenExpr*
+RedirectExpr:
+  x: Expr*
+  value: Expr*[]?
+  param: Expr*[]?
+  sender: Expr*?
+  to_index: RedirectToIndex*?
+  timestamp: Expr*?
+RedirectToIndex:
+  value: bool
+  index: Expr*
+ParametrizedIdent:
+  ident: Ident*
+  params: ParenExpr*
+CompositeLiteral:
+  list: Expr*[]
+RegexpExpr:
+  nocase: bool
+  x: Expr*
+PatternExpr:
+  nocase: bool
+  x: Expr*
+DecodedExpr:
+  params: Expr*?
+  x: Expr*
+DynamicExpr:
+  body: BlockStmt*
+DecmatchExpr:
+  params: Expr*?
+  x: Expr*
+ControlPart:
+  body: BlockStmt*
+  with: WithSpec*?
+AssignmentExpr:
+  property: Expr*
+  value: Expr*

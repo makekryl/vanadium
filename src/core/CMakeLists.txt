@@ -1,0 +1,43 @@
+add_library(vanadium_core STATIC
+  src/ASTInspector.cpp
+  src/VirtualFS.cpp
+  src/Parser.cpp
+  src/Scanner.cpp
+  src/Binder.cpp
+  src/Program.cpp
+  src/utils/FileReader.cpp
+)
+
+target_include_directories(vanadium_core PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+target_link_libraries(vanadium_core
+  vanadium_lib_common
+  vanadium_lib_arena
+  magic_enum
+)
+
+add_test_executable(vanadium_core)
+
+
+set(VANADIUM_CORE_ASTGEN_EXEC "${CMAKE_CURRENT_SOURCE_DIR}/tools/nodegen.py")
+set(VANADIUM_CORE_ASTGEN_SRC  "${CMAKE_CURRENT_SOURCE_DIR}/nodes.yml")
+set(VANADIUM_CORE_ASTGEN_DEST "${CMAKE_CURRENT_SOURCE_DIR}/include/gen")
+add_custom_command(
+  OUTPUT ${VANADIUM_CORE_ASTGEN_DEST}
+  COMMAND ${Python3_EXECUTABLE} ${VANADIUM_CORE_ASTGEN_EXEC}
+                               ${VANADIUM_CORE_ASTGEN_SRC} ${VANADIUM_CORE_ASTGEN_DEST}
+  DEPENDS ${VANADIUM_CORE_ASTGEN_SRC} ${VANADIUM_CORE_ASTGEN_EXEC}
+  VERBATIM
+  CODEGEN
+  COMMENT "Generating AST Nodes"
+)
+add_custom_target(
+  generate_vanadium_ast ALL
+  DEPENDS ${VANADIUM_CORE_ASTGEN_DEST}
+)
+
+add_dependencies(vanadium_core
+  generate_vanadium_ast
+)

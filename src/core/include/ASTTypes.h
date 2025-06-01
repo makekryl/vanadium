@@ -1,0 +1,74 @@
+#pragma once
+
+#include <algorithm>
+#include <cstdint>
+#include <iterator>
+#include <string>
+#include <string_view>
+#include <vector>
+
+#include "FunctionRef.h"
+
+namespace vanadium::core {
+namespace ast {
+
+using pos_t = std::uint32_t;
+
+struct Range {
+  pos_t begin;
+  pos_t end;
+
+  [[nodiscard]] pos_t Length() const {
+    return end - begin;
+  }
+
+  [[nodiscard]] std::string_view String(std::string_view src) const noexcept {
+    return src.substr(begin, end - begin);
+  }
+
+  [[nodiscard]] auto operator<=>(const Range&) const = default;
+};
+
+struct Location {
+  pos_t line;
+  pos_t column;
+};
+
+class LineMapping {
+ public:
+  LineMapping() = default;  // TODO: delete
+
+  LineMapping(std::vector<pos_t>&& line_starts) : line_starts_(std::move(line_starts)) {}
+
+  [[nodiscard]] Location Translate(pos_t pos) const {
+    const auto it = std::ranges::upper_bound(line_starts_, pos);
+    const auto line = std::max<pos_t>(0, std::distance(line_starts_.begin(), it));
+    if (line == 0) [[unlikely]] {
+      return {.line = 0, .column = pos};
+    }
+    return {
+        .line = line,
+        .column = pos - line_starts_[line - 1],
+    };
+  }
+
+  [[nodiscard]] pos_t GetPosition(Location loc) {
+    return line_starts_[loc.line] + loc.column;
+  }
+
+ private:
+  std::vector<pos_t> line_starts_;
+};
+
+struct SyntaxError {
+  ast::Range range;
+  std::string description;
+};
+
+struct Node;
+
+using NodeInspector = lib::Predicate<const Node*>;
+void Inspect(const Node*, const NodeInspector&);
+
+}  // namespace ast
+};  // namespace vanadium::core
