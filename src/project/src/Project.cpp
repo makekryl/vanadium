@@ -5,23 +5,9 @@
 #include <ryml.hpp>
 
 #include "Arena.h"
-#include "c4/substr_fwd.hpp"
-#include "c4/yml/node.hpp"
-#include "c4/yml/tree.hpp"
 #include "utils/FileReader.h"
 
 namespace {
-// TODO: diagnose & fix
-// ryml::Callbacks CreateRymlArenaCallbacks(vanadium::lib::Arena &arena) {
-//   ryml::Callbacks cb;
-//   cb.m_user_data = (void *)(&arena);
-//   cb.m_allocate = [](size_t len, void *, void *data) {
-//     return (void *)((vanadium::lib::Arena *)data)->AllocBuffer(len);
-//   };
-//   cb.m_free = [](void *, size_t, void *) {};
-//   return cb;
-// }
-
 std::string_view RymlSubstrToStringView(const ryml::csubstr &str) {
   return {str.data(), str.size()};
 }
@@ -79,7 +65,7 @@ std::optional<Project> Project::Load(const std::filesystem::path &config_path) {
   assert(std::filesystem::exists(config_path));
 
   Project project(config_path.parent_path());
-  const auto &source = core::utils::ReadFile(config_path, [&](std::size_t size) {
+  auto source = core::utils::ReadFile(config_path, [&](std::size_t size) {
     return project.arena_.AllocStringBuffer(size).data();
   });
 
@@ -88,12 +74,10 @@ std::optional<Project> Project::Load(const std::filesystem::path &config_path) {
     std::fprintf(stderr, "Failed to read project configuration\n");
     std::abort();
   }
-
-  ryml::EventHandlerTree evt_handler;  //(CreateRymlArenaCallbacks(project.arena_));
-  ryml::Parser parser(&evt_handler);
+  ryml::substr ss{const_cast<char *>(source->data()), source->length()};
 
   // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage)
-  project.tree_ = project.arena_.Alloc<c4::yml::Tree>(ryml::parse_in_arena(&parser, source->data()));
+  project.tree_ = project.arena_.Alloc<c4::yml::Tree>(ryml::parse_in_place(ss));
 
   project.Init();
 
