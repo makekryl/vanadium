@@ -52,6 +52,10 @@ CMakeUserPresets.json
 # Tools
 vgcore.*
 
+# JavaScript
+#
+**/node_modules/
+
 # Python
 #
 # Byte-compiled / optimized / DLL files
@@ -74,3 +78,10 @@ venv.bak/
 .cache/
 
 *.log
+
+# VSCode
+**/.vscode/*
+!**/.vscode/tasks.json
+!**/.vscode/settings.template.json
+!**/.vscode/launch.template.json
+!**/.vscode/extensions.json

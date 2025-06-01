@@ -1,0 +1,86 @@
+{
+  "name": "vanadiumd",
+  "displayName": "vanadiumd",
+  "description": "TTCN-3 Language Support",
+  "author": "Mikhail Krylov",
+  "version": "0.0.1",
+  "private": true,
+  "engines": {
+    "vscode": "^1.100.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters",
+    "Formatters",
+    "Snippets"
+  ],
+  "activationEvents": [
+    "workspaceContains:**/*.ttcn",
+    "workspaceContains:**/.vanadiumrc.yml"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "ttcn3",
+        "aliases": [
+          "TTCN-3",
+          "ttcn3",
+          "ttcn"
+        ],
+        "extensions": [
+          ".ttcn"
+        ],
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./icons/icon.png",
+          "dark": "./icons/icon.png"
+        }
+      }
+    ],
+    "grammars": [
+      {
+        "language": "ttcn3",
+        "scopeName": "source.ttcn3",
+        "path": "./syntaxes/ttcn3.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "ttcn3",
+        "path": "./snippets/ttcn3.tmSnippet.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "vanadiumd.helloWorld",
+        "title": "Hello World"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "precompile": "npm run grammar:build",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test",
+    "grammar:build": "js-yaml syntaxes/ttcn3.tmLanguage.yml > syntaxes/ttcn3.tmLanguage.json"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "20.x",
+    "@types/vscode": "^1.100.0",
+    "@typescript-eslint/eslint-plugin": "^8.31.1",
+    "@typescript-eslint/parser": "^8.31.1",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.5.2",
+    "eslint": "^9.25.1",
+    "js-yaml": "^4.1.0",
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.3",
+    "vscode-languageclient": "^9.0.1"
+  },
+  "packageManager": "npm@10.9.2"
+}

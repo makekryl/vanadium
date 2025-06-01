@@ -1,8 +1,10 @@
 {
   "recommendations": [
     "EditorConfig.EditorConfig",
-    "ms-python.python",
     "eamodio.gitlens",
-    "davidfreer.go-to-character-position"
+    "davidfreer.go-to-character-position",
+    "ms-python.python",
+		"dbaeumer.vscode-eslint",
+		"ms-vscode.extension-test-runner"
   ]
 }

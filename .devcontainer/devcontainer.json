@@ -7,6 +7,11 @@
   "features": {
     "ghcr.io/devcontainers/features/python:1": {
       "toolsToInstall": "virtualenv,poetry"
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "lts",
+      "pnpmVersion": "none",
+      "nvmVersion": "latest"
     }
   },
   "postCreateCommand": "bash .devcontainer/postinstall.sh",
@@ -18,7 +23,9 @@
         "ms-vscode.cmake-tools",
         "ms-vscode.cpptools",
         "ms-python.python",
-        "charliermarsh.ruff"
+        "charliermarsh.ruff",
+        "esbenp.prettier-vscode",
+        "ms-vscode.extension-test-runner"
       ]
     }
   }

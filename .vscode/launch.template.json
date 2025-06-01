@@ -1,0 +1,18 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch VS Code extension",
+      "type": "extensionHost",
+      "request": "launch",
+			"args": [
+        "${workspaceFolder}/extension/playground",
+        "--extensionDevelopmentPath=${workspaceFolder}"
+      ],
+      "outFiles": [
+        "${workspaceFolder}/out/**/*.js"
+      ],
+      "preLaunchTask": "Build VSCode Extension"
+    }
+  ]
+}

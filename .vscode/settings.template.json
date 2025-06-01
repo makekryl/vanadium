@@ -16,8 +16,5 @@
   "C_Cpp.intelliSenseEngine": "disabled",
   "cmake.buildDirectory": "${workspaceFolder}/build/${buildType}",
   "cmake.copyCompileCommands": "${workspaceFolder}/compile_commands.json",
-  "files.associations": {
-    // "*.inc": "cpp"
-  },
   "python.analysis.autoImportCompletions": true
 }

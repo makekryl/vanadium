@@ -11,8 +11,10 @@ def test(c: Context, config: Literal["Debug", "Release"] = "Debug"):
 @task
 def check_style(c: Context, fix: bool = False):
   STYLE_CHECKERS: list[tuple[str, str]] = [
-    ("ruff check --select I", "ruff format --check"),
-    ("ruff format", "ruff format --check"),
+    # (check, fix)
+    ("ruff check --select I", "ruff check --select I --fix"),
+    ("ruff format --check", "ruff format"),
+    ("npm run format:check", "npm run format"),
   ]
   for cmd in [checker[1 if fix else 0] for checker in STYLE_CHECKERS]:
     c.run(cmd)
