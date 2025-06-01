@@ -7,7 +7,7 @@
       "request": "launch",
 			"args": [
         "${workspaceFolder}/extension/playground",
-        "--extensionDevelopmentPath=${workspaceFolder}"
+        "--extensionDevelopmentPath=${workspaceFolder}/extension"
       ],
       "outFiles": [
         "${workspaceFolder}/out/**/*.js"
