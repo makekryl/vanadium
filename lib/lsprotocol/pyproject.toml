@@ -1,0 +1,10 @@
+[project]
+name = "vanadium-lspgen"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "generator",
+]
+
+[tool.uv.sources]
+generator = { git = "https://github.com/microsoft/lsprotocol.git", tag = "2025.0.0rc1" }

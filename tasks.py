@@ -18,3 +18,8 @@ def check_style(c: Context, fix: bool = False):
   ]
   for cmd in [checker[1 if fix else 0] for checker in STYLE_CHECKERS]:
     c.run(cmd)
+
+
+@task
+def regenerate_lsprotocol(c: Context):
+  c.run("python3 ./lib/lsprotocol/run_generator.py")
