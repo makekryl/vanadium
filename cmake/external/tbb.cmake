@@ -8,3 +8,11 @@ FetchContent_Declare(
 set(TBB_TEST OFF)
 
 FetchContent_MakeAvailable(tbb)
+
+if(VANADIUM_USE_ASAN)
+  # https://github.com/uxlfoundation/oneTBB/issues/1726
+  message(WARNING "TBB assertions are incompatible with ASAN")
+  target_compile_definitions(tbb PUBLIC
+    TBB_USE_ASSERT=0
+  )
+endif()

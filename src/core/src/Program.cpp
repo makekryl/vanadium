@@ -1,10 +1,15 @@
 #include "Program.h"
 
+#include <oneapi/tbb/parallel_for_each.h>
+#include <oneapi/tbb/spin_mutex.h>
+#include <oneapi/tbb/task_group.h>
+
 #include <algorithm>
 #include <concepts>
 #include <cstddef>
 #include <cstdio>
 #include <ranges>
+#include <unordered_map>
 
 #include "Arena.h"
 #include "LruCache.h"
@@ -14,12 +19,22 @@
 namespace vanadium::core {
 
 void Program::Commit(const lib::Consumer<const ProgramModifier&>& modify) {
-  using Action = ProgramModifier::SourceFilePathAction;
+  oneapi::tbb::task_group wg;
+  const auto parallelized = [&]<void (Program::*F)(const std::string&)>(Program* instance) {
+    return [&wg, instance](const std::string& sref) -> void {
+      wg.run([instance, s = sref] {
+        (instance->*F)(s);
+      });
+    };
+  };
+
   modify({
-      .add = Action::create<Program, &Program::AddFile>(this),
-      .update = Action::create<Program, &Program::UpdateFile>(this),
-      .drop = Action::create<Program, &Program::DropFile>(this),
+      .add = parallelized.operator()<&Program::AddFile>(this),
+      .update = parallelized.operator()<&Program::UpdateFile>(this),
+      .drop = parallelized.operator()<&Program::DropFile>(this),
   });
+  wg.wait();
+
   Crossbind();
 }
 
@@ -66,15 +81,20 @@ void Program::DropFile(const std::string& path) {
 void Program::AttachFile(SourceFile& sf) {
   Bind(sf);
 
-  modules_[sf.module.name] = &sf.module;
-
   sf.dirty = true;
+
+  {
+    oneapi::tbb::speculative_spin_mutex::scoped_lock lock(m_);
+    modules_[sf.module.name] = &sf.module;
+  }
 }
 
 void Program::DetachFile(SourceFile& sf) {
   auto& module = sf.module;
 
   for (auto& [dependency, entries] : module.dependencies) {
+    oneapi::tbb::speculative_spin_mutex::scoped_lock lock(dependency->crossbind_mutex_);
+
     dependency->dependents.erase(&module);
     for (auto& entry : entries) {
       auto& vec = entry.injected_to->augmentation;
@@ -83,7 +103,13 @@ void Program::DetachFile(SourceFile& sf) {
   }
 
   for (auto* dependent : module.dependents) {
+    oneapi::tbb::speculative_spin_mutex::scoped_lock lock(dependent->crossbind_mutex_);
     dependent->sf->dirty = true;
+  }
+
+  {
+    oneapi::tbb::speculative_spin_mutex::scoped_lock lock(m_);
+    modules_.erase(module.name);
   }
 }
 
@@ -103,13 +129,13 @@ bool Program::ForEachImport(const ModuleDescriptor& module, auto on_incomplete,
       continue;
     }
 
-    auto* imported_module = modules_[import];
-    if (imported_module == nullptr) {
+    auto imported_module = modules_.find(import);
+    if (imported_module == modules_.end()) {
       report_incomplete();
       continue;
     }
 
-    if (!f(imported_module, via)) {
+    if (!f(imported_module->second, via)) {
       return false;
     }
   }
@@ -118,13 +144,13 @@ bool Program::ForEachImport(const ModuleDescriptor& module, auto on_incomplete,
     if ((!AcceptPrivateImports && !descriptor.is_public) || !descriptor.transit) {
       continue;
     }
-    auto* imported_module = modules_[import];
-    if (imported_module == nullptr) {
+    auto imported_module = modules_.find(import);
+    if (imported_module == modules_.end()) {
       report_incomplete();
       continue;
     }
 
-    if (!ForEachImport<false>(*imported_module, on_incomplete, f, via ? via : imported_module)) {
+    if (!ForEachImport<false>(*imported_module->second, on_incomplete, f, via ? via : imported_module->second)) {
       return false;
     }
   }
@@ -133,17 +159,6 @@ bool Program::ForEachImport(const ModuleDescriptor& module, auto on_incomplete,
 }
 
 void Program::Crossbind() {
-  const auto is_sf_dirty = [](const SourceFile& sf) {
-    return sf.dirty;
-  };
-
-  std::vector<bool> resolution_set;
-  const auto is_group_resolved = [&resolution_set] {
-    return std::ranges::all_of(resolution_set, [](bool b) {
-      return b;
-    });
-  };
-
   const auto register_dependency = [&](ModuleDescriptor& module, ModuleDescriptor* imported_module,
                                        DependencyEntry&& dependency) {
     imported_module->dependents.insert(&module);
@@ -151,8 +166,19 @@ void Program::Crossbind() {
   };
 
   // TODO: optimize LruCache to use static buffer
-  lib::LruCache<std::string_view, std::pair<const semantic::Symbol*, ModuleDescriptor*>, 128> resolution_cache;
-  for (auto& sf : files_ | std::views::values | std::views::filter(is_sf_dirty)) {
+  oneapi::tbb::parallel_for_each(files_ | std::views::values, [&](auto& sf) {
+    if (!sf.dirty) {
+      return;
+    }
+
+    std::vector<bool> resolution_set;
+    const auto is_group_resolved = [&resolution_set] {
+      return std::ranges::all_of(resolution_set, [](bool b) {
+        return b;
+      });
+    };
+
+    lib::LruCache<std::string_view, std::pair<const semantic::Symbol*, ModuleDescriptor*>, 128> resolution_cache;
     auto& module = sf.module;
     //
     module.unresolved.clear();
@@ -172,6 +198,8 @@ void Program::Crossbind() {
         const auto resolve_via = [&](const semantic::Symbol* sym, ModuleDescriptor* imported_module) {
           augmentation_table = sym->Members();
           ext_group.scope->augmentation.push_back(augmentation_table);  // TODO: should be reset on provider detach
+
+          tbb::speculative_spin_mutex::scoped_lock lock(imported_module->crossbind_mutex_);
           register_dependency(module, imported_module,
                               DependencyEntry{
                                   .provider = augmentation_table,
@@ -224,14 +252,20 @@ void Program::Crossbind() {
         }
         if (depends) {
           module.scope->augmentation.push_back(&imported_scope->symbols);
-          register_dependency(module, imported_module,
-                              DependencyEntry{
-                                  .provider = &imported_scope->symbols,
-                                  .injected_to = module.scope,
-                              });
+          {
+            tbb::speculative_spin_mutex::scoped_lock lock(imported_module->crossbind_mutex_);
+            register_dependency(module, imported_module,
+                                DependencyEntry{
+                                    .provider = &imported_scope->symbols,
+                                    .injected_to = module.scope,
+                                });
+          }
 
           if (via != nullptr) {
-            via->dependents.insert(&module);
+            {
+              tbb::speculative_spin_mutex::scoped_lock lock(via->crossbind_mutex_);
+              via->dependents.insert(&module);
+            }
             module.transitive_dependency_providers.insert(via);
           }
         }
@@ -246,7 +280,7 @@ void Program::Crossbind() {
       }
     }
     sf.dirty = false;
-  }
+  });
 }
 
 }  // namespace vanadium::core

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <oneapi/tbb/spin_mutex.h>
+
 #include <ranges>
 #include <string>
 #include <string_view>
@@ -51,6 +53,8 @@ struct ModuleDescriptor {
 
   std::vector<UnresolvedExternalsGroup> externals;
   std::vector<const ast::nodes::Ident*> unresolved;
+
+  oneapi::tbb::speculative_spin_mutex crossbind_mutex_;
 
   auto ImportsOf(std::string_view import) const {
     const auto [begin, end] = imports.equal_range(import);
@@ -123,6 +127,7 @@ class Program {
   const Filesystem* fs_;
   std::unordered_map<std::string, SourceFile> files_;
   std::unordered_map<std::string_view, ModuleDescriptor*> modules_;
+  oneapi::tbb::speculative_spin_mutex m_;
 };
 
 void Bind(SourceFile&);

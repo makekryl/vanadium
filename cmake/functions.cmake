@@ -10,7 +10,8 @@ function(add_test_executable target_name)
 
   add_executable(${TEST_TARGET_NAME} ${TEST_SOURCES})
 
-  target_link_libraries(${TEST_TARGET_NAME} ${target_name}
+  target_link_libraries(${TEST_TARGET_NAME} PRIVATE
+    ${target_name}
     GTest::gtest_main
     GTest::gmock_main
   )

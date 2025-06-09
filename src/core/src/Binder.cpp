@@ -174,14 +174,14 @@ bool Binder::Inspect(const ast::Node* n) {
         Visit(m->defs);
         if (m->name) {
           const auto name = Lit(std::addressof(*m->name));
-          sf_.module = ModuleDescriptor{
-              .name = name,
-              .sf = &sf_,
-              .scope = scope_,
-              .imports = std::move(imports_),
-              .required_imports = std::move(required_imports_),
-              .externals = externals_.Build(),
-          };
+
+          sf_.module.name = name;
+          sf_.module.sf = &sf_;
+          sf_.module.scope = scope_;
+          sf_.module.imports = std::move(imports_);
+          sf_.module.required_imports = std::move(required_imports_);
+          sf_.module.externals = externals_.Build();
+
           imports_ = {};
           externals_ = {};
           required_imports_ = {};
