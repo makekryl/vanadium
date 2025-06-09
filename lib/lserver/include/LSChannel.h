@@ -5,11 +5,11 @@
 #include "LSMessageToken.h"
 #include "LSTransport.h"
 
-namespace vanadium::lsp {
+namespace vanadium::lserver {
 
 class Channel {
  public:
-  Channel(TokenPool& pool, Transport& transport) : pool_(&pool), transport_(&transport) {}
+  Channel(Transport& transport, std::size_t tokens) : pool_(tokens), transport_(&transport) {}
   ~Channel() {}
 
   void Read();
@@ -20,11 +20,11 @@ class Channel {
   PooledMessageToken Poll();
 
  private:
-  TokenPool* pool_;
+  TokenPool pool_;
   Transport* transport_;
 
   tbb::concurrent_bounded_queue<PooledMessageToken> ready_;
   tbb::concurrent_bounded_queue<PooledMessageToken> out_queue_;
 };
 
-}  // namespace vanadium::lsp
+}  // namespace vanadium::lserver

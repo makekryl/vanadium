@@ -7,7 +7,6 @@ target_include_directories(vanadiumd PRIVATE
 )
 
 target_link_libraries(vanadiumd PRIVATE
-  vanadium_core
-  vanadium_lib_lsprotocol
-  vanadium_lib_lsserver
+  vanadium_lib_lserver
+  vanadium_ls
 )

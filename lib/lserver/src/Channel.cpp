@@ -3,10 +3,10 @@
 #include "LSChannel.h"
 #include "LSMessageToken.h"
 
-namespace vanadium::lsp {
+namespace vanadium::lserver {
 
 void Channel::Read() {
-  auto token = pool_->Acquire();
+  auto token = pool_.Acquire();
   auto& buf = token->buf;
 
   buf.resize(128);
@@ -48,4 +48,4 @@ PooledMessageToken Channel::Poll() {
   return token;
 }
 
-}  // namespace vanadium::lsp
+}  // namespace vanadium::lserver

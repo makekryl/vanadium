@@ -5,7 +5,7 @@
 
 #include "LSTransport.h"
 
-namespace vanadium::lsp {
+namespace vanadium::lserver {
 
 void StdioTransport::Read(std::span<char> chunk) {
   std::fread(chunk.data(), chunk.size(), 1, stdin);
@@ -16,16 +16,6 @@ void StdioTransport::ReadLine(std::span<char> chunk) {
 }
 
 void StdioTransport::Write(std::string_view buf) {
-  // TODO: remove
-  {
-    static FILE* logfile{nullptr};
-    if (!logfile) {
-      logfile = fopen("lspwlog.txt", "w");
-    }
-    std::fputs(buf.data(), logfile);
-    std::fflush(logfile);
-  }
-
   std::fputs(buf.data(), stdout);  // TODO: check null-termination guarantees from our side
 }
 
@@ -38,4 +28,4 @@ void StdioTransport::Setup() {
   std::cin.tie(nullptr);
 }
 
-}  // namespace vanadium::lsp
+}  // namespace vanadium::lserver

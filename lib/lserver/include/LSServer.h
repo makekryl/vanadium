@@ -23,7 +23,7 @@ c4::csubstr to_csubstr(std::vector<char> const& vec) {
 }
 }  // namespace c4
 
-namespace vanadium::lsp {
+namespace vanadium::lserver {
 
 template <typename TContextPayload>
 class Server;
@@ -38,12 +38,17 @@ class ServerContext {
   }
   void Send(PooledMessageToken&&);
 
+  Payload& operator&() {
+    return data_;
+  }
+  Payload* operator->() {
+    return &data_;
+  }
+
  private:
   Server<Payload>* const server_;
   TokenPool pool_;
-
- public:
-  Payload data;
+  Payload data_;
 };
 
 template <typename TContextPayload>
@@ -54,38 +59,41 @@ class Server {
 
   Server(Transport& transport, RouterFn router, std::size_t concurrency, std::size_t backlog)
       : router_(router),
-        channel_pool_(concurrency * 2),
-        channel_(channel_pool_, transport),
+        channel_(transport, concurrency * 2),
         backlog_(backlog),
         task_arena_(concurrency),
         ctx_(this) {}
 
-  void ProcessMessages() {}
-
   void Listen() {
     is_running_ = true;
 
-    const auto background_job = [&]<typename F>(F f) {
-      wg_.run([&] {
-        while (is_running_.load()) {
-          f();
-        }
-      });
-    };
+    // const auto background_job = [&]<typename F>(F&& f) {
+    //   wg_.run([&] {
+    //     while (is_running_.load()) {
+    //       f();
+    //     }
+    //   });
+    // };
 
-    background_job([&] {
-      channel_.Read();
+    wg_.run([&] {
+      while (is_running_.load()) {
+        channel_.Read();
+      }
     });
-    background_job([&] {
-      channel_.Write();
+    wg_.run([&] {
+      while (is_running_.load()) {
+        channel_.Write();
+      }
     });
     task_arena_.execute([&] {
       for (int i = 0; i < task_arena_.max_concurrency(); ++i) {
-        background_job([&] {
-          auto token = channel_.Poll();
-          auto str = ryml::substr{token->buf.data(), token->buf.size()};
-          ryml::parse_json_in_place(&token->parser, str, &token->tree);
-          router_(ctx_, std::move(token));
+        wg_.run([&] {
+          while (is_running_.load()) {
+            auto token = channel_.Poll();
+            auto str = ryml::substr{token->buf.data(), token->buf.size()};
+            ryml::parse_json_in_place(&token->parser, str, &token->tree);
+            router_(ctx_, std::move(token));
+          }
         });
       }
     });
@@ -96,6 +104,10 @@ class Server {
   void Stop() {
     is_running_ = false;
     wg_.cancel();
+  }
+
+  Context& GetContext() {
+    return ctx_;
   }
 
   void Send(PooledMessageToken&& token) {
@@ -118,12 +130,11 @@ class Server {
  private:
   RouterFn router_;
 
-  TokenPool channel_pool_;
   Channel channel_;
 
   std::size_t backlog_;
-  oneapi::tbb::task_arena task_arena_;
-  oneapi::tbb::task_group wg_;
+  tbb::task_arena task_arena_;
+  tbb::task_group wg_;
 
   std::atomic<bool> is_running_;
 
@@ -139,4 +150,4 @@ void ServerContext<Payload>::Send(PooledMessageToken&& token) {
   server_->Send(std::move(token));
 }
 
-}  // namespace vanadium::lsp
+}  // namespace vanadium::lserver

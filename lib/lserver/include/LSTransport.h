@@ -3,7 +3,7 @@
 #include <span>
 #include <string_view>
 
-namespace vanadium::lsp {
+namespace vanadium::lserver {
 
 class Transport {
  public:
@@ -24,4 +24,4 @@ class StdioTransport : public Transport {
   static void Setup();
 };
 
-}  // namespace vanadium::lsp
+}  // namespace vanadium::lserver

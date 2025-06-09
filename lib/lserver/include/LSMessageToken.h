@@ -3,9 +3,10 @@
 #include <oneapi/tbb/concurrent_queue.h>
 
 #include <ryml.hpp>
+#include <utility>
 #include <vector>
 
-namespace vanadium::lsp {
+namespace vanadium::lserver {
 
 struct MessageToken {
   using buffer_t = std::vector<char>;
@@ -35,9 +36,20 @@ class PooledMessageToken {
     return token_;
   }
 
+  PooledMessageToken(const PooledMessageToken&) = delete;
+  PooledMessageToken& operator=(const PooledMessageToken&) = delete;
+
+  PooledMessageToken(PooledMessageToken&& other) noexcept
+      : token_(std::exchange(other.token_, nullptr)), pool_(std::exchange(other.pool_, nullptr)) {};
+  PooledMessageToken& operator=(PooledMessageToken&& other) noexcept {
+    std::swap(token_, other.token_);
+    std::swap(pool_, other.pool_);
+    return *this;
+  }
+
  private:
-  MessageToken* token_;
-  TokenPool* pool_;
+  MessageToken* token_{nullptr};
+  TokenPool* pool_{nullptr};
 };
 
 class TokenPool {
@@ -59,7 +71,7 @@ class TokenPool {
   }
 
   void Release(PooledMessageToken&& token) {
-    pool_.emplace(token);
+    pool_.emplace(std::move(token));
   }
 
   [[nodiscard]] bool Full() noexcept {
@@ -72,7 +84,10 @@ class TokenPool {
 };
 
 inline PooledMessageToken::~PooledMessageToken() {
-  // pool_->Release(std::move(*this));
+  if (pool_ == nullptr) {
+    return;
+  }
+  pool_->Release(std::move(*this));
 }
 
-}  // namespace vanadium::lsp
+}  // namespace vanadium::lserver
