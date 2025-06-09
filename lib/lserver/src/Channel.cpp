@@ -13,11 +13,12 @@ void Channel::Read() {
   transport_->ReadLine(buf);
 
   std::size_t message_size;
-
-  std::string_view bufsv{buf.data(), buf.size()};
-  const auto separator_pos = bufsv.find(':');
-  const auto svp = bufsv.substr(separator_pos + 2, bufsv.length() - separator_pos - 2);
-  std::from_chars(svp.begin(), svp.end(), message_size);
+  {
+    std::string_view sbuf{buf.data(), buf.size()};
+    const auto separator_pos = sbuf.find(':');
+    const auto length_fragment = sbuf.substr(separator_pos + 2, sbuf.length() - separator_pos - 2);
+    std::from_chars(length_fragment.begin(), length_fragment.end(), message_size);
+  }
 
   transport_->Read({buf.data(), buf.data() + 2});  // \r\n
 
