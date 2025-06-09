@@ -134,8 +134,6 @@ const std::set<TokenKind> kTokTopLevel = {
 // clang-format on
 
 constexpr int kLowestPrec = 0;
-constexpr int kUnaryPrec = 6;
-constexpr int kHighestPrec = 15;
 namespace {
 int PrecedenceOf(TokenKind kind) {
   switch (kind) {
@@ -481,7 +479,7 @@ nodes::DefKindExpr* Parser::ParseImportStmt() {
           nodes::Expr* y = ParseTypeRef();
           if (tok_ == TokenKind::EXCEPT) {
             y = NewNode<nodes::ExceptExpr>([&, py = y](auto& ee) {
-              ee.x = y;
+              ee.x = py;
               ConsumeInvariant(TokenKind::EXCEPT);
               Expect(TokenKind::LBRACE);
               ee.list = ParseExceptStmts();

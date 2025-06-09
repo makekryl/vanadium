@@ -140,7 +140,7 @@ Token Scanner::Scan() {
   ++pos_;
   const char next = HasNext() ? Peek() : 0;
 
-  TokenKind kind;
+  TokenKind kind{TokenKind::ILLEGAL};
 
   if (std::isalpha(ch) || ch == '_') {
     kind = TokenKind::IDENT;

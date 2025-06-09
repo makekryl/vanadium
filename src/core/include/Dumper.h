@@ -17,8 +17,8 @@ class Dumper {
 
   void Dump(std::string_view name, const vanadium::core::ast::Token& tok);
 
-  void DumpIdent(const vanadium::core::ast::nodes::Ident& ident) {}
-  void Dump(std::string_view name, const vanadium::core::ast::nodes::Ident& ident) {}
+  void DumpIdent(const vanadium::core::ast::nodes::Ident&) {}
+  void Dump(std::string_view, const vanadium::core::ast::nodes::Ident&) {}
 
   template <typename T>
   void Dump(std::string_view name, const std::vector<T>& v);

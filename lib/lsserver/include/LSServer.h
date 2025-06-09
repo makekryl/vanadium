@@ -80,7 +80,7 @@ class Server {
       channel_.Write();
     });
     task_arena_.execute([&] {
-      for (std::size_t i = 0; i < task_arena_.max_concurrency(); ++i) {
+      for (int i = 0; i < task_arena_.max_concurrency(); ++i) {
         background_job([&] {
           auto token = channel_.Poll();
           auto str = ryml::substr{token->buf.data(), token->buf.size()};

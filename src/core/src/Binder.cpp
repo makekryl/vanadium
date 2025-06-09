@@ -51,7 +51,7 @@ class ExternalsTracker {
   }
 
  private:
-  UnresolvedExternalsGroup top_level_{.augmentation_provider = "", .scope = nullptr};
+  UnresolvedExternalsGroup top_level_{.augmentation_provider = "", .idents = {}, .scope = nullptr};
   std::unordered_map<std::string_view, UnresolvedExternalsGroup> mapping_;
 
   UnresolvedExternalsGroup* active_;
