@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <utility>
 
 namespace vanadium::lib {
 
@@ -54,25 +55,25 @@ class FunctionRef<TReturn(TParams...)> final {
 
   template <TReturn (*TMethod)(TParams...)>
   constexpr static TReturn function_stub(void*, TParams... params) {
-    return (TMethod)(params...);
+    return (TMethod)(std::forward<TParams>(params)...);
   }
 
   template <typename Func>
-  constexpr static TReturn lambda_stub(void* instance, TParams... arg) {
+  constexpr static TReturn lambda_stub(void* instance, TParams... params) {
     Func* p = static_cast<Func*>(instance);
-    return (p->operator())(arg...);
+    return (p->operator())(std::forward<TParams>(params)...);
   }
 
   template <class T, TReturn (T::*TMethod)(TParams...)>
   constexpr static TReturn method_stub(void* instance, TParams... params) {
     auto* p = static_cast<T*>(instance);
-    return (p->*TMethod)(params...);
+    return (p->*TMethod)(std::forward<TParams>(params)...);
   }
 
   template <class T, TReturn (T::*TMethod)(TParams...) const>
   constexpr static TReturn const_method_stub(void* instance, TParams... params) {
     auto* const p = static_cast<T*>(instance);
-    return (p->*TMethod)(params...);
+    return (p->*TMethod)(std::forward<TParams>(params)...);
   }
 
   void* instance_ = nullptr;
