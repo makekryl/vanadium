@@ -19,7 +19,7 @@
 namespace vanadium::core {
 
 void Program::Commit(const lib::Consumer<const ProgramModifier&>& modify) {
-  oneapi::tbb::task_group wg;
+  tbb::task_group wg;
   const auto parallelized = [&]<void (Program::*F)(const std::string&)>(Program* instance) {
     return [&wg, instance](const std::string& sref) -> void {
       wg.run([instance, s = sref] {
@@ -84,7 +84,7 @@ void Program::AttachFile(SourceFile& sf) {
   sf.dirty = true;
 
   {
-    oneapi::tbb::speculative_spin_mutex::scoped_lock lock(m_);
+    tbb::speculative_spin_mutex::scoped_lock lock(m_);
     modules_[sf.module.name] = &sf.module;
   }
 }
@@ -93,7 +93,7 @@ void Program::DetachFile(SourceFile& sf) {
   auto& module = sf.module;
 
   for (auto& [dependency, entries] : module.dependencies) {
-    oneapi::tbb::speculative_spin_mutex::scoped_lock lock(dependency->crossbind_mutex_);
+    tbb::speculative_spin_mutex::scoped_lock lock(dependency->crossbind_mutex_);
 
     dependency->dependents.erase(&module);
     for (auto& entry : entries) {
@@ -103,12 +103,12 @@ void Program::DetachFile(SourceFile& sf) {
   }
 
   for (auto* dependent : module.dependents) {
-    oneapi::tbb::speculative_spin_mutex::scoped_lock lock(dependent->crossbind_mutex_);
+    tbb::speculative_spin_mutex::scoped_lock lock(dependent->crossbind_mutex_);
     dependent->sf->dirty = true;
   }
 
   {
-    oneapi::tbb::speculative_spin_mutex::scoped_lock lock(m_);
+    tbb::speculative_spin_mutex::scoped_lock lock(m_);
     modules_.erase(module.name);
   }
 }
@@ -166,7 +166,7 @@ void Program::Crossbind() {
   };
 
   // TODO: optimize LruCache to use static buffer
-  oneapi::tbb::parallel_for_each(files_ | std::views::values, [&](auto& sf) {
+  tbb::parallel_for_each(files_ | std::views::values, [&](auto& sf) {
     if (!sf.dirty) {
       return;
     }
