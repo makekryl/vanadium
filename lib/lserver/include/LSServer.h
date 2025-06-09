@@ -1,16 +1,17 @@
 #pragma once
 
+#include <oneapi/tbb/task_arena.h>
+#include <oneapi/tbb/task_group.h>
+
+#include <c4/std/vector_fwd.hpp>
+#include <c4/substr_fwd.hpp>
+#include <c4/yml/emit.hpp>
+#include <c4/yml/parse.hpp>
 #include <cstddef>
 
 #include "LSChannel.h"
 #include "LSMessageToken.h"
 #include "LSTransport.h"
-#include "c4/std/vector_fwd.hpp"
-#include "c4/substr_fwd.hpp"
-#include "c4/yml/emit.hpp"
-#include "c4/yml/parse.hpp"
-#include "oneapi/tbb/task_arena.h"
-#include "oneapi/tbb/task_group.h"
 
 namespace c4 {
 template <>
@@ -66,14 +67,6 @@ class Server {
 
   void Listen() {
     is_running_ = true;
-
-    // const auto background_job = [&]<typename F>(F&& f) {
-    //   wg_.run([&] {
-    //     while (is_running_.load()) {
-    //       f();
-    //     }
-    //   });
-    // };
 
     wg_.run([&] {
       while (is_running_.load()) {
