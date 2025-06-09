@@ -3,7 +3,7 @@
 #include <oneapi/tbb/task_arena.h>
 #include <oneapi/tbb/task_group.h>
 
-#include <c4/std/vector_fwd.hpp>
+#include <c4/std/string_fwd.hpp>
 #include <c4/substr_fwd.hpp>
 #include <c4/yml/emit.hpp>
 #include <c4/yml/parse.hpp>
@@ -14,13 +14,11 @@
 #include "LSTransport.h"
 
 namespace c4 {
-template <>
-c4::substr to_substr(std::vector<char>& vec) {
-  return c4::substr{vec.data(), vec.size()};
+inline c4::substr to_substr(std::string& s) noexcept {
+  return c4::substr{s.data(), s.size()};
 }
-template <>
-c4::csubstr to_csubstr(std::vector<char> const& vec) {
-  return c4::csubstr{vec.data(), vec.size()};
+inline c4::csubstr to_csubstr(const std::string& s) noexcept {
+  return c4::csubstr{s.data(), s.size()};
 }
 }  // namespace c4
 

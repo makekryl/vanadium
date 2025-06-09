@@ -9,7 +9,7 @@
 namespace vanadium::lserver {
 
 struct MessageToken {
-  using buffer_t = std::vector<char>;
+  using buffer_t = std::string;
 
   buffer_t buf;
 
