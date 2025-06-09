@@ -9,8 +9,6 @@ target_include_directories(vanadium_lint PUBLIC
 
 target_link_libraries(vanadium_lint PUBLIC
   vanadium_lib_common
-)
-target_link_libraries(vanadium_lint PUBLIC
   vanadium_core
 )
 
