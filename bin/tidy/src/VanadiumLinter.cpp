@@ -8,6 +8,7 @@
 #include <iostream>
 #include <thread>
 
+#include "Arena.h"
 #include "Context.h"
 #include "FunctionRef.h"
 #include "Linter.h"
@@ -57,12 +58,21 @@ int main(int argc, char* argv[]) {
   const auto t_load_begin = std::chrono::steady_clock::now();
 
   auto project = vanadium::tooling::Project::Load(manifest);
-  vanadium::core::Program program(&project->GetFS());
+  vanadium::core::Program program;
 
   task_arena.execute([&] {
     program.Commit([&](const auto& modify) {
-      project->VisitFiles([&modify](const std::string& path) {
-        modify.add(path);
+      project->VisitFiles([&](const std::string& path) {
+        modify.update(path, [&](vanadium::lib::Arena& arena) -> std::string_view {
+          const auto contents = project->GetFS().ReadFile(path, [&](std::size_t size) {
+            return arena.AllocStringBuffer(size).data();
+          });
+          if (!contents) {
+            // TODO
+            std::abort();
+          }
+          return *contents;
+        });
       });
     });
   });
@@ -86,7 +96,7 @@ int main(int argc, char* argv[]) {
       const auto initial_problems_count = problems.size();
       const auto&& [fixed_source, refined_problems] = linter.Fix(program, sf, std::move(problems));
       if (fixed_source) {
-        if (!program.GetFS().WriteFile(sf.path, *fixed_source)) {
+        if (!project->GetFS().WriteFile(sf.path, *fixed_source)) {
           // TODO
           std::puts("FILE WRITE FAILED\n");
           std::abort();

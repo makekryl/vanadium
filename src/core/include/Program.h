@@ -84,19 +84,16 @@ struct SourceFile {
 
 class Program {
  public:
-  Program(const Filesystem* fs) : fs_(fs) {}
+  Program() = default;
 
  private:
-  struct ProgramModifier {
-    using SourceFilePathAction = lib::Consumer<const std::string&>;
-    SourceFilePathAction add;
-    SourceFilePathAction update;
-    SourceFilePathAction drop;
-  };
-
-  void AddFile(const std::string& path);
-  void UpdateFile(const std::string& path);
+  void UpdateFile(const std::string& path, lib::FunctionRef<std::string_view(lib::Arena&)> read);
   void DropFile(const std::string& path);
+
+  struct ProgramModifier {
+    lib::Consumer<const std::string&, const std::function<std::string_view(lib::Arena&)>&> update;
+    lib::Consumer<const std::string&> drop;
+  };
 
  public:
   const std::unordered_map<std::string, SourceFile>& Files() const {
@@ -110,8 +107,9 @@ class Program {
     return it == modules_.end() ? nullptr : it->second;
   }
 
-  const Filesystem& GetFS() const {
-    return *fs_;
+  const SourceFile* GetFile(const std::string& path) const {
+    const auto it = files_.find(path);
+    return it == files_.end() ? nullptr : &it->second;
   }
 
  private:
@@ -124,10 +122,11 @@ class Program {
                      ModuleDescriptor* via = nullptr);  // TODO invocable
   void Crossbind();
 
-  const Filesystem* fs_;
   std::unordered_map<std::string, SourceFile> files_;
+  tbb::speculative_spin_mutex files_mutex_;
+
   std::unordered_map<std::string_view, ModuleDescriptor*> modules_;
-  tbb::speculative_spin_mutex m_;
+  tbb::speculative_spin_mutex modules_mutex_;
 };
 
 void Bind(SourceFile&);

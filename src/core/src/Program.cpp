@@ -5,6 +5,7 @@
 #include <oneapi/tbb/task_group.h>
 
 #include <algorithm>
+#include <cassert>
 #include <concepts>
 #include <cstddef>
 #include <cstdio>
@@ -20,52 +21,42 @@ namespace vanadium::core {
 
 void Program::Commit(const lib::Consumer<const ProgramModifier&>& modify) {
   tbb::task_group wg;
-  const auto parallelized = [&]<void (Program::*F)(const std::string&)>(Program* instance) {
-    return [&wg, instance](const std::string& sref) -> void {
-      wg.run([instance, s = sref] {
-        (instance->*F)(s);
-      });
-    };
-  };
-
   modify({
-      .add = parallelized.operator()<&Program::AddFile>(this),
-      .update = parallelized.operator()<&Program::UpdateFile>(this),
-      .drop = parallelized.operator()<&Program::DropFile>(this),
+      .update =
+          [&](const std::string& path, const std::function<std::string_view(lib::Arena&)>& read) {
+            wg.run([this, path, read] {
+              UpdateFile(path, read);
+            });
+          },
+      .drop =
+          [&](const std::string& path) {
+            wg.run([this, path] {
+              DropFile(path);
+            });
+          },
   });
   wg.wait();
 
   Crossbind();
 }
 
-void Program::AddFile(const std::string& path) {
-  auto& sf = files_[path];
-
-  const auto contents = fs_->ReadFile(path, [&](std::size_t size) {
-    return sf.arena.AllocStringBuffer(size).data();
-  });
-  if (!contents) {
-    // TODO
-    std::abort();
+void Program::UpdateFile(const std::string& path, lib::FunctionRef<std::string_view(lib::Arena&)> read) {
+  decltype(files_)::iterator it;
+  bool inserted;
+  {
+    tbb::speculative_spin_mutex::scoped_lock lock(files_mutex_);
+    std::tie(it, inserted) = files_.try_emplace(std::move(path));
   }
-  sf.path = path;
 
-  sf.ast = ast::Parse(sf.arena, *contents);
+  auto& sf = it->second;
+  if (inserted) {
+    sf.path = path;
+  } else {
+    DetachFile(sf);
+    sf.arena.Reset();
+  }
 
-  AttachFile(sf);
-}
-
-void Program::UpdateFile(const std::string& path) {
-  auto& sf = files_.at(path);
-
-  DetachFile(sf);
-
-  sf.arena.Reset();
-
-  const auto contents = fs_->ReadFile(sf.path, [&](std::size_t size) {
-    return sf.arena.AllocStringBuffer(size).data();
-  });
-  sf.ast = ast::Parse(sf.arena, *contents);
+  sf.ast = ast::Parse(sf.arena, read(sf.arena));
 
   AttachFile(sf);
 }
@@ -84,7 +75,7 @@ void Program::AttachFile(SourceFile& sf) {
   sf.dirty = true;
 
   {
-    tbb::speculative_spin_mutex::scoped_lock lock(m_);
+    tbb::speculative_spin_mutex::scoped_lock lock(files_mutex_);
     modules_[sf.module.name] = &sf.module;
   }
 }
@@ -108,7 +99,7 @@ void Program::DetachFile(SourceFile& sf) {
   }
 
   {
-    tbb::speculative_spin_mutex::scoped_lock lock(m_);
+    tbb::speculative_spin_mutex::scoped_lock lock(files_mutex_);
     modules_.erase(module.name);
   }
 }

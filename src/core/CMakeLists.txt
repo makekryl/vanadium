@@ -17,7 +17,6 @@ target_link_libraries(vanadium_core PUBLIC
   vanadium_lib_arena
   TBB::tbb
 )
-
 target_link_libraries(vanadium_core PRIVATE
   magic_enum
 )
