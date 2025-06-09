@@ -6,12 +6,14 @@
 #include <cstdlib>
 #include <filesystem>
 #include <iostream>
+#include <thread>
 
 #include "Context.h"
 #include "FunctionRef.h"
 #include "Linter.h"
 #include "Program.h"
 #include "Project.h"
+#include "oneapi/tbb/task_arena.h"
 #include "rules/NoEmpty.h"
 #include "rules/NoUnusedImports.h"
 #include "rules/NoUnusedVars.h"
@@ -42,24 +44,30 @@ int main(int argc, char* argv[]) {
                                  },
                                  "Vanadium project", "Vanadium project"});
   //
-  bool use_fix;
+  bool use_fix{false};
   app.add_flag("--fix", use_fix, "autofix if possible");
   //
+  std::size_t jobs{std::thread::hardware_concurrency()};
+  app.add_option("-j,--jobs", jobs, "number of jobs");
+  //
   CLI11_PARSE(app, argc, argv);
+
+  tbb::task_arena task_arena(jobs);
 
   const auto t_load_begin = std::chrono::steady_clock::now();
 
   auto project = vanadium::tooling::Project::Load(manifest);
   vanadium::core::Program program(&project->GetFS());
-  program.Commit([&](const auto& modify) {
-    project->VisitFiles([&modify](auto path) {
-      modify.add(std::string(path));
+
+  task_arena.execute([&] {
+    program.Commit([&](const auto& modify) {
+      project->VisitFiles([&modify](auto path) {
+        modify.add(std::string(path));
+      });
     });
   });
 
   const auto t_load_end = std::chrono::steady_clock::now();
-  fmt::print(fmt::fg(fmt::color::cyan), "\n * Project loaded in {} ms\n\n",
-             std::chrono::duration_cast<std::chrono::milliseconds>(t_load_end - t_load_begin).count());
 
   const auto t_lint_begin = std::chrono::steady_clock::now();
 
@@ -108,6 +116,8 @@ int main(int argc, char* argv[]) {
              has_problems ? "✘" : "✔",
              has_problems ? fmt::format("{} errors detected", total_problems) : "no problems found");
 
+  fmt::print(fmt::fg(fmt::color::cyan), "\n * Project loaded in {} ms with {} jobs\n\n",
+             std::chrono::duration_cast<std::chrono::milliseconds>(t_load_end - t_load_begin).count(), jobs);
   const auto t_lint_end = std::chrono::steady_clock::now();
   fmt::print(fmt::fg(fmt::color::cyan), "\n                         ({} ms)\n",
              std::chrono::duration_cast<std::chrono::milliseconds>(t_lint_end - t_lint_begin).count());
