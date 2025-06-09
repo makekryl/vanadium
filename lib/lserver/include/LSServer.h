@@ -54,10 +54,10 @@ template <typename TContextPayload>
 class Server {
  public:
   using Context = ServerContext<TContextPayload>;
-  using RouterFn = std::function<void(Context&, PooledMessageToken)>;
+  using HandlerFn = void (*)(Context&, PooledMessageToken);
 
-  Server(Transport& transport, RouterFn router, std::size_t concurrency, std::size_t backlog)
-      : router_(router),
+  Server(Transport& transport, HandlerFn handler, std::size_t concurrency, std::size_t backlog)
+      : handler_(handler),
         channel_(transport, concurrency * 2),
         backlog_(backlog),
         task_arena_(concurrency),
@@ -83,7 +83,7 @@ class Server {
             auto token = channel_.Poll();
             auto str = ryml::substr{token->buf.data(), token->buf.size()};
             ryml::parse_json_in_place(&token->parser, str, &token->tree);
-            router_(ctx_, std::move(token));
+            handler_(ctx_, std::move(token));
           }
         });
       }
@@ -119,7 +119,7 @@ class Server {
   Server& operator=(Server&&) = delete;
 
  private:
-  RouterFn router_;
+  HandlerFn handler_;
 
   Channel channel_;
 
