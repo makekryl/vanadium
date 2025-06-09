@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+from contextlib import contextmanager
 import os
 import re
 import sys
@@ -97,6 +98,8 @@ def parse_nodes(stream: TextIO) -> AstNodesDict:
 
 
 class SourceCodeBuilder:
+  __TAB_WIDTH = 2
+
   def __init__(self):
     self.__buf = ""
     self.__indentation = 0
@@ -107,8 +110,20 @@ class SourceCodeBuilder:
   def unindent(self):
     self.__indentation -= 1
 
+  @contextmanager
+  def indented(self):
+    self.indent()
+    try:
+      yield
+    finally:
+      self.unindent()
+
   def write(self, s: str):
-    self.__buf += (self.__indentation * TAB_WIDTH * " ") + s + "\n"
+    self.__buf += (self.__indentation * SourceCodeBuilder.__TAB_WIDTH * " ") + s + "\n"
+
+  def write_all(self, lines: list[str]):
+    for line in lines:
+      self.write(line)
 
   def newline(self):
     self.__buf += "\n"
@@ -180,41 +195,38 @@ def generate_nodes_descriptors(nodes: AstNodesDict) -> str:
   for name in ordered_nodes:
     node = nodes[name]
     buf.write(f"struct {name} : {node.basic_type} {{")
-    buf.indent()
-    buf.write(f"{name}() : {node.basic_type}(NodeKind::{name}) {{}}")
-    buf.newline()
+    with buf.indented():
+      buf.write(f"{name}() : {node.basic_type}(NodeKind::{name}) {{}}")
+      buf.newline()
 
-    for field in node.fields:
-      stored_type = field.typename
-      if field.indirect:
-        stored_type = f"{stored_type}*"
-      if field.repeated:
-        stored_type = f"std::vector<{stored_type}>"  # TODO: span on arena
-      if not field.indirect and field.optional:
-        stored_type = f"std::optional<{stored_type}>"
+      for field in node.fields:
+        stored_type = field.typename
+        if field.indirect:
+          stored_type = f"{stored_type}*"
+        if field.repeated:
+          stored_type = f"std::vector<{stored_type}>"  # TODO: span on arena
+        if not field.indirect and field.optional:
+          stored_type = f"std::optional<{stored_type}>"
 
-      initializer = ""
-      if field.optional and field.indirect and not field.repeated:
-        initializer = "{nullptr}"
-      elif field.typename == "bool":
-        initializer = "{false}"
+        initializer = ""
+        if field.optional and field.indirect and not field.repeated:
+          initializer = "{nullptr}"
+        elif field.typename == "bool":
+          initializer = "{false}"
 
-      buf.write(f"{stored_type} {field.name}{initializer};")
+        buf.write(f"{stored_type} {field.name}{initializer};")
 
-    buf.newline()
+      buf.newline()
 
-    inspecting_code_buf = buf.spinoff(delta=1)
-    inspector_obj = "inspector"
-    generate_node_inspecting_code(node, inspector_obj, inspecting_code_buf)
-    buf.write(
-      f"void Accept(const NodeInspector&{'' if inspecting_code_buf.empty() else f' {inspector_obj}'}) const {{"
-    )
-    buf.indent()
-    buf += inspecting_code_buf
-    buf.unindent()
-    buf.write("}")
-
-    buf.unindent()
+      inspecting_code_buf = buf.spinoff(delta=1)
+      inspector_obj = "inspector"
+      generate_node_inspecting_code(node, inspector_obj, inspecting_code_buf)
+      buf.write(
+        f"void Accept(const NodeInspector&{'' if inspecting_code_buf.empty() else f' {inspector_obj}'}) const {{"
+      )
+      with buf.indented():
+        buf += inspecting_code_buf
+      buf.write("}")
     buf.write("};")
     buf.newline()
 
@@ -233,20 +245,14 @@ def generate_dumper_code(nodes: AstNodesDict) -> str:
 
   for node in nodes.values():
     buf.write(f"case NodeKind::{node.name}: {{")
-    buf.indent()
-
-    buf.write(f"const auto* nn = n->As<nodes::{node.name}>();")
-    buf.write(f'DumpGroup("{node.name}", [&] {{')
-    buf.indent()
-
-    for field in node.fields:
-      buf.write(f'Dump("{field.name}", nn->{field.name});')
-
-    buf.unindent()
-    buf.write("});")
-    buf.write("break;")
-
-    buf.unindent()
+    with buf.indented():
+      buf.write(f"const auto* nn = n->As<nodes::{node.name}>();")
+      buf.write(f'DumpGroup("{node.name}", [&] {{')
+      with buf.indented():
+        for field in node.fields:
+          buf.write(f'Dump("{field.name}", nn->{field.name});')
+      buf.write("});")
+      buf.write("break;")
     buf.write("}")
 
   return buf.build()
