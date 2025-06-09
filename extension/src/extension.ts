@@ -9,6 +9,12 @@ export async function activate(context: vscode.ExtensionContext) {
 
   // TODO: register commands (restart server, ...)
 
+  context.subscriptions.push(
+    vscode.commands.registerCommand('vanadiumd.restart', async () => {
+      await client.restart(context);
+    })
+  );
+
   await client.initialize(context);
 }
 

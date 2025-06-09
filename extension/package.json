@@ -53,8 +53,9 @@
     ],
     "commands": [
       {
-        "command": "vanadiumd.helloWorld",
-        "title": "Hello World"
+        "command": "vanadiumd.restart",
+        "title": "Restart language server",
+        "category": "vanadiumd"
       }
     ]
   },
