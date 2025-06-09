@@ -44,7 +44,7 @@ bool Project::VisitPropertyDict(std::string_view path,
 
 Project::Project(std::filesystem::path path) : path_(std::move(path)) {}
 
-void Project::VisitFiles(const lib::Consumer<std::string_view> &accept) const {
+void Project::VisitFiles(const lib::Consumer<const std::string &> &accept) const {
   for (const auto &v : (*tree_)["project"]["sources"]) {
     const auto &src_path = v.val();
     for (const auto &entry : std::filesystem::directory_iterator(path_ / RymlSubstrToStringView(src_path))) {

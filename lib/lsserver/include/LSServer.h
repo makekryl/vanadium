@@ -64,32 +64,37 @@ class Server {
 
   void Listen() {
     is_running_ = true;
-    wg_.run([&] {
-      while (is_running_.load()) {
-        channel_.Read();
-      }
+
+    const auto background_job = [&]<typename F>(F f) {
+      wg_.run([&] {
+        while (is_running_.load()) {
+          f();
+        }
+      });
+    };
+
+    background_job([&] {
+      channel_.Read();
     });
-    wg_.run([&] {
-      while (is_running_.load()) {
-        channel_.Write();
-      }
+    background_job([&] {
+      channel_.Write();
     });
     task_arena_.execute([&] {
       for (std::size_t i = 0; i < task_arena_.max_concurrency(); ++i) {
-        wg_.run([&] {
-          while (is_running_.load()) {
-            auto token = channel_.Poll();
-            auto str = ryml::substr{token->buf.data(), token->buf.size()};
-            ryml::parse_json_in_place(&token->parser, str, &token->tree);
-            router_(ctx_, std::move(token));
-          }
+        background_job([&] {
+          auto token = channel_.Poll();
+          auto str = ryml::substr{token->buf.data(), token->buf.size()};
+          ryml::parse_json_in_place(&token->parser, str, &token->tree);
+          router_(ctx_, std::move(token));
         });
       }
     });
+
     wg_.wait();
   }
 
   void Stop() {
+    is_running_ = false;
     wg_.cancel();
   }
 

@@ -61,8 +61,8 @@ int main(int argc, char* argv[]) {
 
   task_arena.execute([&] {
     program.Commit([&](const auto& modify) {
-      project->VisitFiles([&modify](auto path) {
-        modify.add(std::string(path));
+      project->VisitFiles([&modify](const std::string& path) {
+        modify.add(path);
       });
     });
   });

@@ -24,7 +24,7 @@ class Project {
 
   [[nodiscard]] std::string_view GetInheritedProperty(std::string_view path) const;
 
-  void VisitFiles(const lib::Consumer<std::string_view>&) const;
+  void VisitFiles(const lib::Consumer<const std::string&>&) const;
 
   [[nodiscard]] const std::filesystem::path& GetPath() {
     return path_;
