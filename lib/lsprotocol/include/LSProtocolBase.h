@@ -120,7 +120,9 @@ struct List : detail::StructWrapper {
   T emplace()
     requires(!detail::IsPrimitive<T>)
   {
-    return T(n_.append_child());
+    T t(n_.append_child());
+    t.init();
+    return t;
   }
 
   void emplace(T item)
