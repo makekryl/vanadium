@@ -1,6 +1,5 @@
 add_library(vanadium_lint STATIC
   src/Linter.cpp
-  src/PrecompiledRules.cpp
 )
 
 target_include_directories(vanadium_lint PUBLIC
