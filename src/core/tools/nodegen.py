@@ -301,8 +301,7 @@ def main():
     ("Dumper.inc", generate_dumper_code),
   ]
   for filepath, transform in TARGETS:
-    with open(dest / filepath, mode="w") as f:
-      f.write(transform(nodes))
+    (dest / filepath).write_text(transform(nodes))
 
   return 0
 
