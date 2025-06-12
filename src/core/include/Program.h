@@ -71,9 +71,9 @@ struct SourceFile {
   std::string path;
 
   ast::AST ast;
-
-  ModuleDescriptor module;
   std::vector<semantic::SemanticError> semantic_errors;
+
+  std::optional<ModuleDescriptor> module;
 
   bool dirty;
 
@@ -118,8 +118,7 @@ class Program {
 
   template <bool>
   bool ForEachImport(const ModuleDescriptor& module, auto on_incomplete,
-                     std::predicate<ModuleDescriptor*, ModuleDescriptor*> auto f,
-                     ModuleDescriptor* via = nullptr);  // TODO invocable
+                     std::predicate<ModuleDescriptor*, ModuleDescriptor*> auto f, ModuleDescriptor* via = nullptr);
   void Crossbind();
 
   std::unordered_map<std::string, SourceFile> files_;

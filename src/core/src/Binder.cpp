@@ -159,7 +159,7 @@ class Binder {
 bool Binder::Inspect(const ast::Node* n) {
   switch (n->nkind) {
     case ast::NodeKind::Module: {
-      if (sf_.module.name != "") [[unlikely]] {
+      if (sf_.module.has_value()) [[unlikely]] {
         EmitError(SemanticError{
             .range = n->nrange,
             .type = SemanticError::Type::kToDo,  // 1 module per file
@@ -175,12 +175,13 @@ bool Binder::Inspect(const ast::Node* n) {
         if (m->name) {
           const auto name = Lit(std::addressof(*m->name));
 
-          sf_.module.name = name;
-          sf_.module.sf = &sf_;
-          sf_.module.scope = scope_;
-          sf_.module.imports = std::move(imports_);
-          sf_.module.required_imports = std::move(required_imports_);
-          sf_.module.externals = externals_.Build();
+          sf_.module.emplace();
+          sf_.module->name = name;
+          sf_.module->sf = &sf_;
+          sf_.module->scope = scope_;
+          sf_.module->imports = std::move(imports_);
+          sf_.module->required_imports = std::move(required_imports_);
+          sf_.module->externals = externals_.Build();
 
           imports_ = {};
           externals_ = {};

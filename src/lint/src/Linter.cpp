@@ -23,6 +23,10 @@ void Linter::Lint(const core::Program& program,
 }
 
 ProblemSet Linter::Lint(const core::Program& program, const core::SourceFile& sf) {
+  if (!sf.module.has_value()) {
+    return {};
+  }
+
   Context ctx(program, sf);
 
   sf.ast.root.Accept([&](const vanadium::core::ast::Node* n) {

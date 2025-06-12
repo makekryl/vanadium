@@ -9,6 +9,7 @@
 #include <concepts>
 #include <cstddef>
 #include <cstdio>
+#include <memory>
 #include <ranges>
 #include <unordered_map>
 
@@ -53,6 +54,8 @@ void Program::UpdateFile(const std::string& path, lib::FunctionRef<std::string_v
     sf.path = path;
   } else {
     DetachFile(sf);
+    sf.module = std::nullopt;
+    sf.semantic_errors.clear();
     sf.arena.Reset();
   }
 
@@ -72,16 +75,22 @@ void Program::DropFile(const std::string& path) {
 void Program::AttachFile(SourceFile& sf) {
   Bind(sf);
 
-  sf.dirty = true;
+  if (sf.module.has_value()) [[likely]] {
+    sf.dirty = true;
+  }
 
   {
     tbb::speculative_spin_mutex::scoped_lock lock(files_mutex_);
-    modules_[sf.module.name] = &sf.module;
+    modules_[sf.module->name] = std::addressof(*sf.module);
   }
 }
 
 void Program::DetachFile(SourceFile& sf) {
-  auto& module = sf.module;
+  if (!sf.module.has_value()) {
+    return;
+  }
+
+  auto& module = *sf.module;
 
   for (auto& [dependency, entries] : module.dependencies) {
     tbb::speculative_spin_mutex::scoped_lock lock(dependency->crossbind_mutex_);
@@ -157,7 +166,7 @@ void Program::Crossbind() {
   };
 
   // TODO: optimize LruCache to use static buffer
-  tbb::parallel_for_each(files_ | std::views::values, [&](auto& sf) {
+  tbb::parallel_for_each(files_ | std::views::values, [&](SourceFile& sf) {
     if (!sf.dirty) {
       return;
     }
@@ -170,7 +179,7 @@ void Program::Crossbind() {
     };
 
     lib::LruCache<std::string_view, std::pair<const semantic::Symbol*, ModuleDescriptor*>, 128> resolution_cache;
-    auto& module = sf.module;
+    auto& module = *sf.module;
     //
     module.unresolved.clear();
     resolution_cache.reset();
