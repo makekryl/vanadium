@@ -40,12 +40,21 @@ class LineMapping {
 
   LineMapping(std::vector<pos_t>&& line_starts) : line_starts_(std::move(line_starts)) {}
 
-  [[nodiscard]] Location Translate(pos_t pos) const {
+  [[nodiscard]] pos_t StartOf(pos_t line) const {
+    return line_starts_[line];
+  }
+
+  [[nodiscard]] pos_t LineOf(pos_t pos) const {
     const auto it = std::ranges::upper_bound(line_starts_, pos);
     const auto line = std::max<pos_t>(0, std::distance(line_starts_.begin(), it));
     if (line == 0) [[unlikely]] {
-      return {.line = 0, .column = pos};
+      return 0;
     }
+    return line;
+  }
+
+  [[nodiscard]] Location Translate(pos_t pos) const {
+    const pos_t line = LineOf(pos);
     return {
         .line = line,
         .column = pos - line_starts_[line - 1],

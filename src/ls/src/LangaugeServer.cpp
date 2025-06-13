@@ -1,7 +1,14 @@
+#include <cstdlib>
+#include <mutex>
+#include <print>
+#include <unordered_map>
+
 #include "JsonRpc.h"
-#include "LSProtocol.h"
 #include "LSServer.h"
+#include "LanguageServer.h"
 #include "LanguageServerContext.h"
+#include "LanguageServerProcedures.h"
+#include "c4/yml/tag.hpp"
 
 namespace vanadium {
 namespace ls {
@@ -9,32 +16,34 @@ namespace ls {
 constexpr std::size_t kServerBacklog = 2;
 
 namespace {
-void HandleMessage(VanadiumLsContext& ctx, lserver::PooledMessageToken token) {
+const std::unordered_map<std::string_view, VanadiumLsServer::HandlerFn> kMessageHandlers{
+    {"initialize", procedures::initialize},
+    {"shutdown", procedures::shutdown},
+    {"exit", procedures::exit},
+    {"textDocument/didOpen", procedures::textDocument::didOpen},
+    {"textDocument/didChange", procedures::textDocument::didChange},
+    {"textDocument/diagnostic", procedures::textDocument::diagnostic},
+};
+
+void HandleMessage(VanadiumLsContext& ctx, lserver::PooledMessageToken&& token) {
   jsonrpc::Notification notification(token->tree.rootref());
-  if (notification.method() != "initialize") {
+
+  auto it = kMessageHandlers.find(notification.method());
+  if (it == kMessageHandlers.end()) {
+    // TODO: log
     return;
   }
-  jsonrpc::Request req(notification);
 
-  auto res_token = ctx.AcquireToken();
-
-  auto res = jsonrpc::Response::Success(res_token->tree.rootref(), req.id());
-
-  lsp::InitializeResult ir(res.result());
-  ir.init();
-
-  // ir.capabilities().add_hoverProvider().jsonNode().set_type(ryml::VAL);
-  // ir.capabilities().hoverProvider().set_boolean(true);
-
-  ir.add_serverInfo().set_name("vanadiumd");
-  ir.serverInfo().set_version("0.0.0.1");
-
-  ctx.Send(std::move(res_token));
+  static std::mutex m;
+  std::lock_guard l(m);  // TODO: PoC
+  std::println(stderr, "PROCEED {}", std::string(notification.method()));
+  it->second(ctx, std::move(token));
+  std::println(stderr, "COMPLETE {}", std::string(notification.method()));
 }
 }  // namespace
 
 void Serve(lserver::Transport& transport, std::size_t concurrency, std::size_t jobs) {
-  lserver::Server<VanadiumLsState> server(transport, HandleMessage, concurrency, kServerBacklog);
+  VanadiumLsServer server(transport, HandleMessage, concurrency, kServerBacklog);
 
   server.GetContext()->task_arena.initialize(jobs);
 

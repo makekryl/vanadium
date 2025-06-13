@@ -54,7 +54,7 @@ template <typename TContextPayload>
 class Server {
  public:
   using Context = ServerContext<TContextPayload>;
-  using HandlerFn = void (*)(Context&, PooledMessageToken);
+  using HandlerFn = void (*)(Context&, PooledMessageToken&&);
 
   Server(Transport& transport, HandlerFn handler, std::size_t concurrency, std::size_t backlog)
       : handler_(handler),

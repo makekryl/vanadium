@@ -5,8 +5,8 @@
 #include "LanguageServer.h"
 
 namespace {
-volatile bool dbg_attached = false;
 void WaitDebugger() {
+  volatile bool dbg_attached = false;
   while (!dbg_attached) {
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
   }
