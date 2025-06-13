@@ -7,13 +7,17 @@ export async function activate(context: vscode.ExtensionContext) {
   const traceOutput = vscode.window.createOutputChannel('Vanadium TTCN-3 Language Server');
   const client = new Client(output, traceOutput);
 
-  // TODO: register commands (restart server, ...)
-
   context.subscriptions.push(
     vscode.commands.registerCommand('vanadiumd.restart', async () => {
       await client.restart(context);
     })
   );
+
+  const status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right);
+  status.text = 'Restart vanadiumd';
+  status.command = 'vanadiumd.restart';
+  context.subscriptions.push(status);
+  status.show();
 
   await client.initialize(context);
 }
