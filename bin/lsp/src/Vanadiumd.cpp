@@ -1,4 +1,7 @@
 #include <chrono>
+#include <csignal>
+#include <iostream>
+#include <stacktrace>
 #include <thread>
 
 #include "LSTransport.h"
@@ -15,6 +18,11 @@ void WaitDebugger() {
 
 int main() {
   // WaitDebugger();
+
+  std::signal(SIGABRT, [](int signum) {
+    std::cerr << std::stacktrace::current();
+    std::exit(signum);
+  });
 
   vanadium::lserver::StdioTransport::Setup();
   vanadium::lserver::StdioTransport transport;
