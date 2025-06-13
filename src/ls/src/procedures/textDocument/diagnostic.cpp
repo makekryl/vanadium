@@ -1,6 +1,8 @@
 #include "JsonRpc.h"
 #include "LSProtocol.h"
+#include "LanguageServerDiagnostic.h"
 #include "LanguageServerProcedures.h"
+#include "c4/yml/node_type.hpp"
 
 namespace vanadium::ls::procedures::textDocument {
 void diagnostic(VanadiumLsContext& ctx, lserver::PooledMessageToken&& token) {
@@ -45,9 +47,12 @@ void diagnostic(VanadiumLsContext& ctx, lserver::PooledMessageToken&& token) {
       auto loc_end = file->ast.lines.Translate(err->nrange.end);
       item.range().end().set_line(loc_end.line);
       item.range().end().set_character(loc_end.column);
+
+      auto bundle = item.add_data();
+      bundle.jsonNode().set_type(c4::yml::KEYMAP);
+      lsp::detail::SetPrimitive(bundle.jsonNode().append_child() << ryml::key("kind"), 1);
     }
   }
-  report.jsonNode().append_child() << ryml::key("sz") << file->ast.errors.size();
 
   ctx.Send(std::move(res));
 }

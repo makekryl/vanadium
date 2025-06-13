@@ -23,6 +23,7 @@ const std::unordered_map<std::string_view, VanadiumLsServer::HandlerFn> kMessage
     {"textDocument/didOpen", procedures::textDocument::didOpen},
     {"textDocument/didChange", procedures::textDocument::didChange},
     {"textDocument/diagnostic", procedures::textDocument::diagnostic},
+    {"textDocument/codeAction", procedures::textDocument::codeAction},
 };
 
 void HandleMessage(VanadiumLsContext& ctx, lserver::PooledMessageToken&& token) {

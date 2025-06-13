@@ -1,6 +1,7 @@
 #include "JsonRpc.h"
 #include "LSProtocol.h"
 #include "LanguageServerProcedures.h"
+#include "c4/yml/node_type.hpp"
 
 namespace vanadium::ls::procedures {
 void initialize(VanadiumLsContext& ctx, lserver::PooledMessageToken&& token) {
@@ -21,6 +22,10 @@ void initialize(VanadiumLsContext& ctx, lserver::PooledMessageToken&& token) {
   auto sync = initialize_result.capabilities().add_textDocumentSync();
   sync.jsonNode().set_type(ryml::KEYVAL);
   lsp::detail::SerializeEnum(lsp::TextDocumentSyncKind::kFull, sync.jsonNode());
+
+  auto actprov = initialize_result.capabilities().add_codeActionProvider();
+  actprov.jsonNode().set_type(c4::yml::KEYVAL);
+  actprov.set_boolean(true);
 
   initialize_result.add_serverInfo().set_name("vanadiumd");
   initialize_result.serverInfo().set_version("0.0.0.1");

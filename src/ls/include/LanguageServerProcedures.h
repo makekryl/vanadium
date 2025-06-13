@@ -3,20 +3,26 @@
 #include "LanguageServerContext.h"
 
 namespace vanadium::ls {
+
 // NOLINTBEGIN(readability-identifier-naming)
 
+#define DECLARE_PROCEDURE(NAME) void NAME(VanadiumLsContext&, lserver::PooledMessageToken&&);
+
 namespace procedures {
-void initialize(VanadiumLsContext&, lserver::PooledMessageToken&&);
-void shutdown(VanadiumLsContext&, lserver::PooledMessageToken&&);
-void exit(VanadiumLsContext&, lserver::PooledMessageToken&&);
+DECLARE_PROCEDURE(initialize);
+DECLARE_PROCEDURE(shutdown);
+DECLARE_PROCEDURE(exit);
 
 namespace textDocument {
-void didOpen(VanadiumLsContext&, lserver::PooledMessageToken&&);
-void didChange(VanadiumLsContext&, lserver::PooledMessageToken&&);
-void diagnostic(VanadiumLsContext&, lserver::PooledMessageToken&&);
+DECLARE_PROCEDURE(didOpen);
+DECLARE_PROCEDURE(didChange);
+DECLARE_PROCEDURE(diagnostic);
+DECLARE_PROCEDURE(codeAction);
 }  // namespace textDocument
 
 }  // namespace procedures
+
+#undef DECLARE_PROCEDURE
 
 // NOLINTEND(readability-identifier-naming)
 
