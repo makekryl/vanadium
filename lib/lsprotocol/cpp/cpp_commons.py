@@ -52,7 +52,7 @@ def get_type_name(type_def: model.LSP_TYPE_SPEC, optional: bool | None = None) -
     case "reference":
       name = type_def.name  # type: ignore
     case "array":
-      name = f"List<{get_type_name(type_def.element)}>"  # type: ignore
+      name = f"std::span<{get_type_name(type_def.element)}>"  # type: ignore
     case "map":
       key_type = get_type_name(type_def.key)  # type: ignore
       value_type = get_type_name(type_def.value)  # type: ignore
@@ -63,7 +63,9 @@ def get_type_name(type_def: model.LSP_TYPE_SPEC, optional: bool | None = None) -
       sub_types = [get_type_name(sub_spec) for sub_spec in get_union_types(type_def)]
       sub_types_str = ", ".join(sub_types)
       if len(sub_types) >= 2:
+        sub_types_str = ("std::monostate, " if optional else "") + sub_types_str
         name = f"std::variant<{sub_types_str}>"
+        return name  # skip Optional wrapping
       elif len(sub_types) == 1:
         name = sub_types[0]
       else:
@@ -96,4 +98,4 @@ def get_type_name(type_def: model.LSP_TYPE_SPEC, optional: bool | None = None) -
     case _:
       raise ValueError(f"Unknown type kind: {type_def.kind}")
 
-  return name
+  return f"std::optional<{name}>" if optional else name  # type: ignore

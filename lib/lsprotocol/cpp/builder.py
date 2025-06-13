@@ -53,8 +53,7 @@ class SourceCodeBuilder:
 
 @dataclass
 class TypeEntry:
-  header: SourceCodeBuilder
-  implementation: SourceCodeBuilder | None = None
+  buf: SourceCodeBuilder
   dependencies: list[str] = []
 
 

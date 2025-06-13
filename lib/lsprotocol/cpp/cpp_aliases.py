@@ -13,19 +13,11 @@ def _generate_type_alias(alias: model.TypeAlias) -> TypeEntry:
       lines_to_multiline_comment(alias.documentation.splitlines(keepends=False))
     )
 
-  if alias.type.kind != "or":
-    buf.write(f"using {alias.name} = {get_type_name(alias.type)};")
-  else:
-    buf.write(f"struct {alias.name} : detail::StructWrapper {{")
-    with buf.indented():
-      buf.write("using StructWrapper::StructWrapper;")
-      buf.newline()
-    buf.write("};")
-
+  buf.write(f"using {alias.name} = {get_type_name(alias.type)};")
   buf.newline()
 
   return TypeEntry(
-    header=buf,
+    buf=buf,
     dependencies=get_used_types_names(alias.type),
   )
 

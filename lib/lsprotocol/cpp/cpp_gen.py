@@ -1,5 +1,4 @@
 import pathlib
-import pprint
 from graphlib import TopologicalSorter
 
 import generator.model as model
@@ -22,7 +21,7 @@ def _write_types(reg: TypesRegistry, hdr_buf: SourceCodeBuilder) -> None:
   for typename in ordered_types:
     if typename in ["LSPObject", "LSPArray", "LSPAny"]:
       continue
-    hdr_buf += reg[typename].header
+    hdr_buf += reg[typename].buf
 
 
 def _build_header(reg: TypesRegistry):
@@ -36,17 +35,7 @@ def _build_header(reg: TypesRegistry):
   buf.write("#include <string_view>")
   buf.write("#include <optional>")
   buf.write("#include <variant>")
-  buf.write("#include <ryml.hpp>")
   buf.newline()
-  buf.write('#include "LSProtocolBase.h"')
-  buf.newline()
-  #
-  # buf.newline()
-  # buf.write("namespace ryml {")
-  # buf.write("class NodeRef;")
-  # buf.write("}")
-  # buf.newline()
-  #
   buf.write("// NOLINTBEGIN(readability-identifier-naming)\n")
   buf.write("namespace lsp {")
   buf.newline()
@@ -54,29 +43,6 @@ def _build_header(reg: TypesRegistry):
   buf.newline()
   buf.write("}  // namespace lsp")
   buf.write("\n// NOLINTEND(readability-identifier-naming)")
-
-  return buf.build()
-
-
-def _build_serialization(reg: TypesRegistry) -> str:
-  buf = SourceCodeBuilder()
-
-  buf.write('#include "LSProtocol.h"')
-  buf.write("#include <cassert>")
-
-  buf.write("#include <ryml.hpp>")
-  buf.newline()
-  #
-  buf.write("namespace lsp {")
-  buf.newline()
-
-  for entry in reg.values():
-    if not entry.implementation:
-      continue
-    buf += entry.implementation
-
-  buf.newline()
-  buf.write("}  // namespace lsp")
 
   return buf.build()
 
@@ -93,8 +59,4 @@ def generate_from_spec(spec: model.LSPModel, output_dir: str, test_dir: str) -> 
 
   (output_path / "include" / "LSProtocol.h").write_text(
     _build_header(reg), encoding="utf-8"
-  )
-
-  (output_path / "src" / "LSProtocolSerializers.cpp").write_text(
-    _build_serialization(reg), encoding="utf-8"
   )
