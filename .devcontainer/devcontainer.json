@@ -11,7 +11,8 @@
     "ghcr.io/devcontainers/features/node:1": {
       "version": "lts",
       "pnpmVersion": "none",
-      "nvmVersion": "latest"
+      "nvmVersion": "latest",
+      "installYarnUsingApt": false
     }
   },
   "capAdd": ["SYS_PTRACE"],
