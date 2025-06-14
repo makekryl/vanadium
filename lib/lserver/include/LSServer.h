@@ -3,24 +3,13 @@
 #include <oneapi/tbb/task_arena.h>
 #include <oneapi/tbb/task_group.h>
 
-#include <c4/std/string_fwd.hpp>
-#include <c4/substr_fwd.hpp>
-#include <c4/yml/emit.hpp>
-#include <c4/yml/parse.hpp>
 #include <cstddef>
+#include <glaze/ext/jsonrpc.hpp>
+#include <glaze/glaze.hpp>
 
 #include "LSChannel.h"
 #include "LSMessageToken.h"
 #include "LSTransport.h"
-
-namespace c4 {
-inline c4::substr to_substr(std::string& s) noexcept {
-  return c4::substr{s.data(), s.size()};
-}
-inline c4::csubstr to_csubstr(const std::string& s) noexcept {
-  return c4::csubstr{s.data(), s.size()};
-}
-}  // namespace c4
 
 namespace vanadium::lserver {
 
@@ -54,7 +43,7 @@ template <typename TContextPayload>
 class Server {
  public:
   using Context = ServerContext<TContextPayload>;
-  using HandlerFn = void (*)(Context&, PooledMessageToken&&);
+  using HandlerFn = std::function<void(Context&, PooledMessageToken&&)>;
 
   Server(Transport& transport, HandlerFn handler, std::size_t concurrency, std::size_t backlog)
       : handler_(handler),
@@ -81,8 +70,6 @@ class Server {
         wg_.run([&] {
           while (is_running_.load()) {
             auto token = channel_.Poll();
-            auto str = ryml::substr{token->buf.data(), token->buf.size()};
-            ryml::parse_json_in_place(&token->parser, str, &token->tree);
             handler_(ctx_, std::move(token));
           }
         });
@@ -102,7 +89,6 @@ class Server {
   }
 
   void Send(PooledMessageToken&& token) {
-    ryml::emitrs_json(token->tree, &token->buf);
     channel_.Enqueue(std::move(token));
   }
 

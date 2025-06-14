@@ -157,6 +157,7 @@ class Binder {
 };
 
 bool Binder::Inspect(const ast::Node* n) {
+  if (!n) return false;
   switch (n->nkind) {
     case ast::NodeKind::Module: {
       if (sf_.module.has_value()) [[unlikely]] {

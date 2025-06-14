@@ -16,6 +16,10 @@ void StdioTransport::ReadLine(std::span<char> chunk) {
 }
 
 void StdioTransport::Write(std::string_view buf) {
+  {
+    static FILE* f = std::fopen("lsplog.txt", "w");
+    std::fputs(buf.data(), f);
+  }
   std::fputs(buf.data(), stdout);  // TODO: check null-termination guarantees from our side
 }
 

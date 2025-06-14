@@ -1,11 +1,11 @@
 file(GLOB_RECURSE
-  PROCEDURES_SOURCE_FILES CONFIGURE_DEPENDS
-  src/procedures/*.cpp
+  METHODS_SOURCE_FILES CONFIGURE_DEPENDS
+  src/methods/*.cpp
 )
 
 add_library(vanadium_ls STATIC
   src/LangaugeServer.cpp
-  ${PROCEDURES_SOURCE_FILES}
+  ${METHODS_SOURCE_FILES}
 )
 
 target_include_directories(vanadium_ls PUBLIC
@@ -21,6 +21,7 @@ target_link_libraries(vanadium_ls PRIVATE
   vanadium_lib_lserver
   vanadium_core
   vanadium_project
+  glaze::glaze
 )
 
 add_test_executable(vanadium_ls)

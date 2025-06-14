@@ -5,18 +5,20 @@ from .cpp_commons import get_type_name, get_used_types_names
 from .cpp_utils import lines_to_comment, lines_to_multiline_comment
 
 
-def _generate_struct_decl(struct: model.Structure) -> str:
-  inherited_from = [x for x in (struct.extends + struct.mixins)]  # type: ignore
-  parenal = (
-    f" : {', '.join([parent.name for parent in inherited_from])}"
-    if inherited_from
-    else ""
+def _get_extended_props(
+  struct: model.Structure, spec: model.LSPModel
+) -> list[model.Property]:
+  inherited_from = struct.extends + struct.mixins  # type: ignore
+  return sum(
+    [
+      next(filter(lambda x: x.name == parent.name, spec.structures)).properties
+      for parent in inherited_from
+    ],
+    [],
   )
 
-  return f"struct {struct.name}{parenal}"
 
-
-def _generate_struct(struct: model.Structure) -> TypeEntry:
+def _generate_struct(struct: model.Structure, spec: model.LSPModel) -> TypeEntry:
   hdr_buf = SourceCodeBuilder()
 
   if struct.documentation:
@@ -24,15 +26,26 @@ def _generate_struct(struct: model.Structure) -> TypeEntry:
       lines_to_multiline_comment(struct.documentation.splitlines(keepends=False))
     )
 
-  hdr_buf.write(f"{_generate_struct_decl(struct)} {{")
+  all_properties: list[model.Property] = list(struct.properties) + _get_extended_props(
+    struct, spec
+  )
+
+  hdr_buf.write(f"struct {struct.name} {{")
   hdr_buf.indent()
 
-  for i, prop in enumerate(struct.properties):
+  seen: list[str] = []
+  for i, prop in enumerate(all_properties):
+    if prop.name in seen:
+      continue
+    seen.append(prop.name)
+
     if prop.documentation:
       if i != 0:
         hdr_buf.newline()
       hdr_buf.write_all(lines_to_comment(prop.documentation.splitlines(keepends=False)))
     typename = get_type_name(prop.type, prop.optional)
+    if prop.name == "text" and typename == "std::string_view":
+      typename = "std::string"  # TODO: glaze sv inplace unescape
     if (
       typename == "std::optional<SelectionRange>" and struct.name == "SelectionRange"
     ):  # TODO: cleanup
@@ -60,5 +73,5 @@ def _generate_struct(struct: model.Structure) -> TypeEntry:
 def generate_structs(spec: model.LSPModel) -> TypesRegistry:
   reg = TypesRegistry()
   for struct in spec.structures:
-    reg[struct.name] = _generate_struct(struct)
+    reg[struct.name] = _generate_struct(struct, spec)
   return reg

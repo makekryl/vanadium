@@ -2,7 +2,6 @@
 
 #include <oneapi/tbb/concurrent_queue.h>
 
-#include <ryml.hpp>
 #include <utility>
 #include <vector>
 
@@ -12,12 +11,6 @@ struct MessageToken {
   using buffer_t = std::string;
 
   buffer_t buf;
-
-  ryml::Parser parser{&ryml_evt_handler_};
-  ryml::Tree tree;
-
- private:
-  ryml::EventHandlerTree ryml_evt_handler_;
 };
 
 class TokenPool;
@@ -65,7 +58,6 @@ class TokenPool {
     pool_.pop(result);
 
     result->buf.clear();
-    result->tree.clear();
 
     return result;
   }

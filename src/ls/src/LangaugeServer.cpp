@@ -1,52 +1,77 @@
 #include <cstdlib>
+#include <glaze/ext/jsonrpc.hpp>
+#include <glaze/util/expected.hpp>
+#include <glaze/util/string_literal.hpp>
 #include <mutex>
-#include <print>
-#include <unordered_map>
 
-#include "JsonRpc.h"
 #include "LSServer.h"
 #include "LanguageServer.h"
 #include "LanguageServerContext.h"
-#include "LanguageServerProcedures.h"
-#include "c4/yml/tag.hpp"
+#include "LanguageServerMethods.h"
+#include "Metaprogramming.h"
 
 namespace vanadium {
 namespace ls {
 
 constexpr std::size_t kServerBacklog = 2;
 
-namespace {
-const std::unordered_map<std::string_view, VanadiumLsServer::HandlerFn> kMessageHandlers{
-    {"initialize", procedures::initialize},
-    {"shutdown", procedures::shutdown},
-    {"exit", procedures::exit},
-    {"textDocument/didOpen", procedures::textDocument::didOpen},
-    {"textDocument/didChange", procedures::textDocument::didChange},
-    {"textDocument/diagnostic", procedures::textDocument::diagnostic},
-    {"textDocument/codeAction", procedures::textDocument::codeAction},
-};
+using ServerMethods = mp::Typelist<methods::initialize,   //
+                                   methods::initialized,  //
+                                   methods::shutdown,     //
+                                   methods::exit,         //
+                                   //
+                                   methods::textDocument::didOpen,     //
+                                   methods::textDocument::didChange,   //
+                                   methods::textDocument::diagnostic,  //
+                                   //
+                                   methods::workspace::diagnostic  //
+                                                                   //  methods::textDocument::codeAction   //
+                                   >;                              //
 
-void HandleMessage(VanadiumLsContext& ctx, lserver::PooledMessageToken&& token) {
-  jsonrpc::Notification notification(token->tree.rootref());
+template <class... Methods>
+using JsonRpcServer = glz::rpc::server<typename Methods::RpcMethod...>;
 
-  auto it = kMessageHandlers.find(notification.method());
-  if (it == kMessageHandlers.end()) {
-    // TODO: log
-    return;
-  }
-
-  static std::mutex m;
-  std::lock_guard l(m);  // TODO: PoC
-  std::println(stderr, "PROCEED {}", std::string(notification.method()));
-  it->second(ctx, std::move(token));
-  std::println(stderr, "COMPLETE {}", std::string(notification.method()));
-}
-}  // namespace
+template <typename Methods>
+using VanadiumRpcServer = typename mp::Apply<JsonRpcServer, Methods>::type;
 
 void Serve(lserver::Transport& transport, std::size_t concurrency, std::size_t jobs) {
-  VanadiumLsServer server(transport, HandleMessage, concurrency, kServerBacklog);
+  VanadiumRpcServer<ServerMethods> rpc_server;
 
-  server.GetContext()->task_arena.initialize(jobs);
+  const auto handle_message = [&rpc_server](VanadiumLsContext& ctx, lserver::PooledMessageToken&& token) {
+    static std::mutex m;
+    std::lock_guard l(m);  // TODO: PoC
+
+    std::fprintf(stderr, "\n\n\n***********\nIN: ---\n%s\n---\n", token->buf.c_str());
+
+    auto resstr = rpc_server.call(token->buf);
+    std::fprintf(stderr, "OUT: ---\n%s\n---\n", resstr.c_str());
+
+    if (resstr.empty()) {
+      return;
+    }
+
+    auto res_token = ctx.AcquireToken();
+    res_token->buf = std::move(resstr);
+    ctx.Send(std::move(res_token));
+  };
+
+  VanadiumLsServer server(transport, handle_message, concurrency, kServerBacklog);
+  auto& ctx = server.GetContext();
+
+  {
+    ServerMethods::Apply([&]<typename P>() {
+      rpc_server.on<P::kMethodName>([&](const auto& params) -> glz::expected<typename P::TResult, glz::rpc::error> {
+        if constexpr (std::is_same_v<typename P::TResult, std::nullptr_t>) {
+          P{}(ctx, params);
+          return std::nullptr_t{};
+        } else {
+          return P{}(ctx, params);
+        }
+      });
+    });
+  }
+
+  ctx->task_arena.initialize(jobs);
 
   server.Listen();
 }

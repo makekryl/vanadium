@@ -55,6 +55,7 @@ class SourceCodeBuilder:
 class TypeEntry:
   buf: SourceCodeBuilder
   dependencies: list[str] = []
+  appendix: SourceCodeBuilder | None = None
 
 
 TypesRegistry = dict[str, TypeEntry]

@@ -1,0 +1,21 @@
+#pragma once
+
+namespace mp {
+
+template <typename... Ts>
+struct Typelist {
+  template <typename Fn>
+  static void Apply(Fn f) {
+    (f.template operator()<Ts>(), ...);
+  }
+};
+
+template <template <typename...> class Target, typename TList>
+struct Apply;
+
+template <template <typename...> class Target, typename... Ts>
+struct Apply<Target, Typelist<Ts...>> {
+  using type = Target<Ts...>;
+};
+
+}  // namespace mp
