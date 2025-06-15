@@ -26,42 +26,39 @@ struct Notification : Method<Name, Params, Result> {
 
 }  // namespace rpc
 
-#define DECL_METHOD_0(TYPE, PARAMS, RESULT, NAME) using NAME = rpc::TYPE<#NAME, PARAMS, RESULT>
-#define DECL_METHOD_1(TYPE, PARAMS, RESULT, W0, NAME)    \
+#define DECL_METHOD_0(NAME, TYPE, PARAMS, RESULT) using NAME = rpc::TYPE<#NAME, PARAMS, RESULT>
+#define DECL_METHOD_1(W0, NAME, TYPE, PARAMS, RESULT)    \
   namespace W0 {                                         \
   using NAME = rpc::TYPE<#W0 "/" #NAME, PARAMS, RESULT>; \
   }
-#define DECL_METHOD_2(TYPE, PARAMS, RESULT, W0, W1, NAME)        \
+#define DECL_METHOD_2(W0, W1, NAME, TYPE, PARAMS, RESULT)        \
   namespace W0::W1 {                                             \
   using NAME = rpc::TYPE<#W0 "/" #W1 "/" #NAME, PARAMS, RESULT>; \
   }
 
-#define DECL_REQUEST_0(PARAMS, RESULT, NAME) DECL_METHOD_0(Request, PARAMS, RESULT, NAME)
-#define DECL_REQUEST_1(PARAMS, RESULT, W0, NAME) DECL_METHOD_1(Request, PARAMS, RESULT, W0, NAME)
-#define DECL_REQUEST_2(PARAMS, RESULT, W0, W1, NAME) DECL_METHOD_2(Request, PARAMS, RESULT, W0, W1, NAME)
+#define DECL_REQUEST_0(NAME, PARAMS, RESULT) DECL_METHOD_0(NAME, Request, PARAMS, RESULT)
+#define DECL_REQUEST_1(W0, NAME, PARAMS, RESULT) DECL_METHOD_1(W0, NAME, Request, PARAMS, RESULT)
+#define DECL_REQUEST_2(W0, W1, NAME, PARAMS, RESULT) DECL_METHOD_2(W0, W1, NAME, Request, PARAMS, RESULT)
 
-#define DECL_NOTIFIC_0(PARAMS, NAME) DECL_METHOD_0(Notification, PARAMS, std::nullptr_t, NAME)
-#define DECL_NOTIFIC_1(PARAMS, W0, NAME) DECL_METHOD_1(Notification, PARAMS, std::nullptr_t, W0, NAME)
-#define DECL_NOTIFIC_2(PARAMS, W0, W1, NAME) DECL_METHOD_2(Notification, PARAMS, std::nullptr_t, W0, W1, NAME)
+#define DECL_NOTIFIC_0(NAME, PARAMS) DECL_METHOD_0(NAME, Notification, PARAMS, std::nullptr_t)
+#define DECL_NOTIFIC_1(W0, NAME, PARAMS) DECL_METHOD_1(W0, NAME, Notification, PARAMS, std::nullptr_t)
+#define DECL_NOTIFIC_2(W0, W1, NAME, PARAMS) DECL_METHOD_2(W0, W1, NAME, Notification, PARAMS, std::nullptr_t)
 
 // NOLINTBEGIN(readability-identifier-naming)
 
 namespace methods {
 
-DECL_REQUEST_0(lsp::InitializeParams, lsp::InitializeResult, initialize);
-DECL_NOTIFIC_0(rpc::Empty, initialized);
-DECL_REQUEST_0(rpc::Empty, std::nullptr_t, shutdown);
-DECL_NOTIFIC_0(rpc::Empty, exit);
+DECL_REQUEST_0(initialize, lsp::InitializeParams, lsp::InitializeResult);
+DECL_NOTIFIC_0(initialized, rpc::Empty);
+DECL_REQUEST_0(shutdown, rpc::Empty, std::nullptr_t);
+DECL_NOTIFIC_0(exit, rpc::Empty);
 
 // textDocument
-DECL_NOTIFIC_1(lsp::DidOpenTextDocumentParams, textDocument, didOpen);
-DECL_NOTIFIC_1(lsp::DidChangeTextDocumentParams, textDocument, didChange);
-DECL_REQUEST_1(lsp::DocumentDiagnosticParams, lsp::DocumentDiagnosticReport, textDocument, diagnostic);
-DECL_REQUEST_1(lsp::CodeActionParams, int, textDocument,
-               codeAction);  // std::variant<lsp::Command, std::vector<lsp::CodeAction>, std::nullptr_t>
-
-// workspace
-DECL_REQUEST_1(lsp::WorkspaceDiagnosticParams, lsp::WorkspaceDiagnosticReport, workspace, diagnostic);
+DECL_NOTIFIC_1(textDocument, didOpen, lsp::DidOpenTextDocumentParams);
+DECL_NOTIFIC_1(textDocument, didChange, lsp::DidChangeTextDocumentParams);
+DECL_REQUEST_1(textDocument, diagnostic, lsp::DocumentDiagnosticParams, lsp::DocumentDiagnosticReport);
+DECL_REQUEST_1(textDocument, codeAction, lsp::CodeActionParams,
+               int);  // std::variant<lsp::Command, std::vector<lsp::CodeAction>, std::nullptr_t>
 
 }  // namespace methods
 
