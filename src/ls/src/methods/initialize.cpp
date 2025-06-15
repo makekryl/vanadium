@@ -11,10 +11,9 @@ rpc::ExpectedResult<lsp::InitializeResult> methods::initialize::operator()(Vanad
               .textDocumentSync = lsp::TextDocumentSyncKind::kFull,
               // .codeActionProvider = true,
               .diagnosticProvider =
-                  lsp::DiagnosticRegistrationOptions{
-                      // .identifier = "vanadium",
+                  lsp::DiagnosticOptions{
+                      .identifier = "vanadium",
                       .interFileDependencies = true,
-                      .workspaceDiagnostics = true,
                   },
           },
       .serverInfo =

@@ -4,6 +4,7 @@
 #include <glaze/ext/jsonrpc.hpp>
 #include <glaze/util/expected.hpp>
 
+#include "LSMethod.h"
 #include "LSProtocol.h"
 #include "LanguageServerContext.h"
 
@@ -11,17 +12,7 @@ namespace vanadium::ls {
 
 namespace rpc {
 
-template <typename T>
-using ExpectedResult = glz::expected<T, glz::rpc::error>;
-
-template <glz::string_literal Name, typename Params, typename Result>
-struct Method {
-  using RpcMethod = glz::rpc::method<Name, Params, Result>;
-
-  static constexpr auto kMethodName = Name;
-  using TParams = Params;
-  using TResult = Result;
-};
+using namespace lserver::rpc;
 
 template <glz::string_literal Name, typename Params, typename Result>
 struct Request : Method<Name, Params, Result> {
@@ -32,8 +23,6 @@ template <glz::string_literal Name, typename Params, typename Result>
 struct Notification : Method<Name, Params, Result> {
   void operator()(VanadiumLsContext&, const Params&);
 };
-
-struct Empty {};
 
 }  // namespace rpc
 

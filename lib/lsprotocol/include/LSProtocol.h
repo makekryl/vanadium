@@ -7799,3 +7799,6 @@ struct glz::meta<lsp::TokenFormat> {
 
 
 // NOLINTEND(readability-identifier-naming)
+
+#include "LSProtocolAdjustments.h"
+

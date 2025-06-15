@@ -4,7 +4,7 @@
 #include <glaze/util/string_literal.hpp>
 #include <mutex>
 
-#include "LSServer.h"
+#include "LSConnection.h"
 #include "LanguageServer.h"
 #include "LanguageServerContext.h"
 #include "LanguageServerMethods.h"
@@ -41,10 +41,9 @@ void Serve(lserver::Transport& transport, std::size_t concurrency, std::size_t j
     static std::mutex m;
     std::lock_guard l(m);  // TODO: PoC
 
-    std::fprintf(stderr, "\n\n\n***********\nIN: ---\n%s\n---\n", token->buf.c_str());
+    std::println(stderr, "PROCEED: {}", token->buf.substr(0, 128));
 
     auto resstr = rpc_server.call(token->buf);
-    std::fprintf(stderr, "OUT: ---\n%s\n---\n", resstr.c_str());
 
     if (resstr.empty()) {
       return;
@@ -55,8 +54,8 @@ void Serve(lserver::Transport& transport, std::size_t concurrency, std::size_t j
     ctx.Send(std::move(res_token));
   };
 
-  VanadiumLsServer server(transport, handle_message, concurrency, kServerBacklog);
-  auto& ctx = server.GetContext();
+  VanadiumLsConnection connection(handle_message, transport, concurrency, kServerBacklog);
+  auto& ctx = connection.GetContext();
 
   {
     ServerMethods::Apply([&]<typename P>() {
@@ -73,7 +72,7 @@ void Serve(lserver::Transport& transport, std::size_t concurrency, std::size_t j
 
   ctx->task_arena.initialize(jobs);
 
-  server.Listen();
+  connection.Listen();
 }
 
 }  // namespace ls

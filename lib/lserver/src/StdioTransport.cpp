@@ -1,5 +1,6 @@
 #include <cstdio>
 #include <iostream>
+#include <print>
 #include <span>
 #include <string_view>
 
@@ -16,10 +17,7 @@ void StdioTransport::ReadLine(std::span<char> chunk) {
 }
 
 void StdioTransport::Write(std::string_view buf) {
-  {
-    static FILE* f = std::fopen("lsplog.txt", "w");
-    std::fputs(buf.data(), f);
-  }
+  std::println(stderr, "WRITE({})", buf);
   std::fputs(buf.data(), stdout);  // TODO: check null-termination guarantees from our side
 }
 

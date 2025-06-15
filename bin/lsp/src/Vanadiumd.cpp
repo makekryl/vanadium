@@ -20,7 +20,9 @@ int main() {
   // WaitDebugger();
 
   std::signal(SIGABRT, [](int signum) {
+    std::cerr << "STACKTRACE:" << std::endl;
     std::cerr << std::stacktrace::current();
+    std::cerr.flush();
     std::exit(signum);
   });
 

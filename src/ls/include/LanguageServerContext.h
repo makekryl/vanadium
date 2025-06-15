@@ -2,9 +2,7 @@
 
 #include <tbb/task_arena.h>
 
-#include <cstddef>
-
-#include "LSServer.h"
+#include "LSConnection.h"
 #include "Program.h"
 #include "Project.h"
 
@@ -17,7 +15,7 @@ struct VanadiumLsState {
   core::Program program;
 };
 
-using VanadiumLsContext = lserver::ServerContext<VanadiumLsState>;
-using VanadiumLsServer = lserver::Server<VanadiumLsState>;
+using VanadiumLsContext = lserver::ConnectionContext<VanadiumLsState>;
+using VanadiumLsConnection = lserver::Connection<VanadiumLsState>;
 
 }  // namespace vanadium::ls
