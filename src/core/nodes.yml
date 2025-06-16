@@ -129,7 +129,7 @@ LanguageSpec:
   list: Token[]
 ModuleDef:
   visibility: Token*?
-  def: Node*
+  def: Node*?
 WithSpec:
   list: WithStmt*[]
 WithStmt:

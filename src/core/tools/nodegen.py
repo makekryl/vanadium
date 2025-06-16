@@ -171,7 +171,10 @@ def generate_node_inspecting_code(
         buf.write("}")
     else:
       if field.optional or not field.repeated:
-        emit_inspect(f"std::addressof(*{variable})")
+        buf.write(f"if ({variable}.has_value()) {{")
+        with buf.indented():
+          emit_inspect(f"std::addressof(*{variable})")
+        buf.write("}")
       else:
         emit_inspect(variable)
 

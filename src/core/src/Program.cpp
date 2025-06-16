@@ -56,7 +56,7 @@ void Program::UpdateFile(const std::string& path, const FileReadFn& read) {
     DetachFile(sf);
     sf.module = std::nullopt;
     sf.semantic_errors.clear();
-    // sf.arena.Reset();
+    sf.arena.Reset();
   }
 
   sf.ast = ast::Parse(sf.arena, read(path, sf.arena));

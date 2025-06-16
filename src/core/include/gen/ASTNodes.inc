@@ -11,10 +11,12 @@ struct ModuleDef : Node {
   ModuleDef() : Node(NodeKind::ModuleDef) {}
 
   Token* visibility{nullptr};
-  Node* def;
+  Node* def{nullptr};
 
   void Accept(const NodeInspector& inspector) const {
-    Inspect(def, inspector);
+    if (def != nullptr) {
+      Inspect(def, inspector);
+    }
   }
 };
 
@@ -408,7 +410,9 @@ struct Declarator : Node {
   Expr* value{nullptr};
 
   void Accept(const NodeInspector& inspector) const {
-    Inspect(std::addressof(*name), inspector);
+    if (name.has_value()) {
+      Inspect(std::addressof(*name), inspector);
+    }
     for (const auto* n : arraydef) {
       if (n != nullptr) {
         Inspect(n, inspector);
@@ -474,7 +478,9 @@ struct FormalPar : Node {
       Inspect(restriction, inspector);
     }
     Inspect(type, inspector);
-    Inspect(std::addressof(*name), inspector);
+    if (name.has_value()) {
+      Inspect(std::addressof(*name), inspector);
+    }
     for (const auto* n : arraydef) {
       if (n != nullptr) {
         Inspect(n, inspector);
@@ -734,7 +740,9 @@ struct Module : Node {
   WithSpec* with{nullptr};
 
   void Accept(const NodeInspector& inspector) const {
-    Inspect(std::addressof(*name), inspector);
+    if (name.has_value()) {
+      Inspect(std::addressof(*name), inspector);
+    }
     if (language != nullptr) {
       Inspect(language, inspector);
     }
@@ -780,7 +788,9 @@ struct ImportDecl : Decl {
   WithSpec* with{nullptr};
 
   void Accept(const NodeInspector& inspector) const {
-    Inspect(std::addressof(*module), inspector);
+    if (module.has_value()) {
+      Inspect(std::addressof(*module), inspector);
+    }
     if (language != nullptr) {
       Inspect(language, inspector);
     }
@@ -801,7 +811,9 @@ struct GroupDecl : Decl {
   WithSpec* with{nullptr};
 
   void Accept(const NodeInspector& inspector) const {
-    Inspect(std::addressof(*name), inspector);
+    if (name.has_value()) {
+      Inspect(std::addressof(*name), inspector);
+    }
     for (const auto* n : defs) {
       Inspect(n, inspector);
     }
@@ -818,7 +830,9 @@ struct FriendDecl : Decl {
   WithSpec* with{nullptr};
 
   void Accept(const NodeInspector& inspector) const {
-    Inspect(std::addressof(*module), inspector);
+    if (module.has_value()) {
+      Inspect(std::addressof(*module), inspector);
+    }
     if (with != nullptr) {
       Inspect(with, inspector);
     }
@@ -838,7 +852,9 @@ struct ClassTypeDecl : Decl {
   WithSpec* with{nullptr};
 
   void Accept(const NodeInspector& inspector) const {
-    Inspect(std::addressof(*name), inspector);
+    if (name.has_value()) {
+      Inspect(std::addressof(*name), inspector);
+    }
     for (const auto* n : extends) {
       if (n != nullptr) {
         Inspect(n, inspector);
@@ -890,7 +906,9 @@ struct Field : Node {
 
   void Accept(const NodeInspector& inspector) const {
     Inspect(type, inspector);
-    Inspect(std::addressof(*name), inspector);
+    if (name.has_value()) {
+      Inspect(std::addressof(*name), inspector);
+    }
     for (const auto* n : arraydef) {
       if (n != nullptr) {
         Inspect(n, inspector);
@@ -949,7 +967,9 @@ struct TemplateDecl : Decl {
       Inspect(restriction, inspector);
     }
     Inspect(type, inspector);
-    Inspect(std::addressof(*name), inspector);
+    if (name.has_value()) {
+      Inspect(std::addressof(*name), inspector);
+    }
     if (pars != nullptr) {
       Inspect(pars, inspector);
     }
@@ -983,7 +1003,9 @@ struct FuncDecl : Decl {
   WithSpec* with{nullptr};
 
   void Accept(const NodeInspector& inspector) const {
-    Inspect(std::addressof(*name), inspector);
+    if (name.has_value()) {
+      Inspect(std::addressof(*name), inspector);
+    }
     if (pars != nullptr) {
       Inspect(pars, inspector);
     }
@@ -1033,7 +1055,9 @@ struct SignatureDecl : Decl {
   WithSpec* with{nullptr};
 
   void Accept(const NodeInspector& inspector) const {
-    Inspect(std::addressof(*name), inspector);
+    if (name.has_value()) {
+      Inspect(std::addressof(*name), inspector);
+    }
     if (pars != nullptr) {
       Inspect(pars, inspector);
     }
@@ -1060,7 +1084,9 @@ struct MapTypeDecl : Decl {
 
   void Accept(const NodeInspector& inspector) const {
     Inspect(spec, inspector);
-    Inspect(std::addressof(*name), inspector);
+    if (name.has_value()) {
+      Inspect(std::addressof(*name), inspector);
+    }
     if (pars != nullptr) {
       Inspect(pars, inspector);
     }
@@ -1079,7 +1105,9 @@ struct EnumTypeDecl : Decl {
   WithSpec* with{nullptr};
 
   void Accept(const NodeInspector& inspector) const {
-    Inspect(std::addressof(*name), inspector);
+    if (name.has_value()) {
+      Inspect(std::addressof(*name), inspector);
+    }
     if (pars != nullptr) {
       Inspect(pars, inspector);
     }
@@ -1105,7 +1133,9 @@ struct BehaviourTypeDecl : Decl {
   WithSpec* with{nullptr};
 
   void Accept(const NodeInspector& inspector) const {
-    Inspect(std::addressof(*name), inspector);
+    if (name.has_value()) {
+      Inspect(std::addressof(*name), inspector);
+    }
     if (pars != nullptr) {
       Inspect(pars, inspector);
     }
@@ -1135,7 +1165,9 @@ struct PortTypeDecl : Decl {
   WithSpec* with{nullptr};
 
   void Accept(const NodeInspector& inspector) const {
-    Inspect(std::addressof(*name), inspector);
+    if (name.has_value()) {
+      Inspect(std::addressof(*name), inspector);
+    }
     if (pars != nullptr) {
       Inspect(pars, inspector);
     }
@@ -1169,7 +1201,9 @@ struct ComponentTypeDecl : Decl {
   WithSpec* with{nullptr};
 
   void Accept(const NodeInspector& inspector) const {
-    Inspect(std::addressof(*name), inspector);
+    if (name.has_value()) {
+      Inspect(std::addressof(*name), inspector);
+    }
     if (pars != nullptr) {
       Inspect(pars, inspector);
     }
@@ -1238,7 +1272,9 @@ struct StructTypeDecl : Decl {
   WithSpec* with{nullptr};
 
   void Accept(const NodeInspector& inspector) const {
-    Inspect(std::addressof(*name), inspector);
+    if (name.has_value()) {
+      Inspect(std::addressof(*name), inspector);
+    }
     if (pars != nullptr) {
       Inspect(pars, inspector);
     }
