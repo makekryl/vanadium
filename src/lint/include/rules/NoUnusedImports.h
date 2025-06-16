@@ -28,7 +28,7 @@ class NoUnusedImports final : public Rule {
 
     std::unordered_set<std::string_view> unused_imports;
     std::unordered_set<std::string_view> unused_transit_imports;
-    for (const auto& [import, desc] : ctx.GetFile().module.imports) {
+    for (const auto& [import, desc] : ctx.GetFile().module->imports) {
       if (desc.is_public) {
         continue;
       }
@@ -39,20 +39,20 @@ class NoUnusedImports final : public Rule {
       unused_imports.insert(import);
     }
 
-    for (const auto& dependency : ctx.GetFile().module.dependencies | std::ranges::views::keys) {
+    for (const auto& dependency : ctx.GetFile().module->dependencies | std::ranges::views::keys) {
       unused_imports.erase(dependency->name);
     }
     for (const auto& import : unused_imports) {
       const auto* module = ctx.GetProgram().GetModule(import);
       if (module == nullptr || !module->sf->ast.errors.empty() ||
-          ctx.GetFile().module.required_imports.contains(module->name)) {
+          ctx.GetFile().module->required_imports.contains(module->name)) {
         continue;
       }
-      const auto* decl = FindImport(ctx.GetFile().module, import, false).declaration;
+      const auto* decl = FindImport(*ctx.GetFile().module, import, false).declaration;
       report_import(decl, std::format("import '{}' is not used directly", import));
     }
 
-    for (const auto& used_transit : ctx.GetFile().module.transitive_dependency_providers) {
+    for (const auto& used_transit : ctx.GetFile().module->transitive_dependency_providers) {
       unused_transit_imports.erase(used_transit->name);
     }
     for (const auto& import : unused_transit_imports) {
@@ -60,7 +60,7 @@ class NoUnusedImports final : public Rule {
       if (module == nullptr || !module->sf->ast.errors.empty()) {
         continue;
       }
-      const auto* decl = FindImport(ctx.GetFile().module, import, true).declaration;
+      const auto* decl = FindImport(*ctx.GetFile().module, import, true).declaration;
       report_import(decl, std::format("import '{}' is not used recursively", import));
     }
   };
