@@ -61,7 +61,7 @@ class LineMapping {
     };
   }
 
-  [[nodiscard]] pos_t GetPosition(Location loc) {
+  [[nodiscard]] pos_t GetPosition(Location loc) const {
     return line_starts_[loc.line] + loc.column;
   }
 

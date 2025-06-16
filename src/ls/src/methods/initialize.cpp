@@ -40,6 +40,7 @@ rpc::ExpectedResult<lsp::InitializeResult> methods::initialize::operator()(Vanad
       .capabilities =
           lsp::ServerCapabilities{
               .textDocumentSync = lsp::TextDocumentSyncKind::kFull,
+              .definitionProvider = true,
               // .codeActionProvider = true,
               .diagnosticProvider =
                   lsp::DiagnosticOptions{

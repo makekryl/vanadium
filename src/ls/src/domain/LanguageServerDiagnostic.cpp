@@ -1,16 +1,69 @@
 #include "domain/LanguageServerDiagnostic.h"
 
+#include <format>
 #include <print>
 #include <vector>
 
 #include "LSProtocol.h"
+#include "LanguageServerContext.h"
+#include "LanguageServerConv.h"
+#include "Program.h"
 
 namespace vanadium::ls::domain {
-std::vector<lsp::Diagnostic> CollectDiagnostics(const core::SourceFile& file) {
-  std::vector<lsp::Diagnostic> result;
+
+namespace {
+void CollectModuleDiagnostics(VanadiumLsContext& ctx, const core::SourceFile& file,
+                              std::vector<lsp::Diagnostic>& diags) {
+  assert(file.module.has_value());
+  const auto& module = *file.module;
+
+  for (const auto& [import_name, import] : module.imports) {
+    if (ctx->program.GetModule(import_name)) {
+      continue;
+    }
+    const auto& message = *ctx->GetTemporaryArena().Alloc<std::string>(
+        std::format("imported module '{}' is not accessible", import_name));
+    diags.emplace_back(lsp::Diagnostic{
+        .range = conv::ToLSPRange(import.declaration->nrange, file.ast),
+        .severity = lsp::DiagnosticSeverity::kError,
+        .source = "vanadium",
+        .message = message,
+    });
+  }
+
+  for (const auto& ident : module.unresolved) {
+    // TODO: check fmt lib custom allocators or precalcuate size and fill string buffer manually, preferable via helper
+    const auto& message = *ctx->GetTemporaryArena().Alloc<std::string>(
+        std::format("use of unknown symbol '{}'", ident->On(file.ast.src)));
+
+    diags.emplace_back(lsp::Diagnostic{
+        .range = conv::ToLSPRange(ident->nrange, file.ast),
+        .severity = lsp::DiagnosticSeverity::kError,
+        .source = "vanadium",
+        .message = message,
+    });
+    // item.data. // TODO
+  }
+
+  const auto& problems = *ctx->GetTemporaryArena().Alloc<lint::ProblemSet>(ctx->linter.Lint(ctx->program, file));
+  for (const auto& problem : problems) {
+    diags.emplace_back(lsp::Diagnostic{
+        .range = conv::ToLSPRange(problem.range, file.ast),
+        .severity = lsp::DiagnosticSeverity::kWarning,  // TODO
+        .code = problem.reporter,
+        .source = "vanadium-tidy",
+        .message = problem.description,
+        .tags = std::vector<lsp::DiagnosticTag>{lsp::DiagnosticTag::kUnnecessary},  // TODO
+    });
+  }
+}
+}  // namespace
+
+std::vector<lsp::Diagnostic> CollectDiagnostics(VanadiumLsContext& ctx, const core::SourceFile& file) {
+  std::vector<lsp::Diagnostic> diags;
 
   for (const auto& err : file.ast.errors) {
-    auto& item = result.emplace_back();
+    auto& item = diags.emplace_back();
     item.source = "vanadium";
     item.severity = lsp::DiagnosticSeverity::kError;
     item.message = err.description;
@@ -27,29 +80,9 @@ std::vector<lsp::Diagnostic> CollectDiagnostics(const core::SourceFile& file) {
     };
   }
   if (file.module.has_value()) {
-    std::println(stderr, "collect diag for {}, unresolved.size = {}", file.path, file.module->unresolved.size());
-    for (const auto& err : file.module->unresolved) {
-      auto& item = result.emplace_back();
-      item.source = "vanadium";
-      item.severity = lsp::DiagnosticSeverity::kError;
-      item.message = err->On(file.ast.src);
-
-      auto loc_begin = file.ast.lines.Translate(err->nrange.begin);
-      item.range.start = {
-          .line = loc_begin.line,
-          .character = loc_begin.column,
-      };
-      auto loc_end = file.ast.lines.Translate(err->nrange.end);
-      item.range.end = {
-          .line = loc_end.line,
-          .character = loc_end.column,
-      };
-
-      item.data = lsp::LSPAny{};
-      // item.data. // TODO
-    }
+    CollectModuleDiagnostics(ctx, file, diags);
   }
 
-  return result;
+  return diags;
 }
 }  // namespace vanadium::ls::domain

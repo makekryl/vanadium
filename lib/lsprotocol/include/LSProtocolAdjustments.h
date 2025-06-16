@@ -4,6 +4,10 @@
 
 // NOLINTBEGIN(readability-identifier-naming)
 
+namespace lsp {
+using DefinitionResult = std::variant<lsp::Location, std::vector<lsp::Location>, std::nullptr_t>;
+}
+
 namespace glz {
 template <>
 struct from<JSON, lsp::TextDocumentContentChangeEvent> {

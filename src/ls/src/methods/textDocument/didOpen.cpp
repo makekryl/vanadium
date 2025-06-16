@@ -27,9 +27,9 @@ void methods::textDocument::didOpen::operator()(VanadiumLsContext& ctx, const ls
     modify.update(path, read_file);
   });
 
-  // ctx.Notify<"textDocument/publishDiagnostics">(lsp::PublishDiagnosticsParams{
-  //     .uri = params.textDocument.uri,
-  //     .diagnostics = domain::CollectDiagnostics(*ctx->program.GetFile(path)),
-  // });
+  ctx.Notify<"textDocument/publishDiagnostics">(lsp::PublishDiagnosticsParams{
+      .uri = params.textDocument.uri,
+      .diagnostics = domain::CollectDiagnostics(ctx, *ctx->program.GetFile(path)),
+  });
 }
 }  // namespace vanadium::ls

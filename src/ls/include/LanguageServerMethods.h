@@ -57,6 +57,7 @@ DECL_NOTIFIC_0(exit, rpc::Empty);
 DECL_NOTIFIC_1(textDocument, didOpen, lsp::DidOpenTextDocumentParams);
 DECL_NOTIFIC_1(textDocument, didChange, lsp::DidChangeTextDocumentParams);
 DECL_REQUEST_1(textDocument, diagnostic, lsp::DocumentDiagnosticParams, lsp::DocumentDiagnosticReport);
+DECL_REQUEST_1(textDocument, definition, lsp::DefinitionParams, lsp::DefinitionResult);
 DECL_REQUEST_1(textDocument, codeAction, lsp::CodeActionParams,
                int);  // std::variant<lsp::Command, std::vector<lsp::CodeAction>, std::nullptr_t>
 

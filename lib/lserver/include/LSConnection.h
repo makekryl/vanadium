@@ -42,7 +42,14 @@ class ConnectionContext {
   Payload& operator&() {
     return data_;
   }
+  const Payload& operator&() const {
+    return data_;
+  }
+
   Payload* operator->() {
+    return &data_;
+  }
+  const Payload* operator->() const {
     return &data_;
   }
 
