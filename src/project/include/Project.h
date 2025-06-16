@@ -24,6 +24,10 @@ class Project {
 
   [[nodiscard]] std::string_view GetInheritedProperty(std::string_view path) const;
 
+  [[nodiscard]] std::string RelativizePath(const std::filesystem::path& path) const {
+    return std::filesystem::relative(path, path_).string();
+  }
+
   void VisitFiles(const lib::Consumer<std::string>&) const;
 
   [[nodiscard]] const std::filesystem::path& GetPath() {

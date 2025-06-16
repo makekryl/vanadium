@@ -20,6 +20,7 @@ target_link_libraries(vanadium_ls PRIVATE
   vanadium_lib_lserver
   vanadium_core
   vanadium_project
+  vanadium_lint
   glaze::glaze
 )
 

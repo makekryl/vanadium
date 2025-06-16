@@ -17,7 +17,6 @@ void StdioTransport::ReadLine(std::span<char> chunk) {
 }
 
 void StdioTransport::Write(std::string_view buf) {
-  std::println(stderr, "WRITE({})", buf);
   std::fputs(buf.data(), stdout);  // TODO: check null-termination guarantees from our side
 }
 

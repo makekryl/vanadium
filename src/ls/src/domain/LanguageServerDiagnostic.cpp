@@ -1,5 +1,6 @@
 #include "domain/LanguageServerDiagnostic.h"
 
+#include <print>
 #include <vector>
 
 #include "LSProtocol.h"
@@ -26,6 +27,7 @@ std::vector<lsp::Diagnostic> CollectDiagnostics(const core::SourceFile& file) {
     };
   }
   if (file.module.has_value()) {
+    std::println(stderr, "collect diag for {}, unresolved.size = {}", file.path, file.module->unresolved.size());
     for (const auto& err : file.module->unresolved) {
       auto& item = result.emplace_back();
       item.source = "vanadium";
