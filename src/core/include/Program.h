@@ -84,14 +84,16 @@ struct SourceFile {
 
 class Program {
  public:
+  using FileReadFn = lib::FunctionRef<std::string_view(std::string_view, lib::Arena&)>;
+
   Program() = default;
 
  private:
-  void UpdateFile(const std::string& path, lib::FunctionRef<std::string_view(lib::Arena&)> read);
+  void UpdateFile(const std::string& path, const FileReadFn& read);
   void DropFile(const std::string& path);
 
   struct ProgramModifier {
-    lib::Consumer<const std::string&, const std::function<std::string_view(lib::Arena&)>&> update;
+    lib::Consumer<const std::string&, const FileReadFn&> update;
     lib::Consumer<const std::string&> drop;
   };
 

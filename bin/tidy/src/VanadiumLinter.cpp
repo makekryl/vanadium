@@ -6,6 +6,8 @@
 #include <cstdlib>
 #include <filesystem>
 #include <iostream>
+#include <string>
+#include <string_view>
 #include <thread>
 
 #include "Arena.h"
@@ -60,19 +62,20 @@ int main(int argc, char* argv[]) {
   auto project = vanadium::tooling::Project::Load(manifest);
   vanadium::core::Program program;
 
+  const auto read_file = [&](std::string_view path, vanadium::lib::Arena& arena) -> std::string_view {
+    const auto contents = project->GetFS().ReadFile(path, [&](std::size_t size) {
+      return arena.AllocStringBuffer(size).data();
+    });
+    if (!contents) {
+      // TODO
+      std::abort();
+    }
+    return *contents;
+  };
   task_arena.execute([&] {
     program.Commit([&](const auto& modify) {
       project->VisitFiles([&](const std::string& path) {
-        modify.update(path, [&](vanadium::lib::Arena& arena) -> std::string_view {
-          const auto contents = project->GetFS().ReadFile(path, [&](std::size_t size) {
-            return arena.AllocStringBuffer(size).data();
-          });
-          if (!contents) {
-            // TODO
-            std::abort();
-          }
-          return *contents;
-        });
+        modify.update(path, read_file);
       });
     });
   });

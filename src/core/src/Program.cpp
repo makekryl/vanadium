@@ -24,7 +24,7 @@ void Program::Commit(const lib::Consumer<const ProgramModifier&>& modify) {
   tbb::task_group wg;
   modify({
       .update =
-          [&](const std::string& path, const std::function<std::string_view(lib::Arena&)>& read) {
+          [&](const std::string& path, const FileReadFn& read) {
             wg.run([this, path, read] {
               UpdateFile(path, read);
             });
@@ -41,7 +41,7 @@ void Program::Commit(const lib::Consumer<const ProgramModifier&>& modify) {
   Crossbind();
 }
 
-void Program::UpdateFile(const std::string& path, lib::FunctionRef<std::string_view(lib::Arena&)> read) {
+void Program::UpdateFile(const std::string& path, const FileReadFn& read) {
   decltype(files_)::iterator it;
   bool inserted;
   {
@@ -59,7 +59,7 @@ void Program::UpdateFile(const std::string& path, lib::FunctionRef<std::string_v
     // sf.arena.Reset();
   }
 
-  sf.ast = ast::Parse(sf.arena, read(sf.arena));
+  sf.ast = ast::Parse(sf.arena, read(path, sf.arena));
 
   AttachFile(sf);
 }
