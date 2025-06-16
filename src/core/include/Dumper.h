@@ -80,7 +80,7 @@ class Dumper {
   }
 
   void Dump(AST& ast) {
-    Dump("Root", ast.root.nodes);
+    Dump("Root", ast.root->nodes);
   }
 
   Impl impl_;

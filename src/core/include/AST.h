@@ -7,9 +7,15 @@
 #include "ASTTypes.h"
 
 namespace vanadium::core {
+
+struct SourceFile;
+
 namespace ast {
 
-struct RootNode {
+struct RootNode : Node {
+  RootNode() : Node(NodeKind::Root) {}
+
+  SourceFile* file{nullptr};
   std::vector<Node*> nodes;
 
   void Accept(const NodeInspector& inspector) const {
@@ -21,7 +27,7 @@ struct RootNode {
 
 struct AST {
   std::string_view src;
-  RootNode root;
+  RootNode* root;
   LineMapping lines;
   std::vector<SyntaxError> errors;
 

@@ -16,7 +16,7 @@ class Parser {
  public:
   Parser(lib::Arena& arena, std::string_view src);
 
-  RootNode ParseRoot();
+  RootNode* ParseRoot();
   std::vector<SyntaxError>&& GetErrors() noexcept;
   std::vector<pos_t>&& ExtractLineMapping() noexcept;
 
@@ -193,10 +193,10 @@ class Parser {
 
 inline AST Parse(lib::Arena& arena, std::string_view src) {
   parser::Parser parser(arena, src);
-  auto root = parser.ParseRoot();
+  auto* root = parser.ParseRoot();
   return {
       .src = src,
-      .root = std::move(root),
+      .root = root,
       .lines = parser.ExtractLineMapping(),
       .errors = parser.GetErrors(),
   };

@@ -63,7 +63,7 @@ class Binder {
 
   void Bind() {
     scope_ = nullptr;
-    sf_.ast.root.Accept(inspector_);
+    sf_.ast.root->Accept(inspector_);
   }
 
  private:

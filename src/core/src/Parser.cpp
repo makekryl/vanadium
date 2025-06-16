@@ -197,22 +197,22 @@ int PrecedenceOf(TokenKind kind) {
 
 Parser::Parser(lib::Arena& arena, std::string_view src) : scanner_(src), src_(src), arena_(&arena) {}
 
-RootNode Parser::ParseRoot() {
-  RootNode root;
-
-  tok_ = Peek(1).kind;
-  while (tok_ != TokenKind::kEOF) {
-    auto* node = Parse();
-    root.nodes.push_back(node);
-    if (tok_ != TokenKind::kEOF && !kTokTopLevel.contains(tok_)) {
-      EmitError(Peek(1).range, "unexpected token + tok_");
-      break;
+RootNode* Parser::ParseRoot() {
+  return NewNode<RootNode>([&](auto& root) {
+    tok_ = Peek(1).kind;
+    while (tok_ != TokenKind::kEOF) {
+      auto* node = Parse();
+      node->parent = &root;
+      root.nodes.push_back(node);
+      if (tok_ != TokenKind::kEOF && !kTokTopLevel.contains(tok_)) {
+        EmitError(Peek(1).range, "unexpected token + tok_");
+        break;
+      }
+      if (tok_ == TokenKind::COMMA || tok_ == TokenKind::SEMICOLON) {
+        Consume();
+      }
     }
-    if (tok_ == TokenKind::COMMA || tok_ == TokenKind::SEMICOLON) {
-      Consume();
-    }
-  }
-  return root;
+  });
 }
 
 std::vector<SyntaxError>&& Parser::GetErrors() noexcept {

@@ -29,7 +29,7 @@ ProblemSet Linter::Lint(const core::Program& program, const core::SourceFile& sf
 
   Context ctx(program, sf);
 
-  sf.ast.root.Accept([&](const vanadium::core::ast::Node* n) {
+  sf.ast.root->Accept([&](const vanadium::core::ast::Node* n) {
     for (auto* rule : matching_[n->nkind]) {
       rule->Check(ctx, n);
     }
