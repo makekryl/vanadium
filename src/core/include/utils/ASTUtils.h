@@ -1,10 +1,7 @@
 #pragma once
 
-#include <stack>
-
 #include "AST.h"
 #include "ASTNodes.h"
-#include "Program.h"
 
 namespace vanadium::core::ast {
 namespace utils {
@@ -17,15 +14,15 @@ inline SourceFile* SourceFileOf(const Node* n) {
 }
 
 inline const Node* GetNodeAt(pos_t pos, const AST& ast) {
-  std::stack<const Node*> path;
+  const Node* candidate;
   ast.root->Accept([&](const Node* n) {
     if (n->nrange.begin <= pos && n->nrange.end >= pos) {
-      path.emplace(n);
+      candidate = n;
       return true;
     }
     return false;
   });
-  return path.top();
+  return candidate;
 }
 
 inline const Node* TraverseSelectorExpressionStart(const nodes::SelectorExpr* se) {

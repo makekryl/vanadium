@@ -318,6 +318,10 @@ struct Node {
 
   void Accept(const NodeInspector& inspector) const;
 
+  [[nodiscard]] bool Contains(const Node* other) const {
+    return nrange.Contains(other->nrange);
+  }
+
   [[nodiscard]] std::string_view On(std::string_view src) const noexcept {
     return nrange.String(src);
   }

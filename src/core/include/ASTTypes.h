@@ -18,7 +18,11 @@ struct Range {
   pos_t begin;
   pos_t end;
 
-  [[nodiscard]] pos_t Length() const {
+  [[nodiscard]] bool Contains(const Range& other) const noexcept {
+    return begin <= other.begin && other.end <= end;
+  }
+
+  [[nodiscard]] pos_t Length() const noexcept {
     return end - begin;
   }
 
@@ -26,7 +30,7 @@ struct Range {
     return src.substr(begin, end - begin);
   }
 
-  [[nodiscard]] auto operator<=>(const Range&) const = default;
+  [[nodiscard]] auto operator<=>(const Range&) const noexcept = default;
 };
 
 struct Location {
