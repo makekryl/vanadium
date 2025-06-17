@@ -228,6 +228,7 @@ bool Binder::Inspect(const ast::Node* n) {
           const auto* d = stmt->As<ast::nodes::DeclStmt>();
           if (d->decl->nkind == ast::NodeKind::ValueDecl) {
             const auto* vd = d->decl->As<ast::nodes::ValueDecl>();
+            Visit(vd->type);
             for (const auto* declarator : vd->decls) {
               if (declarator->name) {
                 AddSymbol(members, {
