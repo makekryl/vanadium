@@ -97,14 +97,16 @@ void Program::DetachFile(SourceFile& sf) {
     tbb::speculative_spin_mutex::scoped_lock lock(dependency->crossbind_mutex_);
 
     dependency->dependents.erase(&module);
-    for (auto& entry : entries) {
-      auto& vec = entry.injected_to->augmentation;
-      vec.erase(std::ranges::remove(vec, entry.provider).begin(), vec.end());
-    }
   }
 
   for (auto* dependent : module.dependents) {
     tbb::speculative_spin_mutex::scoped_lock lock(dependent->crossbind_mutex_);
+
+    for (const auto& entry : dependent->dependencies[&module]) {
+      auto& vec = entry.injected_to->augmentation;
+      vec.erase(std::ranges::remove(vec, entry.provider).begin(), vec.end());
+    }
+
     dependent->sf->dirty = true;
   }
 
