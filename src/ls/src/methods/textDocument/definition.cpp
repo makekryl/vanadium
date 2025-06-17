@@ -16,7 +16,7 @@ static std::string lsptoreal(std::string_view lsppath) {
 namespace vanadium::ls {
 template <>
 rpc::ExpectedResult<lsp::DefinitionResult> methods::textDocument::definition::operator()(
-    VanadiumLsContext& ctx, const lsp::DefinitionParams& params) {
+    LsContext& ctx, const lsp::DefinitionParams& params) {
   const auto path = ctx->project->RelativizePath(lsptoreal(std::string(params.textDocument.uri)));
   const auto* file = ctx->program.GetFile(path);
 

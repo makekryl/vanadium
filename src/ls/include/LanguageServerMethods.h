@@ -16,12 +16,12 @@ using namespace lserver::rpc;
 
 template <glz::string_literal Name, typename Params, typename Result>
 struct Request : Method<Name, Params, Result> {
-  ExpectedResult<Result> operator()(VanadiumLsContext&, const Params&);
+  ExpectedResult<Result> operator()(LsContext&, const Params&);
 };
 
 template <glz::string_literal Name, typename Params, typename Result>
 struct Notification : Method<Name, Params, Result> {
-  void operator()(VanadiumLsContext&, const Params&);
+  void operator()(LsContext&, const Params&);
 };
 
 }  // namespace rpc

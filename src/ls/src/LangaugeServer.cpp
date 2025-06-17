@@ -40,7 +40,7 @@ using VanadiumRpcServer = typename mp::Apply<JsonRpcServer, Methods>::type;
 void Serve(lserver::Transport& transport, std::size_t concurrency, std::size_t jobs) {
   VanadiumRpcServer<ServerMethods> rpc_server;
 
-  const auto handle_message = [&rpc_server](VanadiumLsContext& ctx, lserver::PooledMessageToken&& token) {
+  const auto handle_message = [&rpc_server](LsContext& ctx, lserver::PooledMessageToken&& token) {
     static std::mutex m;
     std::lock_guard l(m);  // TODO: PoC, add mutexes to Program
 

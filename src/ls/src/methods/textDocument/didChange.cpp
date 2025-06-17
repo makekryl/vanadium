@@ -13,8 +13,7 @@ static std::string lsptoreal(std::string_view lsppath) {
 
 namespace vanadium::ls {
 template <>
-void methods::textDocument::didChange::operator()(VanadiumLsContext& ctx,
-                                                  const lsp::DidChangeTextDocumentParams& params) {
+void methods::textDocument::didChange::operator()(LsContext& ctx, const lsp::DidChangeTextDocumentParams& params) {
   const auto path = ctx->project->RelativizePath(lsptoreal(std::string(params.textDocument.uri)));
 
   const auto read_file = [&](std::string_view, vanadium::lib::Arena& arena) -> std::string_view {

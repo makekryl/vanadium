@@ -6,7 +6,7 @@
 
 namespace vanadium::ls {
 template <>
-rpc::ExpectedResult<lsp::InitializeResult> methods::initialize::operator()(VanadiumLsContext& ctx,
+rpc::ExpectedResult<lsp::InitializeResult> methods::initialize::operator()(LsContext& ctx,
                                                                            const lsp::InitializeParams& params) {
   if (params.workspaceFolders) {
     const auto& folders = *params.workspaceFolders;

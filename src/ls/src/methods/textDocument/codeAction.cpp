@@ -5,7 +5,7 @@
 // #include "c4/yml/node_type.hpp"
 
 // namespace vanadium::ls::procedures::textDocument {
-// void codeAction(VanadiumLsContext& ctx, lserver::PooledMessageToken&& token) {
+// void codeAction(LsContext& ctx, lserver::PooledMessageToken&& token) {
 //   jsonrpc::Request req(token->tree);
 //   auto res = ctx.AcquireToken();
 

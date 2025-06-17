@@ -28,7 +28,7 @@ struct VanadiumLsState {
   tbb::enumerable_thread_specific<lib::Arena> temporary_arena_;
 };
 
-using VanadiumLsContext = lserver::ConnectionContext<VanadiumLsState>;
+using LsContext = lserver::ConnectionContext<VanadiumLsState>;
 using VanadiumLsConnection = lserver::Connection<VanadiumLsState>;
 
 }  // namespace vanadium::ls

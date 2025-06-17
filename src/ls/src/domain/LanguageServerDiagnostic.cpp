@@ -12,8 +12,7 @@
 namespace vanadium::ls::domain {
 
 namespace {
-void CollectModuleDiagnostics(VanadiumLsContext& ctx, const core::SourceFile& file,
-                              std::vector<lsp::Diagnostic>& diags) {
+void CollectModuleDiagnostics(LsContext& ctx, const core::SourceFile& file, std::vector<lsp::Diagnostic>& diags) {
   assert(file.module.has_value());
   const auto& module = *file.module;
 
@@ -59,7 +58,7 @@ void CollectModuleDiagnostics(VanadiumLsContext& ctx, const core::SourceFile& fi
 }
 }  // namespace
 
-std::vector<lsp::Diagnostic> CollectDiagnostics(VanadiumLsContext& ctx, const core::SourceFile& file) {
+std::vector<lsp::Diagnostic> CollectDiagnostics(LsContext& ctx, const core::SourceFile& file) {
   std::vector<lsp::Diagnostic> diags;
 
   for (const auto& err : file.ast.errors) {

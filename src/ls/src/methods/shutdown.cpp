@@ -3,7 +3,7 @@
 
 namespace vanadium::ls {
 template <>
-rpc::ExpectedResult<std::nullptr_t> methods::shutdown::operator()(VanadiumLsContext&, const rpc::Empty&) {
+rpc::ExpectedResult<std::nullptr_t> methods::shutdown::operator()(LsContext&, const rpc::Empty&) {
   return std::nullptr_t{};
 }
 }  // namespace vanadium::ls

@@ -3,5 +3,5 @@
 
 namespace vanadium::ls {
 template <>
-void methods::initialized::operator()(VanadiumLsContext&, const rpc::Empty&) {}
+void methods::initialized::operator()(LsContext&, const rpc::Empty&) {}
 }  // namespace vanadium::ls
