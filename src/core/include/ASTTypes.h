@@ -46,9 +46,9 @@ class LineMapping {
 
   [[nodiscard]] pos_t LineOf(pos_t pos) const {
     const auto it = std::ranges::upper_bound(line_starts_, pos);
-    const auto line = std::max<pos_t>(0, std::distance(line_starts_.begin(), it));
-    if (line == 0) [[unlikely]] {
-      return 0;
+    pos_t line = std::distance(line_starts_.begin(), it);
+    if ((line != 0) && (pos != *it)) [[likely]] {
+      --line;
     }
     return line;
   }
@@ -57,12 +57,12 @@ class LineMapping {
     const pos_t line = LineOf(pos);
     return {
         .line = line,
-        .column = pos - line_starts_[line - 1],
+        .column = pos - StartOf(line),
     };
   }
 
   [[nodiscard]] pos_t GetPosition(Location loc) const {
-    return line_starts_[loc.line] + loc.column;
+    return StartOf(loc.line) + loc.column;
   }
 
  private:

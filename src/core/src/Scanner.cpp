@@ -122,7 +122,7 @@ const std::unordered_map<std::string_view, TokenKind> kKeywordLookup{
     {"with", TokenKind::WITH},
 };
 
-Scanner::Scanner(std::string_view src) : src_(src), pos_(0) {}
+Scanner::Scanner(std::string_view src) : src_(src), pos_(0), lines_({0}) {}
 
 Token Scanner::Scan() {
   ScanWhitespace();
