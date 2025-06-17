@@ -20,8 +20,8 @@ void CollectModuleDiagnostics(LsContext& ctx, const core::SourceFile& file, std:
     if (ctx->program.GetModule(import_name)) {
       continue;
     }
-    const auto& message = *ctx->GetTemporaryArena().Alloc<std::string>(
-        std::format("imported module '{}' is not accessible", import_name));
+    const auto& message =
+        *ctx->GetTemporaryArena().Alloc<std::string>(std::format("module '{}' not found", import_name));
     diags.emplace_back(lsp::Diagnostic{
         .range = conv::ToLSPRange(import.declaration->nrange, file.ast),
         .severity = lsp::DiagnosticSeverity::kError,
