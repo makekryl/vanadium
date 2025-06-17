@@ -1,6 +1,7 @@
 #include <glaze/ext/jsonrpc.hpp>
 #include <glaze/json/write.hpp>
 
+#include "ASTNodes.h"
 #include "ASTTypes.h"
 #include "LSProtocol.h"
 #include "LanguageServerContext.h"
@@ -22,13 +23,16 @@ rpc::ExpectedResult<lsp::DefinitionResult> methods::textDocument::definition::op
   const auto path = ctx->project->RelativizePath(lsptoreal(std::string(params.textDocument.uri)));
   const auto* file = ctx->program.GetFile(path);
 
-  std::println(stderr, "getpos(line={}, col={})", params.position.line, params.position.character);
-
   const auto* n = core::ast::utils::GetNodeAt(file->ast.lines.GetPosition(core::ast::Location{
                                                   .line = params.position.line,
                                                   .column = params.position.character,
                                               }),
                                               file->ast);
+
+  if (n->nkind != core::ast::NodeKind::Ident) {
+    return nullptr;
+  }
+
   const core::semantic::Scope* scope = core::semantic::utils::FindScope(file->module->scope, n);
 
   if (const auto* sym = scope->Resolve(n->On(file->ast.src)); sym) {
