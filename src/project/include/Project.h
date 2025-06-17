@@ -30,10 +30,10 @@ class Project {
 
   void VisitFiles(const lib::Consumer<std::string>&) const;
 
-  [[nodiscard]] const std::filesystem::path& GetPath() {
+  [[nodiscard]] const std::filesystem::path& GetPath() const noexcept {
     return path_;
   }
-  [[nodiscard]] const core::VirtualFS& GetFS() const {
+  [[nodiscard]] const core::VirtualFS& GetFS() const noexcept {
     return vfs_;
   }
 

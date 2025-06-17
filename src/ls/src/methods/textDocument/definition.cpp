@@ -11,16 +11,11 @@
 #include "utils/ASTUtils.h"
 #include "utils/SemanticUtils.h"
 
-static std::string lsptoreal(std::string_view lsppath) {
-  constexpr std::size_t prefixsize = std::string_view{"file://"}.size();
-  return std::string(lsppath.substr(prefixsize, lsppath.size() - prefixsize));
-}
-
 namespace vanadium::ls {
 template <>
 rpc::ExpectedResult<lsp::DefinitionResult> methods::textDocument::definition::operator()(
     LsContext& ctx, const lsp::DefinitionParams& params) {
-  const auto path = ctx->project->RelativizePath(lsptoreal(std::string(params.textDocument.uri)));
+  const auto path = ctx->FileUriToPath(params.textDocument.uri);
   const auto* file = ctx->program.GetFile(path);
 
   const auto* n = core::ast::utils::GetNodeAt(file->ast, file->ast.lines.GetPosition(core::ast::Location{
@@ -35,12 +30,15 @@ rpc::ExpectedResult<lsp::DefinitionResult> methods::textDocument::definition::op
   const core::semantic::Scope* scope = core::semantic::utils::FindScope(file->module->scope, n);
 
   if (const auto* sym = scope->Resolve(n->On(file->ast.src)); sym) {
+    const auto* target_file = core::ast::utils::SourceFileOf(sym->Declaration());
+    const auto& uri = *ctx->GetTemporaryArena().Alloc<std::string>(ctx->PathToFileUri(target_file->path));
     return lsp::Location{
-        .uri = params.textDocument.uri,
+        .uri = uri,
         .range =
             lsp::Range{
-                .start = conv::ToLSPPosition(file->ast.lines.Translate(sym->Declaration()->parent->nrange.begin)),
-                .end = conv::ToLSPPosition(file->ast.lines.Translate(sym->Declaration()->parent->nrange.end)),
+                .start =
+                    conv::ToLSPPosition(target_file->ast.lines.Translate(sym->Declaration()->parent->nrange.begin)),
+                .end = conv::ToLSPPosition(target_file->ast.lines.Translate(sym->Declaration()->parent->nrange.end)),
             },
     };
   }
