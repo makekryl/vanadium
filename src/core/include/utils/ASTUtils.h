@@ -7,7 +7,7 @@ namespace vanadium::core::ast {
 namespace utils {
 
 inline SourceFile* SourceFileOf(const Node* n) {
-  while (n->nkind != NodeKind::ConstructorDecl) {
+  while (n->nkind != NodeKind::Root) {
     n = n->parent;
   }
   return n->As<RootNode>()->file;
