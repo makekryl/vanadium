@@ -4,7 +4,7 @@ import { Client } from './client';
 
 export async function activate(context: vscode.ExtensionContext) {
   const output = vscode.window.createOutputChannel('Vanadium', 'log');
-  const traceOutput = vscode.window.createOutputChannel('Vanadium TTCN-3 Language Server');
+  const traceOutput = vscode.window.createOutputChannel('Vanadium Language Server');
   const client = new Client(output, traceOutput);
 
   context.subscriptions.push(
