@@ -22,6 +22,10 @@ struct Range {
     return begin <= other.begin && other.end <= end;
   }
 
+  [[nodiscard]] bool Contains(pos_t pos) const noexcept {
+    return begin <= pos && pos <= end;
+  }
+
   [[nodiscard]] pos_t Length() const noexcept {
     return end - begin;
   }

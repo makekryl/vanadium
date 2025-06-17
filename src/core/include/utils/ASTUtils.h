@@ -13,10 +13,10 @@ inline SourceFile* SourceFileOf(const Node* n) {
   return n->As<RootNode>()->file;
 }
 
-inline const Node* GetNodeAt(pos_t pos, const AST& ast) {
+inline const Node* GetNodeAt(const AST& ast, pos_t pos) {
   const Node* candidate;
   ast.root->Accept([&](const Node* n) {
-    if (n->nrange.begin <= pos && n->nrange.end >= pos) {
+    if (n->nrange.Contains(pos)) {
       candidate = n;
       return true;
     }

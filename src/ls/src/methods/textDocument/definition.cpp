@@ -23,11 +23,10 @@ rpc::ExpectedResult<lsp::DefinitionResult> methods::textDocument::definition::op
   const auto path = ctx->project->RelativizePath(lsptoreal(std::string(params.textDocument.uri)));
   const auto* file = ctx->program.GetFile(path);
 
-  const auto* n = core::ast::utils::GetNodeAt(file->ast.lines.GetPosition(core::ast::Location{
-                                                  .line = params.position.line,
-                                                  .column = params.position.character,
-                                              }),
-                                              file->ast);
+  const auto* n = core::ast::utils::GetNodeAt(file->ast, file->ast.lines.GetPosition(core::ast::Location{
+                                                             .line = params.position.line,
+                                                             .column = params.position.character,
+                                                         }));
 
   if (n->nkind != core::ast::NodeKind::Ident) {
     return nullptr;
