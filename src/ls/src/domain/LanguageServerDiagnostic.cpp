@@ -40,6 +40,9 @@ void CollectModuleDiagnostics(LsContext& ctx, const core::SourceFile& file, std:
         .severity = lsp::DiagnosticSeverity::kError,
         .source = "vanadium",
         .message = message,
+        .data = {{
+            {"unresolved", 1},
+        }},
     });
     // item.data. // TODO
   }
@@ -54,6 +57,17 @@ void CollectModuleDiagnostics(LsContext& ctx, const core::SourceFile& file, std:
         .message = problem.description,
         .tags = std::vector<lsp::DiagnosticTag>{lsp::DiagnosticTag::kUnnecessary},  // TODO
     });
+    if (problem.autofix) {
+      diags.back().data = glz::json_t{
+          {
+              "autofix",
+              {
+                  {"title", "Remove unused import"},
+                  {"range", {problem.autofix->range.begin, problem.autofix->range.end}},
+              },
+          },
+      };
+    }
   }
 }
 }  // namespace

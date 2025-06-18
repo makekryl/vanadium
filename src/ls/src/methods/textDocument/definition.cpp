@@ -23,6 +23,8 @@ rpc::ExpectedResult<lsp::DefinitionResult> methods::textDocument::definition::op
                                                              .column = params.position.character,
                                                          }));
 
+  std::println(stderr, "NODE: '{}'", n->On(file->ast.src));
+
   if (n->nkind != core::ast::NodeKind::Ident) {
     return nullptr;
   }

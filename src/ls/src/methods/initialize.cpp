@@ -41,7 +41,7 @@ rpc::ExpectedResult<lsp::InitializeResult> methods::initialize::operator()(LsCon
           lsp::ServerCapabilities{
               .textDocumentSync = lsp::TextDocumentSyncKind::kFull,
               .definitionProvider = true,
-              // .codeActionProvider = true,
+              .codeActionProvider = true,
               .diagnosticProvider =
                   lsp::DiagnosticOptions{
                       .identifier = "vanadium",

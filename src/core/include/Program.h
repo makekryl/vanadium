@@ -102,6 +102,15 @@ class Program {
     return files_;
   }
 
+  auto Modules() const {
+    return files_ | std::views::values | std::views::filter([](const SourceFile& sf) {
+             return sf.module.has_value();
+           }) |
+           std::views::transform([](const SourceFile& sf) -> const ModuleDescriptor& {
+             return *sf.module;
+           });
+  }
+
   void Commit(const lib::Consumer<const ProgramModifier&>& modify);
 
   const ModuleDescriptor* GetModule(std::string_view name) const {

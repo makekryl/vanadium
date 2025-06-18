@@ -26,10 +26,10 @@ using ServerMethods = mp::Typelist<methods::initialize,   //
                                    methods::textDocument::didOpen,     //
                                    methods::textDocument::didChange,   //
                                    methods::textDocument::diagnostic,  //
-                                   methods::textDocument::definition   //
-                                   ///
-                                   //  methods::textDocument::codeAction   //
-                                   >;  //
+                                   methods::textDocument::definition,  //
+                                                                       ///
+                                   methods::textDocument::codeAction   //
+                                   >;                                  //
 
 template <class... Methods>
 using JsonRpcServer = glz::rpc::server<typename Methods::RpcMethod...>;
