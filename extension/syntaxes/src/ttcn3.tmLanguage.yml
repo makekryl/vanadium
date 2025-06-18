@@ -28,22 +28,21 @@ repository:
       - name: keyword.other.class.index.dot.ttcn
         match: (?<=[\{\(\[\][:space:]\;]|^)([[:alpha:]][[:word:]]*)(?=\[\S+\][\.])
 
-      - name: entity.name.function.module.ttcn
-        match: (?<=[\{\(\[\][:space:]\,\;]|^)(?!infinity|not_a_number)([[:alpha:]][[:word:]]*)(?=[\.])
-
-      - name: entity.name.method.dot.ttcn
-        match: (?<=[\.])(?!infinity|not_a_number)([[:alpha:]][[:word:]]*)\s*(?=[\(])
-
-      - name: keyword.other.method.dot.ttcn
-        match: (?<=[\.])(?!infinity|not_a_number)([[:alpha:]][[:word:]]*)\s*(?=[\s])
+      - name: entity.name.function.call.ttcn
+        match: \b([[:alpha:]_][[:word:]]*)(?=\()
 
   declarations:
     patterns:
-      - name: entity.name.function.module.ttcn
-        match: (?<=[[:^word:]]from|[[:^word:]]module)\s+([[:alpha:]][[:word:]]*)(?=[[:space:]\{\}\;])
+      - name: entity.name.type.module.ttcn
+        match: (?<=\b(?:from|module)\b)\s+([[:alpha:]][[:word:]]*)(?=[[:space:]\{\}\;])
 
-      - name: entity.name.method.function.ttcn
-        match: (?<=[[:^word:]]function|[[:^word:]]testcase|[[:^word:]]altstep|[[:^word]]configuration)\s+((?!interleave)[[:alpha:]][[:word:]]*)(?=[[:space:]\(\)\{\}\<\>\;])
+      - name: entity.name.type.module.ttcn
+        match: (?<=\b(?:from|module)\b)\s+([[:alpha:]][[:word:]]*)(?=[[:space:]\{\}\;])
+
+      - name: entity.name.function.declaration.ttcn
+        match: (?<=\b(?:function|testcase|altstep|configuration)\b)\s*([[:alpha:]_][[:word:]]*)\s*\(
+        # match: (?<=[[:^word:]](?:function|testcase|altstep|configuration))\s+(\w+)
+        # match: (?<=[[:^word:]]function|[[:^word:]]testcase|[[:^word:]]altstep|[[:^word:]]configuration)\s+(?=[[:space:]\(\)\{\}\<\>\;])
 
       - name: entity.name.method.modified.ttcn
         match: (?<=@deterministic|@control)\s+([[:alpha:]][[:word:]]*)(?=[[:space:]\(\)\{\}\<\>\;])
@@ -162,7 +161,7 @@ repository:
         match: '\b(display|encode|extension|override|variant|with)\b'
 
       - match: '\b(friend|private|public)\b'
-        name: constant.language.access-type.ttcn3
+        name: storage.modifier.ttcn3
 
       - comment: Built-in types
         name: support.type.ttcn3

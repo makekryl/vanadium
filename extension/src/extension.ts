@@ -15,6 +15,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   const status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right);
   status.text = 'Restart vanadiumd';
+  status.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
   status.command = 'vanadiumd.restart';
   context.subscriptions.push(status);
   status.show();

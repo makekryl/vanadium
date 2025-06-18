@@ -67,7 +67,7 @@
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
     "test": "vscode-test",
-    "grammar:build": "js-yaml syntaxes/ttcn3.tmLanguage.yml > syntaxes/ttcn3.tmLanguage.json"
+    "grammar:build": "js-yaml syntaxes/src/ttcn3.tmLanguage.yml > syntaxes/ttcn3.tmLanguage.json"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
