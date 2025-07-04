@@ -27,7 +27,7 @@ using ServerMethods = mp::Typelist<methods::initialize,   //
                                    methods::textDocument::didChange,   //
                                    methods::textDocument::diagnostic,  //
                                    methods::textDocument::definition,  //
-                                                                       ///
+                                   methods::textDocument::references,  //
                                    methods::textDocument::codeAction   //
                                    >;                                  //
 

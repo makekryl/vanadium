@@ -6,6 +6,7 @@
 
 #include "LSMethod.h"
 #include "LSProtocol.h"
+#include "LSProtocolAdjustments.h"
 #include "LanguageServerContext.h"
 
 namespace vanadium::ls {
@@ -59,6 +60,7 @@ DECL_NOTIFIC_1(textDocument, didChange, lsp::DidChangeTextDocumentParams);
 DECL_REQUEST_1(textDocument, diagnostic, lsp::DocumentDiagnosticParams, lsp::DocumentDiagnosticReport);
 DECL_REQUEST_1(textDocument, definition, lsp::DefinitionParams, lsp::DefinitionResult);
 DECL_REQUEST_1(textDocument, codeAction, lsp::CodeActionParams, lsp::CodeActionResult);
+DECL_REQUEST_1(textDocument, references, lsp::ReferenceParams, lsp::ReferencesResult);
 
 }  // namespace methods
 

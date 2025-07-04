@@ -1,6 +1,5 @@
 #include <glaze/ext/jsonrpc.hpp>
 #include <glaze/json/write.hpp>
-#include <memory>
 
 #include "ASTNodes.h"
 #include "ASTTypes.h"
@@ -9,22 +8,11 @@
 #include "LanguageServerConv.h"
 #include "LanguageServerMethods.h"
 #include "Semantic.h"
+#include "domain/LanguageServerSymbolDef.h"
 #include "utils/ASTUtils.h"
 #include "utils/SemanticUtils.h"
 
 namespace vanadium::ls {
-
-namespace {
-const core::ast::Node* GetReadableDeclaration(const core::semantic::Symbol* sym) {
-  const auto* n = sym->Declaration();
-  switch (n->nkind) {
-    case core::ast::NodeKind::FuncDecl:
-      return std::addressof(*(n->As<core::ast::nodes::FuncDecl>()->name));
-    default:
-      return n;
-  }
-}
-}  // namespace
 
 template <>
 rpc::ExpectedResult<lsp::DefinitionResult> methods::textDocument::definition::operator()(
@@ -46,16 +34,12 @@ rpc::ExpectedResult<lsp::DefinitionResult> methods::textDocument::definition::op
   const core::semantic::Scope* scope = core::semantic::utils::FindScope(file->module->scope, n);
 
   if (const auto* sym = scope->Resolve(n->On(file->ast.src)); sym) {
-    const auto* decl = GetReadableDeclaration(sym);
+    const auto* decl = domain::GetReadableDeclaration(sym);
     const auto* target_file = core::ast::utils::SourceFileOf(decl);
     const auto& uri = *ctx->GetTemporaryArena().Alloc<std::string>(ctx->PathToFileUri(target_file->path));
     return lsp::Location{
         .uri = uri,
-        .range =
-            lsp::Range{
-                .start = conv::ToLSPPosition(target_file->ast.lines.Translate(decl->nrange.begin)),
-                .end = conv::ToLSPPosition(target_file->ast.lines.Translate(decl->nrange.end)),
-            },
+        .range = conv::ToLSPRange(decl->nrange, target_file->ast),
     };
   }
 

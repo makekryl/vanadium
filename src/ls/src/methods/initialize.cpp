@@ -41,6 +41,7 @@ rpc::ExpectedResult<lsp::InitializeResult> methods::initialize::operator()(LsCon
           lsp::ServerCapabilities{
               .textDocumentSync = lsp::TextDocumentSyncKind::kFull,
               .definitionProvider = true,
+              .referencesProvider = true,
               .codeActionProvider = true,
               .diagnosticProvider =
                   lsp::DiagnosticOptions{
