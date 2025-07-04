@@ -2024,16 +2024,20 @@ nodes::SelectorExpr* Parser::ParseSelectorExpr(nodes::Expr* x) {
 }
 
 nodes::IndexExpr* Parser::ParseIndexExpr(nodes::Expr* x) {
-  return NewNode<nodes::IndexExpr>([&](auto& ie) {
+  auto* r = NewNode<nodes::IndexExpr>([&](auto& ie) {
     ie.x = x;
     Expect(TokenKind::LBRACK);
     ie.index = ParseExpr();
     Expect(TokenKind::RBRACK);
   });
+  if (x) [[likely]] {
+    r->nrange.begin = x->nrange.begin;
+  }
+  return r;
 }
 
 nodes::CallExpr* Parser::ParseCallExpr(nodes::Expr* x) {
-  return NewNode<nodes::CallExpr>([&](auto& ce) {
+  auto* r = NewNode<nodes::CallExpr>([&](auto& ce) {
     ce.fun = x;
     ce.args = NewNode<nodes::ParenExpr>([&](auto& pe) {
       Expect(TokenKind::LPAREN);
@@ -2059,18 +2063,26 @@ nodes::CallExpr* Parser::ParseCallExpr(nodes::Expr* x) {
       Expect(TokenKind::RPAREN);
     });
   });
+  if (x) [[likely]] {
+    r->nrange.begin = x->nrange.begin;
+  }
+  return r;
 }
 
 nodes::LengthExpr* Parser::ParseLengthExpr(nodes::Expr* x) {
-  return NewNode<nodes::LengthExpr>([&](auto& le) {
+  auto* r = NewNode<nodes::LengthExpr>([&](auto& le) {
     le.x = x;
     Expect(TokenKind::LENGTH);
     le.size = ParseParenExpr();
   });
+  if (x) [[likely]] {
+    r->nrange.begin = x->nrange.begin;
+  }
+  return r;
 }
 
 nodes::RedirectExpr* Parser::ParseRedirect(nodes::Expr* x) {
-  return NewNode<nodes::RedirectExpr>([&](auto& re) {
+  auto* r = NewNode<nodes::RedirectExpr>([&](auto& re) {
     re.x = x;
     Expect(TokenKind::REDIR);
 
@@ -2110,6 +2122,10 @@ nodes::RedirectExpr* Parser::ParseRedirect(nodes::Expr* x) {
       re.timestamp = ParsePrimaryExpr();
     }
   });
+  if (x) [[likely]] {
+    r->nrange.begin = x->nrange.begin;
+  }
+  return r;
 }
 
 // ExprList ::= Expr { "," Expr }
