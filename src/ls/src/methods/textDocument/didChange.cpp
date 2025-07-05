@@ -1,4 +1,3 @@
-#include <print>
 #include <string_view>
 
 #include "LSProtocol.h"
@@ -12,13 +11,8 @@ void methods::textDocument::didChange::operator()(LsContext& ctx, const lsp::Did
   const auto path = ctx->FileUriToPath(params.textDocument.uri);
 
   const auto read_file = [&](std::string_view, vanadium::lib::Arena& arena) -> std::string_view {
-    // TODO: move str
-
     const auto new_text = std::get<lsp::TextDocumentContentChangeWholeDocument>(params.contentChanges[0]);
-
-    auto buf = arena.AllocStringBuffer(new_text.text.size());
-    std::ranges::copy(new_text.text, buf.begin());
-    return {buf.data(), buf.size()};
+    return *arena.Alloc<std::string>(std::move(new_text.text));
   };
   ctx->program.Commit([&](auto& modify) {
     modify.update(path, read_file);

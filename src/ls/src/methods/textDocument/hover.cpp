@@ -79,7 +79,7 @@ rpc::ExpectedResult<lsp::HoverResult> methods::textDocument::hover::operator()(L
 {}
 ```
 )",
-          provider_file->ast.Text(std::addressof(*m->name)),  //
+          provider_file->ast.Text(*m->name),  //
           m->ret ? provider_file->ast.Text(m->ret->type) : "void",
           m->params->list.empty()
               ? ""
@@ -102,7 +102,7 @@ Parameters:
 {}
 ```
 )",
-                             provider_file->ast.Text(std::addressof(*m->name)),
+                             provider_file->ast.Text(*m->name),  //
                              BuildMarkdownParameterList(provider_file->ast, m->params),
                              provider_file->ast.Text(core::ast::Range{
                                  .begin = decl->nrange.begin,

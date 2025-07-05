@@ -1,6 +1,5 @@
 #include <glaze/ext/jsonrpc.hpp>
 #include <glaze/json/write.hpp>
-#include <print>
 
 #include "LSProtocol.h"
 #include "LanguageServerContext.h"
@@ -13,10 +12,7 @@ void methods::textDocument::didOpen::operator()(LsContext& ctx, const lsp::DidOp
   const auto path = ctx->FileUriToPath(params.textDocument.uri);
 
   const auto read_file = [&](std::string_view, vanadium::lib::Arena& arena) -> std::string_view {
-    // TODO: move str
-    auto buf = arena.AllocStringBuffer(params.textDocument.text.size());
-    std::ranges::copy(params.textDocument.text, buf.begin());
-    return {buf.data(), buf.size()};
+    return *arena.Alloc<std::string>(std::move(params.textDocument.text));
   };
   ctx->program.Commit([&](auto& modify) {
     modify.update(path, read_file);
