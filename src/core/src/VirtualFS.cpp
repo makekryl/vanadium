@@ -7,6 +7,8 @@
 #include "Filesystem.h"
 #include "utils/FileReader.h"
 
+// TODO: move this out of core
+
 namespace vanadium::core {
 
 std::optional<std::string_view> VirtualFS::ReadFile(std::string_view path, FileContentsAllocator alloc) const {

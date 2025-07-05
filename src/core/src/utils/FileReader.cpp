@@ -6,6 +6,8 @@
 
 #include "FunctionRef.h"
 
+// TODO: move file IO out of core
+
 namespace vanadium::core {
 namespace utils {
 
