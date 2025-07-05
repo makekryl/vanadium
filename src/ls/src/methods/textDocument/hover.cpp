@@ -1,6 +1,8 @@
 #include <glaze/ext/jsonrpc.hpp>
 #include <glaze/json/write.hpp>
+#include <ranges>
 
+#include "AST.h"
 #include "ASTNodes.h"
 #include "ASTTypes.h"
 #include "LSProtocol.h"
@@ -13,6 +15,29 @@
 #include "utils/SemanticUtils.h"
 
 namespace vanadium::ls {
+
+namespace {
+std::string BuildMarkdownParameterList(const core::ast::AST& ast, const core::ast::nodes::FormalPars* pars) {
+  std::string buf;
+  buf.reserve(pars->list.size() * 32);
+
+  const auto last_idx = static_cast<decltype(pars->list)::difference_type>(pars->list.size()) - 1;
+  for (const auto& [idx, par] : pars->list | std::views::enumerate) {
+    buf += "- `";
+    buf += ast.Text(par->type);
+    buf += " ";
+    buf += ast.Text(*par->name);
+    buf += "`";
+
+    if (idx != last_idx) [[likely]] {
+      buf += "\n";
+    }
+  }
+
+  return buf;
+}
+}  // namespace
+
 template <>
 rpc::ExpectedResult<lsp::HoverResult> methods::textDocument::hover::operator()(LsContext& ctx,
                                                                                const lsp::HoverParams& params) {
@@ -43,10 +68,33 @@ rpc::ExpectedResult<lsp::HoverResult> methods::textDocument::hover::operator()(L
   switch (decl->nkind) {
     case core::ast::NodeKind::FuncDecl: {
       const auto* m = decl->As<core::ast::nodes::FuncDecl>();
-      content += std::format(R"(
+      content += std::format(
+          R"(
 ### function `{}`
 ---
-→ `{}`\
+→ `{}`
+{}
+---
+```ttcn
+{}
+```
+)",
+          provider_file->ast.Text(std::addressof(*m->name)),  //
+          m->ret ? provider_file->ast.Text(m->ret->type) : "void",
+          m->params->list.empty()
+              ? ""
+              : std::format("\nParameters:\n{}", BuildMarkdownParameterList(provider_file->ast, m->params)),
+          provider_file->ast.Text(core::ast::Range{
+              .begin = decl->nrange.begin,
+              .end = m->body->nrange.begin,
+          }));
+      break;
+    }
+    case core::ast::NodeKind::TemplateDecl: {
+      const auto* m = decl->As<core::ast::nodes::TemplateDecl>();
+      content += std::format(R"(
+### template `{}`
+---
 Parameters:
 {}
 ---
@@ -55,39 +103,25 @@ Parameters:
 ```
 )",
                              provider_file->ast.Text(std::addressof(*m->name)),
-                             m->ret ? provider_file->ast.Text(m->ret->type) : "none", "- `test`",
+                             BuildMarkdownParameterList(provider_file->ast, m->params),
                              provider_file->ast.Text(core::ast::Range{
                                  .begin = decl->nrange.begin,
-                                 .end = m->body->nrange.begin,
+                                 .end = m->value->nrange.begin,
                              }));
       break;
     }
-    case core::ast::NodeKind::TemplateDecl:
-      content += std::format(R"(
-### template `{}`
----
-```ttcn
-{}
-```
-)",
-                             provider_file->ast.Text(std::addressof(*decl->As<core::ast::nodes::TemplateDecl>()->name)),
-                             provider_file->ast.Text(core::ast::Range{
-                                 .begin = decl->nrange.begin,
-                                 .end = decl->As<core::ast::nodes::TemplateDecl>()->value->nrange.begin,
-                             }));
-      break;
     default:
       content += "TODO";
       break;
   }
 
   if (provider_file != file) {
-    const auto source_loc = provider_file->ast.lines.Translate(decl->nrange.begin);
+    const auto source_loc = conv::ToLSPPosition(provider_file->ast.lines.Translate(decl->nrange.begin));
     content += std::format(R"(
 ---
 [module {}]({}#L{}C{}))",
                            provider_file->module->name, ctx->PathToFileUri(provider_file->path), source_loc.line,
-                           source_loc.column);
+                           source_loc.character);
   }
   return lsp::Hover{
       .contents =
