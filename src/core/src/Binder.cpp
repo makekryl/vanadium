@@ -503,9 +503,18 @@ bool Binder::Inspect(const ast::Node* n) {
           continue;
         }
         const auto* ae = e->As<ast::nodes::AssignmentExpr>();
-        if (ae->property->nkind != ast::NodeKind::Ident) {
-          Visit(ae->property);
+        Visit(ae->value);
+      }
+      return false;
+    }
+    case ast::NodeKind::ParenExpr: {
+      const auto* m = n->As<ast::nodes::ParenExpr>();
+      for (const auto* e : m->list) {
+        if (e->nkind != ast::NodeKind::AssignmentExpr) {
+          Visit(e);
+          continue;
         }
+        const auto* ae = e->As<ast::nodes::AssignmentExpr>();
         Visit(ae->value);
       }
       return false;
