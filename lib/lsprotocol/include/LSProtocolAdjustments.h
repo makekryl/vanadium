@@ -5,9 +5,10 @@
 // NOLINTBEGIN(readability-identifier-naming)
 
 namespace lsp {
+using CodeActionResult = std::variant<lsp::Command, std::vector<lsp::CodeAction>, std::nullptr_t>;
 using DefinitionResult = std::variant<lsp::Location, std::vector<lsp::Location>, std::nullptr_t>;
 using ReferencesResult = std::variant<std::vector<lsp::Location>, std::nullptr_t>;
-using CodeActionResult = std::variant<lsp::Command, std::vector<lsp::CodeAction>, std::nullptr_t>;
+using DocumentHighlightResults = std::variant<std::vector<lsp::DocumentHighlight>, std::nullptr_t>;
 }  // namespace lsp
 
 namespace glz {

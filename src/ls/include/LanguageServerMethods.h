@@ -58,9 +58,10 @@ DECL_NOTIFIC_0(exit, rpc::Empty);
 DECL_NOTIFIC_1(textDocument, didOpen, lsp::DidOpenTextDocumentParams);
 DECL_NOTIFIC_1(textDocument, didChange, lsp::DidChangeTextDocumentParams);
 DECL_REQUEST_1(textDocument, diagnostic, lsp::DocumentDiagnosticParams, lsp::DocumentDiagnosticReport);
-DECL_REQUEST_1(textDocument, definition, lsp::DefinitionParams, lsp::DefinitionResult);
 DECL_REQUEST_1(textDocument, codeAction, lsp::CodeActionParams, lsp::CodeActionResult);
+DECL_REQUEST_1(textDocument, definition, lsp::DefinitionParams, lsp::DefinitionResult);
 DECL_REQUEST_1(textDocument, references, lsp::ReferenceParams, lsp::ReferencesResult);
+DECL_REQUEST_1(textDocument, documentHighlight, lsp::DocumentHighlightParams, lsp::DocumentHighlightResults);
 
 }  // namespace methods
 
