@@ -34,6 +34,10 @@ struct AST {
   [[nodiscard]] std::string_view Text(const Node* n) const noexcept {
     return n->On(src);
   }
+
+  [[nodiscard]] std::string_view Text(const Range& r) const noexcept {
+    return r.String(src);
+  }
 };
 
 }  // namespace ast
