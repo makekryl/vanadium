@@ -15,6 +15,7 @@ using TypeDefinitionResult =
     std::variant<lsp::Location, std::vector<lsp::Location>, std::vector<lsp::LocationLink>, std::nullptr_t>;
 using DocumentHighlightResults = std::variant<std::vector<lsp::DocumentHighlight>, std::nullptr_t>;
 using HoverResult = std::variant<lsp::Hover, std::nullptr_t>;
+using RenameResult = std::variant<lsp::WorkspaceEdit, std::nullptr_t>;
 }  // namespace lsp
 
 namespace glz {

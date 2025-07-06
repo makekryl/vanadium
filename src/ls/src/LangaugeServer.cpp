@@ -23,17 +23,18 @@ using ServerMethods = mp::Typelist<methods::initialize,   //
                                    methods::shutdown,     //
                                    methods::exit,         //
                                    //
-                                   methods::textDocument::didOpen,           //
-                                   methods::textDocument::didChange,         //
-                                   methods::textDocument::didClose,          //
-                                   methods::textDocument::diagnostic,        //
-                                   methods::textDocument::codeAction,        //
-                                   methods::textDocument::definition,        //
-                                   methods::textDocument::references,        //
-                                   methods::textDocument::typeDefinition,    //
-                                   methods::textDocument::hover,             //
-                                   methods::textDocument::documentHighlight  //
-                                   >;                                        //
+                                   methods::textDocument::didOpen,            //
+                                   methods::textDocument::didChange,          //
+                                   methods::textDocument::didClose,           //
+                                   methods::textDocument::diagnostic,         //
+                                   methods::textDocument::codeAction,         //
+                                   methods::textDocument::definition,         //
+                                   methods::textDocument::references,         //
+                                   methods::textDocument::typeDefinition,     //
+                                   methods::textDocument::hover,              //
+                                   methods::textDocument::documentHighlight,  //
+                                   methods::textDocument::rename              //
+                                   >;                                         //
 
 template <class... Methods>
 using JsonRpcServer = glz::rpc::server<typename Methods::RpcMethod...>;

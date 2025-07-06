@@ -65,6 +65,7 @@ DECL_REQUEST_1(textDocument, references, lsp::ReferenceParams, lsp::ReferencesRe
 DECL_REQUEST_1(textDocument, typeDefinition, lsp::TypeDefinitionParams, lsp::TypeDefinitionResult);
 DECL_REQUEST_1(textDocument, documentHighlight, lsp::DocumentHighlightParams, lsp::DocumentHighlightResults);
 DECL_REQUEST_1(textDocument, hover, lsp::HoverParams, lsp::HoverResult);
+DECL_REQUEST_1(textDocument, rename, lsp::RenameParams, lsp::RenameResult);
 
 }  // namespace methods
 

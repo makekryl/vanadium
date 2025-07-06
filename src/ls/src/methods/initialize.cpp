@@ -46,6 +46,7 @@ rpc::ExpectedResult<lsp::InitializeResult> methods::initialize::operator()(LsCon
               .referencesProvider = true,
               .documentHighlightProvider = true,
               .codeActionProvider = true,
+              .renameProvider = true,
               .diagnosticProvider =
                   lsp::DiagnosticOptions{
                       .identifier = "vanadium",
