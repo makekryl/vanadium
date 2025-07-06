@@ -29,6 +29,7 @@ using ServerMethods = mp::Typelist<methods::initialize,   //
                                    methods::textDocument::codeAction,        //
                                    methods::textDocument::definition,        //
                                    methods::textDocument::references,        //
+                                   methods::textDocument::typeDefinition,    //
                                    methods::textDocument::hover,             //
                                    methods::textDocument::documentHighlight  //
                                    >;                                        //

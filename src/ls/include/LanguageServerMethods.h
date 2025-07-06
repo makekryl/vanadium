@@ -61,6 +61,7 @@ DECL_REQUEST_1(textDocument, diagnostic, lsp::DocumentDiagnosticParams, lsp::Doc
 DECL_REQUEST_1(textDocument, codeAction, lsp::CodeActionParams, lsp::CodeActionResult);
 DECL_REQUEST_1(textDocument, definition, lsp::DefinitionParams, lsp::DefinitionResult);
 DECL_REQUEST_1(textDocument, references, lsp::ReferenceParams, lsp::ReferencesResult);
+DECL_REQUEST_1(textDocument, typeDefinition, lsp::TypeDefinitionParams, lsp::TypeDefinitionResult);
 DECL_REQUEST_1(textDocument, documentHighlight, lsp::DocumentHighlightParams, lsp::DocumentHighlightResults);
 DECL_REQUEST_1(textDocument, hover, lsp::HoverParams, lsp::HoverResult);
 

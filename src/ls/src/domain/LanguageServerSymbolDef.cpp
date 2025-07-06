@@ -4,8 +4,7 @@
 
 namespace vanadium::ls::domain {
 
-const core::ast::Node* GetReadableDeclaration(const core::semantic::Symbol* sym) {
-  const auto* n = sym->Declaration();
+const core::ast::Node* GetReadableDeclaration(const core::ast::Node* n) {
   switch (n->nkind) {
     case core::ast::NodeKind::FuncDecl:
       return std::addressof(*(n->As<core::ast::nodes::FuncDecl>()->name));

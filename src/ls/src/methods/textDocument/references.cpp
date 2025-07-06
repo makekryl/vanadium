@@ -46,7 +46,7 @@ rpc::ExpectedResult<lsp::ReferencesResult> methods::textDocument::references::op
     std::vector<lsp::Location> refs;
 
     if (params.context.includeDeclaration) {
-      const auto* decl = domain::GetReadableDeclaration(sym);
+      const auto* decl = domain::GetReadableDeclaration(sym->Declaration());
       const auto* target_file = core::ast::utils::SourceFileOf(decl);
       const auto& uri = *ctx->GetTemporaryArena().Alloc<std::string>(ctx->PathToFileUri(target_file->path));
       refs.emplace_back(lsp::Location{

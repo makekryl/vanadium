@@ -32,17 +32,17 @@ rpc::ExpectedResult<lsp::DefinitionResult> methods::textDocument::definition::op
   }
 
   const core::semantic::Scope* scope = core::semantic::utils::FindScope(file->module->scope, n);
-
-  if (const auto* sym = scope->Resolve(n->On(file->ast.src)); sym) {
-    const auto* decl = domain::GetReadableDeclaration(sym);
-    const auto* target_file = core::ast::utils::SourceFileOf(decl);
-    const auto& uri = *ctx->GetTemporaryArena().Alloc<std::string>(ctx->PathToFileUri(target_file->path));
-    return lsp::Location{
-        .uri = uri,
-        .range = conv::ToLSPRange(decl->nrange, target_file->ast),
-    };
+  const auto* sym = scope->Resolve(n->On(file->ast.src));
+  if (!sym) {
+    return nullptr;
   }
 
-  return nullptr;
+  const auto* decl = domain::GetReadableDeclaration(sym->Declaration());
+  const auto* target_file = core::ast::utils::SourceFileOf(decl);
+  const auto& uri = *ctx->GetTemporaryArena().Alloc<std::string>(ctx->PathToFileUri(target_file->path));
+  return lsp::Location{
+      .uri = uri,
+      .range = conv::ToLSPRange(decl->nrange, target_file->ast),
+  };
 }
 }  // namespace vanadium::ls

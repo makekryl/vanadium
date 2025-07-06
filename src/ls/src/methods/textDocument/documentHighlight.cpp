@@ -41,8 +41,12 @@ rpc::ExpectedResult<lsp::DocumentHighlightResults> methods::textDocument::docume
     std::vector<lsp::DocumentHighlight> refs;
 
     const core::ast::Node* container = sym->Declaration();
-    while (container->nkind != core::ast::NodeKind::BlockStmt) {
+    while (container && (container->nkind != core::ast::NodeKind::BlockStmt)) {
       container = container->parent;
+    }
+    if (!container) {
+      std::fprintf(stderr, "container==nullptr\n");
+      return nullptr;
     }
     container->Accept([&](const core::ast::Node* vn) {
       if (vn->nkind == core::ast::NodeKind::Ident && file->ast.Text(vn) == sym_name) {

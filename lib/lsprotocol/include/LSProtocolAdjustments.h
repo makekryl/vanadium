@@ -8,8 +8,11 @@
 
 namespace lsp {
 using CodeActionResult = std::variant<lsp::Command, std::vector<lsp::CodeAction>, std::nullptr_t>;
-using DefinitionResult = std::variant<lsp::Location, std::vector<lsp::Location>, std::nullptr_t>;
+using DefinitionResult =
+    std::variant<lsp::Location, std::vector<lsp::Location>, std::vector<lsp::LocationLink>, std::nullptr_t>;
 using ReferencesResult = std::variant<std::vector<lsp::Location>, std::nullptr_t>;
+using TypeDefinitionResult =
+    std::variant<lsp::Location, std::vector<lsp::Location>, std::vector<lsp::LocationLink>, std::nullptr_t>;
 using DocumentHighlightResults = std::variant<std::vector<lsp::DocumentHighlight>, std::nullptr_t>;
 using HoverResult = std::variant<lsp::Hover, std::nullptr_t>;
 }  // namespace lsp
