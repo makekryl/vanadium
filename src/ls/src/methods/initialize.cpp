@@ -40,6 +40,10 @@ rpc::ExpectedResult<lsp::InitializeResult> methods::initialize::operator()(LsCon
       .capabilities =
           lsp::ServerCapabilities{
               .textDocumentSync = lsp::TextDocumentSyncKind::kFull,
+              .completionProvider =
+                  lsp::CompletionOptions{
+                      .triggerCharacters = {{"."}},
+                  },
               .hoverProvider = true,
               .definitionProvider = true,
               .typeDefinitionProvider = true,

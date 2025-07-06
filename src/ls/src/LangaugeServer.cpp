@@ -33,7 +33,8 @@ using ServerMethods = mp::Typelist<methods::initialize,   //
                                    methods::textDocument::typeDefinition,     //
                                    methods::textDocument::hover,              //
                                    methods::textDocument::documentHighlight,  //
-                                   methods::textDocument::rename              //
+                                   methods::textDocument::rename,             //
+                                   methods::textDocument::completion          //
                                    >;                                         //
 
 template <class... Methods>
