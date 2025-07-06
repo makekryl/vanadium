@@ -58,7 +58,7 @@ def _build_header(reg: TypesRegistry):
       buf.newline()
   buf.write("\n// NOLINTEND(readability-identifier-naming)")
   buf.newline()
-  buf.write('#include "LSProtocolAdjustments.h"')
+  buf.write('#include "LSProtocolEx.h"')
   buf.newline()
 
   return buf.build()

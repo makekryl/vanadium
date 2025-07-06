@@ -16,8 +16,34 @@
 namespace vanadium::ls {
 
 namespace {
+std::optional<std::string_view> LookupTypeName(const core::semantic::Symbol* sym) {
+  const auto* decl = sym->Declaration()->parent;
+
+  const core::ast::Node* typename_node{nullptr};
+
+  switch (decl->nkind) {
+    case core::ast::NodeKind::Declarator: {
+      const auto* valdecl = decl->parent->As<core::ast::nodes::ValueDecl>();
+      typename_node = valdecl->type;
+      break;
+    }
+    case core::ast::NodeKind::FormalPar: {
+      const auto* valdecl = decl->As<core::ast::nodes::FormalPar>();
+      typename_node = valdecl->type;
+      break;
+    }
+    default: {
+      std::fprintf(stderr, "LookupTypeName :: not supported\n");
+      return std::nullopt;
+    }
+  }
+
+  const auto* decl_file = core::ast::utils::SourceFileOf(decl);
+  return decl_file->Text(typename_node);
+}
 const core::semantic::Symbol* LookupTypeSymbol(const core::semantic::Symbol* sym) {
-  if (!(sym->Flags() & (core::semantic::SymbolFlags::kVariable | core::semantic::SymbolFlags::kArgument))) {
+  if (!(sym->Flags() & (core::semantic::SymbolFlags::kVariable | core::semantic::SymbolFlags::kArgument |
+                        core::semantic::SymbolFlags::kField))) {
     // TODO: support chained expressions
     return nullptr;
   }

@@ -6,7 +6,7 @@
 
 #include "LSMethod.h"
 #include "LSProtocol.h"
-#include "LSProtocolAdjustments.h"
+#include "LSProtocolEx.h"
 #include "LanguageServerContext.h"
 
 namespace vanadium::ls {
