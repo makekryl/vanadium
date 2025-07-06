@@ -57,6 +57,7 @@ DECL_NOTIFIC_0(exit, rpc::Empty);
 // textDocument
 DECL_NOTIFIC_1(textDocument, didOpen, lsp::DidOpenTextDocumentParams);
 DECL_NOTIFIC_1(textDocument, didChange, lsp::DidChangeTextDocumentParams);
+DECL_NOTIFIC_1(textDocument, didClose, lsp::DidCloseTextDocumentParams);
 DECL_REQUEST_1(textDocument, diagnostic, lsp::DocumentDiagnosticParams, lsp::DocumentDiagnosticReport);
 DECL_REQUEST_1(textDocument, codeAction, lsp::CodeActionParams, lsp::CodeActionResult);
 DECL_REQUEST_1(textDocument, definition, lsp::DefinitionParams, lsp::DefinitionResult);
