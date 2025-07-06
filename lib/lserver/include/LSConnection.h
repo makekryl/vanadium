@@ -16,6 +16,24 @@
 #include "LSMessageToken.h"
 #include "LSTransport.h"
 
+// NOLINTBEGIN(readability-identifier-naming)
+namespace glz::rpc {
+template <class Params>
+struct notification_t {
+  std::string_view method;
+  Params params{};
+  std::string_view version{rpc::supported_version};
+
+  struct glaze {
+    using T = notification_t;
+    static constexpr auto value = glz::object("jsonrpc", &T::version,  //
+                                              &T::method,              //
+                                              &T::params);
+  };
+};
+}  // namespace glz::rpc
+// NOLINTEND(readability-identifier-naming)
+
 namespace vanadium::lserver {
 
 template <typename TContextPayload>
@@ -174,8 +192,7 @@ class Connection {
 
   template <glz::string_literal Method, typename Params>
   void Notify(Params&& params) {
-    glz::rpc::request_t<Params> req{
-        .id = glz::json_t::null_t{},
+    glz::rpc::notification_t<Params> req{
         .method = Method,
         .params = std::forward<Params>(params),
     };
