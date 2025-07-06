@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
 import argparse
-from contextlib import contextmanager
 import os
 import re
 import sys
+from contextlib import contextmanager
 from dataclasses import dataclass
 from graphlib import TopologicalSorter
 from pathlib import Path
