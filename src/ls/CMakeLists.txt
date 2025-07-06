@@ -22,6 +22,7 @@ target_link_libraries(vanadium_ls PRIVATE
   vanadium_project
   vanadium_lint
   glaze::glaze
+  magic_enum
 )
 
 add_test_executable(vanadium_ls)

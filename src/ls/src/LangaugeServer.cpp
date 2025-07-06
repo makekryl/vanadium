@@ -45,7 +45,7 @@ void Serve(lserver::Transport& transport, std::size_t concurrency, std::size_t j
 
   const auto handle_message = [&rpc_server](LsContext& ctx, lserver::PooledMessageToken&& token) {
     static std::mutex m;
-    std::lock_guard l(m);  // TODO: PoC, add mutexes to Program
+    std::lock_guard l(m);  // TODO: PoC, this efficiently prevents concurrency - add RWmutexes to Program
 
     std::println(stderr, "PROCEED: {}", token->buf.substr(0, 128));
 
