@@ -1,55 +1,79 @@
 #pragma once
 
+#include <expected>
 #include <filesystem>
+#include <memory>
 #include <optional>
+#include <rfl/toml/read.hpp>
+#include <string>
 #include <string_view>
+#include <unordered_map>
 
-#include "Arena.h"
-#include "Filesystem.h"
-#include "FunctionRef.h"
-
-namespace c4::yml {
-class Tree;
-}
+#include "Error.h"
+#include "FsDirectory.h"
 
 namespace vanadium {
 namespace tooling {
 
+// reflectcpp does not support reading into string_views
+// despite we're not asking for any lifetime guarantees,
+// and this is extremely disappointing
+
+struct ExternalProjectDescriptor {
+  std::string path;
+  std::optional<std::vector<std::string>> references;
+};
+
+struct ProjectDescriptor {
+  std::optional<bool> root;
+
+  struct {
+    std::string name;
+    std::optional<std::vector<std::string>> references;
+    std::optional<std::vector<std::string>> subprojects;
+  } project;
+
+  std::optional<std::unordered_map<std::string, ExternalProjectDescriptor>> external;
+};
+
 class Project {
  public:
-  [[nodiscard]] std::optional<std::string_view> GetProperty(std::string_view path) const;
-  [[nodiscard]] bool VisitPropertyList(std::string_view path, const lib::Predicate<std::string_view>&) const;
-  [[nodiscard]] bool VisitPropertyDict(std::string_view path,
-                                       const lib::Predicate<std::string_view, std::string_view>&) const;
+  static constexpr std::string_view kDescriptorFilename = ".vanadiumrc.toml";
 
-  [[nodiscard]] std::string_view GetInheritedProperty(std::string_view path) const;
+  [[nodiscard]] std::optional<std::filesystem::path> WalkRoot() const;
 
-  [[nodiscard]] std::string RelativizePath(const std::filesystem::path& path) const {
-    return std::filesystem::relative(path, path_).string();
-  }
+  [[nodiscard]] const core::IDirectory& Directory() const noexcept;
 
-  void VisitFiles(const lib::Consumer<std::string>&) const;
+  [[nodiscard]] const ProjectDescriptor& Read() const noexcept;
 
-  [[nodiscard]] const std::filesystem::path& GetPath() const noexcept {
-    return path_;
-  }
-  [[nodiscard]] const core::VirtualFS& GetFS() const noexcept {
-    return vfs_;
-  }
+  template <typename T>
+  [[nodiscard]] std::expected<T, Error> ReadSpec() const;
 
-  static std::optional<Project> Load(const std::filesystem::path& config_path);
+  static std::expected<Project, Error> Load(const std::filesystem::path& config_path);
+  Project(std::shared_ptr<core::IDirectory>, std::string&& contents, ProjectDescriptor&&);
 
  private:
-  Project(std::filesystem::path);
-
-  void Init();
-
-  c4::yml::Tree* tree_;
-  std::filesystem::path path_;
-
-  core::VirtualFS vfs_;
-  lib::Arena arena_;
+  std::shared_ptr<core::IDirectory> dir_;
+  std::string contents_;
+  ProjectDescriptor descriptor_;
 };
+
+inline const core::IDirectory& Project::Directory() const noexcept {
+  return *dir_;
+}
+
+inline const ProjectDescriptor& Project::Read() const noexcept {
+  return descriptor_;
+}
+
+template <typename T>
+inline std::expected<T, Error> Project::ReadSpec() const {
+  rfl::Result<T> result = rfl::toml::read<T>(contents_);
+  if (result.has_value()) {
+    return result.value();
+  }
+  return Error{result.error().what()};
+}
 
 }  // namespace tooling
 }  // namespace vanadium

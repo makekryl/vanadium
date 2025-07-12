@@ -1,85 +1,45 @@
 #include "Project.h"
 
 #include <cassert>
+#include <expected>
 #include <filesystem>
-#include <ryml.hpp>
 
-#include "Arena.h"
+#include "FsDirectory.h"
 #include "utils/FileReader.h"
-
-namespace {
-std::string_view RymlSubstrToStringView(const ryml::csubstr &str) {
-  return {str.data(), str.size()};
-}
-}  // namespace
 
 namespace vanadium {
 namespace tooling {
 
-std::optional<std::string_view> Project::GetProperty(std::string_view path) const {
-  const auto &d = (*tree_)[path.data()];
-  return RymlSubstrToStringView(d.val());
-}
+Project::Project(std::shared_ptr<core::IDirectory> dir, std::string &&contents, ProjectDescriptor &&descriptor)
+    : dir_(std::move(dir)), contents_(std::move(contents)), descriptor_(std::move(descriptor)) {};
 
-bool Project::VisitPropertyList(std::string_view path, const lib::Predicate<std::string_view> &pred) const {
-  const auto &d = (*tree_)[path.data()];
-  for (const auto &v : d) {
-    if (!pred(RymlSubstrToStringView(v.key()))) {
-      break;
-    }
+std::expected<Project, Error> Project::Load(const std::filesystem::path &config_path) {
+  if (!std::filesystem::exists(config_path)) {
+    return std::unexpected<Error>{"File not exists"};
   }
-  return true;
-}
 
-bool Project::VisitPropertyDict(std::string_view path,
-                                const lib::Predicate<std::string_view, std::string_view> &pred) const {
-  const auto &d = (*tree_)[path.data()];
-  for (const auto &v : d) {
-    if (!pred(RymlSubstrToStringView(v.key()), RymlSubstrToStringView(v.val()))) {
-      break;
-    }
-  }
-  return true;
-}
-
-Project::Project(std::filesystem::path path) : path_(std::move(path)) {}
-
-void Project::VisitFiles(const lib::Consumer<std::string> &accept) const {
-  for (const auto &v : (*tree_)["project"]["sources"]) {
-    const auto &src_path = v.val();
-    for (const auto &entry : std::filesystem::directory_iterator(path_ / RymlSubstrToStringView(src_path))) {
-      if (entry.is_directory()) continue;
-      if (entry.path().extension() != ".ttcn") continue;
-
-      accept(std::filesystem::relative(entry.path(), path_).string());
-    }
-  }
-}
-
-void Project::Init() {
-  // TODO
-  vfs_.AddSearchPath(path_.string() + "/");
-}
-
-std::optional<Project> Project::Load(const std::filesystem::path &config_path) {
-  assert(std::filesystem::exists(config_path));
-
-  Project project(config_path.parent_path());
-  auto source = core::utils::ReadFile(config_path, [&](std::size_t size) {
-    return project.arena_.AllocStringBuffer(size).data();
+  std::string contents;
+  const auto result = core::utils::ReadFile(config_path, [&](std::size_t size) {
+    contents.resize(size);
+    return contents.data();
   });
-
-  if (!source) {
-    // TODO
-    std::fprintf(stderr, "Failed to read project configuration\n");
-    std::abort();
+  if (!result.has_value()) {
+    return std::unexpected<Error>{result.error().what()};
   }
-  ryml::substr ss{const_cast<char *>(source->data()), source->length()};
 
-  // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage)
-  project.tree_ = project.arena_.Alloc<c4::yml::Tree>(ryml::parse_in_place(ss));
+  rfl::Result<ProjectDescriptor> parse_result = rfl::toml::read<ProjectDescriptor>(contents);
+  if (!parse_result.has_value()) {
+    return std::unexpected<Error>{parse_result.error().what()};
+  }
 
-  project.Init();
+  Project project(std::make_shared<core::FilesystemDirectory>(config_path.parent_path()), std::move(contents),
+                  std::move(parse_result.value()));
+
+  if (!result) {
+    // TODO: improve error handling, maybe rethink the Error wrapper class
+    const auto &err = result.error();
+    return std::unexpected{Error{"Failed to read project descriptor", Error{err.what()}}};
+  }
 
   return project;
 }

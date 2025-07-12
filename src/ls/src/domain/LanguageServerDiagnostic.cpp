@@ -1,7 +1,6 @@
 #include "domain/LanguageServerDiagnostic.h"
 
 #include <format>
-#include <print>
 #include <vector>
 
 #include "LSProtocol.h"
@@ -12,12 +11,13 @@
 namespace vanadium::ls::domain {
 
 namespace {
-void CollectModuleDiagnostics(LsContext& ctx, const core::SourceFile& file, std::vector<lsp::Diagnostic>& diags) {
+void CollectModuleDiagnostics(LsContext& ctx, const core::Program& program, const core::SourceFile& file,
+                              std::vector<lsp::Diagnostic>& diags) {
   assert(file.module.has_value());
   const auto& module = *file.module;
 
   for (const auto& [import_name, import] : module.imports) {
-    if (ctx->program.GetModule(import_name)) {
+    if (program.GetModule(import_name)) {
       continue;
     }
     const auto& message =
@@ -47,7 +47,7 @@ void CollectModuleDiagnostics(LsContext& ctx, const core::SourceFile& file, std:
     // item.data. // TODO
   }
 
-  const auto& problems = *ctx->GetTemporaryArena().Alloc<lint::ProblemSet>(ctx->linter.Lint(ctx->program, file));
+  const auto& problems = *ctx->GetTemporaryArena().Alloc<lint::ProblemSet>(ctx->linter.Lint(program, file));
   for (const auto& problem : problems) {
     diags.emplace_back(lsp::Diagnostic{
         .range = conv::ToLSPRange(problem.range, file.ast),
@@ -72,7 +72,8 @@ void CollectModuleDiagnostics(LsContext& ctx, const core::SourceFile& file, std:
 }
 }  // namespace
 
-std::vector<lsp::Diagnostic> CollectDiagnostics(LsContext& ctx, const core::SourceFile& file) {
+std::vector<lsp::Diagnostic> CollectDiagnostics(LsContext& ctx, const core::Program& program,
+                                                const core::SourceFile& file) {
   std::vector<lsp::Diagnostic> diags;
 
   for (const auto& err : file.ast.errors) {
@@ -93,7 +94,7 @@ std::vector<lsp::Diagnostic> CollectDiagnostics(LsContext& ctx, const core::Sour
     };
   }
   if (file.module.has_value()) {
-    CollectModuleDiagnostics(ctx, file, diags);
+    CollectModuleDiagnostics(ctx, program, file, diags);
   }
 
   return diags;

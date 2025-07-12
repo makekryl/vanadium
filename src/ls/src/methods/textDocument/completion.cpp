@@ -17,8 +17,8 @@ namespace vanadium::ls {
 template <>
 rpc::ExpectedResult<lsp::CompletionResult> methods::textDocument::completion::operator()(
     LsContext& ctx, const lsp::CompletionParams& params) {
-  const auto path = ctx->FileUriToPath(params.textDocument.uri);
-  const auto* file = ctx->program.GetFile(path);
+  const auto& [subproject, path] = ctx->ResolveFile(params.textDocument.uri);
+  const auto* file = subproject.program.GetFile(path);
 
   // params.
 

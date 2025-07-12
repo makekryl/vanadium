@@ -14,7 +14,8 @@ enum DiagnosticKind : std::uint8_t {
   kUnresolvedName,
 };
 
-std::vector<lsp::Diagnostic> CollectDiagnostics(LsContext& ctx, const core::SourceFile& file);
+std::vector<lsp::Diagnostic> CollectDiagnostics(LsContext& ctx, const core::Program& program,
+                                                const core::SourceFile& file);
 
 }  // namespace domain
 }  // namespace vanadium::ls

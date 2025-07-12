@@ -11,6 +11,7 @@
 #include <cstdio>
 #include <memory>
 #include <ranges>
+#include <string_view>
 #include <unordered_map>
 
 #include "Arena.h"
@@ -20,7 +21,7 @@
 
 namespace vanadium::core {
 
-void Program::Commit(const lib::Consumer<const ProgramModifier&>& modify) {
+void Program::Update(const lib::Consumer<const ProgramModifier&>& modify) {
   tbb::task_group wg;
   modify({
       .update =
@@ -37,7 +38,10 @@ void Program::Commit(const lib::Consumer<const ProgramModifier&>& modify) {
           },
   });
   wg.wait();
+}
 
+void Program::Commit(const lib::Consumer<const ProgramModifier&>& modify) {
+  Update(modify);
   Crossbind();
 }
 
@@ -116,6 +120,21 @@ void Program::DetachFile(SourceFile& sf) {
   }
 }
 
+const ModuleDescriptor* Program::GetModule(std::string_view name) const {
+  const auto it = modules_.find(name);
+  if (it != modules_.end()) {
+    return it->second;
+  }
+
+  for (const auto* ref : references_) {
+    if (const auto* module = ref->GetModule(name); module) {
+      return module;
+    }
+  }
+
+  return nullptr;
+}
+
 template <bool AcceptPrivateImports>
 bool Program::ForEachImport(const ModuleDescriptor& module, auto on_incomplete,
                             std::predicate<ModuleDescriptor*, ModuleDescriptor*> auto f, ModuleDescriptor* via) {
@@ -132,13 +151,13 @@ bool Program::ForEachImport(const ModuleDescriptor& module, auto on_incomplete,
       continue;
     }
 
-    auto imported_module = modules_.find(import);
-    if (imported_module == modules_.end()) {
+    auto* imported_module = GetModule(import);
+    if (!imported_module) {
       report_incomplete();
       continue;
     }
 
-    if (!f(imported_module->second, via)) {
+    if (!f(imported_module, via)) {
       return false;
     }
   }
@@ -147,13 +166,13 @@ bool Program::ForEachImport(const ModuleDescriptor& module, auto on_incomplete,
     if ((!AcceptPrivateImports && !descriptor.is_public) || !descriptor.transit) {
       continue;
     }
-    auto imported_module = modules_.find(import);
-    if (imported_module == modules_.end()) {
+    auto* imported_module = GetModule(import);
+    if (!imported_module) {
       report_incomplete();
       continue;
     }
 
-    if (!ForEachImport<false>(*imported_module->second, on_incomplete, f, via ? via : imported_module->second)) {
+    if (!ForEachImport<false>(*imported_module, on_incomplete, f, via ? via : imported_module)) {
       return false;
     }
   }
@@ -284,6 +303,10 @@ void Program::Crossbind() {
     }
     sf.dirty = false;
   });
+
+  for (auto* program : dependents_) {
+    program->Crossbind();
+  }
 }
 
 }  // namespace vanadium::core

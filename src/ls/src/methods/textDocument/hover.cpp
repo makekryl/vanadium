@@ -41,8 +41,8 @@ std::string BuildMarkdownParameterList(const core::ast::AST& ast, const core::as
 template <>
 rpc::ExpectedResult<lsp::HoverResult> methods::textDocument::hover::operator()(LsContext& ctx,
                                                                                const lsp::HoverParams& params) {
-  const auto path = ctx->FileUriToPath(params.textDocument.uri);
-  const auto* file = ctx->program.GetFile(path);
+  const auto& [subproject, path] = ctx->ResolveFile(params.textDocument.uri);
+  const auto* file = subproject.program.GetFile(path);
 
   const auto* n = core::ast::utils::GetNodeAt(file->ast, file->ast.lines.GetPosition(core::ast::Location{
                                                              .line = params.position.line,

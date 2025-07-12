@@ -17,8 +17,8 @@ namespace vanadium::ls {
 template <>
 rpc::ExpectedResult<lsp::CodeActionResult> methods::textDocument::codeAction::operator()(
     LsContext& ctx, const lsp::CodeActionParams& params) {
-  const auto path = ctx->FileUriToPath(params.textDocument.uri);
-  const auto* file = ctx->program.GetFile(path);
+  const auto& [subproject, path] = ctx->ResolveFile(params.textDocument.uri);
+  const auto* file = subproject.program.GetFile(path);
 
   std::vector<lsp::CodeAction> actions;
 
@@ -37,7 +37,7 @@ rpc::ExpectedResult<lsp::CodeActionResult> methods::textDocument::codeAction::op
                                                              }));
       const auto text = n->On(file->ast.src);
 
-      auto modules = ctx->program.Modules();
+      auto modules = subproject.program.Modules();
       // TODO: multiple modules can provide resolution
       const auto it = std::ranges::find_if(modules, [&](const auto& module) {
         return module.scope->ResolveDirect(text) != nullptr;

@@ -12,7 +12,6 @@
 #include "AST.h"
 #include "ASTNodes.h"
 #include "Arena.h"
-#include "Filesystem.h"
 #include "FunctionRef.h"
 #include "Semantic.h"
 
@@ -111,16 +110,22 @@ class Program {
            });
   }
 
+  void Update(const lib::Consumer<const ProgramModifier&>& modify);
   void Commit(const lib::Consumer<const ProgramModifier&>& modify);
 
-  const ModuleDescriptor* GetModule(std::string_view name) const {
-    const auto it = modules_.find(name);
-    return it == modules_.end() ? nullptr : it->second;
+  const ModuleDescriptor* GetModule(std::string_view name) const;
+  ModuleDescriptor* GetModule(std::string_view name) {
+    return const_cast<ModuleDescriptor*>(static_cast<const Program*>(this)->GetModule(name));
   }
 
   const SourceFile* GetFile(const std::string& path) const {
     const auto it = files_.find(path);
     return it == files_.end() ? nullptr : &it->second;
+  }
+
+  void AddReference(Program* program) {
+    references_.push_back(program);
+    program->dependents_.push_back(this);
   }
 
  private:
@@ -137,6 +142,9 @@ class Program {
 
   std::unordered_map<std::string_view, ModuleDescriptor*> modules_;
   tbb::speculative_spin_mutex modules_mutex_;
+
+  std::vector<Program*> references_;
+  std::vector<Program*> dependents_;
 };
 
 void Bind(SourceFile&);

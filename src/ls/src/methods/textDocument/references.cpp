@@ -21,8 +21,8 @@ namespace vanadium::ls {
 template <>
 rpc::ExpectedResult<lsp::ReferencesResult> methods::textDocument::references::operator()(
     LsContext& ctx, const lsp::ReferenceParams& params) {
-  const auto path = ctx->FileUriToPath(params.textDocument.uri);
-  const auto* file = ctx->program.GetFile(path);
+  const auto& [subproject, path] = ctx->ResolveFile(params.textDocument.uri);
+  const auto* file = subproject.program.GetFile(path);
 
   const auto* n = core::ast::utils::GetNodeAt(file->ast, file->ast.lines.GetPosition(core::ast::Location{
                                                              .line = params.position.line,
