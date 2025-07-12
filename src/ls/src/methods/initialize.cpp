@@ -134,11 +134,11 @@ rpc::ExpectedResult<lsp::InitializeResult> methods::initialize::operator()(LsCon
               .documentHighlightProvider = true,
               .codeActionProvider = true,
               .renameProvider = true,
-              .diagnosticProvider =
-                  lsp::DiagnosticOptions{
-                      .identifier = "vanadium",
-                      .interFileDependencies = true,
-                  },
+              // .diagnosticProvider =
+              //     lsp::DiagnosticOptions{
+              //         .identifier = "vanadium",
+              //         .interFileDependencies = true,
+              //     },
           },
       .serverInfo =
           lsp::ServerInfo{
