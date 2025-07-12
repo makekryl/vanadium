@@ -40,10 +40,7 @@ bool FilesystemDirectory::WriteFile(std::string_view path, std::string_view cont
 namespace {
 void VisitDirectory(const std::filesystem::path &directory,
                     const lib::Consumer<const std::filesystem::path &> &accept) {
-  for (const auto &entry : std::filesystem::directory_iterator(directory)) {
-    if (entry.is_directory()) {
-      VisitDirectory(directory, accept);
-    }
+  for (const auto &entry : std::filesystem::recursive_directory_iterator(directory)) {
     accept(entry.path());
   }
 }
