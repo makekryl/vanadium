@@ -29,7 +29,7 @@ int main() {
   vanadium::lserver::StdioTransport::Setup();
   vanadium::lserver::StdioTransport transport;
 
-  vanadium::ls::Serve(transport, 3, 1);
+  vanadium::ls::Serve(transport, 3, 4);
 
   return 0;
 }
