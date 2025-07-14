@@ -7,6 +7,7 @@
 #include "LanguageServerContext.h"
 #include "LanguageServerConv.h"
 #include "Program.h"
+#include "magic_enum/magic_enum.hpp"
 
 namespace vanadium::ls::domain {
 
@@ -74,25 +75,38 @@ void CollectModuleDiagnostics(LsContext& ctx, const core::Program& program, cons
 
 std::vector<lsp::Diagnostic> CollectDiagnostics(LsContext& ctx, const core::Program& program,
                                                 const core::SourceFile& file) {
-  std::vector<lsp::Diagnostic> diags;
+  std::vector<lsp::Diagnostic> diags;  // TODO: preallocate memory
 
   for (const auto& err : file.ast.errors) {
-    auto& item = diags.emplace_back();
-    item.source = "vanadium";
-    item.severity = lsp::DiagnosticSeverity::kError;
-    item.message = err.description;
-
-    auto loc_begin = file.ast.lines.Translate(err.range.begin);
-    item.range.start = {
-        .line = loc_begin.line,
-        .character = loc_begin.column,
-    };
-    auto loc_end = file.ast.lines.Translate(err.range.end);
-    item.range.end = {
-        .line = loc_end.line,
-        .character = loc_end.column,
-    };
+    diags.emplace_back(lsp::Diagnostic{
+        .range = conv::ToLSPRange(err.range, file.ast),
+        .severity = lsp::DiagnosticSeverity::kError,
+        .code = "syntax",
+        .source = "vanadium",
+        .message = err.description,
+    });
   }
+
+  for (const auto& err : file.semantic_errors) {
+    diags.emplace_back(lsp::Diagnostic{
+        .range = conv::ToLSPRange(err.range, file.ast),
+        .severity = lsp::DiagnosticSeverity::kError,
+        .code = "semantic",
+        .source = "vanadium",
+        .message = magic_enum::enum_name(err.type),  // TODO
+    });
+  }
+
+  for (const auto& err : file.type_errors) {
+    diags.emplace_back(lsp::Diagnostic{
+        .range = conv::ToLSPRange(err.range, file.ast),
+        .severity = lsp::DiagnosticSeverity::kError,
+        .code = "typechecker",
+        .source = "vanadium",
+        .message = err.message,  // TODO
+    });
+  }
+
   if (file.module.has_value()) {
     CollectModuleDiagnostics(ctx, program, file, diags);
   }

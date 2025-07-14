@@ -18,6 +18,7 @@
 #include "LruCache.h"
 #include "Parser.h"
 #include "Semantic.h"
+#include "TypeChecker.h"
 
 namespace vanadium::core {
 
@@ -187,7 +188,6 @@ void Program::Crossbind() {
     module.dependencies[imported_module].emplace_back(dependency);
   };
 
-  // TODO: optimize LruCache to use static buffer
   tbb::parallel_for_each(files_ | std::views::values, [&](SourceFile& sf) {
     if (!sf.dirty) {
       return;
@@ -200,6 +200,7 @@ void Program::Crossbind() {
       });
     };
 
+    // TODO: optimize LruCache to use static buffer
     lib::LruCache<std::string_view, std::pair<const semantic::Symbol*, ModuleDescriptor*>, 128> resolution_cache;
     auto& module = *sf.module;
     //
@@ -301,6 +302,16 @@ void Program::Crossbind() {
         }
       }
     }
+  });
+
+  tbb::parallel_for_each(files_ | std::views::values, [&](SourceFile& sf) {
+    if (!sf.dirty) {
+      return;
+    }
+
+    sf.type_errors.clear();
+    checker::PerformTypeCheck(*sf.module, sf.type_errors);
+
     sf.dirty = false;
   });
 

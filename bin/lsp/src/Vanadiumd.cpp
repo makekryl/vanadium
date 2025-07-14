@@ -18,6 +18,7 @@ void WaitDebugger() {
 
 int main() {
   // WaitDebugger();
+  // std::this_thread::sleep_for(std::chrono::seconds(15));
 
   std::signal(SIGABRT, [](int signum) {
     std::cerr << "STACKTRACE:" << std::endl;

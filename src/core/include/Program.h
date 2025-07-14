@@ -14,6 +14,7 @@
 #include "Arena.h"
 #include "FunctionRef.h"
 #include "Semantic.h"
+#include "TypeChecker.h"
 
 namespace vanadium::core {
 
@@ -71,12 +72,16 @@ struct SourceFile {
 
   ast::AST ast;
   std::vector<semantic::SemanticError> semantic_errors;
+  std::vector<checker::TypeError> type_errors;
 
   std::optional<ModuleDescriptor> module;
 
   bool dirty;
 
   [[nodiscard]] std::string_view Text(const ast::Node* n) const noexcept {
+    return ast.Text(n);
+  }
+  [[nodiscard]] std::string_view Text(const ast::Node& n) const noexcept {
     return ast.Text(n);
   }
 };

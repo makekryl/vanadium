@@ -129,8 +129,11 @@ class Binder {
 
   bool Inspect(const ast::Node*);
 
-  std::string_view Lit(const ast::nodes::Ident* ident) const {
+  [[nodiscard]] std::string_view Lit(const ast::nodes::Ident* ident) const {
     return ident->On(sf_.ast.src);
+  }
+  [[nodiscard]] std::string_view Lit(const ast::nodes::Ident& ident) const {
+    return Lit(&ident);
   }
 
   void BindReference(const ast::nodes::Ident* ident) {
@@ -438,12 +441,18 @@ bool Binder::Inspect(const ast::Node* n) {
 
       auto& members = NewSymbolTable();
       for (const auto* item : m->enums) {
-        if (item->nkind == ast::NodeKind::Ident) {
-          // TODO flags
+        const ast::nodes::Ident* valname{nullptr};
+        if (item->nkind == ast::NodeKind::Ident) [[likely]] {
+          valname = item->As<ast::nodes::Ident>();
+        } else if (item->nkind == ast::NodeKind::CallExpr) {
+          valname = item->As<ast::nodes::CallExpr>()->fun->As<ast::nodes::Ident>();
+        }
+
+        if (valname != nullptr) [[likely]] {
           AddSymbol(members, semantic::Symbol{
-                                 Lit(item->As<ast::nodes::Ident>()),
-                                 item,
-                                 SymbolFlags::kField,
+                                 Lit(valname),
+                                 valname,
+                                 SymbolFlags::kEnumValue,
                              });
         }
       }

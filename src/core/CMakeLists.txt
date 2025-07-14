@@ -4,6 +4,7 @@ add_library(vanadium_core STATIC
   src/Parser.cpp
   src/Scanner.cpp
   src/Binder.cpp
+  src/TypeChecker.cpp
   src/Program.cpp
   src/utils/FileReader.cpp
 )
