@@ -684,7 +684,7 @@ Node* Parser::ParsePortAttribute() {
     default:
       EmitErrorExpected("port attribute");
       Advance(kTokStmtStart);
-      return nullptr;  // errornode
+      return NewErrorNode<Node>();
   }
 }
 
@@ -884,7 +884,7 @@ nodes::TypeSpec* Parser::ParseTypeSpec() {
       return ParseBehaviourSpec();
     default:
       EmitErrorExpected("type definition");
-      return nullptr;  // todo: errornode
+      return NewErrorNode<nodes::TypeSpec>();
   }
 }
 
@@ -1423,7 +1423,7 @@ nodes::Expr* Parser::ParseWithQualifier() {
     default:
       EmitErrorExpected("with-qualifier");
       Advance(kTokStmtStart);
-      return nullptr;  // todo: errornode?
+      return NewErrorNode<nodes::Expr>();
   }
 }
 
@@ -1560,7 +1560,7 @@ nodes::Stmt* Parser::ParseStmt() {
     default:
       EmitErrorExpected("statement");
       Advance(kTokStmtStart);
-      return nullptr;  // todo errornode?
+      return NewErrorNode<nodes::Stmt>();
   }
 }
 
@@ -2011,7 +2011,7 @@ nodes::Expr* Parser::ParseOperand() {
 
     default:
       EmitErrorExpected("operand");
-      return nullptr;  // todo: maybe errornode
+      return NewErrorNode<nodes::Expr>();
   }
 }
 
@@ -2517,6 +2517,12 @@ T* Parser::NewNode(Initializer f) {
   //
   last_node_ = top;
   return p;
+}
+
+template <typename ConcreteNode>
+  requires std::is_base_of_v<Node, ConcreteNode>
+ConcreteNode* Parser::NewErrorNode() {
+  return arena_->Alloc<ConcreteNode>(NodeKind::ErrorNode);
 }
 
 }  // namespace parser

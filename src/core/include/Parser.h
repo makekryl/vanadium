@@ -2,6 +2,7 @@
 
 #include <set>
 #include <string_view>
+#include <type_traits>
 
 #include "AST.h"
 #include "ASTNodes.h"
@@ -167,6 +168,10 @@ class Parser {
   template <typename T, typename Initializer>
     requires std::is_invocable_v<Initializer, T&>
   T* NewNode(Initializer f);
+
+  template <typename ConcreteNode>
+    requires std::is_base_of_v<Node, ConcreteNode>
+  ConcreteNode* NewErrorNode();
 
   Node* last_node_{nullptr};
 

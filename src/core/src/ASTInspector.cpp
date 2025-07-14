@@ -18,6 +18,8 @@ void Node::Accept(const NodeInspector& inspector) const {
     FORWARD_ACCEPT(NameIdent)
     FORWARD_ACCEPT(DeclStmt)
     FORWARD_ACCEPT(ExprStmt)
+    case NodeKind::ErrorNode:
+      break;
 #include "gen/ASTInspector.inc"
     default:
       assert(false && "unhandled node kind in inspector code");

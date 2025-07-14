@@ -194,6 +194,7 @@ enum class TokenKind : std::uint8_t {
 // NOLINTBEGIN(readability-identifier-naming)
 enum class NodeKind : std::uint8_t {
   Root,
+  ErrorNode,
 
   Ident,
   CompositeIdent,
@@ -360,7 +361,7 @@ struct DeclStmt : Stmt {
   Decl* decl;
 
   void Accept(const NodeInspector& inspector) const {
-    decl->As<Node>()->Accept(inspector);  // TODO: maybe reduce scope
+    Inspect(decl, inspector);
   }
 };
 struct ExprStmt : Stmt {
@@ -369,7 +370,7 @@ struct ExprStmt : Stmt {
   Expr* expr;
 
   void Accept(const NodeInspector& inspector) const {
-    expr->As<Node>()->Accept(inspector);  // TODO: maybe reduce scope
+    Inspect(expr, inspector);
   }
 };
 
