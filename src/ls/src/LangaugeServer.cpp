@@ -1,3 +1,4 @@
+#include <chrono>
 #include <cstdlib>
 #include <glaze/ext/jsonrpc.hpp>
 #include <glaze/util/expected.hpp>
@@ -51,12 +52,17 @@ void Serve(lserver::Transport& transport, std::size_t concurrency, std::size_t j
     std::lock_guard l(m);  // TODO: PoC, this efficiently prevents concurrency - add RWmutexes to Program
 
     std::println(stderr, "PROCEED: {}", token->buf.substr(0, 128));
+    const auto begin_ts = std::chrono::steady_clock::now();
 
-    std::string serialized_response;  // TODO: use buf from token
+    std::string serialized_response;  // TODO: use preallocated buf from token, it may require patching glz::rpc
     ctx->task_arena.execute([&] {
       serialized_response = rpc_server.call(token->buf);
     });
     ctx->GetTemporaryArena().Reset();
+
+    const auto end_ts = std::chrono::steady_clock::now();
+    std::println(stderr, "  ---> Completed in {} ms",
+                 std::chrono::duration_cast<std::chrono::milliseconds>(end_ts - begin_ts).count());
 
     if (serialized_response.empty()) {
       return;
