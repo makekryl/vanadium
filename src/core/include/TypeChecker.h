@@ -18,8 +18,11 @@ class Scope;
 namespace checker {
 
 namespace utils {
-const ast::nodes::FormalPars* GetCallableDeclParams(const ast::nodes::Decl*);
-const semantic::Symbol* GetCallableReturnType(const SourceFile&, const ast::nodes::Decl*);
+[[nodiscard]] std::string_view GetReadableTypeName(const SourceFile&, const semantic::Symbol*);
+[[nodiscard]] const semantic::Symbol* GetIdentType(const SourceFile&, const semantic::Scope*, const ast::nodes::Ident*);
+[[nodiscard]] const semantic::Symbol* GetCallableReturnType(const SourceFile&, const ast::nodes::Decl*);
+[[nodiscard]] const semantic::Symbol* GetSelectorExprType(const SourceFile&, const semantic::Scope*,
+                                                          const ast::nodes::SelectorExpr*);
 }  // namespace utils
 
 struct TypeError {
@@ -27,6 +30,7 @@ struct TypeError {
   std::string message;  // TODO: get rid of string
 };
 
+const semantic::Symbol* GetEffectiveType(const SourceFile&, const semantic::Scope*, const ast::Node*);
 const semantic::Symbol* DeduceExpressionType(const SourceFile&, const ast::nodes::Expr*);
 
 void PerformTypeCheck(const ModuleDescriptor& module, std::vector<TypeError>& errors);

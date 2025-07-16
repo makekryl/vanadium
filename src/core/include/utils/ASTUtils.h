@@ -6,6 +6,17 @@
 namespace vanadium::core::ast {
 namespace utils {
 
+inline const ast::nodes::FormalPars* GetCallableDeclParams(const ast::nodes::Decl* decl) {
+  switch (decl->nkind) {
+    case ast::NodeKind::FuncDecl:
+      return decl->As<ast::nodes::FuncDecl>()->params;
+    case ast::NodeKind::TemplateDecl:
+      return decl->As<ast::nodes::TemplateDecl>()->params;
+    default:
+      return nullptr;
+  }
+}
+
 inline const Node* TraverseSelectorExpressionStart(const nodes::SelectorExpr* se) {
   while (se->x->nkind == core::ast::NodeKind::SelectorExpr) {
     se = se->x->As<core::ast::nodes::SelectorExpr>();

@@ -1738,6 +1738,7 @@ nodes::Expr* Parser::ParseBinaryExpr(int prec) {
         ConsumeInvariant(TokenKind::ASSIGN);
         be.value = ParseBinaryExpr(prec + 1);
       });
+      x->nrange.begin = x->As<nodes::AssignmentExpr>()->property->nrange.begin;
       continue;
     }
 
