@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <stack>
+#include <string_view>
 #include <type_traits>
 #include <utility>
 
@@ -45,7 +46,7 @@ const semantic::Symbol* GetCallableReturnType(const SourceFile& file, const ast:
 
 namespace {
 template <typename ConcreteNode, auto PropertyPtr>
-  requires std::is_base_of_v<ast::Node, ConcreteNode>
+  requires ast::IsNode<ConcreteNode>
 const semantic::Symbol* ResolveTypeVia(const SourceFile& file, const ast::Node* n) {
   const auto* m = n->As<ConcreteNode>();
   const auto* decl_file = ast::utils::SourceFileOf(m);
@@ -94,17 +95,20 @@ class BasicTypeChecker {
   const semantic::Symbol* CheckType(const ast::Node* n, const semantic::Symbol* expected_type = nullptr);
   bool Inspect(const ast::Node*);
 
+  void VisitChildren(const ast::Node* n) {
+    n->Accept(inspector_);
+  }
   void Visit(const ast::Node* n) {
     if (Inspect(n)) {
-      n->Accept(inspector_);
+      VisitChildren(n);
     }
   }
 
-  void MaybeVisit(const ast::Node* n) {
-    if (n != nullptr) {
-      Visit(n);
-    }
-  }
+  template <typename TParamDescriptorNode>
+    requires ast::IsNode<TParamDescriptorNode>
+  void PerformArgumentsTypeCheck(std::span<const ast::nodes::Expr* const> args, const ast::Range& args_range,
+                                 const SourceFile* params_file, std::span<const TParamDescriptorNode* const> params,
+                                 std::predicate<const TParamDescriptorNode*> auto is_param_required);
 
   const ModuleDescriptor& module_;
   std::vector<TypeError>& errors_;
@@ -113,6 +117,89 @@ class BasicTypeChecker {
   const ast::NodeInspector inspector_;
 };
 
+template <typename TParamDescriptorNode>
+  requires ast::IsNode<TParamDescriptorNode>
+void BasicTypeChecker::PerformArgumentsTypeCheck(std::span<const ast::nodes::Expr* const> args,
+                                                 const ast::Range& args_range, const SourceFile* params_file,
+                                                 std::span<const TParamDescriptorNode* const> params,
+                                                 std::predicate<const TParamDescriptorNode*> auto is_param_required) {
+  const auto args_count = args.size();
+
+  const auto minimal_args_cnt = static_cast<std::size_t>(std::ranges::count_if(params, is_param_required));
+  const auto maximal_args_cnt = params.size();
+
+  if (args_count < minimal_args_cnt || args_count > maximal_args_cnt) {
+    errors_.emplace_back(TypeError{
+              .range = (args_count < minimal_args_cnt) ?
+                  ast::Range{
+                      .begin = args_range.end - 1,
+                      .end = args_range.end,  // closing paren
+                  } : args_range,
+              .message = std::format("{} arguments expected, {} provided", minimal_args_cnt, args_count),
+          });
+  }
+
+  const auto check_argument = [&](const TParamDescriptorNode* param, const ast::Node* n) {
+    const auto* exp_sym = params_file->module->scope->Resolve(params_file->Text(param->type));
+    const auto* actual_sym = CheckType(n, exp_sym);
+    if (exp_sym != actual_sym) {
+      errors_.emplace_back(TypeError{
+          .range = n->nrange,
+          .message = std::format(
+              "type mismatch, todo: show type names in='{}' vs ref='{}'",
+              actual_sym == nullptr
+                  ? "nullptr"
+                  : ast::utils::SourceFileOf(actual_sym->Declaration())->Text(actual_sym->Declaration()),
+              exp_sym == nullptr ? "nullptr"
+                                 : ast::utils::SourceFileOf(exp_sym->Declaration())->Text(exp_sym->Declaration())),
+      });
+    }
+  };
+
+  bool seen_named_argument{false};
+  for (std::size_t i = 0; i < args_count; ++i) {
+    const auto* argnode = args[i];
+    switch (argnode->nkind) {
+      case ast::NodeKind::AssignmentExpr: {
+        const auto* ae = argnode->As<ast::nodes::AssignmentExpr>();
+        seen_named_argument = true;
+
+        if (ae->property->nkind != ast::NodeKind::Ident) [[unlikely]] {
+          errors_.emplace_back(TypeError{
+              .range = ae->nrange,
+              .message = "check if this even a valid syntax, it should not be a valid syntax [ f(g() := 1) ]",
+          });
+          continue;
+        }
+
+        const auto propname = module_.sf->Text(ae->property);
+        for (const auto* param : params) {
+          if (!param->name || params_file->Text(*param->name) != propname) {
+            continue;
+          }
+          check_argument(param, ae->value);
+        }
+
+        break;
+      }
+      default: {
+        if (seen_named_argument) {
+          errors_.emplace_back(TypeError{
+              .range = argnode->nrange,
+              .message = "positional arguments cannot follow named arguments",
+          });
+        }
+        if (i >= minimal_args_cnt) {
+          Visit(argnode);
+          continue;
+        }
+        check_argument(params[i], argnode);
+        break;
+      }
+    }
+  }
+}
+
 const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const semantic::Symbol* expected_type) {
   const semantic::Symbol* resulting_type{nullptr};
   switch (n->nkind) {
@@ -120,6 +207,7 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
       const auto* m = n->As<ast::nodes::CallExpr>();
       const auto* callee_sym = DeduceExpressionType(*module_.sf, m);
       if (!callee_sym) {
+        VisitChildren(m);
         break;
       }
 
@@ -131,91 +219,25 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
       //
 
       const ast::nodes::FormalPars* params = utils::GetCallableDeclParams(callee_decl);
-
-      const auto minimal_args_cnt =
-          static_cast<std::size_t>(std::ranges::count_if(params->list, [](const ast::nodes::FormalPar* par) {
-            return par->value == nullptr;
-          }));
-      const auto maximal_args_cnt = params->list.size();
-      const auto provided_args_cnt = m->args->list.size();
-
-      if (provided_args_cnt < minimal_args_cnt || provided_args_cnt > maximal_args_cnt) {
-        errors_.emplace_back(TypeError{
-              .range = (provided_args_cnt < minimal_args_cnt) ?
-                  ast::Range{
-                      .begin = m->args->nrange.end - 1,
-                      .end = m->args->nrange.end,  // closing paren
-                  } : m->args->nrange,
-              .message = std::format("{} arguments expected, {} provided", minimal_args_cnt, provided_args_cnt),
-          });
+      if (!params) {
+        VisitChildren(m);
+        break;
       }
 
-      const auto check_arg = [&](const ast::nodes::FormalPar* par, const ast::Node* n) {
-        const auto* exp_sym = callee_sym->OriginatedScope()->Resolve(callee_file->Text(par->type));
-        const auto* actual_sym = CheckType(n, exp_sym);
-        if (exp_sym != actual_sym) {
-          errors_.emplace_back(TypeError{
-              .range = n->nrange,
-              .message = std::format(
-                  "type mismatch, todo: show type names in='{}' vs ref='{}'",
-                  actual_sym == nullptr
-                      ? "nullptr"
-                      : ast::utils::SourceFileOf(actual_sym->Declaration())->Text(actual_sym->Declaration()),
-                  exp_sym == nullptr ? "nullptr"
-                                     : ast::utils::SourceFileOf(exp_sym->Declaration())->Text(exp_sym->Declaration())),
-          });
-        }
-      };
+      PerformArgumentsTypeCheck<ast::nodes::FormalPar>(m->args->list, m->args->nrange, callee_file, params->list,
+                                                       [](const ast::nodes::FormalPar* param) {
+                                                         return param->value == nullptr;
+                                                       });
 
-      const auto argcnt = m->args->list.size();
-      bool seen_explicit_assignment{false};
-      for (std::size_t i = 0; i < argcnt; ++i) {
-        const auto* argnode = m->args->list[i];
-        switch (argnode->nkind) {
-          case ast::NodeKind::AssignmentExpr: {
-            const auto* ae = argnode->As<ast::nodes::AssignmentExpr>();
-            if (ae->property->nkind != ast::NodeKind::Ident) [[unlikely]] {
-              errors_.emplace_back(TypeError{
-                  .range = ae->nrange,
-                  .message = "check if this even a valid syntax, it should not be a valid syntax [ f(g() := 1) ]",
-              });
-              continue;
-            }
-
-            seen_explicit_assignment = true;
-
-            const auto propname = module_.sf->Text(ae->property);
-            for (const auto* par : params->list) {
-              if (!par->name || callee_file->Text(*par->name) != propname) {
-                continue;
-              }
-              check_arg(par, ae->value);
-            }
-
-            break;
-          }
-          default: {
-            if (seen_explicit_assignment) {
-              errors_.emplace_back(TypeError{
-                  .range = argnode->nrange,
-                  .message = "positional arguments can't be placed after (how explicit args called?)",
-              });
-            }
-            if (i >= minimal_args_cnt) {
-              Visit(argnode);
-              continue;
-            }
-            check_arg(params->list[i], argnode);
-            break;
-          }
-        }
-      }
       break;
     }
 
     case ast::NodeKind::CompositeLiteral: {
       const auto* m = n->As<ast::nodes::CompositeLiteral>();
-      if (!expected_type) break;
+      if (!expected_type) {
+        VisitChildren(m);
+        break;
+      }
 
       if (!(expected_type->Flags() & semantic::SymbolFlags::kStructure)) {
         errors_.emplace_back(TypeError{
@@ -231,86 +253,16 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
       //
 
       const auto* record_decl = record_sym->Declaration()->As<ast::nodes::StructTypeDecl>();
+      if (!record_decl) {
+        VisitChildren(m);
+        break;
+      }
+
       const auto* record_file = ast::utils::SourceFileOf(record_decl);
-
-      const auto minimal_args_cnt =
-          static_cast<std::size_t>(std::ranges::count_if(record_decl->fields, [](const ast::nodes::Field* f) {
-            return !f->optional.has_value() || !(*f->optional);
-          }));
-      const auto maximal_args_cnt = record_decl->fields.size();
-      const auto provided_args_cnt = m->list.size();
-
-      if (provided_args_cnt < minimal_args_cnt || provided_args_cnt > maximal_args_cnt) {
-        errors_.emplace_back(TypeError{
-              .range = (provided_args_cnt < minimal_args_cnt) ?
-                  ast::Range{
-                      .begin = m->nrange.end - 1,
-                      .end = m->nrange.end,  // closing paren
-                  } : m->nrange,
-              .message = std::format("{} arguments expected, {} provided", minimal_args_cnt, provided_args_cnt),
-          });
-      }
-
-      const auto check_arg = [&](const ast::nodes::Field* field, const ast::Node* n) {
-        const auto* exp_sym = record_sym->Members()->Lookup(record_file->Text(field->type));
-        const auto* actual_sym = CheckType(n, exp_sym);
-        if (exp_sym != actual_sym) {
-          errors_.emplace_back(TypeError{
-              .range = n->nrange,
-              .message = std::format(
-                  "type mismatch, todo: show type names in='{}' vs ref='{}'",
-                  actual_sym == nullptr
-                      ? "nullptr"
-                      : ast::utils::SourceFileOf(actual_sym->Declaration())->Text(actual_sym->Declaration()),
-                  exp_sym == nullptr ? "nullptr"
-                                     : ast::utils::SourceFileOf(exp_sym->Declaration())->Text(exp_sym->Declaration())),
-          });
-        }
-      };
-
-      const auto argcnt = m->list.size();
-      bool seen_explicit_assignment{false};
-      for (std::size_t i = 0; i < argcnt; ++i) {
-        const auto* argnode = m->list[i];
-        switch (argnode->nkind) {
-          case ast::NodeKind::AssignmentExpr: {
-            const auto* ae = argnode->As<ast::nodes::AssignmentExpr>();
-            if (ae->property->nkind != ast::NodeKind::Ident) [[unlikely]] {
-              errors_.emplace_back(TypeError{
-                  .range = ae->nrange,
-                  .message = "check if this even a valid syntax, it should not be a valid syntax [ f(g() := 1) ]",
-              });
-              continue;
-            }
-
-            seen_explicit_assignment = true;
-
-            const auto propname = module_.sf->Text(ae->property);
-            for (const auto* par : record_decl->fields) {
-              if (!par->name || record_file->Text(*par->name) != propname) {
-                continue;
-              }
-              check_arg(par, ae->value);
-            }
-
-            break;
-          }
-          default: {
-            if (seen_explicit_assignment) {
-              errors_.emplace_back(TypeError{
-                  .range = argnode->nrange,
-                  .message = "positional arguments can't be placed after (how explicit args called?)",
-              });
-            }
-            if (i >= minimal_args_cnt) {
-              Visit(argnode);
-              continue;
-            }
-            check_arg(record_decl->fields[i], argnode);
-            break;
-          }
-        }
-      }
+      PerformArgumentsTypeCheck<ast::nodes::Field>(m->list, m->nrange, record_file, record_decl->fields,
+                                                   [](const ast::nodes::Field* field) {
+                                                     return !field->optional.has_value() || !(*field->optional);
+                                                   });
 
       break;
     }

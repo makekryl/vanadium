@@ -170,7 +170,7 @@ class Parser {
   T* NewNode(Initializer f);
 
   template <typename ConcreteNode>
-    requires std::is_base_of_v<Node, ConcreteNode>
+    requires IsNode<ConcreteNode>
   ConcreteNode* NewErrorNode();
 
   Node* last_node_{nullptr};

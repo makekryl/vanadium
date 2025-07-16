@@ -74,7 +74,7 @@ class Binder {
   }
 
   template <class ConcreteNode>
-    requires std::is_base_of_v<ast::Node, ConcreteNode>
+    requires ast::IsNode<ConcreteNode>
   void Visit(const std::vector<ConcreteNode*>& nodes) {
     for (const auto* n : nodes) {
       Visit(n);

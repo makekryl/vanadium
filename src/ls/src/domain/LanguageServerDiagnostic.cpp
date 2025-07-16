@@ -76,6 +76,7 @@ void CollectModuleDiagnostics(LsContext& ctx, const core::Program& program, cons
 std::vector<lsp::Diagnostic> CollectDiagnostics(LsContext& ctx, const core::Program& program,
                                                 const core::SourceFile& file) {
   std::vector<lsp::Diagnostic> diags;  // TODO: preallocate memory
+  diags.reserve(256);                  // this is not real
 
   for (const auto& err : file.ast.errors) {
     diags.emplace_back(lsp::Diagnostic{

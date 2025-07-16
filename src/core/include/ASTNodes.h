@@ -310,6 +310,11 @@ struct Token {
   }
 };
 
+struct Node;
+
+template <typename T>
+concept IsNode = std::is_base_of_v<Node, T>;
+
 struct Node {
   Node(NodeKind nkind_) : nkind(nkind_) {}
 
@@ -328,13 +333,13 @@ struct Node {
   }
 
   template <typename DerivedNode>
-    requires std::is_base_of_v<Node, DerivedNode>
+    requires IsNode<DerivedNode>
   DerivedNode* As() {
     return static_cast<DerivedNode*>(this);
   }
 
   template <typename DerivedNode>
-    requires std::is_base_of_v<Node, DerivedNode>
+    requires IsNode<DerivedNode>
   [[nodiscard]] const DerivedNode* As() const {
     return static_cast<const DerivedNode*>(this);
   }

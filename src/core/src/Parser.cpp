@@ -2520,7 +2520,7 @@ T* Parser::NewNode(Initializer f) {
 }
 
 template <typename ConcreteNode>
-  requires std::is_base_of_v<Node, ConcreteNode>
+  requires IsNode<ConcreteNode>
 ConcreteNode* Parser::NewErrorNode() {
   return arena_->Alloc<ConcreteNode>(NodeKind::ErrorNode);
 }
