@@ -18,27 +18,25 @@ inline lsp::Position ToLSPPosition(const core::ast::Location& loc) {
   };
 }
 
-inline lsp::Position ToLSPosition(const core::ast::AST& ast, core::ast::pos_t pos) {
-  const core::ast::pos_t line = ast.lines.LineOf(pos);
-
-  std::uint32_t character{0};
-  // for (char c : ast.src.substr(ast.lines.StartOf(line), pos)) {
-  //   if (c >= 0xd800 && c <= 0xdbff)
-  //     string_pos += 2;
-  //   else
-  //     ++string_pos;
-  // }
-
-  return {
-      .line = line,
-      .character = character,
-  };
-}
-
 inline lsp::Range ToLSPRange(const core::ast::Range& range, const core::ast::AST& ast) {
   return lsp::Range{
       .start = ToLSPPosition(ast.lines.Translate(range.begin)),
       .end = ToLSPPosition(ast.lines.Translate(range.end)),
+  };
+}
+
+inline core::ast::Location FromLSPPosition(const lsp::Position& pos) {
+  // TODO: UTF-16
+  return core::ast::Location{
+      .line = pos.line,
+      .column = pos.character,
+  };
+}
+
+inline core::ast::Range FromLSPRange(const lsp::Range& range, const core::ast::AST& ast) {
+  return core::ast::Range{
+      .begin = ast.lines.GetPosition(FromLSPPosition(range.start)),
+      .end = ast.lines.GetPosition(FromLSPPosition(range.end)),
   };
 }
 

@@ -70,7 +70,9 @@ struct SourceFile {
   lib::Arena arena;
   std::string path;
 
+  std::string src;
   ast::AST ast;
+
   std::vector<semantic::SemanticError> semantic_errors;
   std::vector<checker::TypeError> type_errors;
 
@@ -88,7 +90,7 @@ struct SourceFile {
 
 class Program {
  public:
-  using FileReadFn = lib::FunctionRef<std::string_view(std::string_view, lib::Arena&)>;
+  using FileReadFn = lib::FunctionRef<void(std::string_view, std::string&)>;
 
   Program() = default;
 

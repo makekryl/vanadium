@@ -64,7 +64,8 @@ void Program::UpdateFile(const std::string& path, const FileReadFn& read) {
     sf.arena.Reset();
   }
 
-  sf.ast = ast::Parse(sf.arena, read(path, sf.arena));
+  read(path, sf.src);
+  sf.ast = ast::Parse(sf.arena, sf.src);
   sf.ast.root->file = &sf;
 
   AttachFile(sf);

@@ -1,7 +1,9 @@
 #include <string_view>
+#include <variant>
 
 #include "LSProtocol.h"
 #include "LanguageServerContext.h"
+#include "LanguageServerConv.h"
 #include "LanguageServerMethods.h"
 #include "domain/LanguageServerDiagnostic.h"
 
@@ -10,9 +12,24 @@ template <>
 void methods::textDocument::didChange::operator()(LsContext& ctx, const lsp::DidChangeTextDocumentParams& params) {
   const auto& [subproject, path] = ctx->ResolveFile(params.textDocument.uri);
 
-  const auto read_file = [&](std::string_view, vanadium::lib::Arena& arena) -> std::string_view {
-    const auto new_text = std::get<lsp::TextDocumentContentChangeWholeDocument>(params.contentChanges[0]);
-    return *arena.Alloc<std::string>(std::move(new_text.text));
+  const auto read_file = [&](std::string_view, std::string& srcbuf) -> void {
+    if (params.contentChanges.size() == 1 &&
+        std::holds_alternative<lsp::TextDocumentContentChangeWholeDocument>(params.contentChanges.front())) {
+      const auto& revision = std::get<lsp::TextDocumentContentChangeWholeDocument>(params.contentChanges.front());
+      srcbuf = std::move(revision.text);
+      return;
+    }
+
+    const auto* sf = subproject.program.GetFile(path);
+
+    for (const auto& v : params.contentChanges) {
+      assert(std::holds_alternative<lsp::TextDocumentContentChangePartial>(v));
+
+      const auto& change = std::get<lsp::TextDocumentContentChangePartial>(params.contentChanges.front());
+
+      const auto range = conv::FromLSPRange(change.range, sf->ast);
+      srcbuf.replace(range.begin, range.Length(), change.text);
+    }
   };
   subproject.program.Commit([&](auto& modify) {
     modify.update(path, read_file);

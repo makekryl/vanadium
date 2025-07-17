@@ -11,8 +11,8 @@ template <>
 void methods::textDocument::didOpen::operator()(LsContext& ctx, const lsp::DidOpenTextDocumentParams& params) {
   const auto& [subproject, path] = ctx->ResolveFile(params.textDocument.uri);
 
-  const auto read_file = [&](std::string_view, vanadium::lib::Arena& arena) -> std::string_view {
-    return *arena.Alloc<std::string>(std::move(params.textDocument.text));
+  const auto read_file = [&](std::string_view, std::string& srcbuf) {
+    srcbuf = std::move(params.textDocument.text);
   };
   subproject.program.Commit([&](auto& modify) {
     modify.update(path, read_file);

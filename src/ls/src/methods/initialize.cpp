@@ -20,9 +20,10 @@ void InitSubproject(SubprojectEntry& subproject, std::string path, std::unique_p
   subproject.dir = std::move(dir);
   subproject.references = std::move(references);
 
-  const auto read_file = [&](std::string_view path, vanadium::lib::Arena& arena) -> std::string_view {
+  const auto read_file = [&](std::string_view path, std::string& srcbuf) -> void {
     const auto contents = subproject.dir->ReadFile(path, [&](std::size_t size) {
-      return arena.AllocStringBuffer(size).data();
+      srcbuf.resize(size);
+      return srcbuf.data();
     });
     if (!contents) {
       // TODO, +requires IDirectory::ReadFile signature modification
@@ -30,7 +31,6 @@ void InitSubproject(SubprojectEntry& subproject, std::string path, std::unique_p
       std::fflush(stderr);
       std::abort();
     }
-    return *contents;
   };
 
   subproject.program.Update([&](const auto& modify) {
@@ -122,7 +122,7 @@ rpc::ExpectedResult<lsp::InitializeResult> methods::initialize::operator()(LsCon
   return lsp::InitializeResult{
       .capabilities =
           lsp::ServerCapabilities{
-              .textDocumentSync = lsp::TextDocumentSyncKind::kFull,
+              .textDocumentSync = lsp::TextDocumentSyncKind::kIncremental,
               .completionProvider =
                   lsp::CompletionOptions{
                       .triggerCharacters = {{"."}},
