@@ -1,7 +1,7 @@
 #include "TypeChecker.h"
 
 #include <algorithm>
-#include <stack>
+#include <cstdlib>
 #include <string_view>
 #include <type_traits>
 #include <utility>
@@ -150,6 +150,36 @@ const semantic::Symbol* GetSelectorExprType(const SourceFile& sf, const semantic
   };
   return extractor.ExtractSelectorExprType(se);
 }
+
+std::optional<std::pair<std::size_t, std::size_t>> GetLengthExprBounds(const SourceFile* sf,
+                                                                       const ast::nodes::LengthExpr* lc) {
+  if (!lc->size || lc->size->nkind != ast::NodeKind::ParenExpr) {
+    return std::nullopt;
+  }
+
+  const auto* pe = lc->size->As<ast::nodes::ParenExpr>();
+  if (pe->list.size() != 1 || pe->list.front()->nkind != ast::NodeKind::BinaryExpr) {
+    return std::nullopt;
+  }
+
+  const auto* be = pe->list.front()->As<ast::nodes::BinaryExpr>();
+  const auto lo_str = sf->Text(be->x);
+  std::size_t min_args{};
+  if (std::from_chars(lo_str.data(), lo_str.data() + lo_str.size(), min_args).ec != std::errc{}) {
+    return std::nullopt;
+  }
+
+  const auto hi_str = sf->Text(be->y);
+  std::size_t max_args{};
+  if (hi_str == "infinity") {
+    max_args = static_cast<std::size_t>(-1);
+  } else if (std::from_chars(hi_str.data(), hi_str.data() + hi_str.size(), max_args).ec != std::errc{}) {
+    return std::nullopt;
+  }
+
+  return std::make_pair(min_args, max_args);
+}
+
 }  // namespace utils
 
 const semantic::Symbol* GetEffectiveType(const SourceFile& sf, const semantic::Scope* scope, const ast::Node* n) {
@@ -368,19 +398,48 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
         break;
       }
 
-      if (!(desired_type->Flags() & semantic::SymbolFlags::kStructure)) {
-        errors_.emplace_back(TypeError{
-            .range = m->nrange,
-            .message = "expected non structural type, todo",
-        });
+      if (!(desired_type->Flags() & (semantic::SymbolFlags::kStructure | semantic::SymbolFlags::kSubType))) {
+        //
+        resulting_type = desired_type;
+        //
         break;
       }
+
+      if (desired_type->Flags() & semantic::SymbolFlags::kSubType) {
+        const auto* subtype_sym = desired_type;
+        const auto* subtype_decl = subtype_sym->Declaration()->As<ast::nodes::SubTypeDecl>();
+        if (!subtype_decl) {
+          Introspect(m);
+          break;
+        }
+        const auto* subtype_file = ast::utils::SourceFileOf(subtype_decl);
+
+        const auto* f = subtype_decl->field;
+        if (f->type->nkind == ast::NodeKind::ListSpec) {
+          const auto* ls = f->type->As<ast::nodes::ListSpec>();
+          if (ls->length) {
+            const auto& bounds_opt = utils::GetLengthExprBounds(subtype_file, ls->length);
+            if (bounds_opt) {
+              const auto& [min_args, max_args] = *bounds_opt;
+              const auto args_count = m->list.size();
+              if (args_count < min_args || args_count > max_args) {
+                errors_.emplace_back(TypeError{
+                    .range =
+                        ast::Range{
+                            .begin = m->nrange.end - 1,
+                            .end = m->nrange.end,  // closing paren
+                        },
+                    .message = std::format("elements count is required to be in between {} and {}", min_args, max_args),
+                });
+              }
+            }
+          }
+        }
+
+        break;
+      }
+
       const auto* record_sym = desired_type;
-
-      //
-      resulting_type = record_sym;
-      //
-
       const auto* record_decl = record_sym->Declaration()->As<ast::nodes::StructTypeDecl>();
       if (!record_decl) {
         Introspect(m);
@@ -423,20 +482,6 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
       break;
     }
 
-    case ast::NodeKind::SubTypeDecl: {
-      const auto* m = n->As<ast::nodes::SubTypeDecl>();
-      const auto* f = m->field;
-
-      if (f->value_constraint) {
-        const auto* sym = scope_->Resolve(module_.sf->Text(*f->type->As<ast::nodes::RefSpec>()->x));
-        for (const auto* item : f->value_constraint->list) {
-          CheckType(item, sym);
-        }
-      }
-
-      break;
-    }
-
     case ast::NodeKind::Ident: {
       resulting_type = utils::GetIdentType(*module_.sf, scope_, n->As<ast::nodes::Ident>());
       break;
@@ -474,7 +519,39 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
         const auto* actual_type = CheckType(decl->value, expected_type);
         MatchTypes(decl->nrange, actual_type, expected_type);
       }
+      break;
     };
+
+    case ast::NodeKind::SubTypeDecl: {
+      const auto* m = n->As<ast::nodes::SubTypeDecl>();
+      const auto* f = m->field;
+
+      if (f->type->nkind == ast::NodeKind::ListSpec) {
+        const auto* ls = f->type->As<ast::nodes::ListSpec>();
+        if (ls->length) {
+          const auto& bounds_opt = utils::GetLengthExprBounds(module_.sf, ls->length);
+          if (bounds_opt) {
+            const auto& [min_args, max_args] = *bounds_opt;
+            if (min_args > max_args) {
+              errors_.emplace_back(TypeError{
+                  .range = ls->length->nrange,
+                  .message = "lower bound cannot exceed the highest",
+              });
+              break;
+            }
+          }
+        }
+      }
+
+      if (f->value_constraint && f->type->nkind == ast::NodeKind::RefSpec) {
+        const auto* sym = scope_->Resolve(module_.sf->Text(*f->type->As<ast::nodes::RefSpec>()->x));
+        for (const auto* item : f->value_constraint->list) {
+          CheckType(item, sym);
+        }
+      }
+
+      break;
+    }
 
     default:
       break;

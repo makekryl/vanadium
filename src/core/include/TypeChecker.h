@@ -23,6 +23,8 @@ namespace utils {
 [[nodiscard]] const semantic::Symbol* GetCallableReturnType(const SourceFile&, const ast::nodes::Decl*);
 [[nodiscard]] const semantic::Symbol* GetSelectorExprType(const SourceFile&, const semantic::Scope*,
                                                           const ast::nodes::SelectorExpr*);
+[[nodiscard]] std::optional<std::pair<std::size_t, std::size_t>> GetLengthExprBounds(const SourceFile*,
+                                                                                     const ast::nodes::LengthExpr*);
 }  // namespace utils
 
 struct TypeError {

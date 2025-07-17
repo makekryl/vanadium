@@ -901,7 +901,6 @@ struct Field : Node {
   std::vector<ParenExpr*> arraydef;
   FormalPars* pars{nullptr};
   ParenExpr* value_constraint{nullptr};
-  LengthExpr* length_constraint{nullptr};
   bool optional{false};
 
   void Accept(const NodeInspector& inspector) const {
@@ -919,9 +918,6 @@ struct Field : Node {
     }
     if (value_constraint != nullptr) {
       Inspect(value_constraint, inspector);
-    }
-    if (length_constraint != nullptr) {
-      Inspect(length_constraint, inspector);
     }
   }
 };

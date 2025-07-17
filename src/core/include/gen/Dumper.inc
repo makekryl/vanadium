@@ -17,7 +17,6 @@ case NodeKind::Field: {
     Dump("arraydef", nn->arraydef);
     Dump("pars", nn->pars);
     Dump("value_constraint", nn->value_constraint);
-    Dump("length_constraint", nn->length_constraint);
     Dump("optional", nn->optional);
   });
   break;

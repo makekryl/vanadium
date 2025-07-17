@@ -148,6 +148,42 @@ Fields:
                              }));
       break;
     }
+    case core::ast::NodeKind::EnumTypeDecl: {
+      const auto* m = decl->As<core::ast::nodes::EnumTypeDecl>();
+      content += std::format(
+          R"(
+### enumerated `{}`
+---
+Values:
+{}
+---
+```ttcn
+{}
+```
+)",
+          provider_file->ast.Text(*m->name),
+          [&] -> std::string {
+            std::string buf;
+            buf.reserve(m->enums.size() * 32);
+
+            const auto last_idx = static_cast<decltype(m->enums)::difference_type>(m->enums.size()) - 1;
+            for (const auto& [idx, v] : m->enums | std::views::enumerate) {
+              buf += "- `";
+              buf += provider_file->Text(v);
+              buf += "`";
+              if (idx != last_idx) [[likely]] {
+                buf += "\n";
+              }
+            }
+
+            return buf;
+          }(),
+          provider_file->ast.Text(core::ast::Range{
+              .begin = m->nrange.begin,
+              .end = m->name->nrange.end,
+          }));
+      break;
+    }
     case core::ast::NodeKind::SubTypeDecl: {
       const auto* m = decl->As<core::ast::nodes::SubTypeDecl>();
       content += std::format(R"(
