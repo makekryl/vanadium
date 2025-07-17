@@ -1,6 +1,7 @@
 #include <chrono>
 #include <cstdlib>
 #include <glaze/ext/jsonrpc.hpp>
+#include <glaze/json/write.hpp>
 #include <glaze/util/expected.hpp>
 #include <glaze/util/string_literal.hpp>
 #include <mutex>
@@ -54,23 +55,30 @@ void Serve(lserver::Transport& transport, std::size_t concurrency, std::size_t j
     std::println(stderr, "PROCEED: {}", token->buf.substr(0, 128));
     const auto begin_ts = std::chrono::steady_clock::now();
 
-    std::string serialized_response;  // TODO: use preallocated buf from token, it may require patching glz::rpc
+    auto res_token = ctx.AcquireToken();
     ctx->task_arena.execute([&] {
-      serialized_response = rpc_server.call(token->buf);
+      const auto results = rpc_server.call<decltype(rpc_server)::raw_call_return_t>(token->buf);
+      if (results.empty()) {
+        return;
+      }
+      assert(results.size() == 1);
+      const auto& result = results.front();
+
+      const auto ec = glz::write_json(result, res_token->buf);
+      if (ec) {
+        // TODO: report error
+      }
     });
+
+    if (!res_token->buf.empty()) {
+      ctx.Send(std::move(res_token));
+    }
+
     ctx->GetTemporaryArena().Reset();
 
     const auto end_ts = std::chrono::steady_clock::now();
     std::println(stderr, "  ---> Completed in {} ms",
                  std::chrono::duration_cast<std::chrono::milliseconds>(end_ts - begin_ts).count());
-
-    if (serialized_response.empty()) {
-      return;
-    }
-
-    auto res_token = ctx.AcquireToken();
-    res_token->buf = std::move(serialized_response);  // TODO^
-    ctx.Send(std::move(res_token));
   };
 
   VanadiumLsConnection connection(handle_message, transport, concurrency, kServerBacklog);
