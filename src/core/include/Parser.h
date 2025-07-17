@@ -169,8 +169,7 @@ class Parser {
     requires std::is_invocable_v<Initializer, T&>
   T* NewNode(Initializer f);
 
-  template <typename ConcreteNode>
-    requires IsNode<ConcreteNode>
+  template <IsNode ConcreteNode>
   ConcreteNode* NewErrorNode();
 
   Node* last_node_{nullptr};

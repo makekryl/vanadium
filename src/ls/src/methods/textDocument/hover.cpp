@@ -17,16 +17,30 @@
 namespace vanadium::ls {
 
 namespace {
-std::string BuildMarkdownParameterList(const core::ast::AST& ast, const core::ast::nodes::FormalPars* pars) {
+template <core::ast::IsNode TParamDescriptorNode>
+std::string BuildMarkdownParameterList(const core::ast::AST& ast, std::span<const TParamDescriptorNode* const> params) {
   std::string buf;
-  buf.reserve(pars->list.size() * 32);
+  buf.reserve(params.size() * 32);
 
-  const auto last_idx = static_cast<decltype(pars->list)::difference_type>(pars->list.size()) - 1;
-  for (const auto& [idx, par] : pars->list | std::views::enumerate) {
+  const auto last_idx = static_cast<decltype(params)::difference_type>(params.size()) - 1;
+  for (const auto& [idx, param] : params | std::views::enumerate) {
+    const core::ast::Node* typenode = param->type;
+    if (typenode->nkind == core::ast::NodeKind::SelectorExpr) {
+      typenode = core::ast::utils::TraverseSelectorExpressionStart(typenode->As<core::ast::nodes::SelectorExpr>());
+    }
+
     buf += "- `";
-    buf += ast.Text(par->type);
+
+    buf += ast.Text(typenode);
     buf += " ";
-    buf += ast.Text(*par->name);
+    buf += ast.Text(*param->name);
+
+    if constexpr (std::is_same_v<TParamDescriptorNode, core::ast::nodes::Field>) {
+      if (param->optional) {
+        buf += " (optional)";
+      }
+    }
+
     buf += "`";
 
     if (idx != last_idx) [[likely]] {
@@ -70,7 +84,7 @@ rpc::ExpectedResult<lsp::HoverResult> methods::textDocument::hover::operator()(L
       const auto* m = decl->As<core::ast::nodes::FuncDecl>();
       content += std::format(
           R"(
-### function `{}`
+  ### {} `{}`
 ---
 → `{}`
 {}
@@ -79,11 +93,13 @@ rpc::ExpectedResult<lsp::HoverResult> methods::textDocument::hover::operator()(L
 {}
 ```
 )",
-          provider_file->ast.Text(*m->name),  //
+          provider_file->Text(m->kind.range),  //
+          provider_file->Text(*m->name),       //
           m->ret ? provider_file->ast.Text(m->ret->type) : "void",
           m->params->list.empty()
               ? ""
-              : std::format("\nParameters:\n{}", BuildMarkdownParameterList(provider_file->ast, m->params)),
+              : std::format("\nArguments:\n{}", BuildMarkdownParameterList<core::ast::nodes::FormalPar>(
+                                                    provider_file->ast, m->params->list)),
           provider_file->ast.Text(core::ast::Range{
               .begin = decl->nrange.begin,
               .end = m->body->nrange.begin,
@@ -92,7 +108,8 @@ rpc::ExpectedResult<lsp::HoverResult> methods::textDocument::hover::operator()(L
     }
     case core::ast::NodeKind::TemplateDecl: {
       const auto* m = decl->As<core::ast::nodes::TemplateDecl>();
-      content += std::format(R"(
+      content +=
+          std::format(R"(
 ### template `{}`
 ---
 Parameters:
@@ -102,11 +119,48 @@ Parameters:
 {}
 ```
 )",
-                             provider_file->ast.Text(*m->name),  //
-                             BuildMarkdownParameterList(provider_file->ast, m->params),
+                      provider_file->ast.Text(*m->name),  //
+                      BuildMarkdownParameterList<core::ast::nodes::FormalPar>(provider_file->ast, m->params->list),
+                      provider_file->ast.Text(core::ast::Range{
+                          .begin = decl->nrange.begin,
+                          .end = m->value->nrange.begin,
+                      }));
+      break;
+    }
+    case core::ast::NodeKind::StructTypeDecl: {
+      const auto* m = decl->As<core::ast::nodes::StructTypeDecl>();
+      content += std::format(R"(
+### {} `{}`
+---
+Fields:
+{}
+---
+```ttcn
+{}
+```
+)",
+                             provider_file->Text(m->kind.range),  //
+                             provider_file->ast.Text(*m->name),
+                             BuildMarkdownParameterList<core::ast::nodes::Field>(provider_file->ast, m->fields),
                              provider_file->ast.Text(core::ast::Range{
-                                 .begin = decl->nrange.begin,
-                                 .end = m->value->nrange.begin,
+                                 .begin = m->nrange.begin,
+                                 .end = m->name->nrange.end,
+                             }));
+      break;
+    }
+    case core::ast::NodeKind::SubTypeDecl: {
+      const auto* m = decl->As<core::ast::nodes::SubTypeDecl>();
+      content += std::format(R"(
+### subtype `{}`
+---
+```ttcn
+{}
+```
+)",
+                             provider_file->ast.Text(*m->field->name),
+                             provider_file->ast.Text(core::ast::Range{
+                                 .begin = m->nrange.begin,
+                                 .end = m->field->name->nrange.end,
                              }));
       break;
     }

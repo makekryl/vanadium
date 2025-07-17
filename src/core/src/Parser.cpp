@@ -2520,8 +2520,7 @@ T* Parser::NewNode(Initializer f) {
   return p;
 }
 
-template <typename ConcreteNode>
-  requires IsNode<ConcreteNode>
+template <IsNode ConcreteNode>
 ConcreteNode* Parser::NewErrorNode() {
   return arena_->Alloc<ConcreteNode>(NodeKind::ErrorNode);
 }

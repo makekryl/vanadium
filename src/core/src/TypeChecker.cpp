@@ -16,8 +16,7 @@ namespace vanadium::core {
 namespace checker {
 
 namespace {
-template <typename ConcreteNode, auto PropertyPtr>
-  requires ast::IsNode<ConcreteNode>
+template <ast::IsNode ConcreteNode, auto PropertyPtr>
 const semantic::Symbol* ResolveTypeVia(const SourceFile& file, const ast::Node* n) {
   const auto* m = n->As<ConcreteNode>();
   const auto* decl_file = ast::utils::SourceFileOf(m);
@@ -29,8 +28,25 @@ const semantic::Symbol* ResolveTypeVia(const SourceFile& file, const ast::Node* 
 namespace utils {
 
 [[nodiscard]] std::string_view GetReadableTypeName(const SourceFile& sf, const semantic::Symbol* sym) {
-  // TODO
-  return sf.Text(sym->Declaration());
+  const auto* decl = sym->Declaration();
+  switch (decl->nkind) {
+    case ast::NodeKind::StructTypeDecl: {
+      const auto* m = decl->As<ast::nodes::StructTypeDecl>();
+      return sf.Text(ast::Range{
+          .begin = m->kind.range.begin,
+          .end = m->name->nrange.end,
+      });
+    }
+    case ast::NodeKind::SubTypeDecl: {
+      const auto* m = decl->As<ast::nodes::SubTypeDecl>();
+      return sf.Text(ast::Range{
+          .begin = m->field->nrange.begin,
+          .end = m->field->name->nrange.end,
+      });
+    }
+    default:
+      return sf.Text(sym->Declaration());
+  }
 }
 
 const semantic::Symbol* GetIdentType(const SourceFile& sf, const semantic::Scope* scope, const ast::nodes::Ident* m) {
@@ -191,17 +207,16 @@ class BasicTypeChecker {
   const semantic::Symbol* CheckType(const ast::Node* n, const semantic::Symbol* desired_type = nullptr);
   bool Inspect(const ast::Node*);
 
-  void VisitChildren(const ast::Node* n) {
+  void Introspect(const ast::Node* n) {
     n->Accept(inspector_);
   }
   void Visit(const ast::Node* n) {
     if (Inspect(n)) {
-      VisitChildren(n);
+      Introspect(n);
     }
   }
 
-  template <typename TParamDescriptorNode>
-    requires ast::IsNode<TParamDescriptorNode>
+  template <ast::IsNode TParamDescriptorNode>
   void PerformArgumentsTypeCheck(std::span<const ast::nodes::Expr* const> args, const ast::Range& args_range,
                                  const SourceFile* params_file, std::span<const TParamDescriptorNode* const> params,
                                  std::predicate<const TParamDescriptorNode*> auto is_param_required);
@@ -236,8 +251,7 @@ void BasicTypeChecker::MatchTypes(const ast::Range& range, const semantic::Symbo
   });
 }
 
-template <typename TParamDescriptorNode>
-  requires ast::IsNode<TParamDescriptorNode>
+template <ast::IsNode TParamDescriptorNode>
 void BasicTypeChecker::PerformArgumentsTypeCheck(std::span<const ast::nodes::Expr* const> args,
                                                  const ast::Range& args_range, const SourceFile* params_file,
                                                  std::span<const TParamDescriptorNode* const> params,
@@ -289,7 +303,7 @@ void BasicTypeChecker::PerformArgumentsTypeCheck(std::span<const ast::nodes::Exp
           check_argument(*param_it, ae->value);
         } else {
           errors_.emplace_back(TypeError{
-              .range = argnode->nrange,
+              .range = ae->property->nrange,
               .message = std::format("unknown property '{}'", property_name),
           });
           Visit(argnode);
@@ -322,7 +336,7 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
       const auto* m = n->As<ast::nodes::CallExpr>();
       const auto* callee_sym = DeduceExpressionType(*module_.sf, m);
       if (!callee_sym) {
-        VisitChildren(m);
+        Introspect(m);
         break;
       }
 
@@ -335,7 +349,7 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
 
       const ast::nodes::FormalPars* params = ast::utils::GetCallableDeclParams(callee_decl);
       if (!params) {
-        VisitChildren(m);
+        Introspect(m);
         break;
       }
 
@@ -350,7 +364,7 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
     case ast::NodeKind::CompositeLiteral: {
       const auto* m = n->As<ast::nodes::CompositeLiteral>();
       if (!desired_type) {
-        VisitChildren(m);
+        Introspect(m);
         break;
       }
 
@@ -369,14 +383,14 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
 
       const auto* record_decl = record_sym->Declaration()->As<ast::nodes::StructTypeDecl>();
       if (!record_decl) {
-        VisitChildren(m);
+        Introspect(m);
         break;
       }
 
       const auto* record_file = ast::utils::SourceFileOf(record_decl);
       PerformArgumentsTypeCheck<ast::nodes::Field>(m->list, m->nrange, record_file, record_decl->fields,
                                                    [](const ast::nodes::Field* field) {
-                                                     return !field->optional.has_value() || !(*field->optional);
+                                                     return !field->optional;
                                                    });
 
       break;
@@ -409,6 +423,20 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
       break;
     }
 
+    case ast::NodeKind::SubTypeDecl: {
+      const auto* m = n->As<ast::nodes::SubTypeDecl>();
+      const auto* f = m->field;
+
+      if (f->value_constraint) {
+        const auto* sym = scope_->Resolve(module_.sf->Text(*f->type->As<ast::nodes::RefSpec>()->x));
+        for (const auto* item : f->value_constraint->list) {
+          CheckType(item, sym);
+        }
+      }
+
+      break;
+    }
+
     case ast::NodeKind::Ident: {
       resulting_type = utils::GetIdentType(*module_.sf, scope_, n->As<ast::nodes::Ident>());
       break;
@@ -430,10 +458,6 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
   }
 
   switch (n->nkind) {
-    // case ast::NodeKind::BlockStmt: {
-    //   // we will fall into another scope, so
-    //   return false;
-    // }
     case ast::NodeKind::CallExpr: {
       CheckType(n);
       return false;

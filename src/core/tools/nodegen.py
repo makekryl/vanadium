@@ -27,7 +27,7 @@ class AstNodeField:
   def optional(self):
     if self.explicitly_optional:
       return True
-    if self.typename == "Token":
+    if self.typename in ["Token", "bool"]:
       return False
     return not self.indirect and not self.repeated
 

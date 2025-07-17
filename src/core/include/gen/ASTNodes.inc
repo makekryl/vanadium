@@ -89,7 +89,7 @@ struct SystemSpec : TypeSpec {
 struct RestrictionSpec : TypeSpec {
   RestrictionSpec() : TypeSpec(NodeKind::RestrictionSpec) {}
 
-  std::optional<bool> is_template{false};
+  bool is_template{false};
   Token type;
 
   void Accept(const NodeInspector&) const {
@@ -147,7 +147,7 @@ struct WithStmt : Stmt {
   WithStmt() : Stmt(NodeKind::WithStmt) {}
 
   Token kind;
-  std::optional<bool> overrides{false};
+  bool overrides{false};
   std::vector<Expr*> list;
   Expr* value;
 
@@ -320,7 +320,7 @@ struct IndexExpr : Expr {
 struct RedirectToIndex : Node {
   RedirectToIndex() : Node(NodeKind::RedirectToIndex) {}
 
-  std::optional<bool> value{false};
+  bool value{false};
   Expr* index;
 
   void Accept(const NodeInspector& inspector) const {
@@ -343,7 +343,7 @@ struct CompositeLiteral : Expr {
 struct RegexpExpr : Expr {
   RegexpExpr() : Expr(NodeKind::RegexpExpr) {}
 
-  std::optional<bool> nocase{false};
+  bool nocase{false};
   Expr* x;
 
   void Accept(const NodeInspector& inspector) const {
@@ -354,7 +354,7 @@ struct RegexpExpr : Expr {
 struct PatternExpr : Expr {
   PatternExpr() : Expr(NodeKind::PatternExpr) {}
 
-  std::optional<bool> nocase{false};
+  bool nocase{false};
   Expr* x;
 
   void Accept(const NodeInspector& inspector) const {
@@ -618,7 +618,7 @@ struct CaseClause : Node {
 struct CommClause : Stmt {
   CommClause() : Stmt(NodeKind::CommClause) {}
 
-  std::optional<bool> is_else{false};
+  bool is_else{false};
   Expr* x{nullptr};
   Stmt* comm;
   BlockStmt* body{nullptr};
@@ -719,7 +719,7 @@ struct FormalPars : Node {
 struct SelectStmt : Stmt {
   SelectStmt() : Stmt(NodeKind::SelectStmt) {}
 
-  std::optional<bool> is_union{false};
+  bool is_union{false};
   ParenExpr* tag;
   std::vector<CaseClause*> clauses;
 
@@ -902,7 +902,7 @@ struct Field : Node {
   FormalPars* pars{nullptr};
   ParenExpr* value_constraint{nullptr};
   LengthExpr* length_constraint{nullptr};
-  std::optional<bool> optional{false};
+  bool optional{false};
 
   void Accept(const NodeInspector& inspector) const {
     Inspect(type, inspector);
@@ -989,7 +989,7 @@ struct TemplateDecl : Decl {
 struct FuncDecl : Decl {
   FuncDecl() : Decl(NodeKind::FuncDecl) {}
 
-  std::optional<bool> external{false};
+  bool external{false};
   Token kind;
   std::optional<Ident> name;
   Token* modif{nullptr};
@@ -1049,7 +1049,7 @@ struct SignatureDecl : Decl {
   std::optional<Ident> name;
   FormalPars* pars{nullptr};
   FormalPars* params;
-  std::optional<bool> noblock{false};
+  bool noblock{false};
   ReturnSpec* ret{nullptr};
   ParenExpr* exception{nullptr};
   WithSpec* with{nullptr};
@@ -1160,7 +1160,7 @@ struct PortTypeDecl : Decl {
 
   std::optional<Ident> name;
   FormalPars* pars{nullptr};
-  std::optional<bool> realtime{false};
+  bool realtime{false};
   std::vector<Node*> attrs;
   WithSpec* with{nullptr};
 

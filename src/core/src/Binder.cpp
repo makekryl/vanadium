@@ -67,14 +67,17 @@ class Binder {
   }
 
  private:
+  void Introspect(const ast::Node* n) {
+    n->Accept(inspector_);
+  }
+
   void Visit(const ast::Node* n) {
     if (Inspect(n)) {
-      n->Accept(inspector_);
+      Introspect(n);
     }
   }
 
-  template <class ConcreteNode>
-    requires ast::IsNode<ConcreteNode>
+  template <ast::IsNode ConcreteNode>
   void Visit(const std::vector<ConcreteNode*>& nodes) {
     for (const auto* n : nodes) {
       Visit(n);
@@ -427,7 +430,7 @@ bool Binder::Inspect(const ast::Node* n) {
       Visit(field->type);
       if (field->name) {
         AddSymbol(semantic::Symbol{
-            Lit(std::addressof(*field->name)),
+            Lit(*field->name),
             m,
             SymbolFlags::kSubType,
         });

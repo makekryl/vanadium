@@ -42,6 +42,8 @@ enum Value : std::uint16_t {
 
   kField = 1 << 8,
   kEnumValue = 1 << 9,
+
+  kArray = 1 << 10,
 };
 }
 

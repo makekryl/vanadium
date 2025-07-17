@@ -332,14 +332,12 @@ struct Node {
     return nrange.String(src);
   }
 
-  template <typename DerivedNode>
-    requires IsNode<DerivedNode>
+  template <IsNode DerivedNode>
   DerivedNode* As() {
     return static_cast<DerivedNode*>(this);
   }
 
-  template <typename DerivedNode>
-    requires IsNode<DerivedNode>
+  template <IsNode DerivedNode>
   [[nodiscard]] const DerivedNode* As() const {
     return static_cast<const DerivedNode*>(this);
   }

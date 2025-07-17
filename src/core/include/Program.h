@@ -86,6 +86,9 @@ struct SourceFile {
   [[nodiscard]] std::string_view Text(const ast::Node& n) const noexcept {
     return ast.Text(n);
   }
+  [[nodiscard]] std::string_view Text(const ast::Range& r) const noexcept {
+    return ast.Text(r);
+  }
 };
 
 class Program {
