@@ -109,8 +109,8 @@ rpc::ExpectedResult<lsp::HoverResult> methods::textDocument::hover::operator()(L
               : std::format("\nArguments:\n{}", BuildMarkdownParameterList<core::ast::nodes::FormalPar>(
                                                     provider_file->ast, m->params->list)),
           provider_file->ast.Text(core::ast::Range{
-              .begin = decl->nrange.begin,
-              .end = m->body->nrange.begin,
+              .begin = m->nrange.begin,
+              .end = m->body ? m->body->nrange.begin : m->nrange.end,
           }));
       break;
     }
