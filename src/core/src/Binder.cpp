@@ -57,10 +57,12 @@ class ExternalsTracker {
   std::vector<UnresolvedExternalsGroup> Build() {
     std::vector<UnresolvedExternalsGroup> result;
     result.reserve(mapping_.size() + (top_level_.idents.empty() ? 0 : 1));
+
     if (!top_level_.idents.empty()) {
       top_level_.resolution_set = lib::Bitset(top_level_.idents.size());
       result.push_back(std::move(top_level_));
     }
+
     for (auto& group : mapping_ | std::ranges::views::values) {
       // TODO: do something with this ugly bitset after-construction resizing (actually, replacing the 0-sized one)
       //       also applies to the same thing few lines upper
@@ -73,8 +75,10 @@ class ExternalsTracker {
   void Augmented(std::string_view provider, Scope* scope, std::invocable auto f) {
     auto* upper = active_;
 
-    auto [group_it, _] = mapping_.try_emplace(provider, std::vector<const ast::nodes::Ident*>{}, scope, provider);
+    auto [group_it, _] = mapping_.try_emplace(provider, std::vector<const ast::nodes::Ident*>{},
+                                              std::vector<semantic::Scope*>{}, provider);
     active_ = &group_it->second;
+    active_->scopes.emplace_back(scope);
     //
     f();
     //
@@ -89,7 +93,7 @@ class ExternalsTracker {
   }
 
  private:
-  UnresolvedExternalsGroup top_level_{{}, nullptr, ""};
+  UnresolvedExternalsGroup top_level_{{}, {}, ""};
   std::unordered_map<std::string_view, UnresolvedExternalsGroup> mapping_;
 
   UnresolvedExternalsGroup* active_;
@@ -382,6 +386,22 @@ bool Binder::Inspect(const ast::Node* n) {
       return false;
     }
 
+    case ast::NodeKind::ControlPart: {
+      const auto* m = n->As<ast::nodes::ControlPart>();
+
+      AddSymbol({
+          "__CONTROLPART__",
+          m,
+          SymbolFlags::kControl,
+          Scoped(m,
+                 [&] {
+                   Introspect(m);
+                 }),
+      });
+
+      return false;
+    }
+
     case ast::NodeKind::BlockStmt: {
       const auto* m = n->As<ast::nodes::BlockStmt>();
 
@@ -470,6 +490,10 @@ bool Binder::Inspect(const ast::Node* n) {
       // todo: why is it stored as a Field?!
       const auto* field = m->field;
       Visit(field->type);
+      Visit(field->arraydef);
+      MaybeVisit(field->pars);
+      MaybeVisit(field->value_constraint);
+
       if (field->name) {
         AddSymbol(semantic::Symbol{
             Lit(*field->name),

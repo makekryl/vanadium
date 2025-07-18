@@ -115,8 +115,17 @@ void Program::DetachFile(SourceFile& sf) {
     auto it = dependent->dependencies.find(&module);
     if (it != dependent->dependencies.end()) {
       for (auto& entry : it->second) {
-        auto& vec = entry.injected_to->augmentation;
-        vec.erase(std::ranges::remove(vec, entry.provider).begin(), vec.end());
+        const auto detach_from_scope = [&](semantic::Scope* scope) {
+          auto& vec = scope->augmentation;
+          vec.erase(std::ranges::remove(vec, entry.provider).begin(), vec.end());
+        };
+        if (entry.injected_to) {
+          detach_from_scope(entry.injected_to);
+        } else {
+          for (auto* scope : entry.ext_group->scopes) {
+            detach_from_scope(scope);
+          }
+        }
 
         if (entry.augmenting_locals) {
           entry.ext_group->augmentation_provider_injected = false;
@@ -246,12 +255,8 @@ void Program::Crossbind() {
       return;
     }
 
-    // TODO: optimize LruCache to use static buffer
-    lib::LruCache<std::string_view, std::pair<const semantic::Symbol*, ModuleDescriptor*>, 8> resolution_cache;
     auto& module = *sf.module;
-    //
     module.unresolved.clear();
-    resolution_cache.reset();
 
     const auto on_incomplete = [&](ModuleDescriptor* via) {
       // it may become useful after, we should keep an eye on it
@@ -276,37 +281,34 @@ void Program::Crossbind() {
             return;
           }
 
-          ext_group.scope->augmentation.push_back(augmentation_table);
+          for (auto* scope : ext_group.scopes) {
+            scope->augmentation.push_back(augmentation_table);
+          }
+          ext_group.augmentation_provider_injected = true;
 
           register_dependency(module, imported_module,
                               DependencyEntry{
                                   .provider = augmentation_table,
-                                  .injected_to = ext_group.scope,
+                                  .injected_to = nullptr,  // i.e. injected to ext_group->scopes
                                   .ext_group = &ext_group,
                                   .contribution = *contribution_opt,
                                   .augmenting_locals = true,
                               });
         };
 
-        if (const auto* cached_result = resolution_cache.get(ext_group.augmentation_provider)) {
-          const auto& [sym, imported_module] = *cached_result;
-          resolve_through(sym, imported_module);
-        } else {
-          ForEachImport<{.accept_private_imports = true}>(module, on_incomplete, [&](auto* imported_module, auto* via) {
-            const auto* sym = imported_module->scope->ResolveDirect(ext_group.augmentation_provider);
-            if (!sym) {
-              // continue search
-              return true;
-            }
+        ForEachImport<{.accept_private_imports = true}>(module, on_incomplete, [&](auto* imported_module, auto* via) {
+          const auto* sym = imported_module->scope->ResolveDirect(ext_group.augmentation_provider);
+          if (!sym) {
+            // continue search
+            return true;
+          }
 
-            resolve_through(sym, imported_module);
-            if (via != nullptr) {
-              register_transitive_dependency(module, via);
-            }
-            resolution_cache.put(ext_group.augmentation_provider, std::make_pair(sym, imported_module));
-            return false;
-          });
-        }
+          resolve_through(sym, imported_module);
+          if (via != nullptr) {
+            register_transitive_dependency(module, via);
+          }
+          return false;
+        });
       }
 
       if (!ext_group.IsResolved()) {
@@ -332,6 +334,10 @@ void Program::Crossbind() {
             return true;
           }
 
+          // About ".injected_to = module.scope," - we've noticed that some unresolved symbols from this group
+          // are actually are global symbols imported into this scope from another module.
+          // We bind dependency to ext_group as we would want to recheck this group only if dependent symbol
+          // goes out of the imported module scope.
           const bool is_new_dependency = register_dependency(module, imported_module,
                                                              DependencyEntry{
                                                                  .provider = &imported_table,
@@ -341,6 +347,7 @@ void Program::Crossbind() {
                                                                  .augmenting_locals = false,
                                                              });
 
+          // better to double check than capture mutex in register_transitive_dependency
           if (is_new_dependency ||
               std::ranges::all_of(module.dependencies[imported_module], [](const DependencyEntry& entry) {
                 return entry.augmenting_locals;

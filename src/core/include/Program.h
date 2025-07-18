@@ -24,16 +24,16 @@ struct ModuleDescriptor;
 
 struct UnresolvedExternalsGroup {
   std::vector<const ast::nodes::Ident*> idents;
-  semantic::Scope* scope;
+  std::vector<semantic::Scope*> scopes;
   std::string_view augmentation_provider;
 
-  bool augmentation_provider_injected;
+  bool augmentation_provider_injected{false};
   lib::Bitset resolution_set;
 
-  UnresolvedExternalsGroup(std::vector<const ast::nodes::Ident*>&& idents_, semantic::Scope* scope_,
+  UnresolvedExternalsGroup(std::vector<const ast::nodes::Ident*>&& idents_, std::vector<semantic::Scope*>&& scopes_,
                            std::string_view augmentation_provider_ = {})
       : idents(std::move(idents_)),
-        scope(scope_),
+        scopes(std::move(scopes_)),
         augmentation_provider(augmentation_provider_),
         resolution_set(idents_.size()) {}
 
@@ -44,7 +44,7 @@ struct UnresolvedExternalsGroup {
 
 struct DependencyEntry {
   const semantic::SymbolTable* provider;
-  semantic::Scope* injected_to;
+  semantic::Scope* injected_to;  // nullptr if injected to ext_group->scopes
   UnresolvedExternalsGroup* ext_group;
   lib::Bitset contribution;
   bool augmenting_locals;

@@ -35,18 +35,19 @@ enum Value : std::uint16_t {
 
   kFunction = 1 << 3,
   kTemplate = 1 << 4,
+  kControl = 1 << 5,
 
-  kComponent = 1 << 5,
-  kStructural = 1 << 6,
-  kSubType = 1 << 7,
-  kEnum = 1 << 8,
+  kComponent = 1 << 6,
+  kStructural = 1 << 7,
+  kSubType = 1 << 8,
+  kEnum = 1 << 9,
 
-  kField = 1 << 9,
-  kEnumValue = 1 << 10,
+  kField = 1 << 10,
+  kEnumValue = 1 << 11,
 
-  kArray = 1 << 11,
+  kArray = 1 << 12,
 
-  kBuiltin = 1 << 12,
+  kBuiltin = 1 << 13,
 };
 }
 
