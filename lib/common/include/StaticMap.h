@@ -2,23 +2,25 @@
 
 #include <algorithm>
 #include <array>
+#include <functional>
 #include <utility>
 
 namespace vanadium::lib {
 
 template <typename K, typename V, std::size_t N>
 class StaticMap final {
+  using row_t = std::pair<K, V>;
+
  public:
-  consteval StaticMap(std::array<std::pair<K, V>, N>&& data) : storage_(std::move(data)) {
-    std::ranges::sort(storage_, &std::pair<K, V>::second);
+  consteval StaticMap(std::array<row_t, N>&& data) : storage_(std::move(data)) {
+    std::ranges::sort(storage_);
   }
 
-  auto find(const K& key) const noexcept {
-    return find_it(key);
-  }
-
-  auto end() const noexcept {
-    return storage_.end();
+  [[nodiscard]] std::optional<std::reference_wrapper<const V>> get(const K& key) const noexcept {
+    if (auto it = find(key); it != storage_.end() && it->first == key) {
+      return it->second;
+    }
+    return std::nullopt;
   }
 
   const V& operator[](const K& key) const noexcept {
@@ -26,11 +28,11 @@ class StaticMap final {
   }
 
  private:
-  auto find_it(const K& key) const noexcept {
-    return std::ranges::lower_bound(storage_, key);
+  auto find(const K& key) const noexcept {
+    return std::ranges::lower_bound(storage_, key, std::ranges::less{}, &row_t::first);
   }
 
-  const std::array<std::pair<K, V>, N> storage_;
+  std::array<row_t, N> storage_;
 };
 
 }  // namespace vanadium::lib

@@ -36,41 +36,39 @@ rpc::ExpectedResult<lsp::ReferencesResult> methods::textDocument::references::op
   const core::semantic::Scope* scope = core::semantic::utils::FindScope(file->module->scope, n);
 
   const auto sym_name = n->On(file->ast.src);
-  if (const auto* sym = scope->Resolve(sym_name); sym) {
-    if (!(sym->Flags() & core::semantic::SymbolFlags::kVariable) &&
-        !(sym->Flags() & core::semantic::SymbolFlags::kArgument)) {
-      // TODO
-      return nullptr;
-    }
+  const auto* sym = scope->Resolve(sym_name);
+  if (!sym || !(sym->Flags() & (core::semantic::SymbolFlags::kVariable | core::semantic::SymbolFlags::kArgument))) {
+    // TODO: support datatypes
+    return nullptr;
+  }
 
-    std::vector<lsp::Location> refs;
+  std::vector<lsp::Location> refs;
 
-    if (params.context.includeDeclaration) {
-      const auto* decl = domain::GetReadableDeclaration(sym->Declaration());
-      const auto* target_file = core::ast::utils::SourceFileOf(decl);
-      const auto& uri = *ctx->GetTemporaryArena().Alloc<std::string>(ctx->PathToFileUri(target_file->path));
+  if (params.context.includeDeclaration) {
+    const auto* decl = domain::GetReadableDeclaration(sym->Declaration());
+    const auto* target_file = core::ast::utils::SourceFileOf(decl);
+    const auto& uri = *ctx->GetTemporaryArena().Alloc<std::string>(ctx->PathToFileUri(target_file->path));
+    refs.emplace_back(lsp::Location{
+        .uri = uri,
+        .range = conv::ToLSPRange(n->nrange, target_file->ast),
+    });
+  }
+
+  const core::ast::Node* container = sym->Declaration();
+  while (container->nkind != core::ast::NodeKind::BlockStmt) {
+    container = container->parent;
+  }
+  container->Accept([&](const core::ast::Node* vn) {
+    if (vn->nkind == core::ast::NodeKind::Ident && file->ast.Text(vn) == sym_name) {
       refs.emplace_back(lsp::Location{
-          .uri = uri,
-          .range = conv::ToLSPRange(n->nrange, target_file->ast),
+          .uri = params.textDocument.uri,
+          .range = conv::ToLSPRange(vn->nrange, file->ast),
       });
     }
+    return true;
+  });
 
-    const core::ast::Node* container = sym->Declaration();
-    while (container->nkind != core::ast::NodeKind::BlockStmt) {
-      container = container->parent;
-    }
-    container->Accept([&](const core::ast::Node* vn) {
-      if (vn->nkind == core::ast::NodeKind::Ident && file->ast.Text(vn) == sym_name) {
-        refs.emplace_back(lsp::Location{
-            .uri = params.textDocument.uri,
-            .range = conv::ToLSPRange(vn->nrange, file->ast),
-        });
-      }
-      return true;
-    });
-
-    return refs;
-  }
+  return refs;
 
   return nullptr;
 }

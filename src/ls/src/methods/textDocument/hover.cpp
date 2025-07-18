@@ -77,7 +77,7 @@ rpc::ExpectedResult<lsp::HoverResult> methods::textDocument::hover::operator()(L
 
   const core::semantic::Scope* scope = core::semantic::utils::FindScope(file->module->scope, n);
   const auto* sym = scope->Resolve(n->On(file->ast.src));
-  if (!sym) {
+  if (!sym || (sym->Flags() & core::semantic::SymbolFlags::kBuiltin)) {
     return nullptr;
   }
 

@@ -49,6 +49,13 @@ namespace utils {
   }
 }
 
+[[nodiscard]] std::string_view GetReadableTypeName(const semantic::Symbol* sym) {
+  if (sym->Flags() & semantic::SymbolFlags::kBuiltin) {
+    return sym->GetName();
+  }
+  return GetReadableTypeName(*ast::utils::SourceFileOf(sym->Declaration()), sym);
+}
+
 const semantic::Symbol* GetIdentType(const SourceFile& sf, const semantic::Scope* scope, const ast::nodes::Ident* m) {
   const auto* sym = scope->Resolve(sf.Text(m));
   if (!sym) {
@@ -269,20 +276,21 @@ void BasicTypeChecker::MatchTypes(const ast::Range& range, const semantic::Symbo
   }
 
   if (!actual) {
-    errors_.emplace_back(TypeError{
-        .range = range,
-        .message =
-            std::format("expected argument of type '{}', got argument of unknown type",
-                        utils::GetReadableTypeName(*ast::utils::SourceFileOf(expected->Declaration()), expected)),
-    });
+    // Seems like that is is too much as right side types that cannot be resolved
+    // will be reported by the semantic analyzeer
+
+    // errors_.emplace_back(TypeError{
+    //     .range = range,
+    //     .message = std::format("expected argument of type '{}', got argument of unknown type",
+    //                            utils::GetReadableTypeName(expected)),
+    // });
     return;
   }
 
   errors_.emplace_back(TypeError{
       .range = range,
       .message = std::format("expected argument of type '{}', got argument of type '{}'",
-                             utils::GetReadableTypeName(*ast::utils::SourceFileOf(expected->Declaration()), expected),
-                             utils::GetReadableTypeName(*ast::utils::SourceFileOf(actual->Declaration()), actual)),
+                             utils::GetReadableTypeName(expected), utils::GetReadableTypeName(actual)),
   });
 }
 
@@ -494,9 +502,7 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
               [&](const ast::Node* x, const semantic::Symbol* sym) {
                 errors_.emplace_back(TypeError{
                     .range = x->nrange,
-                    .message =
-                        std::format("type '{}' is not subscriptable",
-                                    utils::GetReadableTypeName(*ast::utils::SourceFileOf(sym->Declaration()), sym)),
+                    .message = std::format("type '{}' is not subscriptable", utils::GetReadableTypeName(sym)),
                 });
               },
           .on_unknown_property =

@@ -45,6 +45,8 @@ enum Value : std::uint16_t {
   kEnumValue = 1 << 10,
 
   kArray = 1 << 11,
+
+  kBuiltin = 1 << 12,
 };
 }
 
@@ -87,6 +89,21 @@ class Symbol {
   } containment_;
 };
 
+namespace builtins {
+extern const Symbol kAnytype;
+extern const Symbol kBoolean;
+extern const Symbol kInteger;
+extern const Symbol kFloat;
+extern const Symbol kBitstring;
+extern const Symbol kCharstring;
+extern const Symbol kOctetstring;
+extern const Symbol kHexstring;
+extern const Symbol kUniversalCharstring;
+extern const Symbol kVerdictType;
+
+const Symbol* ResolveBuiltin(std::string_view name);
+}  // namespace builtins
+
 class SymbolTable {
  public:
   void Add(Symbol&& symbol) {
@@ -119,6 +136,13 @@ class Scope {
   Scope(const ast::Node* container, Scope* parent = nullptr) : parent_(parent), container_(container) {}
 
   const Symbol* Resolve(std::string_view name) const {
+    if (const auto* sym = builtins::ResolveBuiltin(name)) {
+      return sym;
+    }
+    return ResolveOwn(name);
+  }
+
+  const Symbol* ResolveOwn(std::string_view name) const {
     if (const auto* sym = symbols.Lookup(name); sym != nullptr) {
       return sym;
     }
@@ -130,7 +154,7 @@ class Scope {
     }
 
     for (const Scope* scope = parent_; scope != nullptr; scope = scope->parent_) {
-      if (const auto* sym = scope->Resolve(name); sym != nullptr) {
+      if (const auto* sym = scope->ResolveOwn(name); sym != nullptr) {
         return sym;
       }
     }
@@ -144,7 +168,7 @@ class Scope {
     }
 
     for (const Scope* scope = parent_; scope != nullptr; scope = scope->parent_) {
-      if (const auto* sym = scope->Resolve(name); sym != nullptr) {
+      if (const auto* sym = scope->ResolveOwn(name); sym != nullptr) {
         return sym;
       }
     }
