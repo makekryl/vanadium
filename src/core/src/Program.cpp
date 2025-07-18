@@ -210,7 +210,7 @@ bool Program::ForEachImport(const ModuleDescriptor& module, auto on_incomplete,
 namespace {
 template <typename NodeTextProvider>
   requires std::is_invocable_r_v<std::string_view, NodeTextProvider, const ast::nodes::Ident*>
-[[nodiscard]] std::optional<lib::Bitset> ResolveContribution(UnresolvedExternalsGroup& ext_group,
+[[nodiscard]] std::optional<lib::Bitset> ResolveContribution(ExternallyResolvedGroup& ext_group,
                                                              NodeTextProvider get_text,
                                                              const semantic::SymbolTable& table,
                                                              std::predicate<std::size_t> auto should_resolve_index) {

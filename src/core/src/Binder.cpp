@@ -54,8 +54,8 @@ class ExternalsTracker {
  public:
   ExternalsTracker() : active_(&top_level_) {}
 
-  std::vector<UnresolvedExternalsGroup> Build() {
-    std::vector<UnresolvedExternalsGroup> result;
+  std::vector<ExternallyResolvedGroup> Build() {
+    std::vector<ExternallyResolvedGroup> result;
     result.reserve(mapping_.size() + (top_level_.idents.empty() ? 0 : 1));
 
     if (!top_level_.idents.empty()) {
@@ -85,18 +85,18 @@ class ExternalsTracker {
     active_ = upper;
   }
 
-  UnresolvedExternalsGroup* operator->() {
+  ExternallyResolvedGroup* operator->() {
     return active_;
   }
-  UnresolvedExternalsGroup& operator*() {
+  ExternallyResolvedGroup& operator*() {
     return *active_;
   }
 
  private:
-  UnresolvedExternalsGroup top_level_{{}, {}, ""};
-  std::unordered_map<std::string_view, UnresolvedExternalsGroup> mapping_;
+  ExternallyResolvedGroup top_level_{{}, {}, ""};
+  std::unordered_map<std::string_view, ExternallyResolvedGroup> mapping_;
 
-  UnresolvedExternalsGroup* active_;
+  ExternallyResolvedGroup* active_;
 };
 
 class Binder {

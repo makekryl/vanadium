@@ -22,7 +22,7 @@ namespace vanadium::core {
 struct SourceFile;
 struct ModuleDescriptor;
 
-struct UnresolvedExternalsGroup {
+struct ExternallyResolvedGroup {
   std::vector<const ast::nodes::Ident*> idents;
   std::vector<semantic::Scope*> scopes;
   std::string_view augmentation_provider;
@@ -30,8 +30,8 @@ struct UnresolvedExternalsGroup {
   bool augmentation_provider_injected{false};
   lib::Bitset resolution_set;
 
-  UnresolvedExternalsGroup(std::vector<const ast::nodes::Ident*>&& idents_, std::vector<semantic::Scope*>&& scopes_,
-                           std::string_view augmentation_provider_ = {})
+  ExternallyResolvedGroup(std::vector<const ast::nodes::Ident*>&& idents_, std::vector<semantic::Scope*>&& scopes_,
+                          std::string_view augmentation_provider_ = {})
       : idents(std::move(idents_)),
         scopes(std::move(scopes_)),
         augmentation_provider(augmentation_provider_),
@@ -45,7 +45,7 @@ struct UnresolvedExternalsGroup {
 struct DependencyEntry {
   const semantic::SymbolTable* provider;
   semantic::Scope* injected_to;  // nullptr if injected to ext_group->scopes
-  UnresolvedExternalsGroup* ext_group;
+  ExternallyResolvedGroup* ext_group;
   lib::Bitset contribution;
   bool augmenting_locals;
 };
@@ -69,7 +69,7 @@ struct ModuleDescriptor {
   std::unordered_set<ModuleDescriptor*> dependents;
   std::unordered_set<std::string_view> required_imports;
 
-  std::vector<UnresolvedExternalsGroup> externals;
+  std::vector<ExternallyResolvedGroup> externals;
   std::vector<const ast::nodes::Ident*> unresolved;
 
   tbb::speculative_spin_mutex crossbind_mutex_;
