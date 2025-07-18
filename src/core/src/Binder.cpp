@@ -257,7 +257,7 @@ bool Binder::Inspect(const ast::Node* n) {
         AddSymbol({
             Lit(std::addressof(*m->name)),
             m,
-            SymbolFlags::kStructure,
+            SymbolFlags::kStructural,
             &members,
         });
         // TODO
@@ -286,7 +286,7 @@ bool Binder::Inspect(const ast::Node* n) {
         AddSymbol({
             Lit(std::addressof(*m->name)),
             m,
-            SymbolFlags::kStructure,
+            SymbolFlags::kStructural,
             &members,
         });
         // TODO
@@ -319,10 +319,14 @@ bool Binder::Inspect(const ast::Node* n) {
         if (augmenting) {
           const auto augment_by = Lit(m->runs_on->comp);
           if (const auto* sym = scope_->Resolve(augment_by)) {
-            if (sym->Flags() & SymbolFlags::kStructure) {
+            if (sym->Flags() & SymbolFlags::kComponent) {
               scope_->augmentation.push_back(sym->Members());
             } else {
-              // TODO: emit error
+              // TODO: try to also bring up this error from xbind
+              EmitError(SemanticError{
+                  .range = m->runs_on->nrange,
+                  .type = SemanticError::Type::kRunsOnRequiresComponent,
+              });
             }
             process();
           } else {
@@ -469,7 +473,7 @@ bool Binder::Inspect(const ast::Node* n) {
         AddSymbol({
             Lit(std::addressof(*m->name)),
             m,
-            SymbolFlags::kStructure,
+            SymbolFlags::kStructural,
             &members,
         });
       }
@@ -491,7 +495,7 @@ bool Binder::Inspect(const ast::Node* n) {
         AddSymbol({
             Lit(std::addressof(*m->name)),
             m,
-            SymbolFlags::kStructure,
+            SymbolFlags::kStructural,
             &members,
         });
       }

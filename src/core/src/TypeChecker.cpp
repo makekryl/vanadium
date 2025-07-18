@@ -116,7 +116,7 @@ struct SelectorExprTypeExtractor {
       return nullptr;
     }
 
-    if (!(x_sym->Flags() & semantic::SymbolFlags::kStructure)) {
+    if (!(x_sym->Flags() & semantic::SymbolFlags::kStructural)) {
       on_non_structural_type(se->x, x_sym);
       return nullptr;
     }
@@ -414,7 +414,7 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
         break;
       }
 
-      if (desired_type->Flags() & (semantic::SymbolFlags::kStructure | semantic::SymbolFlags::kSubType)) {
+      if (desired_type->Flags() & (semantic::SymbolFlags::kStructural | semantic::SymbolFlags::kSubType)) {
         //
         resulting_type = desired_type;
         //

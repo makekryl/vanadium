@@ -15,7 +15,7 @@ struct SemanticError {
   ast::Range range;
   enum class Type : std::uint8_t {
     kRedefinition,
-    kUnknownProperty,
+    kRunsOnRequiresComponent,
     kToDo,
   } type;
 };
@@ -36,14 +36,15 @@ enum Value : std::uint16_t {
   kFunction = 1 << 3,
   kTemplate = 1 << 4,
 
-  kStructure = 1 << 5,
-  kSubType = 1 << 6,
-  kEnum = 1 << 7,
+  kComponent = 1 << 5,
+  kStructural = 1 << 6,
+  kSubType = 1 << 7,
+  kEnum = 1 << 8,
 
-  kField = 1 << 8,
-  kEnumValue = 1 << 9,
+  kField = 1 << 9,
+  kEnumValue = 1 << 10,
 
-  kArray = 1 << 10,
+  kArray = 1 << 11,
 };
 }
 
