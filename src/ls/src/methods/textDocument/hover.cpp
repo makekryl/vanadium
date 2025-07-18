@@ -31,6 +31,14 @@ std::string BuildMarkdownParameterList(const core::ast::AST& ast, std::span<cons
 
     buf += "- `";
 
+    // TODO: cleanup builder from this
+    if constexpr (std::is_same_v<TParamDescriptorNode, core::ast::nodes::FormalPar>) {
+      if (param->restriction) {
+        buf += ast.Text(param->restriction);
+        buf += " ";
+      }
+    }
+
     buf += ast.Text(typenode);
     buf += " ";
     buf += ast.Text(*param->name);

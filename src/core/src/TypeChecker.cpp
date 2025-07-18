@@ -246,7 +246,11 @@ class BasicTypeChecker {
     }
   }
 
-  template <ast::IsNode TParamDescriptorNode>
+  struct ArgumentsTypeCheckOptions {
+    bool is_union{false};
+  };
+
+  template <ast::IsNode TParamDescriptorNode, ArgumentsTypeCheckOptions Options>
   void PerformArgumentsTypeCheck(std::span<const ast::nodes::Expr* const> args, const ast::Range& args_range,
                                  const SourceFile* params_file, std::span<const TParamDescriptorNode* const> params,
                                  std::predicate<const TParamDescriptorNode*> auto is_param_required);
@@ -267,8 +271,9 @@ void BasicTypeChecker::MatchTypes(const ast::Range& range, const semantic::Symbo
   if (!actual) {
     errors_.emplace_back(TypeError{
         .range = range,
-        .message = std::format("expected argument of type '{}', got argument of unknown type",
-                               ast::utils::SourceFileOf(expected->Declaration())->Text(expected->Declaration())),
+        .message =
+            std::format("expected argument of type '{}', got argument of unknown type",
+                        utils::GetReadableTypeName(*ast::utils::SourceFileOf(expected->Declaration()), expected)),
     });
     return;
   }
@@ -281,7 +286,7 @@ void BasicTypeChecker::MatchTypes(const ast::Range& range, const semantic::Symbo
   });
 }
 
-template <ast::IsNode TParamDescriptorNode>
+template <ast::IsNode TParamDescriptorNode, BasicTypeChecker::ArgumentsTypeCheckOptions Options = {}>
 void BasicTypeChecker::PerformArgumentsTypeCheck(std::span<const ast::nodes::Expr* const> args,
                                                  const ast::Range& args_range, const SourceFile* params_file,
                                                  std::span<const TParamDescriptorNode* const> params,
@@ -291,8 +296,9 @@ void BasicTypeChecker::PerformArgumentsTypeCheck(std::span<const ast::nodes::Exp
   const auto minimal_args_cnt = static_cast<std::size_t>(std::ranges::count_if(params, is_param_required));
   const auto maximal_args_cnt = params.size();
 
-  if (args_count < minimal_args_cnt || args_count > maximal_args_cnt) {
-    errors_.emplace_back(TypeError{
+  if constexpr (!Options.is_union) {
+    if (args_count < minimal_args_cnt || args_count > maximal_args_cnt) {
+      errors_.emplace_back(TypeError{
               .range = (args_count < minimal_args_cnt) ?
                   ast::Range{
                       .begin = args_range.end - 1,
@@ -300,6 +306,7 @@ void BasicTypeChecker::PerformArgumentsTypeCheck(std::span<const ast::nodes::Exp
                   } : args_range,
               .message = std::format("{} arguments expected, {} provided", minimal_args_cnt, args_count),
           });
+    }
   }
 
   const auto check_argument = [&](const TParamDescriptorNode* param, const ast::Node* n) {
@@ -342,7 +349,7 @@ void BasicTypeChecker::PerformArgumentsTypeCheck(std::span<const ast::nodes::Exp
         break;
       }
       default: {
-        if (seen_named_argument) {
+        if (seen_named_argument && !Options.is_union) {
           errors_.emplace_back(TypeError{
               .range = argnode->nrange,
               .message = "positional arguments cannot follow named ones",
@@ -355,6 +362,15 @@ void BasicTypeChecker::PerformArgumentsTypeCheck(std::span<const ast::nodes::Exp
         check_argument(params[i], argnode);
         break;
       }
+    }
+  }
+
+  if constexpr (Options.is_union) {
+    if (!seen_named_argument || args_count != 1) {
+      errors_.emplace_back(TypeError{
+          .range = args_range,
+          .message = std::format("exactly one named argument is expected in union"),
+      });
     }
   }
 }
@@ -398,11 +414,10 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
         break;
       }
 
-      if (!(desired_type->Flags() & (semantic::SymbolFlags::kStructure | semantic::SymbolFlags::kSubType))) {
+      if (desired_type->Flags() & (semantic::SymbolFlags::kStructure | semantic::SymbolFlags::kSubType)) {
         //
         resulting_type = desired_type;
         //
-        break;
       }
 
       if (desired_type->Flags() & semantic::SymbolFlags::kSubType) {
@@ -418,8 +433,7 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
         if (f->type->nkind == ast::NodeKind::ListSpec) {
           const auto* ls = f->type->As<ast::nodes::ListSpec>();
           if (ls->length) {
-            const auto& bounds_opt = utils::GetLengthExprBounds(subtype_file, ls->length);
-            if (bounds_opt) {
+            if (const auto& bounds_opt = utils::GetLengthExprBounds(subtype_file, ls->length); bounds_opt) {
               const auto& [min_args, max_args] = *bounds_opt;
               const auto args_count = m->list.size();
               if (args_count < min_args || args_count > max_args) {
@@ -432,6 +446,15 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
                     .message = std::format("elements count is required to be in between {} and {}", min_args, max_args),
                 });
               }
+            }
+          }
+
+          if (ls->elemtype->nkind == ast::NodeKind::RefSpec) {
+            const auto* rs = ls->elemtype->As<ast::nodes::RefSpec>();
+            const auto* inner_type_sym = subtype_file->module->scope->Resolve(subtype_file->Text(rs->x));
+            for (const auto* arg : m->list) {
+              const auto* actual_sym = CheckType(arg, inner_type_sym);
+              MatchTypes(arg->nrange, actual_sym, inner_type_sym);
             }
           }
         }
@@ -447,10 +470,18 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
       }
 
       const auto* record_file = ast::utils::SourceFileOf(record_decl);
-      PerformArgumentsTypeCheck<ast::nodes::Field>(m->list, m->nrange, record_file, record_decl->fields,
-                                                   [](const ast::nodes::Field* field) {
-                                                     return !field->optional;
-                                                   });
+
+      if (record_file->Text(record_decl->kind.range) == "union") {
+        PerformArgumentsTypeCheck<ast::nodes::Field, {.is_union = true}>(m->list, m->nrange, record_file,
+                                                                         record_decl->fields, [](const auto*) {
+                                                                           return false;
+                                                                         });
+      } else {
+        PerformArgumentsTypeCheck<ast::nodes::Field>(m->list, m->nrange, record_file, record_decl->fields,
+                                                     [](const ast::nodes::Field* field) {
+                                                       return !field->optional;
+                                                     });
+      }
 
       break;
     }
