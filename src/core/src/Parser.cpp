@@ -205,7 +205,7 @@ RootNode* Parser::ParseRoot() {
       node->parent = &root;
       root.nodes.push_back(node);
       if (tok_ != TokenKind::kEOF && !kTokTopLevel.contains(tok_)) {
-        EmitError(Peek(1).range, "unexpected token + tok_");
+        EmitError(Peek(1).range, std::format("unexpected '{}' token", magic_enum::enum_name(tok_)));
         break;
       }
       if (tok_ == TokenKind::COMMA || tok_ == TokenKind::SEMICOLON) {
