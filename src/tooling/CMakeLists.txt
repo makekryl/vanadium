@@ -1,0 +1,22 @@
+add_library(vanadium_tooling STATIC
+  src/Project.cpp
+  src/Solution.cpp
+  src/VirtualFS.cpp
+  src/utils/FileReader.cpp
+)
+
+target_include_directories(vanadium_tooling PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+target_link_libraries(vanadium_tooling PRIVATE
+  vanadium_lib_common
+  vanadium_lib_arena
+)
+target_link_libraries(vanadium_tooling PUBLIC
+  vanadium_core
+  tomlplusplus::tomlplusplus
+  reflectcpp
+)
+
+add_test_executable(vanadium_tooling)

@@ -1,3 +1,5 @@
+#include "VirtualFS.h"
+
 #include <filesystem>
 #include <fstream>
 #include <memory>
@@ -5,12 +7,11 @@
 #include <string>
 #include <string_view>
 
-#include "FsDirectory.h"
 #include "utils/FileReader.h"
 
 // TODO: move this out of core
 
-namespace vanadium::core {
+namespace vanadium::tooling {
 
 FilesystemDirectory::FilesystemDirectory(std::filesystem::path path)
     : base_path_(std::move(path)), base_path_str_(base_path_.string()) {}
@@ -57,4 +58,4 @@ std::unique_ptr<IDirectory> FilesystemDirectory::Subdirectory(std::string_view n
   return std::make_unique<FilesystemDirectory>(base_path_ / name);
 }
 
-}  // namespace vanadium::core
+}  // namespace vanadium::tooling

@@ -10,7 +10,7 @@
 #include <unordered_map>
 
 #include "Error.h"
-#include "FsDirectory.h"
+#include "VirtualFS.h"
 
 namespace vanadium {
 namespace tooling {
@@ -24,7 +24,7 @@ struct ExternalProjectDescriptor {
   std::optional<std::vector<std::string>> references;
 };
 
-struct ProjectDescriptor {
+struct ProjectManifest {
   std::optional<bool> root;
 
   struct {
@@ -38,31 +38,31 @@ struct ProjectDescriptor {
 
 class Project {
  public:
-  static constexpr std::string_view kDescriptorFilename = ".vanadiumrc.toml";
+  static constexpr std::string_view kManifestFilename = ".vanadiumrc.toml";
 
   [[nodiscard]] std::optional<std::filesystem::path> WalkRoot() const;
 
-  [[nodiscard]] const core::IDirectory& Directory() const noexcept;
+  [[nodiscard]] const IDirectory& Directory() const noexcept;
 
-  [[nodiscard]] const ProjectDescriptor& Read() const noexcept;
+  [[nodiscard]] const ProjectManifest& Read() const noexcept;
 
   template <typename T>
   [[nodiscard]] std::expected<T, Error> ReadSpec() const;
 
   static std::expected<Project, Error> Load(const std::filesystem::path& config_path);
-  Project(std::shared_ptr<core::IDirectory>, std::string&& contents, ProjectDescriptor&&);
+  Project(std::shared_ptr<IDirectory>, std::string&& contents, ProjectManifest&&);
 
  private:
-  std::shared_ptr<core::IDirectory> dir_;
+  std::shared_ptr<IDirectory> dir_;
   std::string contents_;
-  ProjectDescriptor descriptor_;
+  ProjectManifest descriptor_;
 };
 
-inline const core::IDirectory& Project::Directory() const noexcept {
+inline const IDirectory& Project::Directory() const noexcept {
   return *dir_;
 }
 
-inline const ProjectDescriptor& Project::Read() const noexcept {
+inline const ProjectManifest& Project::Read() const noexcept {
   return descriptor_;
 }
 

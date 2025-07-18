@@ -4,13 +4,13 @@
 #include <expected>
 #include <filesystem>
 
-#include "FsDirectory.h"
+#include "VirtualFS.h"
 #include "utils/FileReader.h"
 
 namespace vanadium {
 namespace tooling {
 
-Project::Project(std::shared_ptr<core::IDirectory> dir, std::string &&contents, ProjectDescriptor &&descriptor)
+Project::Project(std::shared_ptr<IDirectory> dir, std::string &&contents, ProjectManifest &&descriptor)
     : dir_(std::move(dir)), contents_(std::move(contents)), descriptor_(std::move(descriptor)) {};
 
 std::expected<Project, Error> Project::Load(const std::filesystem::path &config_path) {
@@ -19,7 +19,7 @@ std::expected<Project, Error> Project::Load(const std::filesystem::path &config_
   }
 
   std::string contents;
-  const auto result = core::utils::ReadFile(config_path, [&](std::size_t size) {
+  const auto result = utils::ReadFile(config_path, [&](std::size_t size) {
     contents.resize(size);
     return contents.data();
   });
@@ -27,12 +27,12 @@ std::expected<Project, Error> Project::Load(const std::filesystem::path &config_
     return std::unexpected<Error>{result.error().what()};
   }
 
-  rfl::Result<ProjectDescriptor> parse_result = rfl::toml::read<ProjectDescriptor>(contents);
+  rfl::Result<ProjectManifest> parse_result = rfl::toml::read<ProjectManifest>(contents);
   if (!parse_result.has_value()) {
     return std::unexpected<Error>{parse_result.error().what()};
   }
 
-  Project project(std::make_shared<core::FilesystemDirectory>(config_path.parent_path()), std::move(contents),
+  Project project(std::make_shared<FilesystemDirectory>(config_path.parent_path()), std::move(contents),
                   std::move(parse_result.value()));
 
   if (!result) {

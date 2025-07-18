@@ -7,9 +7,7 @@
 
 #include "FunctionRef.h"
 
-// TODO: move file IO out of core
-
-namespace vanadium::core {
+namespace vanadium::tooling {
 namespace utils {
 
 std::expected<std::string_view, std::system_error> ReadFile(const std::filesystem::path& path,
@@ -27,4 +25,4 @@ std::expected<std::string_view, std::system_error> ReadFile(const std::filesyste
 }
 
 }  // namespace utils
-}  // namespace vanadium::core
+}  // namespace vanadium::tooling

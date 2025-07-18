@@ -79,8 +79,8 @@ const core::semantic::Symbol* LookupTypeSymbol(const core::semantic::Symbol* sym
 template <>
 rpc::ExpectedResult<lsp::TypeDefinitionResult> methods::textDocument::typeDefinition::operator()(
     LsContext& ctx, const lsp::TypeDefinitionParams& params) {
-  const auto& [subproject, path] = ctx->ResolveFile(params.textDocument.uri);
-  const auto* file = subproject.program.GetFile(path);
+  const auto& [project, path] = ctx->ResolveFile(params.textDocument.uri);
+  const auto* file = project.program.GetFile(path);
 
   const auto* n = core::ast::utils::GetNodeAt(file->ast, file->ast.lines.GetPosition(core::ast::Location{
                                                              .line = params.position.line,

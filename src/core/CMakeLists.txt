@@ -1,12 +1,10 @@
 add_library(vanadium_core STATIC
   src/ASTInspector.cpp
-  src/VirtualFS.cpp
   src/Parser.cpp
   src/Scanner.cpp
   src/Binder.cpp
   src/TypeChecker.cpp
   src/Program.cpp
-  src/utils/FileReader.cpp
 )
 
 target_include_directories(vanadium_core PUBLIC

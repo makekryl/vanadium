@@ -4,11 +4,10 @@
 #include <optional>
 #include <string>
 #include <string_view>
-#include <vector>
 
 #include "FunctionRef.h"
 
-namespace vanadium::core {
+namespace vanadium::tooling {
 
 class IDirectory {
  public:
@@ -46,4 +45,4 @@ class FilesystemDirectory : public IDirectory {
   std::string base_path_str_;
 };
 
-}  // namespace vanadium::core
+}  // namespace vanadium::tooling

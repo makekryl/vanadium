@@ -10,7 +10,7 @@
 namespace vanadium::ls {
 template <>
 void methods::textDocument::didChange::operator()(LsContext& ctx, const lsp::DidChangeTextDocumentParams& params) {
-  const auto& [subproject, path] = ctx->ResolveFile(params.textDocument.uri);
+  const auto& [project, path] = ctx->ResolveFile(params.textDocument.uri);
 
   const auto read_file = [&](std::string_view, std::string& srcbuf) -> void {
     if (params.contentChanges.size() == 1 &&
@@ -20,7 +20,7 @@ void methods::textDocument::didChange::operator()(LsContext& ctx, const lsp::Did
       return;
     }
 
-    const auto* sf = subproject.program.GetFile(path);
+    const auto* sf = project.program.GetFile(path);
 
     for (const auto& v : params.contentChanges) {
       assert(std::holds_alternative<lsp::TextDocumentContentChangePartial>(v));
@@ -31,13 +31,13 @@ void methods::textDocument::didChange::operator()(LsContext& ctx, const lsp::Did
       srcbuf.replace(range.begin, range.Length(), change.text);
     }
   };
-  subproject.program.Commit([&](auto& modify) {
+  project.program.Commit([&](auto& modify) {
     modify.update(path, read_file);
   });
 
   ctx.Notify<"textDocument/publishDiagnostics">(lsp::PublishDiagnosticsParams{
       .uri = params.textDocument.uri,
-      .diagnostics = domain::CollectDiagnostics(ctx, subproject.program, *subproject.program.GetFile(path)),
+      .diagnostics = domain::CollectDiagnostics(ctx, project.program, *project.program.GetFile(path)),
   });
 }
 }  // namespace vanadium::ls

@@ -9,18 +9,18 @@
 namespace vanadium::ls {
 template <>
 void methods::textDocument::didOpen::operator()(LsContext& ctx, const lsp::DidOpenTextDocumentParams& params) {
-  const auto& [subproject, path] = ctx->ResolveFile(params.textDocument.uri);
+  const auto& [project, path] = ctx->ResolveFile(params.textDocument.uri);
 
   const auto read_file = [&](std::string_view, std::string& srcbuf) {
     srcbuf = std::move(params.textDocument.text);
   };
-  subproject.program.Commit([&](auto& modify) {
+  project.program.Commit([&](auto& modify) {
     modify.update(path, read_file);
   });
 
   ctx.Notify<"textDocument/publishDiagnostics">(lsp::PublishDiagnosticsParams{
       .uri = params.textDocument.uri,
-      .diagnostics = domain::CollectDiagnostics(ctx, subproject.program, *subproject.program.GetFile(path)),
+      .diagnostics = domain::CollectDiagnostics(ctx, project.program, *project.program.GetFile(path)),
   });
 }
 }  // namespace vanadium::ls

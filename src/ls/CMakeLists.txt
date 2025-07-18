@@ -19,7 +19,7 @@ target_link_libraries(vanadium_ls PRIVATE
   vanadium_lib_lsprotocol
   vanadium_lib_lserver
   vanadium_core
-  vanadium_project
+  vanadium_tooling
   vanadium_lint
   glaze::glaze
   magic_enum
