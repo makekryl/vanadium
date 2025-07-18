@@ -221,7 +221,7 @@ void Program::Crossbind() {
 
         const auto resolve_via = [&](const semantic::Symbol* sym, ModuleDescriptor* imported_module) {
           augmentation_table = sym->Members();
-          ext_group.scope->augmentation.push_back(augmentation_table);  // TODO: should be reset on provider detach
+          ext_group.scope->augmentation.push_back(augmentation_table);
 
           tbb::speculative_spin_mutex::scoped_lock lock(imported_module->crossbind_mutex_);
           register_dependency(module, imported_module,
