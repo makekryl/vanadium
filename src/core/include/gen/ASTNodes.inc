@@ -842,6 +842,7 @@ struct FriendDecl : Decl {
 struct ClassTypeDecl : Decl {
   ClassTypeDecl() : Decl(NodeKind::ClassTypeDecl) {}
 
+  Token kind;
   Token* modif{nullptr};
   std::optional<Ident> name;
   std::vector<Expr*> extends;

@@ -194,6 +194,7 @@ StructTypeDecl:
   fields: Field*[]
   with: WithSpec*?
 ClassTypeDecl:
+  kind: Token
   modif: Token*?
   name: Ident
   extends: Expr*[]?

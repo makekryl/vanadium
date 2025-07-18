@@ -44,6 +44,13 @@ namespace utils {
           .end = m->field->name->nrange.end,
       });
     }
+    case ast::NodeKind::ClassTypeDecl: {
+      const auto* m = decl->As<ast::nodes::ClassTypeDecl>();
+      return sf.Text(ast::Range{
+          .begin = m->kind.range.begin,
+          .end = m->name->nrange.end,
+      });
+    }
     default:
       return sf.Text(sym->Declaration());
   }
@@ -54,6 +61,22 @@ namespace utils {
     return sym->GetName();
   }
   return GetReadableTypeName(*ast::utils::SourceFileOf(sym->Declaration()), sym);
+}
+
+[[nodiscard]] const semantic::Symbol* ResolvePotentiallyAliasedType(const semantic::Symbol* sym) {
+  const auto* decl = sym->Declaration();
+
+  if (decl && decl->nkind == ast::NodeKind::SubTypeDecl) {
+    decl = decl->As<ast::nodes::SubTypeDecl>()->field->type;
+
+    while (decl && decl->nkind == ast::NodeKind::RefSpec) {
+      const auto* file = ast::utils::SourceFileOf(decl);
+      sym = file->module->scope->Resolve(file->Text(decl->As<ast::nodes::RefSpec>()->x));
+      decl = sym->Declaration();
+    }
+  }
+
+  return sym;
 }
 
 const semantic::Symbol* GetIdentType(const SourceFile& sf, const semantic::Scope* scope, const ast::nodes::Ident* m) {
@@ -264,7 +287,7 @@ class BasicTypeChecker {
 
 void BasicTypeChecker::MatchTypes(const ast::Range& range, const semantic::Symbol* actual,
                                   const semantic::Symbol* expected) {
-  if (expected == actual || !expected) {
+  if (!expected) {
     return;
   }
 
@@ -277,6 +300,11 @@ void BasicTypeChecker::MatchTypes(const ast::Range& range, const semantic::Symbo
     //     .message = std::format("expected argument of type '{}', got argument of unknown type",
     //                            utils::GetReadableTypeName(expected)),
     // });
+    return;
+  }
+
+  // TODO: read language spec and maybe make something more precise
+  if (utils::ResolvePotentiallyAliasedType(expected) == utils::ResolvePotentiallyAliasedType(actual)) {
     return;
   }
 
@@ -549,7 +577,7 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
         const auto* actual_type = CheckType(decl->value, expected_type);
         MatchTypes(decl->nrange, actual_type, expected_type);
       }
-      break;
+      return false;
     };
 
     case ast::NodeKind::SubTypeDecl: {
@@ -580,7 +608,7 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
         }
       }
 
-      break;
+      return false;
     }
 
     default:

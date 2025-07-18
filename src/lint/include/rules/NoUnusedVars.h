@@ -36,8 +36,8 @@ class NoUnusedVars final : public Rule {
 
   void Exit(Context& ctx) final {
     for (const auto& sym : ctx.GetFile().module->scope->symbols.Enumerate() | std::ranges::views::values) {
-      if ((sym.Flags() & core::semantic::SymbolFlags::kFunction) ||
-          (sym.Flags() & core::semantic::SymbolFlags::kTemplate)) {
+      if ((sym.Flags() & (core::semantic::SymbolFlags::kFunction | core::semantic::SymbolFlags::kTemplate |
+                          core::semantic::SymbolFlags::kControl))) {
         CheckScope(ctx, sym.OriginatedScope(), nullptr);
       }
     }

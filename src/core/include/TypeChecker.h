@@ -20,6 +20,8 @@ namespace utils {
 [[nodiscard]] std::string_view GetReadableTypeName(const SourceFile&, const semantic::Symbol*);
 [[nodiscard]] std::string_view GetReadableTypeName(const semantic::Symbol*);
 
+[[nodiscard]] const semantic::Symbol* ResolvePotentiallyAliasedType(const semantic::Symbol*);
+
 [[nodiscard]] const semantic::Symbol* GetIdentType(const SourceFile&, const semantic::Scope*, const ast::nodes::Ident*);
 [[nodiscard]] const semantic::Symbol* GetCallableReturnType(const SourceFile&, const ast::nodes::Decl*);
 [[nodiscard]] const semantic::Symbol* GetSelectorExprType(const SourceFile&, const semantic::Scope*,

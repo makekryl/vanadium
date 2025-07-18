@@ -728,8 +728,8 @@ nodes::StructTypeDecl* Parser::ParseStructTypeDecl() {
 
 nodes::ClassTypeDecl* Parser::ParseClassTypeDecl() {
   return NewNode<nodes::ClassTypeDecl>([&](auto& ctd) {
-    Consume();  // TypeTok
-    Consume();  // KindTok
+    Consume();             // TypeTok
+    ctd.kind = Consume();  // KindTok
     if (tok_ == TokenKind::MODIF) {
       ctd.modif = TokAlloc(Consume());
     }

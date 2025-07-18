@@ -440,6 +440,7 @@ case NodeKind::StructTypeDecl: {
 case NodeKind::ClassTypeDecl: {
   const auto* nn = n->As<nodes::ClassTypeDecl>();
   DumpGroup("ClassTypeDecl", [&] {
+    Dump("kind", nn->kind);
     Dump("modif", nn->modif);
     Dump("name", nn->name);
     Dump("extends", nn->extends);

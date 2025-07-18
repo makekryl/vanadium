@@ -52,7 +52,7 @@ void Serve(lserver::Transport& transport, std::size_t concurrency, std::size_t j
     static std::mutex m;
     std::lock_guard l(m);  // TODO: PoC, this efficiently prevents concurrency - add RWmutexes to Program
 
-    std::println(stderr, "PROCEED: {}", token->buf.substr(0, 128));
+    std::println(stderr, "PROCEED: {}", token->buf.substr(0, 64));
     const auto begin_ts = std::chrono::steady_clock::now();
 
     auto res_token = ctx.AcquireToken();

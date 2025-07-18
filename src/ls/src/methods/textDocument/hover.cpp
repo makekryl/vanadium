@@ -231,7 +231,7 @@ Values:
     case core::ast::NodeKind::FormalPar: {
       const auto* m = decl->As<core::ast::nodes::FormalPar>();
       content += std::format(R"(
-### argument `{}`
+### param `{}`
 ---
 ```ttcn
 {}
