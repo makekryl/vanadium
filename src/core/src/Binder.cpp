@@ -441,7 +441,7 @@ bool Binder::Inspect(const ast::Node* n) {
       if (m->name) {
         AddSymbol({
             Lit(std::addressof(*m->name)),
-            std::addressof(*m->name),
+            m,
             SymbolFlags::kArgument,
         });
       }
@@ -456,7 +456,7 @@ bool Binder::Inspect(const ast::Node* n) {
       if (m->name) {
         AddSymbol({
             Lit(std::addressof(*m->name)),
-            std::addressof(*m->name),
+            m,
             SymbolFlags::kVariable,
         });
       }

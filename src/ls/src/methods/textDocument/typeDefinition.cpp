@@ -17,7 +17,7 @@ namespace vanadium::ls {
 
 namespace {
 std::optional<std::string_view> LookupTypeName(const core::semantic::Symbol* sym) {
-  const auto* decl = sym->Declaration()->parent;
+  const auto* decl = sym->Declaration();
 
   const core::ast::Node* typename_node{nullptr};
 

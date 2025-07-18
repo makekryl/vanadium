@@ -5,6 +5,7 @@
 #include <ranges>
 
 #include "ASTNodes.h"
+#include "ASTTypes.h"
 #include "Context.h"
 #include "Rule.h"
 #include "Semantic.h"
@@ -12,6 +13,19 @@
 
 namespace vanadium::lint {
 namespace rules {
+
+namespace {
+core::ast::Range GetVariableNameRange(const core::ast::Node* decl) {
+  switch (decl->nkind) {
+    case core::ast::NodeKind::Declarator:
+      return decl->As<core::ast::nodes::Declarator>()->name->nrange;
+    case core::ast::NodeKind::FormalPar:
+      return decl->As<core::ast::nodes::FormalPar>()->name->nrange;
+    default:
+      return {};
+  }
+}
+}  // namespace
 
 class NoUnusedVars final : public Rule {
  public:
@@ -78,7 +92,7 @@ class NoUnusedVars final : public Rule {
       }
       const auto& name = sym.GetName();
       if (!used_vars.contains(name)) {
-        ctx.Report(this, sym.Declaration()->nrange,
+        ctx.Report(this, GetVariableNameRange(sym.Declaration()),
                    std::format("{} '{}' is not used", is_argument ? "argument" : "variable", name));
       } else {
         used_vars.erase(name);

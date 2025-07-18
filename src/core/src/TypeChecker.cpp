@@ -66,17 +66,10 @@ const semantic::Symbol* GetIdentType(const SourceFile& sf, const semantic::Scope
   const auto* decl_file = ast::utils::SourceFileOf(decl);
 
   switch (decl->nkind) {
-    case ast::NodeKind::Ident: {
-      switch (decl->parent->nkind) {
-        case ast::NodeKind::Declarator:
-          return ResolveTypeVia<ast::nodes::ValueDecl, &ast::nodes::ValueDecl::type>(*decl_file, decl->parent->parent);
-        case ast::NodeKind::FormalPar:
-          return ResolveTypeVia<ast::nodes::FormalPar, &ast::nodes::FormalPar::type>(*decl_file, decl->parent);
-        default:
-          break;
-      }
-      break;
-    }
+    case ast::NodeKind::Declarator:
+      return ResolveTypeVia<ast::nodes::ValueDecl, &ast::nodes::ValueDecl::type>(*decl_file, decl->parent);
+    case ast::NodeKind::FormalPar:
+      return ResolveTypeVia<ast::nodes::FormalPar, &ast::nodes::FormalPar::type>(*decl_file, decl);
     default:
       break;
   }
