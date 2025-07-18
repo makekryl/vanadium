@@ -12,6 +12,7 @@
 #include "AST.h"
 #include "ASTNodes.h"
 #include "Arena.h"
+#include "Bitset.h"
 #include "FunctionRef.h"
 #include "Semantic.h"
 #include "TypeChecker.h"
@@ -22,14 +23,31 @@ struct SourceFile;
 struct ModuleDescriptor;
 
 struct UnresolvedExternalsGroup {
-  std::string_view augmentation_provider;
   std::vector<const ast::nodes::Ident*> idents;
   semantic::Scope* scope;
+  std::string_view augmentation_provider;
+
+  bool augmentation_provider_injected;
+  lib::Bitset resolution_set;
+
+  UnresolvedExternalsGroup(std::vector<const ast::nodes::Ident*>&& idents_, semantic::Scope* scope_,
+                           std::string_view augmentation_provider_ = {})
+      : idents(std::move(idents_)),
+        scope(scope_),
+        augmentation_provider(augmentation_provider_),
+        resolution_set(idents_.size()) {}
+
+  [[nodiscard]] bool IsResolved() const {
+    return resolution_set.All();
+  }
 };
 
 struct DependencyEntry {
   const semantic::SymbolTable* provider;
   semantic::Scope* injected_to;
+  UnresolvedExternalsGroup* ext_group;
+  lib::Bitset contribution;
+  bool augmenting_locals;
 };
 
 struct ImportDescriptor {
@@ -142,7 +160,10 @@ class Program {
   void AttachFile(SourceFile&);
   void DetachFile(SourceFile&);
 
-  template <bool>
+  struct ImportVisitorOptions {
+    bool accept_private_imports;
+  };
+  template <ImportVisitorOptions>
   bool ForEachImport(const ModuleDescriptor& module, auto on_incomplete,
                      std::predicate<ModuleDescriptor*, ModuleDescriptor*> auto f, ModuleDescriptor* via = nullptr);
   void Crossbind();

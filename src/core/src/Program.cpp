@@ -10,11 +10,15 @@
 #include <cstddef>
 #include <cstdio>
 #include <memory>
+#include <print>
 #include <ranges>
 #include <string_view>
+#include <type_traits>
 #include <unordered_map>
 
+#include "ASTNodes.h"
 #include "Arena.h"
+#include "Bitset.h"
 #include "LruCache.h"
 #include "Parser.h"
 #include "Semantic.h"
@@ -108,9 +112,20 @@ void Program::DetachFile(SourceFile& sf) {
   for (auto* dependent : module.dependents) {
     tbb::speculative_spin_mutex::scoped_lock lock(dependent->crossbind_mutex_);
 
-    for (const auto& entry : dependent->dependencies[&module]) {
-      auto& vec = entry.injected_to->augmentation;
-      vec.erase(std::ranges::remove(vec, entry.provider).begin(), vec.end());
+    auto it = dependent->dependencies.find(&module);
+    if (it != dependent->dependencies.end()) {
+      for (auto& entry : it->second) {
+        auto& vec = entry.injected_to->augmentation;
+        vec.erase(std::ranges::remove(vec, entry.provider).begin(), vec.end());
+
+        if (entry.augmenting_locals) {
+          entry.ext_group->augmentation_provider_injected = false;
+        }
+
+        entry.contribution.Flip();  // it is no longer needed
+        entry.ext_group->resolution_set &= entry.contribution;
+      }
+      dependent->dependencies.erase(it);
     }
 
     dependent->sf->dirty = true;
@@ -137,7 +152,7 @@ const ModuleDescriptor* Program::GetModule(std::string_view name) const {
   return nullptr;
 }
 
-template <bool AcceptPrivateImports>
+template <Program::ImportVisitorOptions Options>
 bool Program::ForEachImport(const ModuleDescriptor& module, auto on_incomplete,
                             std::predicate<ModuleDescriptor*, ModuleDescriptor*> auto f, ModuleDescriptor* via) {
   bool incomplete = false;
@@ -149,7 +164,7 @@ bool Program::ForEachImport(const ModuleDescriptor& module, auto on_incomplete,
   };
 
   for (const auto& [import, descriptor] : module.imports) {
-    if ((!AcceptPrivateImports && !descriptor.is_public) || descriptor.transit) {
+    if ((!Options.accept_private_imports && !descriptor.is_public) || descriptor.transit) {
       continue;
     }
 
@@ -165,7 +180,7 @@ bool Program::ForEachImport(const ModuleDescriptor& module, auto on_incomplete,
   }
 
   for (const auto& [import, descriptor] : module.imports) {
-    if ((!AcceptPrivateImports && !descriptor.is_public) || !descriptor.transit) {
+    if ((!Options.accept_private_imports && !descriptor.is_public) || !descriptor.transit) {
       continue;
     }
     auto* imported_module = GetModule(import);
@@ -174,7 +189,8 @@ bool Program::ForEachImport(const ModuleDescriptor& module, auto on_incomplete,
       continue;
     }
 
-    if (!ForEachImport<false>(*imported_module, on_incomplete, f, via ? via : imported_module)) {
+    if (!ForEachImport<{.accept_private_imports = false}>(*imported_module, on_incomplete, f,
+                                                          via ? via : imported_module)) {
       return false;
     }
   }
@@ -182,11 +198,47 @@ bool Program::ForEachImport(const ModuleDescriptor& module, auto on_incomplete,
   return true;
 }
 
+namespace {
+template <typename NodeTextProvider>
+  requires std::is_invocable_r_v<std::string_view, NodeTextProvider, const ast::nodes::Ident*>
+[[nodiscard]] std::optional<lib::Bitset> ResolveContribution(UnresolvedExternalsGroup& ext_group,
+                                                             NodeTextProvider get_text,
+                                                             const semantic::SymbolTable& table,
+                                                             std::predicate<std::size_t> auto should_resolve_index) {
+  std::optional<lib::Bitset> contribution;
+  for (const auto& [idx, ident] : ext_group.idents | std::views::enumerate) {
+    if (!should_resolve_index(idx)) {
+      continue;
+    }
+    if (table.Lookup(get_text(ident))) {
+      ext_group.resolution_set.Set(idx);
+      if (!contribution) [[unlikely]] {
+        contribution.emplace(ext_group.resolution_set.Size());
+      }
+      contribution->Set(idx);
+    }
+  }
+  return contribution;
+}
+}  // namespace
+
 void Program::Crossbind() {
   const auto register_dependency = [&](ModuleDescriptor& module, ModuleDescriptor* imported_module,
-                                       DependencyEntry&& dependency) {
-    imported_module->dependents.insert(&module);
-    module.dependencies[imported_module].emplace_back(dependency);
+                                       DependencyEntry&& dependency) -> bool {
+    const auto& [it, inserted] = module.dependencies.try_emplace(imported_module);
+    it->second.emplace_back(dependency);
+    {
+      tbb::speculative_spin_mutex::scoped_lock lock(imported_module->crossbind_mutex_);
+      imported_module->dependents.insert(&module);
+    }
+    return inserted;
+  };
+  const auto register_transitive_dependency = [&](ModuleDescriptor& module, ModuleDescriptor* transit_module) {
+    module.transitive_dependency_providers.insert(transit_module);
+    {
+      tbb::speculative_spin_mutex::scoped_lock lock(transit_module->crossbind_mutex_);
+      transit_module->dependents.insert(&module);
+    }
   };
 
   tbb::parallel_for_each(files_ | std::views::values, [&](SourceFile& sf) {
@@ -194,112 +246,120 @@ void Program::Crossbind() {
       return;
     }
 
-    std::vector<bool> resolution_set;
-    const auto is_group_resolved = [&resolution_set] {
-      return std::ranges::all_of(resolution_set, [](bool b) {
-        return b;
-      });
-    };
-
     // TODO: optimize LruCache to use static buffer
-    lib::LruCache<std::string_view, std::pair<const semantic::Symbol*, ModuleDescriptor*>, 128> resolution_cache;
+    lib::LruCache<std::string_view, std::pair<const semantic::Symbol*, ModuleDescriptor*>, 8> resolution_cache;
     auto& module = *sf.module;
     //
     module.unresolved.clear();
     resolution_cache.reset();
 
     const auto on_incomplete = [&](ModuleDescriptor* via) {
+      // it may become useful after, we should keep an eye on it
       module.transitive_dependency_providers.insert(via);
     };
 
-    for (const auto& ext_group : module.externals) {
-      resolution_set.clear();
-      resolution_set.resize(ext_group.idents.size(), false);
+    for (auto& ext_group : module.externals) {
+      if (!ext_group.augmentation_provider.empty() && !ext_group.augmentation_provider_injected) {
+        const auto resolve_through = [&](const semantic::Symbol* sym, ModuleDescriptor* imported_module) {
+          const semantic::SymbolTable* augmentation_table = sym->Members();
+          const auto contribution_opt = ResolveContribution(
+              ext_group,
+              [&sf](const ast::nodes::Ident* ident) {
+                return sf.Text(ident);
+              },
+              *augmentation_table,
+              [](const std::size_t) {
+                return true;
+              });
 
-      if (!ext_group.augmentation_provider.empty()) {
-        const semantic::SymbolTable* augmentation_table{nullptr};
+          if (!contribution_opt) {
+            return;
+          }
 
-        const auto resolve_via = [&](const semantic::Symbol* sym, ModuleDescriptor* imported_module) {
-          augmentation_table = sym->Members();
           ext_group.scope->augmentation.push_back(augmentation_table);
 
-          tbb::speculative_spin_mutex::scoped_lock lock(imported_module->crossbind_mutex_);
           register_dependency(module, imported_module,
                               DependencyEntry{
                                   .provider = augmentation_table,
                                   .injected_to = ext_group.scope,
+                                  .ext_group = &ext_group,
+                                  .contribution = *contribution_opt,
+                                  .augmenting_locals = true,
                               });
         };
 
         if (const auto* cached_result = resolution_cache.get(ext_group.augmentation_provider)) {
           const auto& [sym, imported_module] = *cached_result;
-          resolve_via(sym, imported_module);
+          resolve_through(sym, imported_module);
         } else {
-          ForEachImport<true>(module, on_incomplete, [&](auto* imported_module, auto* via) {
-            if (const auto* sym = imported_module->scope->ResolveDirect(ext_group.augmentation_provider)) {
-              resolve_via(sym, imported_module);
-              if (via != nullptr) {
-                via->dependents.insert(&module);
-                module.transitive_dependency_providers.insert(via);
-              }
-              resolution_cache.put(ext_group.augmentation_provider, std::make_pair(sym, imported_module));
-              return false;
+          ForEachImport<{.accept_private_imports = true}>(module, on_incomplete, [&](auto* imported_module, auto* via) {
+            const auto* sym = imported_module->scope->ResolveDirect(ext_group.augmentation_provider);
+            if (!sym) {
+              // continue search
+              return true;
             }
-            return true;
-          });
-        }
 
-        if (augmentation_table) {
-          for (const auto& [idx, ident] : ext_group.idents | std::views::enumerate) {
-            if (augmentation_table->Lookup(sf.Text(ident))) {
-              resolution_set[idx] = true;
+            resolve_through(sym, imported_module);
+            if (via != nullptr) {
+              register_transitive_dependency(module, via);
             }
-          }
+            resolution_cache.put(ext_group.augmentation_provider, std::make_pair(sym, imported_module));
+            return false;
+          });
         }
       }
 
-      ForEachImport<true>(module, on_incomplete, [&](auto* imported_module, auto* via) {
-        if (is_group_resolved()) {
-          return false;
-        }
-
-        const auto* imported_scope = imported_module->scope;
-        bool depends{false};
-        for (const auto& [idx, ident] : ext_group.idents | std::views::enumerate) {
-          if (resolution_set[idx]) {
-            continue;
-          }
-          if (imported_scope->ResolveDirect(sf.Text(ident))) {
-            resolution_set[idx] = true;
-            depends = true;
-          }
-        }
-        if (depends) {
-          module.scope->augmentation.push_back(&imported_scope->symbols);
-          {
-            tbb::speculative_spin_mutex::scoped_lock lock(imported_module->crossbind_mutex_);
-            register_dependency(module, imported_module,
-                                DependencyEntry{
-                                    .provider = &imported_scope->symbols,
-                                    .injected_to = module.scope,
-                                });
+      if (!ext_group.IsResolved()) {
+        ForEachImport<{.accept_private_imports = true}>(module, on_incomplete, [&](auto* imported_module, auto* via) {
+          if (ext_group.IsResolved()) {
+            return false;
           }
 
-          if (via != nullptr) {
-            {
-              tbb::speculative_spin_mutex::scoped_lock lock(via->crossbind_mutex_);
-              via->dependents.insert(&module);
+          const semantic::SymbolTable& imported_table = imported_module->scope->symbols;
+          const auto contribution_opt = ResolveContribution(
+              ext_group,
+              [&sf](const ast::nodes::Ident* ident) {
+                return sf.Text(ident);
+              },
+              imported_table,
+              [&ext_group](const std::size_t idx) {
+                return !ext_group.resolution_set.Get(idx);
+              });
+
+          if (!contribution_opt) {
+            // there's still unresolved symbols as nothing new has been resolved
+            // continue search
+            return true;
+          }
+
+          const bool is_new_dependency = register_dependency(module, imported_module,
+                                                             DependencyEntry{
+                                                                 .provider = &imported_table,
+                                                                 .injected_to = module.scope,
+                                                                 .ext_group = &ext_group,
+                                                                 .contribution = *contribution_opt,
+                                                                 .augmenting_locals = false,
+                                                             });
+
+          if (is_new_dependency ||
+              std::ranges::all_of(module.dependencies[imported_module], [](const DependencyEntry& entry) {
+                return entry.augmenting_locals;
+              })) {
+            module.scope->augmentation.push_back(&imported_table);
+            if (via != nullptr) {
+              register_transitive_dependency(module, via);
             }
-            module.transitive_dependency_providers.insert(via);
           }
-        }
 
-        return !is_group_resolved();
-      });
+          return !ext_group.IsResolved();
+        });
+      }
 
-      for (std::size_t idx = 0; idx < resolution_set.size(); idx++) {
-        if (!resolution_set[idx]) {
-          module.unresolved.push_back(ext_group.idents[idx]);
+      if (!ext_group.IsResolved()) {  // IsResolved() is very fast, faster than checking individual bits
+        for (std::size_t idx = 0; idx < ext_group.resolution_set.Size(); idx++) {
+          if (!ext_group.resolution_set.Get(idx)) {
+            module.unresolved.push_back(ext_group.idents[idx]);
+          }
         }
       }
     }

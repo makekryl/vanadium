@@ -9,6 +9,7 @@
 
 #include "ASTNodes.h"
 #include "ASTTypes.h"
+#include "Bitset.h"
 #include "Program.h"
 #include "Semantic.h"
 #include "utils/ASTUtils.h"
@@ -24,9 +25,13 @@ class ExternalsTracker {
     std::vector<UnresolvedExternalsGroup> result;
     result.reserve(mapping_.size() + (top_level_.idents.empty() ? 0 : 1));
     if (!top_level_.idents.empty()) {
+      top_level_.resolution_set = lib::Bitset(top_level_.idents.size());
       result.push_back(std::move(top_level_));
     }
     for (auto& group : mapping_ | std::ranges::views::values) {
+      // TODO: do something with this ugly bitset after-construction resizing (actually, replacing the 0-sized one)
+      //       also applies to the same thing few lines upper
+      group.resolution_set = lib::Bitset(group.idents.size());
       result.push_back(std::move(group));
     }
     return result;
@@ -35,7 +40,7 @@ class ExternalsTracker {
   void Augmented(std::string_view provider, Scope* scope, std::invocable auto f) {
     auto* upper = active_;
 
-    auto [group_it, _] = mapping_.try_emplace(provider, provider, std::vector<const ast::nodes::Ident*>{}, scope);
+    auto [group_it, _] = mapping_.try_emplace(provider, std::vector<const ast::nodes::Ident*>{}, scope, provider);
     active_ = &group_it->second;
     //
     f();
@@ -51,7 +56,7 @@ class ExternalsTracker {
   }
 
  private:
-  UnresolvedExternalsGroup top_level_{.augmentation_provider = "", .idents = {}, .scope = nullptr};
+  UnresolvedExternalsGroup top_level_{{}, nullptr, ""};
   std::unordered_map<std::string_view, UnresolvedExternalsGroup> mapping_;
 
   UnresolvedExternalsGroup* active_;
