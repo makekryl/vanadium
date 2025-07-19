@@ -212,20 +212,26 @@ Values:
       const auto* m = decl->As<core::ast::nodes::Declarator>();
       const auto* vd = m->parent->As<core::ast::nodes::ValueDecl>();
 
-      content += std::format(R"(
+      content += std::format(
+          R"(
 ### {} `{}`
 ---
 ```ttcn
-{} {}
+{} {} {}
 ```
 )",
-                             provider_file->ast.Text(vd->kind->range),  //
-                             provider_file->ast.Text(*m->name),         //
-                             provider_file->ast.Text(core::ast::Range{
-                                 .begin = vd->kind->range.begin,
-                                 .end = vd->type->nrange.end,
-                             }),
-                             provider_file->ast.Text(m));
+          provider_file->ast.Text(vd->kind->range),  //
+          provider_file->ast.Text(*m->name),         //
+          provider_file->ast.Text(core::ast::Range{
+              .begin = vd->kind->range.begin,
+              .end = vd->type->nrange.end,
+          }),
+          provider_file->ast.Text(*m->name),
+          (vd->kind->kind == core::ast::TokenKind::CONST && m->value) ? provider_file->ast.Text(core::ast::Range{
+                                                                            .begin = m->name->nrange.end + 1,
+                                                                            .end = m->value->nrange.end,
+                                                                        })
+                                                                      : "");
       break;
     }
     case core::ast::NodeKind::FormalPar: {
@@ -238,7 +244,11 @@ Values:
 ```
 )",
                              provider_file->ast.Text(*m->name),  //
-                             provider_file->ast.Text(m), provider_file->ast.Text(m));
+                             provider_file->ast.Text(m),
+                             provider_file->ast.Text(core::ast::Range{
+                                 .begin = m->nrange.begin,
+                                 .end = m->name->nrange.end,
+                             }));
       break;
     }
     default:
