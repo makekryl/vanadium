@@ -300,7 +300,7 @@ class BasicTypeChecker {
 
 void BasicTypeChecker::MatchTypes(const ast::Range& range, const semantic::Symbol* actual,
                                   const semantic::Symbol* expected) {
-  if (!expected) {
+  if (!expected || expected == &builtins::kAnytype) {
     return;
   }
 
