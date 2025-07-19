@@ -64,7 +64,7 @@ class NoUnusedVars final : public Rule {
         case core::ast::NodeKind::Declarator: {
           auto* val = n->As<core::ast::nodes::Declarator>()->value;
           if (val != nullptr) {
-            val->Accept(self);
+            core::ast::Inspect(val, self);
           }
           return false;
         }
