@@ -6,14 +6,12 @@
 #include <glaze/util/string_literal.hpp>
 #include <mutex>
 
+#include "BuiltinRules.h"
 #include "LSConnection.h"
 #include "LanguageServer.h"
 #include "LanguageServerContext.h"
 #include "LanguageServerMethods.h"
 #include "Metaprogramming.h"
-#include "rules/NoEmpty.h"
-#include "rules/NoUnusedImports.h"
-#include "rules/NoUnusedVars.h"
 
 namespace vanadium {
 namespace ls {

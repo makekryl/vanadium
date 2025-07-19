@@ -1,4 +1,5 @@
 #include <fmt/color.h>
+#include <oneapi/tbb/task_arena.h>
 
 #include <CLI/CLI.hpp>
 #include <chrono>
@@ -11,15 +12,12 @@
 #include <thread>
 
 #include "Arena.h"
+#include "BuiltinRules.h"
 #include "Context.h"
 #include "FunctionRef.h"
 #include "Linter.h"
 #include "Program.h"
 #include "Project.h"
-#include "oneapi/tbb/task_arena.h"
-#include "rules/NoEmpty.h"
-#include "rules/NoUnusedImports.h"
-#include "rules/NoUnusedVars.h"
 
 namespace {
 vanadium::lint::Linter CreateLinter() {

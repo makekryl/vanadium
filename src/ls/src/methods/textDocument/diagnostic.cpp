@@ -1,14 +1,7 @@
-#include <print>
-#include <ranges>
-
 #include "LSProtocol.h"
 #include "LanguageServerContext.h"
-#include "LanguageServerConv.h"
 #include "LanguageServerMethods.h"
-#include "Linter.h"
 #include "domain/LanguageServerDiagnostic.h"
-#include "rules/NoUnusedImports.h"
-#include "rules/NoUnusedVars.h"
 
 namespace vanadium::ls {
 template <>

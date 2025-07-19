@@ -17,9 +17,9 @@ class Rule {
 
   virtual ~Rule() = default;
 
-  virtual void Register(const MatcherRegistrar& match) const = 0;  // TODO: reconsider constness
+  virtual void Register(const MatcherRegistrar& match) const {};  // TODO: reconsider constness
 
-  virtual void Check(Context& ctx, const core::ast::Node* node) = 0;
+  virtual void Check(Context& ctx, const core::ast::Node* node) {};
   virtual void Exit(Context&) {};
 
   [[nodiscard]] std::string_view GetName() const {
