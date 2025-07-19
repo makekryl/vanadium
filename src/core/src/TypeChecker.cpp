@@ -649,6 +649,16 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
       return false;
     };
 
+    case ast::NodeKind::FormalPar: {
+      const auto* m = n->As<ast::nodes::FormalPar>();
+      if (const auto* default_value = m->value; default_value) {
+        const auto* expected_type = module_.scope->Resolve(module_.sf->Text(m->type));
+        const auto* actual_type = CheckType(default_value, expected_type);
+        MatchTypes(default_value->nrange, actual_type, expected_type);
+      }
+      return false;
+    };
+
     case ast::NodeKind::SubTypeDecl: {
       const auto* m = n->As<ast::nodes::SubTypeDecl>();
       const auto* f = m->field;
