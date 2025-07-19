@@ -8,6 +8,7 @@
 
 #include "ASTNodes.h"
 #include "ASTTypes.h"
+#include "Builtins.h"
 #include "Program.h"
 #include "Semantic.h"
 #include "utils/ASTUtils.h"
@@ -16,6 +17,13 @@ namespace vanadium::core {
 namespace checker {
 
 static const semantic::Symbol kErrorTypeSym{"<error-type>", nullptr, semantic::SymbolFlags::kBuiltin};
+static const semantic::Symbol kVoidSym{"<void>", nullptr, semantic::SymbolFlags::kBuiltin};
+static const semantic::Symbol kWildcardTypeSym{
+    "<*>", nullptr,
+    semantic::SymbolFlags::Value(semantic::SymbolFlags::kBuiltin | semantic::SymbolFlags::kTemplateSpec)};
+static const semantic::Symbol kQuestionTypeSym{
+    "<?>", nullptr,
+    semantic::SymbolFlags::Value(semantic::SymbolFlags::kBuiltin | semantic::SymbolFlags::kTemplateSpec)};
 
 namespace {
 template <ast::IsNode ConcreteNode, auto PropertyPtr>
@@ -107,7 +115,7 @@ const semantic::Symbol* GetCallableReturnType(const SourceFile& file, const ast:
   switch (decl->nkind) {
     case ast::NodeKind::FuncDecl: {
       const auto* spec = decl->As<ast::nodes::FuncDecl>()->ret;
-      return spec ? resolve(spec->type) : nullptr;
+      return spec ? resolve(spec->type) : &kVoidSym;
     }
     case ast::NodeKind::TemplateDecl:
       return resolve(decl->As<ast::nodes::TemplateDecl>()->type);
@@ -275,7 +283,8 @@ class BasicTypeChecker {
 
   template <ast::IsNode TParamDescriptorNode, ArgumentsTypeCheckOptions Options>
   void PerformArgumentsTypeCheck(std::span<const ast::nodes::Expr* const> args, const ast::Range& args_range,
-                                 const SourceFile* params_file, std::span<const TParamDescriptorNode* const> params,
+                                 const SourceFile* params_file, const semantic::Symbol* params_type_sym,
+                                 std::span<const TParamDescriptorNode* const> params,
                                  std::predicate<const TParamDescriptorNode*> auto is_param_required);
 
   const ModuleDescriptor& module_;
@@ -328,6 +337,7 @@ void BasicTypeChecker::MatchTypes(const ast::Range& range, const semantic::Symbo
 template <ast::IsNode TParamDescriptorNode, BasicTypeChecker::ArgumentsTypeCheckOptions Options = {}>
 void BasicTypeChecker::PerformArgumentsTypeCheck(std::span<const ast::nodes::Expr* const> args,
                                                  const ast::Range& args_range, const SourceFile* params_file,
+                                                 const semantic::Symbol* params_type_sym,
                                                  std::span<const TParamDescriptorNode* const> params,
                                                  std::predicate<const TParamDescriptorNode*> auto is_param_required) {
   const auto args_count = args.size();
@@ -380,7 +390,8 @@ void BasicTypeChecker::PerformArgumentsTypeCheck(std::span<const ast::nodes::Exp
         } else {
           errors_.emplace_back(TypeError{
               .range = ae->property->nrange,
-              .message = std::format("unknown property '{}'", property_name),
+              .message = std::format("property '{}' does not exist on type '{}'", property_name,
+                                     utils::GetReadableTypeName(*params_file, params_type_sym)),
           });
           Visit(argnode);
         }
@@ -394,7 +405,7 @@ void BasicTypeChecker::PerformArgumentsTypeCheck(std::span<const ast::nodes::Exp
               .message = "positional arguments cannot follow named ones",
           });
         }
-        if (i >= minimal_args_cnt) {
+        if (i >= maximal_args_cnt) {
           Visit(argnode);
           continue;
         }
@@ -438,8 +449,8 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
         break;
       }
 
-      PerformArgumentsTypeCheck<ast::nodes::FormalPar>(m->args->list, m->args->nrange, callee_file, params->list,
-                                                       [](const ast::nodes::FormalPar* param) {
+      PerformArgumentsTypeCheck<ast::nodes::FormalPar>(m->args->list, m->args->nrange, callee_file, callee_sym,
+                                                       params->list, [](const ast::nodes::FormalPar* param) {
                                                          return param->value == nullptr;
                                                        });
 
@@ -516,12 +527,12 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
       const auto* record_file = ast::utils::SourceFileOf(record_decl);
 
       if (record_decl->kind.kind == ast::TokenKind::UNION) {
-        PerformArgumentsTypeCheck<ast::nodes::Field, {.is_union = true}>(m->list, m->nrange, record_file,
+        PerformArgumentsTypeCheck<ast::nodes::Field, {.is_union = true}>(m->list, m->nrange, record_file, record_sym,
                                                                          record_decl->fields, [](const auto*) {
                                                                            return false;
                                                                          });
       } else {
-        PerformArgumentsTypeCheck<ast::nodes::Field>(m->list, m->nrange, record_file, record_decl->fields,
+        PerformArgumentsTypeCheck<ast::nodes::Field>(m->list, m->nrange, record_file, record_sym, record_decl->fields,
                                                      [](const ast::nodes::Field* field) {
                                                        return !field->optional;
                                                      });
@@ -560,6 +571,41 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
       break;
     }
 
+    case ast::NodeKind::ValueLiteral: {
+      const auto* m = n->As<ast::nodes::ValueLiteral>();
+      switch (m->tok.kind) {
+        case ast::TokenKind::TRUE:
+        case ast::TokenKind::FALSE:
+          resulting_type = &builtins::kBoolean;
+          break;
+        case ast::TokenKind::INT:
+          resulting_type = &builtins::kInteger;
+          break;
+        case ast::TokenKind::FLOAT:
+          resulting_type = &builtins::kFloat;
+          break;
+        case ast::TokenKind::BITSTRING:
+          resulting_type = &builtins::kBitstring;
+          break;
+        case ast::TokenKind::CHARSTRING:
+          resulting_type = &builtins::kCharstring;
+          break;
+        // TODO: octet, hex, universal char
+        case ast::TokenKind::PASS:
+        case ast::TokenKind::FAIL:
+          resulting_type = &builtins::kVerdictType;
+          break;
+        case ast::TokenKind::MUL:
+          resulting_type = &kWildcardTypeSym;
+          break;
+        case ast::TokenKind::ANY:
+          resulting_type = &kQuestionTypeSym;
+          break;
+        default:
+          break;
+      }
+    }
+
     default:
       break;
   }
@@ -576,6 +622,10 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
   }
 
   switch (n->nkind) {
+    case ast::NodeKind::CompositeLiteral: {
+      return false;
+    }
+
     case ast::NodeKind::CallExpr: {
       CheckType(n);
       return false;
@@ -622,6 +672,21 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
           CheckType(item, sym);
         }
       }
+
+      return false;
+    }
+
+    case ast::NodeKind::AssignmentExpr: {
+      const auto* m = n->As<ast::nodes::AssignmentExpr>();
+
+      if (m->parent->nkind == ast::NodeKind::CompositeLiteral) {
+        Visit(m->value);
+        return false;
+      }
+
+      const auto* expected_type = GetEffectiveType(*module_.sf, scope_, m->property);
+      const auto* actual_type = CheckType(m->value, expected_type);
+      MatchTypes(m->value->nrange, actual_type, expected_type);
 
       return false;
     }

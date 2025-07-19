@@ -12,43 +12,10 @@
 #include "Bitset.h"
 #include "Program.h"
 #include "Semantic.h"
-#include "StaticMap.h"
 #include "utils/ASTUtils.h"
 
 namespace vanadium::core {
 namespace semantic {
-
-namespace builtins {
-const Symbol kAnytype{"anytype", nullptr, semantic::SymbolFlags::kBuiltin};
-const Symbol kBoolean{"boolean", nullptr, semantic::SymbolFlags::kBuiltin};
-const Symbol kInteger{"integer", nullptr, semantic::SymbolFlags::kBuiltin};
-const Symbol kFloat{"float", nullptr, semantic::SymbolFlags::kBuiltin};
-const Symbol kBitstring{"bitstring", nullptr, semantic::SymbolFlags::kBuiltin};
-const Symbol kCharstring{"charstring", nullptr, semantic::SymbolFlags::kBuiltin};
-const Symbol kOctetstring{"octetstring", nullptr, semantic::SymbolFlags::kBuiltin};
-const Symbol kHexstring{"hexstring", nullptr, semantic::SymbolFlags::kBuiltin};
-const Symbol kUniversalCharstring{"universal charstring", nullptr, semantic::SymbolFlags::kBuiltin};
-const Symbol kVerdictType{"verdicttype", nullptr, semantic::SymbolFlags::kBuiltin};
-
-const Symbol* ResolveBuiltin(std::string_view name) {
-  static constexpr lib::StaticMap<std::string_view, const Symbol*, 10> kBuiltinsTable{{{
-      {"anytype", &kAnytype},
-      {"boolean", &kBoolean},
-      {"integer", &kInteger},
-      {"float", &kFloat},
-      {"bitstring", &kBitstring},
-      {"charstring", &kCharstring},
-      {"octetstring", &kOctetstring},
-      {"hexstring", &kHexstring},
-      {"universal charstring", &kUniversalCharstring},
-      {"verdicttype", &kVerdictType},
-  }}};
-  if (const auto sym_opt = kBuiltinsTable.get(name); sym_opt) {
-    return *sym_opt;
-  }
-  return nullptr;
-}
-}  // namespace builtins
 
 class ExternalsTracker {
  public:

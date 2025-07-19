@@ -23,12 +23,12 @@ enum class TokenKind : std::uint8_t {
 
   // Identifiers and basic type literals
   // (these tokens stand for classes of literals)
-  IDENT,    // main
-  INT,      // 12345
-  FLOAT,    // 123.45
-  STRING,   // "abc"
-  BSTRING,  // '101?F'H
-  MODIF,    // @fuzzy
+  IDENT,      // main
+  INT,        // 12345
+  FLOAT,      // 123.45
+  STRING,     // "abc"
+  BITSTRING,  // '101?F'H
+  MODIF,      // @fuzzy
   // literal_end,
 
   // operator_beg,

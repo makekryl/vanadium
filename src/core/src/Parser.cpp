@@ -63,7 +63,7 @@ const std::set<TokenKind> kTokOperandStart = { // +IDENT? see ntt todo
   TokenKind::ALL,
   TokenKind::ANY,
   TokenKind::ANYKW,
-  TokenKind::BSTRING,
+  TokenKind::BITSTRING,
   TokenKind::CHARSTRING,
   TokenKind::ERROR,
   TokenKind::FAIL,
@@ -1547,7 +1547,7 @@ nodes::Stmt* Parser::ParseStmt() {
     case TokenKind::INT:
     case TokenKind::FLOAT:
     case TokenKind::STRING:
-    case TokenKind::BSTRING:
+    case TokenKind::BITSTRING:
     case TokenKind::TRUE:
     case TokenKind::FALSE:
     case TokenKind::PASS:
@@ -1904,7 +1904,7 @@ exit_loop:
 //	| Literal
 //	| Reference
 //
-// Literal ::= INT | STRING | BSTRING | FLOAT
+// Literal ::= INT | STRING | BITSTRING | FLOAT
 //
 //	| "?" | "*"
 //	| "none" | "inconc" | "pass" | "fail" | "error"
@@ -1962,7 +1962,7 @@ nodes::Expr* Parser::ParseOperand() {
 
     case TokenKind::INT:
     case TokenKind::ANY:
-    case TokenKind::BSTRING:
+    case TokenKind::BITSTRING:
     case TokenKind::ERROR:
     case TokenKind::kNULL:
     case TokenKind::OMIT:

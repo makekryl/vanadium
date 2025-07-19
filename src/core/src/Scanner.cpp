@@ -484,7 +484,7 @@ TokenKind Scanner::ScanBitstring() {
   }
 exit_loop:
 
-  TokenKind kind = TokenKind::BSTRING;
+  TokenKind kind = TokenKind::BITSTRING;
   if (!HasNext() || !std::isalnum(Peek())) {
     kind = TokenKind::MALFORMED;
   }

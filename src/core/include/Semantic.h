@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "ASTNodes.h"
+#include "Builtins.h"
 
 namespace vanadium::core {
 
@@ -48,6 +49,7 @@ enum Value : std::uint16_t {
   kArray = 1 << 12,
 
   kBuiltin = 1 << 13,
+  kTemplateSpec = 1 << 14,
 };
 }
 
@@ -89,21 +91,6 @@ class Symbol {
     SymbolTable* members;
   } containment_;
 };
-
-namespace builtins {
-extern const Symbol kAnytype;
-extern const Symbol kBoolean;
-extern const Symbol kInteger;
-extern const Symbol kFloat;
-extern const Symbol kBitstring;
-extern const Symbol kCharstring;
-extern const Symbol kOctetstring;
-extern const Symbol kHexstring;
-extern const Symbol kUniversalCharstring;
-extern const Symbol kVerdictType;
-
-const Symbol* ResolveBuiltin(std::string_view name);
-}  // namespace builtins
 
 class SymbolTable {
  public:
