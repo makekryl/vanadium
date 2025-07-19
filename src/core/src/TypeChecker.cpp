@@ -16,14 +16,18 @@
 namespace vanadium::core {
 namespace checker {
 
-static const semantic::Symbol kErrorTypeSym{"<error-type>", nullptr, semantic::SymbolFlags::kBuiltin};
-static const semantic::Symbol kVoidSym{"<void>", nullptr, semantic::SymbolFlags::kBuiltin};
-static const semantic::Symbol kWildcardTypeSym{
+namespace symbols {
+const semantic::Symbol kErrorTypeSym{"<error-type>", nullptr, semantic::SymbolFlags::kBuiltin};
+
+const semantic::Symbol kVoidSym{"<void>", nullptr, semantic::SymbolFlags::kBuiltin};
+
+const semantic::Symbol kWildcardTypeSym{
     "<*>", nullptr,
     semantic::SymbolFlags::Value(semantic::SymbolFlags::kBuiltin | semantic::SymbolFlags::kTemplateSpec)};
-static const semantic::Symbol kQuestionTypeSym{
+const semantic::Symbol kQuestionTypeSym{
     "<?>", nullptr,
     semantic::SymbolFlags::Value(semantic::SymbolFlags::kBuiltin | semantic::SymbolFlags::kTemplateSpec)};
+}  // namespace symbols
 
 namespace {
 template <ast::IsNode ConcreteNode, auto PropertyPtr>
@@ -115,7 +119,7 @@ const semantic::Symbol* GetCallableReturnType(const SourceFile& file, const ast:
   switch (decl->nkind) {
     case ast::NodeKind::FuncDecl: {
       const auto* spec = decl->As<ast::nodes::FuncDecl>()->ret;
-      return spec ? resolve(spec->type) : &kVoidSym;
+      return spec ? resolve(spec->type) : &symbols::kVoidSym;
     }
     case ast::NodeKind::TemplateDecl:
       return resolve(decl->As<ast::nodes::TemplateDecl>()->type);
@@ -466,7 +470,7 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
 
       if (!(desired_type->Flags() & (semantic::SymbolFlags::kStructural | semantic::SymbolFlags::kSubType))) {
         //
-        resulting_type = &kErrorTypeSym;
+        resulting_type = &symbols::kErrorTypeSym;
         //
         break;
       }
@@ -526,7 +530,7 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
 
       const auto* record_file = ast::utils::SourceFileOf(record_decl);
 
-      if (record_decl->kind.kind == ast::TokenKind::UNION) {
+      if (record_sym->Flags() & semantic::SymbolFlags::kUnion) {
         PerformArgumentsTypeCheck<ast::nodes::Field, {.is_union = true}>(m->list, m->nrange, record_file, record_sym,
                                                                          record_decl->fields, [](const auto*) {
                                                                            return false;
@@ -596,10 +600,10 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
           resulting_type = &builtins::kVerdictType;
           break;
         case ast::TokenKind::MUL:
-          resulting_type = &kWildcardTypeSym;
+          resulting_type = &symbols::kWildcardTypeSym;
           break;
         case ast::TokenKind::ANY:
-          resulting_type = &kQuestionTypeSym;
+          resulting_type = &symbols::kQuestionTypeSym;
           break;
         default:
           break;

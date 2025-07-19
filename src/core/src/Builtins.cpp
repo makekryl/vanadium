@@ -1,5 +1,15 @@
 #include "Builtins.h"
 
+#include "ASTNodes.h"
+
+#ifndef NDEBUG
+#include <print>
+#endif
+
+#include "AST.h"
+#include "Arena.h"
+#include "Parser.h"
+#include "Program.h"
 #include "Semantic.h"
 #include "StaticMap.h"
 
@@ -16,9 +26,11 @@ const semantic::Symbol kOctetstring{"octetstring", nullptr, semantic::SymbolFlag
 const semantic::Symbol kHexstring{"hexstring", nullptr, semantic::SymbolFlags::kBuiltin};
 const semantic::Symbol kUniversalCharstring{"universal charstring", nullptr, semantic::SymbolFlags::kBuiltin};
 const semantic::Symbol kVerdictType{"verdicttype", nullptr, semantic::SymbolFlags::kBuiltin};
+const semantic::Symbol kTimer{"timer", nullptr, semantic::SymbolFlags::kBuiltin};
 
-const semantic::Symbol* ResolveBuiltin(std::string_view name) {
-  static constexpr lib::StaticMap<std::string_view, const semantic::Symbol*, 10> kBuiltinsTable{{{
+namespace {
+const semantic::Symbol* ResolveBuiltinType(std::string_view name) {
+  static constexpr lib::StaticMap<std::string_view, const semantic::Symbol*, 12> kBuiltinsTable{{{
       {"anytype", &kAnytype},
       {"boolean", &kBoolean},
       {"integer", &kInteger},
@@ -29,9 +41,70 @@ const semantic::Symbol* ResolveBuiltin(std::string_view name) {
       {"hexstring", &kHexstring},
       {"universal charstring", &kUniversalCharstring},
       {"verdicttype", &kVerdictType},
+      {"timer", &kTimer},
   }}};
   if (const auto sym_opt = kBuiltinsTable.get(name); sym_opt) {
     return *sym_opt;
+  }
+  return nullptr;
+}
+}  // namespace
+
+namespace {
+constexpr std::string_view kBuiltinDefsModule{
+#include "blob/TTCNBuiltinDefs.inc"
+};
+
+const semantic::Symbol* ResolveBuiltinDef(std::string_view name) {
+  static const auto* scope = [] {
+    static lib::Arena arena;
+
+    static SourceFile sf{
+        .path = "",
+        .ast = ast::Parse(arena, kBuiltinDefsModule),
+    };
+    sf.ast.root->file = &sf;
+#ifndef NDEBUG
+    if (!sf.ast.errors.empty()) {
+      std::println(stderr, "Builtin definitions module contains syntax errors:");
+      for (const auto& err : sf.ast.errors) {
+        std::println(stderr, " - ({}:{}) {}", err.range.begin, err.range.end, err.description);
+      }
+      std::fflush(stderr);
+      std::abort();
+    }
+#endif
+
+    sf.module.emplace();
+    sf.module->name = "TTCNBuiltins";
+    sf.module->sf = &sf;
+    static semantic::Scope scope{sf.ast.root};
+    sf.module->scope = &scope;
+
+    sf.ast.root->Accept([&](const ast::Node* n) {
+      if (n->nkind != ast::NodeKind::FuncDecl) {
+        return true;
+      }
+      const auto* m = n->As<ast::nodes::FuncDecl>();
+      scope.symbols.Add(
+          {sf.Text(*m->name), m,
+           semantic::SymbolFlags::Value(semantic::SymbolFlags::kFunction | semantic::SymbolFlags::kBuiltinDef)});
+      return false;
+    });
+
+    return &scope;
+  }();
+  return scope->ResolveDirect(name);
+}
+
+}  // namespace
+
+const semantic::Symbol* ResolveBuiltin(std::string_view name) {
+  if (const auto* sym = ResolveBuiltinType(name); sym) {
+    return sym;
+  }
+  if (const auto* sym = ResolveBuiltinDef(name); sym) {
+    return sym;
   }
   return nullptr;
 }

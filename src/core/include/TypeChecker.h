@@ -16,6 +16,15 @@ class Scope;
 
 namespace checker {
 
+namespace symbols {
+extern const semantic::Symbol kErrorTypeSym;
+
+extern const semantic::Symbol kVoidSym;
+
+extern const semantic::Symbol kWildcardTypeSym;
+extern const semantic::Symbol kQuestionTypeSym;
+}  // namespace symbols
+
 namespace utils {
 [[nodiscard]] std::string_view GetReadableTypeName(const SourceFile&, const semantic::Symbol*);
 [[nodiscard]] std::string_view GetReadableTypeName(const semantic::Symbol*);

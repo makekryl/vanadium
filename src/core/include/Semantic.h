@@ -26,7 +26,7 @@ class Symbol;
 class SymbolTable;
 
 namespace SymbolFlags {  // NOLINT(readability-identifier-naming)
-enum Value : std::uint16_t {
+enum Value : std::uint32_t {
   kNone = 0,
 
   kImportedModule = 1 << 0,
@@ -40,16 +40,19 @@ enum Value : std::uint16_t {
 
   kComponent = 1 << 6,
   kStructural = 1 << 7,
-  kSubType = 1 << 8,
-  kEnum = 1 << 9,
+  kUnion = 1 << 8,
+  kSubType = 1 << 9,
+  kEnum = 1 << 10,
 
-  kField = 1 << 10,
-  kEnumValue = 1 << 11,
+  kField = 1 << 11,
+  kEnumValue = 1 << 12,
 
-  kArray = 1 << 12,
+  kArray = 1 << 13,
 
-  kBuiltin = 1 << 13,
-  kTemplateSpec = 1 << 14,
+  kBuiltin = 1 << 14,
+  kBuiltinDef = 1 << 15,
+
+  kTemplateSpec = 1 << 16,
 };
 }
 

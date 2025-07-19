@@ -370,11 +370,16 @@ bool Binder::Inspect(const ast::Node* n) {
                            });
       }
 
+      std::underlying_type_t<SymbolFlags::Value> flags = SymbolFlags::kStructural;
+      if (m->kind.kind == ast::TokenKind::UNION) {
+        flags |= SymbolFlags::kUnion;
+      }
+
       if (m->name) {
         AddSymbol({
             Lit(std::addressof(*m->name)),
             m,
-            SymbolFlags::kStructural,
+            SymbolFlags::Value(flags),
             &members,
         });
         // TODO
