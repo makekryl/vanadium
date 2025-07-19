@@ -104,8 +104,16 @@ class Binder {
   explicit Binder(SourceFile& sf) : sf_(sf), inspector_(ast::NodeInspector::create<Binder, &Binder::Inspect>(this)) {}
 
   void Bind() {
+    sf_.ast.root->Accept(ast::NodeInspector::create<Binder, &Binder::Hoist>(this));
+
     scope_ = nullptr;
     sf_.ast.root->Accept(inspector_);
+
+    for (auto& [name, sym] : enum_values_syms_) {
+      if (!sf_.module->scope->symbols.Has(name)) {
+        sf_.module->scope->symbols.Add(std::move(sym));
+      }
+    }
   }
 
  private:
@@ -153,25 +161,34 @@ class Binder {
     return *sf_.arena.Alloc<SymbolTable>();
   }
 
+  struct SymbolAdditionOptions {
+    bool redefine_if_exists{true};
+  };
+
+  template <SymbolAdditionOptions Options = {}>
   void AddSymbol(SymbolTable& table, Symbol&& sym) {
     if (table.Has(sym.GetName())) {
+      if constexpr (!Options.redefine_if_exists) {
+        return;
+      }
       sf_.semantic_errors.emplace_back(SemanticError{
           .range = sym.Declaration()->nrange,
           .type = SemanticError::Type::kRedefinition,
       });
-      return;
     }
     table.Add(std::move(sym));
   }
 
+  template <SymbolAdditionOptions Options = {}>
   void AddSymbol(Symbol&& sym) {
-    AddSymbol(scope_->symbols, std::move(sym));
+    AddSymbol<Options>(scope_->symbols, std::move(sym));
   }
 
   void EmitError(SemanticError&& err) {
     sf_.semantic_errors.emplace_back(std::move(err));
   }
 
+  bool Hoist(const ast::Node*);
   bool Inspect(const ast::Node*);
 
   [[nodiscard]] std::string_view Lit(const ast::nodes::Ident* ident) const {
@@ -183,26 +200,94 @@ class Binder {
 
   void BindReference(const ast::nodes::Ident* ident) {
     const auto name = Lit(ident);
+
+    if (hoisted_names_.contains(name)) {
+      return;
+    }
+
     if (const auto* sym = scope_->Resolve(name); sym) {
-      if (sym->Flags() & SymbolFlags::kImportedName) [[unlikely]] {
+      if (sym->Flags() & SymbolFlags::kImportedModule) [[unlikely]] {
         required_imports_.insert(sym->GetName());
       }
-      // sym->references.push_back(ident);
-      // PASS
-    } else {
-      externals_->idents.emplace_back(ident);
+      return;
     }
+
+    externals_->idents.emplace_back(ident);
   }
+
+  template <ast::IsNode ConcreteNode>
+  void HoistName(const ast::Node* n) {
+    const auto* m = n->As<ConcreteNode>();
+    if (m->name) {
+      hoisted_names_.insert(Lit(*m->name));
+    }
+  };
 
   std::unordered_multimap<std::string_view, ImportDescriptor> imports_;
   std::unordered_set<std::string_view> required_imports_;
   ExternalsTracker externals_;
+
+  std::unordered_set<std::string_view> hoisted_names_;
+  std::unordered_map<std::string_view, Symbol> enum_values_syms_;
 
   Scope* scope_;
 
   SourceFile& sf_;
   const ast::NodeInspector inspector_;
 };
+
+bool Binder::Hoist(const ast::Node* n) {
+  switch (n->nkind) {
+    case ast::NodeKind::BlockStmt: {
+      return false;
+    }
+
+    case ast::NodeKind::ComponentTypeDecl: {
+      HoistName<ast::nodes::ComponentTypeDecl>(n);
+      return false;
+    }
+    case ast::NodeKind::StructTypeDecl: {
+      HoistName<ast::nodes::StructTypeDecl>(n);
+      return false;
+    }
+    case ast::NodeKind::FuncDecl: {
+      HoistName<ast::nodes::FuncDecl>(n);
+      return false;
+    }
+    case ast::NodeKind::TemplateDecl: {
+      HoistName<ast::nodes::TemplateDecl>(n);
+      return false;
+    }
+    case ast::NodeKind::SubTypeDecl: {
+      const auto* m = n->As<ast::nodes::SubTypeDecl>();
+      HoistName<ast::nodes::Field>(m->field);
+      return false;
+    }
+    case ast::NodeKind::ClassTypeDecl: {
+      HoistName<ast::nodes::ClassTypeDecl>(n);
+      return false;
+    }
+
+    case ast::NodeKind::EnumTypeDecl: {
+      const auto* m = n->As<ast::nodes::EnumTypeDecl>();
+      HoistName<ast::nodes::EnumTypeDecl>(m);
+
+      for (const auto* item : m->enums) {
+        const ast::nodes::Ident* valname = ast::utils::GetEnumValueNamePart(item);
+        if (valname != nullptr) [[likely]] {
+          hoisted_names_.insert(Lit(valname));
+        }
+      }
+
+      return false;
+    }
+
+    default:
+      break;
+  }
+
+  return true;
+}
 
 bool Binder::Inspect(const ast::Node* n) {
   switch (n->nkind) {
@@ -244,13 +329,12 @@ bool Binder::Inspect(const ast::Node* n) {
       const auto* m = n->As<ast::nodes::ImportDecl>();
 
       if (m->module) {
-        // TODO: stored well-known tokens as enums
         const auto* visibility = m->parent->As<ast::nodes::ModuleDef>()->visibility;
-        const bool transit = !m->list.empty() && m->list[0]->kind.On(sf_.ast.src) == "import";
+        const bool transit = !m->list.empty() && m->list[0]->kind.kind == ast::TokenKind::IMPORT;
         imports_.emplace(Lit(std::addressof(*m->module)),
                          ImportDescriptor{
                              .transit = transit,
-                             .is_public = (visibility != nullptr) && visibility->On(sf_.ast.src) == "public",
+                             .is_public = (visibility != nullptr) && visibility->kind == ast::TokenKind::PUBLIC,
                              .declaration = m,
                          });
 
@@ -259,7 +343,7 @@ bool Binder::Inspect(const ast::Node* n) {
           AddSymbol({
               Lit(std::addressof(*m->module)),
               m,
-              SymbolFlags::kImportedName,
+              SymbolFlags::kImportedModule,
           });
         }
       }
@@ -510,19 +594,16 @@ bool Binder::Inspect(const ast::Node* n) {
 
       auto& members = NewSymbolTable();
       for (const auto* item : m->enums) {
-        const ast::nodes::Ident* valname{nullptr};
-        if (item->nkind == ast::NodeKind::Ident) [[likely]] {
-          valname = item->As<ast::nodes::Ident>();
-        } else if (item->nkind == ast::NodeKind::CallExpr) {
-          valname = item->As<ast::nodes::CallExpr>()->fun->As<ast::nodes::Ident>();
-        }
-
+        const ast::nodes::Ident* valname = ast::utils::GetEnumValueNamePart(item);
         if (valname != nullptr) [[likely]] {
-          AddSymbol(members, semantic::Symbol{
-                                 Lit(valname),
-                                 valname,
-                                 SymbolFlags::kEnumValue,
-                             });
+          const auto item_name = Lit(valname);
+          semantic::Symbol sym{
+              item_name,
+              valname,
+              SymbolFlags::kEnumValue,
+          };
+          enum_values_syms_.emplace(item_name, sym);
+          AddSymbol(members, std::move(sym));
         }
       }
 
@@ -530,7 +611,7 @@ bool Binder::Inspect(const ast::Node* n) {
         AddSymbol({
             Lit(std::addressof(*m->name)),
             m,
-            SymbolFlags::kStructural,
+            SymbolFlags::kEnum,
             &members,
         });
       }

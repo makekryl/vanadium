@@ -15,6 +15,8 @@
 namespace vanadium::core {
 namespace checker {
 
+static const semantic::Symbol kErrorTypeSym{"<error-type>", nullptr, semantic::SymbolFlags::kBuiltin};
+
 namespace {
 template <ast::IsNode ConcreteNode, auto PropertyPtr>
 const semantic::Symbol* ResolveTypeVia(const SourceFile& file, const ast::Node* n) {
@@ -94,10 +96,8 @@ const semantic::Symbol* GetIdentType(const SourceFile& sf, const semantic::Scope
     case ast::NodeKind::FormalPar:
       return ResolveTypeVia<ast::nodes::FormalPar, &ast::nodes::FormalPar::type>(*decl_file, decl);
     default:
-      break;
+      return sym;
   }
-
-  return nullptr;
 }
 
 const semantic::Symbol* GetCallableReturnType(const SourceFile& file, const ast::nodes::Decl* decl) {
@@ -303,6 +303,16 @@ void BasicTypeChecker::MatchTypes(const ast::Range& range, const semantic::Symbo
     return;
   }
 
+  if (expected->Flags() & semantic::SymbolFlags::kEnum) {
+    if (expected != actual && !expected->Members()->Has(actual->GetName())) {
+      errors_.emplace_back(TypeError{
+          .range = range,
+          .message = std::format("value '{}' does not belong to enum '{}'", actual->GetName(), expected->GetName()),
+      });
+    }
+    return;
+  }
+
   // TODO: read language spec and maybe make something more precise
   if (utils::ResolvePotentiallyAliasedType(expected) == utils::ResolvePotentiallyAliasedType(actual)) {
     return;
@@ -443,11 +453,16 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
         break;
       }
 
-      if (desired_type->Flags() & (semantic::SymbolFlags::kStructural | semantic::SymbolFlags::kSubType)) {
+      if (!(desired_type->Flags() & (semantic::SymbolFlags::kStructural | semantic::SymbolFlags::kSubType))) {
         //
-        resulting_type = desired_type;
+        resulting_type = &kErrorTypeSym;
         //
+        break;
       }
+
+      //
+      resulting_type = desired_type;
+      //
 
       if (desired_type->Flags() & semantic::SymbolFlags::kSubType) {
         const auto* subtype_sym = desired_type;
@@ -500,7 +515,7 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
 
       const auto* record_file = ast::utils::SourceFileOf(record_decl);
 
-      if (record_file->Text(record_decl->kind.range) == "union") {
+      if (record_decl->kind.kind == ast::TokenKind::UNION) {
         PerformArgumentsTypeCheck<ast::nodes::Field, {.is_union = true}>(m->list, m->nrange, record_file,
                                                                          record_decl->fields, [](const auto*) {
                                                                            return false;
@@ -523,7 +538,7 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
               [&](const ast::Node* x, const semantic::Symbol* sym) {
                 errors_.emplace_back(TypeError{
                     .range = x->nrange,
-                    .message = std::format("type '{}' is not subscriptable", utils::GetReadableTypeName(sym)),
+                    .message = std::format("type '{}' is not structural", utils::GetReadableTypeName(sym)),
                 });
               },
           .on_unknown_property =

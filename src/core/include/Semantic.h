@@ -28,7 +28,7 @@ namespace SymbolFlags {  // NOLINT(readability-identifier-naming)
 enum Value : std::uint16_t {
   kNone = 0,
 
-  kImportedName = 1 << 0,
+  kImportedModule = 1 << 0,
 
   kVariable = 1 << 1,
   kArgument = 1 << 2,
@@ -108,8 +108,7 @@ const Symbol* ResolveBuiltin(std::string_view name);
 class SymbolTable {
  public:
   void Add(Symbol&& symbol) {
-    assert(!Has(symbol.GetName()));
-    names_.emplace(symbol.GetName(), std::move(symbol));
+    names_.insert_or_assign(symbol.GetName(), std::move(symbol));
   }
 
   bool Has(std::string_view name) const {
