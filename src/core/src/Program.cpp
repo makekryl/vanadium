@@ -210,7 +210,7 @@ bool Program::ForEachImport(const ModuleDescriptor& module, auto on_incomplete,
 namespace {
 template <typename NodeTextProvider>
   requires std::is_invocable_r_v<std::string_view, NodeTextProvider, const ast::nodes::Ident*>
-[[nodiscard]] std::optional<lib::Bitset> ResolveContribution(ExternallyResolvedGroup& ext_group,
+[[nodiscard]] std::optional<lib::Bitset> ResolveContribution(const ExternallyResolvedGroup& ext_group,
                                                              NodeTextProvider get_text,
                                                              const semantic::SymbolTable& table,
                                                              std::predicate<std::size_t> auto should_resolve_index) {
@@ -219,9 +219,9 @@ template <typename NodeTextProvider>
     if (!should_resolve_index(idx)) {
       continue;
     }
-    if (table.Lookup(get_text(ident))) {
-      ext_group.resolution_set.Set(idx);
-      if (!contribution) [[unlikely]] {
+    const auto name = get_text(ident);
+    if (table.Lookup(name)) {
+      if (!contribution.has_value()) [[unlikely]] {
         contribution.emplace(ext_group.resolution_set.Size());
       }
       contribution->Set(idx);
@@ -280,6 +280,7 @@ void Program::Crossbind() {
           if (!contribution_opt) {
             return;
           }
+          ext_group.resolution_set |= *contribution_opt;
 
           for (auto* scope : ext_group.scopes) {
             scope->augmentation.push_back(augmentation_table);
@@ -333,6 +334,7 @@ void Program::Crossbind() {
             // continue search
             return true;
           }
+          ext_group.resolution_set |= *contribution_opt;
 
           // About ".injected_to = module.scope," - we've noticed that some unresolved symbols from this group
           // are actually are global symbols imported into this scope from another module.

@@ -82,7 +82,7 @@ class Bitset {
     return pos / kCellBits;
   }
   [[nodiscard]] static storage_t GetMask(std::size_t pos) {
-    return 1 << (pos & (kCellBits - 1));
+    return storage_t{storage_t(1) << (pos % kCellBits)};
   }
 
   void CheckBounds(std::size_t pos) const {
