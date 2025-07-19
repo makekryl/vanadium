@@ -84,7 +84,7 @@ void Program::DropFile(const std::string& path) {
 }
 
 void Program::AttachFile(SourceFile& sf) {
-  Bind(sf);
+  semantic::Bind(sf);
 
   if (sf.module.has_value()) [[likely]] {
     sf.dirty = true;

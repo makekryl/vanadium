@@ -672,12 +672,10 @@ bool Binder::Inspect(const ast::Node* n) {
   return true;
 }
 
-}  // namespace semantic
-
-//
-
 void Bind(SourceFile& sf) {
   semantic::Binder(sf).Bind();
 }
+
+}  // namespace semantic
 
 }  // namespace vanadium::core

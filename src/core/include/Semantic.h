@@ -10,6 +10,8 @@
 
 namespace vanadium::core {
 
+struct SourceFile;
+
 namespace semantic {
 
 struct SemanticError {
@@ -188,6 +190,8 @@ class Scope {
   SymbolTable symbols;
   std::vector<const SymbolTable*> augmentation;
 };
+
+void Bind(SourceFile&);
 
 }  // namespace semantic
 

@@ -178,6 +178,4 @@ class Program {
   std::vector<Program*> dependents_;
 };
 
-void Bind(SourceFile&);
-
 }  // namespace vanadium::core
