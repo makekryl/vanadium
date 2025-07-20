@@ -263,6 +263,14 @@ bool Binder::Hoist(const ast::Node* n) {
       return false;
     }
 
+    case ast::NodeKind::ValueDecl: {
+      const auto* m = n->As<ast::nodes::ValueDecl>();
+      for (const auto* decl : m->decls) {
+        HoistName<ast::nodes::Declarator, TargetSetPtr>(decl);
+      }
+      return false;
+    }
+
     default:
       break;
   }
@@ -359,7 +367,7 @@ bool Binder::Inspect(const ast::Node* n) {
         AddSymbol({
             Lit(std::addressof(*m->name)),
             m,
-            SymbolFlags::kStructuralType,
+            SymbolFlags::kComponentStructuralType,
             &members,
         });
         // TODO
