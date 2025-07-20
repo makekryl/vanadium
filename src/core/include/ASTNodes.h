@@ -278,7 +278,7 @@ enum class NodeKind : std::uint8_t {
 
   module_begin_,
   Module,
-  ModuleDef,
+  Definition,
   ControlPart,
   ImportDecl,
   GroupDecl,

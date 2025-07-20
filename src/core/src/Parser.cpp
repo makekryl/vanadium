@@ -249,7 +249,7 @@ Node* Parser::Parse() {
     case TokenKind::CONST:
     case TokenKind::PRIVATE:
     case TokenKind::PUBLIC:
-      return ParseModuleDef();
+      return ParseDefinition();
 
     case TokenKind::TIMER:
     case TokenKind::PORT:
@@ -280,7 +280,7 @@ Node* Parser::Parse() {
       if (Peek(1).kind == TokenKind::DOT) {
         return ParseStmt();
       }
-      return ParseModuleDef();
+      return ParseDefinition();
 
     default:
       return ParseExpr();
@@ -297,7 +297,7 @@ nodes::Module* Parser::ParseModule() {
     }
     Expect(TokenKind::LBRACE);
     while (tok_ != TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
-      m.defs.emplace_back(ParseModuleDef());
+      m.defs.emplace_back(ParseDefinition());
       ExpectSemi();
     }
     Expect(TokenKind::RBRACE);
@@ -305,8 +305,8 @@ nodes::Module* Parser::ParseModule() {
   });
 }
 
-nodes::ModuleDef* Parser::ParseModuleDef() {
-  return NewNode<nodes::ModuleDef>([&](auto& md) {
+nodes::Definition* Parser::ParseDefinition() {
+  return NewNode<nodes::Definition>([&](auto& md) {
     switch (tok_) {
       case TokenKind::PRIVATE:
       case TokenKind::PUBLIC:
@@ -555,7 +555,7 @@ nodes::GroupDecl* Parser::ParseGroup() {
     ParseName(g.name);
     Expect(TokenKind::LBRACE);
     while (tok_ != TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
-      g.defs.emplace_back(ParseModuleDef());
+      g.defs.emplace_back(ParseDefinition());
       ExpectSemi();
     }
     Expect(TokenKind::RBRACE);
@@ -755,7 +755,7 @@ nodes::ClassTypeDecl* Parser::ParseClassTypeDecl() {
     }
     Expect(TokenKind::LBRACE);
     while (tok_ != TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
-      ctd.defs.push_back(ParseModuleDef());
+      ctd.defs.push_back(ParseDefinition());
       ExpectSemi();
     }
     Expect(TokenKind::RBRACE);

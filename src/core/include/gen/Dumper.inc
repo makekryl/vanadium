@@ -270,9 +270,9 @@ case NodeKind::LanguageSpec: {
   });
   break;
 }
-case NodeKind::ModuleDef: {
-  const auto* nn = n->As<nodes::ModuleDef>();
-  DumpGroup("ModuleDef", [&] {
+case NodeKind::Definition: {
+  const auto* nn = n->As<nodes::Definition>();
+  DumpGroup("Definition", [&] {
     Dump("visibility", nn->visibility);
     Dump("def", nn->def);
   });

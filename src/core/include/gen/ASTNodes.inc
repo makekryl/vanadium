@@ -7,8 +7,8 @@ struct LanguageSpec : TypeSpec {
   }
 };
 
-struct ModuleDef : Node {
-  ModuleDef() : Node(NodeKind::ModuleDef) {}
+struct Definition : Node {
+  Definition() : Node(NodeKind::Definition) {}
 
   Token* visibility{nullptr};
   Node* def{nullptr};
@@ -738,7 +738,7 @@ struct Module : Node {
 
   std::optional<Ident> name;
   LanguageSpec* language{nullptr};
-  std::vector<ModuleDef*> defs;
+  std::vector<Definition*> defs;
   WithSpec* with{nullptr};
 
   void Accept(const NodeInspector& inspector) const {
@@ -809,7 +809,7 @@ struct GroupDecl : Decl {
   GroupDecl() : Decl(NodeKind::GroupDecl) {}
 
   std::optional<Ident> name;
-  std::vector<ModuleDef*> defs;
+  std::vector<Definition*> defs;
   WithSpec* with{nullptr};
 
   void Accept(const NodeInspector& inspector) const {
@@ -851,7 +851,7 @@ struct ClassTypeDecl : Decl {
   RunsOnSpec* runs_on{nullptr};
   MtcSpec* mtc{nullptr};
   SystemSpec* system{nullptr};
-  std::vector<ModuleDef*> defs;
+  std::vector<Definition*> defs;
   WithSpec* with{nullptr};
 
   void Accept(const NodeInspector& inspector) const {

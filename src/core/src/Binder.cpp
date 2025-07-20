@@ -318,7 +318,7 @@ bool Binder::Inspect(const ast::Node* n) {
       const auto* m = n->As<ast::nodes::ImportDecl>();
 
       if (m->module) {
-        const auto* visibility = m->parent->As<ast::nodes::ModuleDef>()->visibility;
+        const auto* visibility = m->parent->As<ast::nodes::Definition>()->visibility;
         const bool transit = !m->list.empty() && m->list[0]->kind.kind == ast::TokenKind::IMPORT;
         imports_.emplace(Lit(std::addressof(*m->module)),
                          ImportDescriptor{

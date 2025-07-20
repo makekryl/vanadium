@@ -31,7 +31,7 @@ class Parser {
   nodes::Ident* ParseExpectedIdent(TokenKind kind);
   //
   nodes::Module* ParseModule();
-  nodes::ModuleDef* ParseModuleDef();
+  nodes::Definition* ParseDefinition();
   nodes::Decl* ParseModulePar();
   nodes::ControlPart* ParseControlPart();
   //

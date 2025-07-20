@@ -2,7 +2,7 @@
 Module:
   name: Ident
   language: LanguageSpec*?
-  defs: ModuleDef*[]
+  defs: Definition*[]
   with: WithSpec*?
 Field:
   default_tok: Token*?
@@ -126,7 +126,7 @@ CommClause:
   body: BlockStmt*?
 LanguageSpec:
   list: Token[]
-ModuleDef:
+Definition:
   visibility: Token*?
   def: Node*?
 WithSpec:
@@ -179,7 +179,7 @@ ImportDecl:
   with: WithSpec*?
 GroupDecl:
   name: Ident
-  defs: ModuleDef*[]
+  defs: Definition*[]
   with: WithSpec*?
 FriendDecl:
   module: Ident
@@ -201,7 +201,7 @@ ClassTypeDecl:
   runs_on: RunsOnSpec*?
   mtc: MtcSpec*?
   system: SystemSpec*?
-  defs: ModuleDef*[]
+  defs: Definition*[]
   with: WithSpec*?
 MapTypeDecl:
   spec: MapSpec*
