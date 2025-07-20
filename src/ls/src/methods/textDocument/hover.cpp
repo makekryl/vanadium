@@ -48,6 +48,11 @@ std::string BuildMarkdownParameterList(const core::ast::AST& ast, std::span<cons
         buf += " (optional)";
       }
     }
+    if constexpr (std::is_same_v<TParamDescriptorNode, core::ast::nodes::FormalPar>) {
+      if (param->value) {
+        buf += " (optional)";
+      }
+    }
 
     buf += "`";
 
