@@ -2,9 +2,12 @@
 
 #include "AST.h"
 #include "ASTNodes.h"
+#include "ASTTypes.h"
 
 namespace vanadium::core::ast {
 namespace utils {
+
+const Range& GetActualNameRange(const Node* n);
 
 inline const nodes::Ident* GetEnumValueNamePart(const nodes::Expr* n) {
   switch (n->nkind) {
@@ -36,7 +39,7 @@ inline const Node* TraverseSelectorExpressionStart(const nodes::SelectorExpr* se
 }
 
 inline SourceFile* SourceFileOf(const Node* n) {
-  while (n->nkind != NodeKind::Root) {
+  while (n->nkind != NodeKind::RootNode) {
     n = n->parent;
   }
   return n->As<RootNode>()->file;

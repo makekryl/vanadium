@@ -1,5 +1,6 @@
 add_library(vanadium_core STATIC
   src/ASTInspector.cpp
+  src/utils/ASTUtils.cpp
   src/Parser.cpp
   src/Scanner.cpp
   src/Builtins.cpp

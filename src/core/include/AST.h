@@ -13,7 +13,7 @@ struct SourceFile;
 namespace ast {
 
 struct RootNode : Node {
-  RootNode() : Node(NodeKind::Root) {}
+  RootNode() : Node(NodeKind::RootNode) {}
 
   SourceFile* file{nullptr};
   std::vector<Node*> nodes;
@@ -37,6 +37,10 @@ struct AST {
 
   [[nodiscard]] std::string_view Text(const Node& n) const noexcept {
     return n.On(src);
+  }
+
+  [[nodiscard]] std::string_view Text(const Token* t) const noexcept {
+    return t->On(src);
   }
 
   [[nodiscard]] std::string_view Text(const Range& r) const noexcept {

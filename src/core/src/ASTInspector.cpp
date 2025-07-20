@@ -1,5 +1,6 @@
 #include <cassert>
 
+#include "AST.h"
 #include "ASTNodes.h"
 #include "ASTTypes.h"
 
@@ -13,6 +14,7 @@ void Node::Accept(const NodeInspector& inspector) const {
 
   using namespace nodes;
   switch (nkind) {
+    FORWARD_ACCEPT(RootNode)
     FORWARD_ACCEPT(Ident)
     FORWARD_ACCEPT(CompositeIdent)
     FORWARD_ACCEPT(NameIdent)

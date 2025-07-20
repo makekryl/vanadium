@@ -104,6 +104,9 @@ struct SourceFile {
   [[nodiscard]] std::string_view Text(const ast::Node& n) const noexcept {
     return ast.Text(n);
   }
+  [[nodiscard]] std::string_view Text(const ast::Token* t) const noexcept {
+    return ast.Text(t);
+  }
   [[nodiscard]] std::string_view Text(const ast::Range& r) const noexcept {
     return ast.Text(r);
   }

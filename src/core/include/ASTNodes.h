@@ -193,7 +193,7 @@ enum class TokenKind : std::uint8_t {
 
 // NOLINTBEGIN(readability-identifier-naming)
 enum class NodeKind : std::uint8_t {
-  Root,
+  RootNode,
   ErrorNode,
 
   Ident,

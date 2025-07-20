@@ -7,6 +7,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "AST.h"
 #include "ASTNodes.h"
 #include "ASTTypes.h"
 #include "Bitset.h"
@@ -71,7 +72,7 @@ class Binder {
   explicit Binder(SourceFile& sf) : sf_(sf), inspector_(ast::NodeInspector::create<Binder, &Binder::Inspect>(this)) {}
 
   void Bind() {
-    sf_.ast.root->Accept(ast::NodeInspector::create<Binder, &Binder::Hoist>(this));
+    HoistNamesOf<ast::RootNode, &Binder::hoisted_names_>(sf_.ast.root);
 
     scope_ = nullptr;
     sf_.ast.root->Accept(inspector_);
@@ -139,7 +140,7 @@ class Binder {
         return;
       }
       sf_.semantic_errors.emplace_back(SemanticError{
-          .range = sym.Declaration()->nrange,
+          .range = ast::utils::GetActualNameRange(sym.Declaration()),
           .type = SemanticError::Type::kRedefinition,
       });
     }
@@ -155,20 +156,22 @@ class Binder {
     sf_.semantic_errors.emplace_back(std::move(err));
   }
 
-  bool Hoist(const ast::Node*);
   bool Inspect(const ast::Node*);
 
-  [[nodiscard]] std::string_view Lit(const ast::nodes::Ident* ident) const {
-    return ident->On(sf_.ast.src);
+  [[nodiscard]] std::string_view Lit(const ast::Node* n) const {
+    return sf_.Text(n);
   }
-  [[nodiscard]] std::string_view Lit(const ast::nodes::Ident& ident) const {
-    return Lit(&ident);
+  [[nodiscard]] std::string_view Lit(const ast::Node& n) const {
+    return Lit(&n);
+  }
+  [[nodiscard]] std::string_view Lit(const ast::Token* n) const {
+    return sf_.Text(n);
   }
 
   void BindReference(const ast::nodes::Ident* ident) {
     const auto name = Lit(ident);
 
-    if (hoisted_names_.contains(name)) {
+    if (hoisted_names_.contains(name) || hoisted_inner_names_.contains(name)) {
       return;
     }
 
@@ -182,11 +185,19 @@ class Binder {
     externals_->idents.emplace_back(ident);
   }
 
-  template <ast::IsNode ConcreteNode>
+  template <ast::IsNode NodeToInspect, auto TargetSetPtr>
+  void HoistNamesOf(const NodeToInspect* n) {
+    // concretizing NodeToInspect allows to avoid extra indirect call to n->Accept(...) switch
+    n->Accept(ast::NodeInspector::create<Binder, &Binder::Hoist<TargetSetPtr>>(this));
+  }
+  template <auto TargetSetPtr>
+  bool Hoist(const ast::Node*);
+
+  template <ast::IsNode ConcreteNode, auto TargetSetPtr>
   void HoistName(const ast::Node* n) {
     const auto* m = n->As<ConcreteNode>();
     if (m->name) {
-      hoisted_names_.insert(Lit(*m->name));
+      (this->*TargetSetPtr).insert(Lit(*m->name));
     }
   };
 
@@ -195,6 +206,8 @@ class Binder {
   ExternalsTracker externals_;
 
   std::unordered_set<std::string_view> hoisted_names_;
+  std::unordered_set<std::string_view> hoisted_inner_names_;
+
   std::unordered_map<std::string_view, Symbol> enum_values_syms_;
 
   Scope* scope_;
@@ -203,6 +216,7 @@ class Binder {
   const ast::NodeInspector inspector_;
 };
 
+template <auto TargetSetPtr>
 bool Binder::Hoist(const ast::Node* n) {
   switch (n->nkind) {
     case ast::NodeKind::BlockStmt: {
@@ -210,39 +224,39 @@ bool Binder::Hoist(const ast::Node* n) {
     }
 
     case ast::NodeKind::ComponentTypeDecl: {
-      HoistName<ast::nodes::ComponentTypeDecl>(n);
+      HoistName<ast::nodes::ComponentTypeDecl, TargetSetPtr>(n);
       return false;
     }
     case ast::NodeKind::StructTypeDecl: {
-      HoistName<ast::nodes::StructTypeDecl>(n);
+      HoistName<ast::nodes::StructTypeDecl, TargetSetPtr>(n);
       return false;
     }
     case ast::NodeKind::FuncDecl: {
-      HoistName<ast::nodes::FuncDecl>(n);
+      HoistName<ast::nodes::FuncDecl, TargetSetPtr>(n);
       return false;
     }
     case ast::NodeKind::TemplateDecl: {
-      HoistName<ast::nodes::TemplateDecl>(n);
+      HoistName<ast::nodes::TemplateDecl, TargetSetPtr>(n);
       return false;
     }
     case ast::NodeKind::SubTypeDecl: {
       const auto* m = n->As<ast::nodes::SubTypeDecl>();
-      HoistName<ast::nodes::Field>(m->field);
+      HoistName<ast::nodes::Field, TargetSetPtr>(m->field);
       return false;
     }
     case ast::NodeKind::ClassTypeDecl: {
-      HoistName<ast::nodes::ClassTypeDecl>(n);
+      HoistName<ast::nodes::ClassTypeDecl, TargetSetPtr>(n);
       return false;
     }
 
     case ast::NodeKind::EnumTypeDecl: {
       const auto* m = n->As<ast::nodes::EnumTypeDecl>();
-      HoistName<ast::nodes::EnumTypeDecl>(m);
+      HoistName<ast::nodes::EnumTypeDecl, TargetSetPtr>(m);
 
       for (const auto* item : m->enums) {
         const ast::nodes::Ident* valname = ast::utils::GetEnumValueNamePart(item);
         if (valname != nullptr) [[likely]] {
-          hoisted_names_.insert(Lit(valname));
+          (this->*TargetSetPtr).insert(Lit(valname));
         }
       }
 
@@ -391,22 +405,29 @@ bool Binder::Inspect(const ast::Node* n) {
     case ast::NodeKind::FuncDecl: {
       const auto* m = n->As<ast::nodes::FuncDecl>();
 
+      MaybeVisit(m->runs_on);
+      MaybeVisit(m->system);
+      MaybeVisit(m->ret);
+
+      if (m->modif && Lit(m->modif) == "@abstract") {
+        const auto* outer = m->parent->parent;
+        if (outer->nkind == ast::NodeKind::ClassTypeDecl) {
+          const auto* cdecl = outer->As<ast::nodes::ClassTypeDecl>();
+          if (!cdecl->modif || Lit(cdecl->modif) != "@abstract") {
+            // TODO: try to also bring up this error from xbind
+            EmitError(SemanticError{
+                .range = m->modif->range,
+                .type = SemanticError::Type::kCannotHaveAbstractFunctionInNonAbstractClass,
+            });
+          }
+        }
+      }
+
       auto* originated_scope = Scoped(m, [&] {
         Visit(m->params);
         const auto process = [&] {
-          if (m->body) {
-            Visit(m->body);
-          }
+          MaybeVisit(m->body);
         };
-        if (m->runs_on) {
-          Visit(m->runs_on);
-        }
-        if (m->system) {
-          Visit(m->system);
-        }
-        if (m->ret) {
-          Visit(m->ret);
-        }
 
         const bool augmenting = !!m->runs_on;
         if (augmenting) {
@@ -594,37 +615,78 @@ bool Binder::Inspect(const ast::Node* n) {
     case ast::NodeKind::ClassTypeDecl: {
       const auto* m = n->As<ast::nodes::ClassTypeDecl>();
 
-      auto& members = NewSymbolTable();
-      // !!! TODO !!!
-      // bind properly and remove the visits below - it is just a stub
-      Scoped(m, [&] {
-        Visit(m->defs);
+      // TODOs:
+      //  - support multiple inheritance (extend xbind to support > 1 augmentation providers)
+      //  -  ^ do the same to support runs on
+
+      MaybeVisit(m->runs_on);
+      MaybeVisit(m->system);
+
+      HoistNamesOf<ast::nodes::ClassTypeDecl, &Binder::hoisted_inner_names_>(m);  // <--- hoist/start
+      auto* originated_scope = Scoped(m, [&] {
+        AddSymbol({
+            "this",
+            m,
+            SymbolFlags::kThis,
+        });
+
+        const auto process = [&] {
+          Visit(m->defs);
+        };
+
+        if (!m->extends.empty()) {
+          const auto augment_by = Lit(m->extends.front());  // <-- TODO
+          if (const auto* sym = scope_->Resolve(augment_by)) {
+            if (sym->Flags() & SymbolFlags::kClass) {
+              scope_->augmentation.push_back(&sym->OriginatedScope()->symbols);
+            } else {
+              // TODO: try to also bring up this error from xbind
+              EmitError(SemanticError{
+                  .range = m->runs_on->nrange,
+                  .type = SemanticError::Type::kClassCanBeExtendedByClassOnly,
+              });
+            }
+            process();
+          } else {
+            externals_.Augmented(augment_by, scope_, process);
+          }
+        } else {
+          process();
+        }
       });
+      hoisted_inner_names_.clear();  // <--- hoist/end
 
       if (m->name) {
         AddSymbol({
             Lit(std::addressof(*m->name)),
             m,
-            SymbolFlags::kStructural,
-            &members,
+            SymbolFlags::kClass,
+            originated_scope,
         });
       }
 
-      return true;
+      return false;
     }
 
-      // case ast::NodeKind::Field: {
-      //   const auto* m = n->As<ast::nodes::Field>();
+    case ast::NodeKind::ConstructorDecl: {
+      const auto* m = n->As<ast::nodes::ConstructorDecl>();
 
-      //   if (m->name) {
-      //     members_->Add({
-      //         Lit(std::addressof(*m->name)),
-      //         m,
-      //         SymbolFlags::kField,
-      //     });
-      //   }
-      //   return false;
-      // }
+      auto* originated_scope = Scoped(m, [&] {
+        Visit(m->params);
+        if (m->body) {
+          Visit(m->body);
+        }
+      });
+
+      AddSymbol({
+          "create",
+          m,
+          SymbolFlags::kFunction,
+          originated_scope,
+      });
+
+      return false;
+    }
 
     case ast::NodeKind::CompositeLiteral: {
       const auto* m = n->As<ast::nodes::CompositeLiteral>();
@@ -677,5 +739,4 @@ void Bind(SourceFile& sf) {
 }
 
 }  // namespace semantic
-
 }  // namespace vanadium::core

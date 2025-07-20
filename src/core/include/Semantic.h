@@ -19,6 +19,8 @@ struct SemanticError {
   enum class Type : std::uint8_t {
     kRedefinition,
     kRunsOnRequiresComponent,
+    kClassCanBeExtendedByClassOnly,
+    kCannotHaveAbstractFunctionInNonAbstractClass,
     kToDo,
   } type;
 };
@@ -46,15 +48,18 @@ enum Value : std::uint32_t {
   kSubType = 1 << 9,
   kEnum = 1 << 10,
 
-  kField = 1 << 11,
-  kEnumValue = 1 << 12,
+  kClass = 1 << 11,
+  kThis = 1 << 12,
 
-  kArray = 1 << 13,
+  kField = 1 << 13,
+  kEnumValue = 1 << 14,
 
-  kBuiltin = 1 << 14,
-  kBuiltinDef = 1 << 15,
+  kArray = 1 << 15,
 
-  kTemplateSpec = 1 << 16,
+  kBuiltin = 1 << 16,
+  kBuiltinDef = 1 << 16,
+
+  kTemplateSpec = 1 << 17,
 };
 }
 
@@ -178,6 +183,10 @@ class Scope {
 
   void AddChild(Scope* scope) {
     children_.push_back(scope);
+  }
+
+  const Scope* ParentScope() const {
+    return parent_;
   }
 
  private:

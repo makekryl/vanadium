@@ -266,7 +266,8 @@ void Program::Crossbind() {
     for (auto& ext_group : module.externals) {
       if (!ext_group.augmentation_provider.empty() && !ext_group.augmentation_provider_injected) {
         const auto resolve_through = [&](const semantic::Symbol* sym, ModuleDescriptor* imported_module) {
-          const semantic::SymbolTable* augmentation_table = sym->Members();
+          const semantic::SymbolTable* augmentation_table =
+              (sym->Flags() & semantic::SymbolFlags::kClass) ? &sym->OriginatedScope()->symbols : sym->Members();
           const auto contribution_opt = ResolveContribution(
               ext_group,
               [&sf](const ast::nodes::Ident* ident) {
