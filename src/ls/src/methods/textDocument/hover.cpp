@@ -277,6 +277,36 @@ Values:
           provider_file->ast.Text(m));
       break;
     }
+    case core::ast::NodeKind::ImportDecl: {
+      const auto* m = decl->As<core::ast::nodes::ImportDecl>();
+      if (n->parent->nkind == core::ast::NodeKind::ImportDecl) {
+        m = n->parent->As<core::ast::nodes::ImportDecl>();
+      }
+
+      const auto* module = project.program.GetModule(provider_file->ast.Text(*m->module));
+      if (!module) {
+        break;
+      }
+
+      content += std::format("### module `{}`",
+                             provider_file->ast.Text(*m->module),  //
+                             provider_file->ast.Text(m));
+
+      if (!m->list.empty() && m->list[0]->kind.kind == core::ast::TokenKind::IMPORT) {
+        content += R"(
+---
+Transitively imports modules:
+)";
+        for (const auto& [import, descriptor] : module->imports) {
+          if (descriptor.transit) {
+            continue;
+          }
+          content += std::format("- `{}`\n", import);
+        }
+        content += "---\n";
+      }
+      break;
+    }
     default:
       content += "TODO";
       break;

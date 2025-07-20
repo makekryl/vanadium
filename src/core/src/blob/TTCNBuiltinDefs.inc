@@ -784,7 +784,7 @@ apply
 */
 function setverdict(
 	in verdicttype verdict,
-	in charstring reason
+	in charstring reason := none
 )
 
 }
