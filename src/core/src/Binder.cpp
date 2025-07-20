@@ -359,7 +359,7 @@ bool Binder::Inspect(const ast::Node* n) {
         AddSymbol({
             Lit(std::addressof(*m->name)),
             m,
-            SymbolFlags::kStructural,
+            SymbolFlags::kStructuralType,
             &members,
         });
         // TODO
@@ -384,16 +384,16 @@ bool Binder::Inspect(const ast::Node* n) {
                            });
       }
 
-      std::underlying_type_t<SymbolFlags::Value> flags = SymbolFlags::kStructural;
+      SymbolFlags::Value flags = SymbolFlags::kStructuralType;
       if (m->kind.kind == ast::TokenKind::UNION) {
-        flags |= SymbolFlags::kUnion;
+        flags = SymbolFlags::kUnionStructuralType;
       }
 
       if (m->name) {
         AddSymbol({
             Lit(std::addressof(*m->name)),
             m,
-            SymbolFlags::Value(flags),
+            flags,
             &members,
         });
         // TODO
@@ -429,8 +429,7 @@ bool Binder::Inspect(const ast::Node* n) {
           MaybeVisit(m->body);
         };
 
-        const bool augmenting = !!m->runs_on;
-        if (augmenting) {
+        if (m->runs_on) {
           const auto augment_by = Lit(m->runs_on->comp);
           if (const auto* sym = scope_->Resolve(augment_by)) {
             if (sym->Flags() & SymbolFlags::kComponent) {
@@ -575,7 +574,7 @@ bool Binder::Inspect(const ast::Node* n) {
         AddSymbol(semantic::Symbol{
             Lit(*field->name),
             m,
-            SymbolFlags::kSubType,
+            SymbolFlags::kSubTypeType,
         });
       }
 
@@ -604,7 +603,7 @@ bool Binder::Inspect(const ast::Node* n) {
         AddSymbol({
             Lit(std::addressof(*m->name)),
             m,
-            SymbolFlags::kEnum,
+            SymbolFlags::kEnumType,
             &members,
         });
       }
@@ -634,7 +633,24 @@ bool Binder::Inspect(const ast::Node* n) {
           Visit(m->defs);
         };
 
-        if (!m->extends.empty()) {
+        // this mixed hot mess copied from FuncDecl will be cleaned up after supporting multi-augmentation
+        if (m->runs_on) {
+          const auto augment_by = Lit(m->runs_on->comp);
+          if (const auto* sym = scope_->Resolve(augment_by)) {
+            if (sym->Flags() & SymbolFlags::kComponent) {
+              scope_->augmentation.push_back(sym->Members());
+            } else {
+              // TODO: try to also bring up this error from xbind
+              EmitError(SemanticError{
+                  .range = m->runs_on->nrange,
+                  .type = SemanticError::Type::kRunsOnRequiresComponent,
+              });
+            }
+            process();
+          } else {
+            externals_.Augmented(augment_by, scope_, process);
+          }
+        } else if (!m->extends.empty()) {
           const auto augment_by = Lit(m->extends.front());  // <-- TODO
           if (const auto* sym = scope_->Resolve(augment_by)) {
             if (sym->Flags() & SymbolFlags::kClass) {
@@ -660,7 +676,7 @@ bool Binder::Inspect(const ast::Node* n) {
         AddSymbol({
             Lit(std::addressof(*m->name)),
             m,
-            SymbolFlags::kClass,
+            SymbolFlags::kClassType,
             originated_scope,
         });
       }

@@ -16,17 +16,17 @@
 namespace vanadium::core {
 namespace builtins {
 
-const semantic::Symbol kAnytype{"anytype", nullptr, semantic::SymbolFlags::kBuiltin};
-const semantic::Symbol kBoolean{"boolean", nullptr, semantic::SymbolFlags::kBuiltin};
-const semantic::Symbol kInteger{"integer", nullptr, semantic::SymbolFlags::kBuiltin};
-const semantic::Symbol kFloat{"float", nullptr, semantic::SymbolFlags::kBuiltin};
-const semantic::Symbol kBitstring{"bitstring", nullptr, semantic::SymbolFlags::kBuiltin};
-const semantic::Symbol kCharstring{"charstring", nullptr, semantic::SymbolFlags::kBuiltin};
-const semantic::Symbol kOctetstring{"octetstring", nullptr, semantic::SymbolFlags::kBuiltin};
-const semantic::Symbol kHexstring{"hexstring", nullptr, semantic::SymbolFlags::kBuiltin};
-const semantic::Symbol kUniversalCharstring{"universal charstring", nullptr, semantic::SymbolFlags::kBuiltin};
-const semantic::Symbol kVerdictType{"verdicttype", nullptr, semantic::SymbolFlags::kBuiltin};
-const semantic::Symbol kTimer{"timer", nullptr, semantic::SymbolFlags::kBuiltin};
+const semantic::Symbol kAnytype{"anytype", nullptr, semantic::SymbolFlags::kBuiltinType};
+const semantic::Symbol kBoolean{"boolean", nullptr, semantic::SymbolFlags::kBuiltinType};
+const semantic::Symbol kInteger{"integer", nullptr, semantic::SymbolFlags::kBuiltinType};
+const semantic::Symbol kFloat{"float", nullptr, semantic::SymbolFlags::kBuiltinType};
+const semantic::Symbol kBitstring{"bitstring", nullptr, semantic::SymbolFlags::kBuiltinType};
+const semantic::Symbol kCharstring{"charstring", nullptr, semantic::SymbolFlags::kBuiltinType};
+const semantic::Symbol kOctetstring{"octetstring", nullptr, semantic::SymbolFlags::kBuiltinType};
+const semantic::Symbol kHexstring{"hexstring", nullptr, semantic::SymbolFlags::kBuiltinType};
+const semantic::Symbol kUniversalCharstring{"universal charstring", nullptr, semantic::SymbolFlags::kBuiltinType};
+const semantic::Symbol kVerdictType{"verdicttype", nullptr, semantic::SymbolFlags::kBuiltinType};
+const semantic::Symbol kTimer{"timer", nullptr, semantic::SymbolFlags::kBuiltinType};
 
 namespace {
 const semantic::Symbol* ResolveBuiltinType(std::string_view name) {

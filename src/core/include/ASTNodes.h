@@ -196,15 +196,14 @@ enum class NodeKind : std::uint8_t {
   RootNode,
   ErrorNode,
 
-  Ident,
-  CompositeIdent,
-  NameIdent,
-  ParametrizedIdent,
-
   ValueLiteral,
   CompositeLiteral,
 
   expr_begin_,
+  Ident,
+  CompositeIdent,
+  NameIdent,
+  ParametrizedIdent,
   UnaryExpr,
   PostExpr,
   AssignmentExpr,
@@ -247,7 +246,6 @@ enum class NodeKind : std::uint8_t {
   stmt_end_,
 
   spec_begin_,
-  Field,
   RefSpec,
   StructSpec,
   ListSpec,
@@ -257,6 +255,7 @@ enum class NodeKind : std::uint8_t {
   spec_end,
 
   decl_begin_,
+  Field,
   ValueDecl,
   Declarator,
   TemplateDecl,
@@ -274,6 +273,7 @@ enum class NodeKind : std::uint8_t {
   PortAttribute,
   PortMapAttribute,
   ComponentTypeDecl,
+  FormalPar,
   decl_end_,
 
   module_begin_,
@@ -293,7 +293,6 @@ enum class NodeKind : std::uint8_t {
   MtcSpec,
   ReturnSpec,
   FormalPars,
-  FormalPar,
   WithSpec,
   WithStmt,
   RedirectToIndex,
@@ -350,9 +349,15 @@ struct Expr : Node {
 };
 struct Stmt : Node {
   Stmt(NodeKind nkind) : Node(nkind) {}
+  static bool IsStmt(const Node* n) {
+    return NodeKind::stmt_begin_ < n->nkind && n->nkind < NodeKind::stmt_end_;
+  }
 };
 struct Decl : Node {
   Decl(NodeKind nkind) : Node(nkind) {}
+  static bool IsDecl(const Node* n) {
+    return NodeKind::decl_begin_ < n->nkind && n->nkind < NodeKind::decl_end_;
+  }
 };
 struct TypeSpec : Node {
   TypeSpec(NodeKind nkind) : Node(nkind) {}

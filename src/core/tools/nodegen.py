@@ -51,9 +51,12 @@ class AstNode:
 
   @property
   def basic_type(self):
+    if self.name in [
+      "ParametrizedIdent",
+    ]:
+      return "Ident"
     if self.name.endswith("Expr") or self.name in [
       "ValueLiteral",
-      "ParametrizedIdent",
       "CompositeLiteral",
     ]:
       return "Expr"

@@ -172,11 +172,13 @@ struct SelectorExpr : Expr {
   SelectorExpr() : Expr(NodeKind::SelectorExpr) {}
 
   Expr* x;
-  Expr* sel;
+  Ident* sel{nullptr};
 
   void Accept(const NodeInspector& inspector) const {
     Inspect(x, inspector);
-    Inspect(sel, inspector);
+    if (sel != nullptr) {
+      Inspect(sel, inspector);
+    }
   }
 };
 
@@ -450,8 +452,8 @@ struct CallExpr : Expr {
   }
 };
 
-struct ParametrizedIdent : Expr {
-  ParametrizedIdent() : Expr(NodeKind::ParametrizedIdent) {}
+struct ParametrizedIdent : Ident {
+  ParametrizedIdent() : Ident(NodeKind::ParametrizedIdent) {}
 
   Ident* ident;
   ParenExpr* params;

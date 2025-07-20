@@ -140,7 +140,7 @@ ValueLiteral:
   tok: Token
 SelectorExpr:
   x: Expr*
-  sel: Expr*
+  sel: Ident*?
 DefKindExpr:
   kind: Token
   list: Expr*[]

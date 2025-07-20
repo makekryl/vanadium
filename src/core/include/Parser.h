@@ -125,7 +125,7 @@ class Parser {
   //
   std::vector<nodes::Expr*> ParseExprList();
   //
-  nodes::Expr* ParseRef();
+  nodes::Ident* ParseRef();
   nodes::ParenExpr* ParseParenExpr();
   //
   nodes::CompositeIdent* ParseUniversalCharstring();
@@ -142,7 +142,7 @@ class Parser {
   //
   nodes::ParenExpr* TryParseTypeParameters();
   nodes::Expr* TryParseTypeParameter();
-  nodes::Expr* TryParseTypeIdent();
+  nodes::Ident* TryParseTypeIdent();
 
   Token Consume();
   Token ConsumeInvariant(TokenKind);

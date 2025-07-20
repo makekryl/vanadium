@@ -6,6 +6,7 @@
 #include <magic_enum/magic_enum.hpp>
 #include <set>
 #include <sstream>
+#include <utility>
 
 #include "AST.h"
 #include "ASTNodes.h"
@@ -1379,8 +1380,12 @@ nodes::WithStmt* Parser::ParseWithStmt() {
       s.value = NewNode<nodes::SelectorExpr>([&](auto& se) {
         se.x = v;
         ConsumeInvariant(TokenKind::DOT);
-        se.sel = NewNode<nodes::ValueLiteral>([&](auto& sel) {
-          sel.tok = Expect(TokenKind::STRING);
+        // TODO: check whether this is really possible
+        // se.sel = NewNode<nodes::ValueLiteral>([&](auto& sel) {
+        //   sel.tok = Expect(TokenKind::STRING);
+        // });
+        se.sel = NewNode<nodes::Ident>([&](auto&) {
+          Expect(TokenKind::STRING);
         });
       });
     } else {
@@ -2017,11 +2022,13 @@ nodes::Expr* Parser::ParseOperand() {
 }
 
 nodes::SelectorExpr* Parser::ParseSelectorExpr(nodes::Expr* x) {
-  return NewNode<nodes::SelectorExpr>([&](auto& se) {
+  auto* se = NewNode<nodes::SelectorExpr>([&](auto& se) {
     se.x = x;
     ConsumeInvariant(TokenKind::DOT);
     se.sel = ParseRef();
   });
+  se->parent = std::exchange(se->x->parent, se);
+  return se;
 }
 
 nodes::IndexExpr* Parser::ParseIndexExpr(nodes::Expr* x) {
@@ -2032,6 +2039,7 @@ nodes::IndexExpr* Parser::ParseIndexExpr(nodes::Expr* x) {
     Expect(TokenKind::RBRACK);
   });
   if (x) [[likely]] {
+    r->parent = std::exchange(r->x->parent, r);
     r->nrange.begin = x->nrange.begin;
   }
   return r;
@@ -2065,6 +2073,7 @@ nodes::CallExpr* Parser::ParseCallExpr(nodes::Expr* x) {
     });
   });
   if (x) [[likely]] {
+    r->parent = std::exchange(r->fun->parent, r);
     r->nrange.begin = x->nrange.begin;
   }
   return r;
@@ -2077,6 +2086,7 @@ nodes::LengthExpr* Parser::ParseLengthExpr(nodes::Expr* x) {
     le.size = ParseParenExpr();
   });
   if (x) [[likely]] {
+    r->parent = std::exchange(r->x->parent, r);
     r->nrange.begin = x->nrange.begin;
   }
   return r;
@@ -2124,6 +2134,7 @@ nodes::RedirectExpr* Parser::ParseRedirect(nodes::Expr* x) {
     }
   });
   if (x) [[likely]] {
+    r->parent = std::exchange(r->x->parent, r);
     r->nrange.begin = x->nrange.begin;
   }
   return r;
@@ -2140,13 +2151,13 @@ std::vector<nodes::Expr*> Parser::ParseExprList() {
   return v;
 }
 
-nodes::Expr* Parser::ParseRef() {
+nodes::Ident* Parser::ParseRef() {
   auto* ident = ParseName();
   if (ident == nullptr) {
     return nullptr;
   }
 
-  if (tok_ != TokenKind::LT) {
+  if (tok_ != TokenKind::LT) [[likely]] {
     return ident;
   }
 
@@ -2276,7 +2287,7 @@ nodes::ParenExpr* Parser::TryParseTypeParameters() {
 }
 
 nodes::Expr* Parser::TryParseTypeParameter() {
-  auto* x = TryParseTypeIdent();
+  nodes::Expr* x = TryParseTypeIdent();
   while (true) {
     switch (tok_) {
       case TokenKind::DOT: {
@@ -2310,7 +2321,7 @@ nodes::Expr* Parser::TryParseTypeParameter() {
   }
 }
 
-nodes::Expr* Parser::TryParseTypeIdent() {
+nodes::Ident* Parser::TryParseTypeIdent() {
   nodes::Ident* x;
   switch (tok_) {
     case TokenKind::IDENT:
@@ -2324,7 +2335,7 @@ nodes::Expr* Parser::TryParseTypeIdent() {
     default:
       return nullptr;
   }
-  if (tok_ == TokenKind::LT) {
+  if (tok_ == TokenKind::LT) [[unlikely]] {
     auto* y = TryParseTypeParameters();
     if (y == nullptr) {
       return NewNode<nodes::ParametrizedIdent>([&](auto& pi) {

@@ -42,24 +42,37 @@ enum Value : std::uint32_t {
   kTemplate = 1 << 4,
   kControl = 1 << 5,
 
-  kComponent = 1 << 6,
+  kType = 1 << 6,
+
   kStructural = 1 << 7,
-  kUnion = 1 << 8,
-  kSubType = 1 << 9,
-  kEnum = 1 << 10,
+  kStructuralType = kType | kStructural,
 
-  kClass = 1 << 11,
-  kThis = 1 << 12,
+  kComponent = 1 << 8,
+  kComponentStructuralType = kType | kStructural | kComponent,
 
-  kField = 1 << 13,
-  kEnumValue = 1 << 14,
+  kUnion = 1 << 9,
+  kUnionStructuralType = kType | kStructural | kUnion,
 
-  kArray = 1 << 15,
+  kClass = 1 << 10,
+  kClassType = kType | kClass,
 
-  kBuiltin = 1 << 16,
-  kBuiltinDef = 1 << 16,
+  kEnum = 1 << 11,
+  kEnumType = kType | kEnum,
 
-  kTemplateSpec = 1 << 17,
+  kSubType = 1 << 12,
+  kSubTypeType = kType | kSubType,
+
+  kThis = 1 << 13,
+  kField = 1 << 14,
+  kEnumValue = 1 << 15,
+
+  kArray = 1 << 16,
+
+  kBuiltin = 1 << 17,
+  kBuiltinType = kType | kBuiltin,
+  kBuiltinDef = 1 << 18,
+
+  kTemplateSpec = 1 << 19,
 };
 }
 
