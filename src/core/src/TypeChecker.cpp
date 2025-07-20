@@ -257,6 +257,11 @@ const semantic::Symbol* ResolveCallableReturnType(const SourceFile* file, const 
       const auto* m = decl->As<ast::nodes::TemplateDecl>();
       return ResolveExprType(file, scope, m->type);
     }
+    case ast::NodeKind::ConstructorDecl: {
+      const auto* m = decl->As<ast::nodes::FuncDecl>();
+      const auto* classdecl = m->parent->parent->As<ast::nodes::ClassTypeDecl>();  // Def->ClassTypeDecl
+      return file->module->scope->ResolveDirect(file->Text(*classdecl->name));
+    }
     default: {
       return nullptr;
     }
@@ -715,11 +720,7 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
       return false;
     }
 
-    case ast::NodeKind::ExprStmt: {
-      CheckType(n->As<ast::nodes::ExprStmt>()->expr);
-      return false;
-    }
-
+    case ast::NodeKind::SelectorExpr:
     case ast::NodeKind::CallExpr: {
       CheckType(n);
       return false;

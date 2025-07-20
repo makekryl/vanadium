@@ -24,6 +24,8 @@ inline const nodes::FormalPars* GetCallableDeclParams(const nodes::Decl* decl) {
   switch (decl->nkind) {
     case NodeKind::FuncDecl:
       return decl->As<nodes::FuncDecl>()->params;
+    case NodeKind::ConstructorDecl:
+      return decl->As<nodes::ConstructorDecl>()->params;
     case NodeKind::TemplateDecl:
       return decl->As<nodes::TemplateDecl>()->params;
     default:
