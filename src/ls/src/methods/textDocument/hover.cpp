@@ -265,14 +265,20 @@ Values:
     case core::ast::NodeKind::Field: {
       const auto* m = decl->As<core::ast::nodes::Field>();
 
+      std::string prefix;
+      if (m->parent->nkind == core::ast::NodeKind::StructTypeDecl) {
+        prefix = std::format("{}::", provider_file->ast.Text(*m->parent->As<core::ast::nodes::StructTypeDecl>()->name));
+      }
+
       content += std::format(
           R"(
-### field `{}`
+### field `{}{}`
 ---
 ```ttcn
 {}
 ```
 )",
+          prefix,
           provider_file->ast.Text(*m->name),  //
           provider_file->ast.Text(m));
       break;
