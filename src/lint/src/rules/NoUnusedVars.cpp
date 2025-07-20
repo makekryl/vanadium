@@ -61,7 +61,7 @@ void CheckScope(const std::pair<NoUnusedVars*, Context&> rule_ctx, const core::s
     return true;
   };
 
-  const auto* container = scope->GetContainer();
+  const auto* container = scope->Container();
   if (container != nullptr) {
     container->Accept(inspector);
   }

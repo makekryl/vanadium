@@ -17,7 +17,7 @@ namespace vanadium::core {
 namespace checker {
 
 namespace symbols {
-const semantic::Symbol kErrorType{"<error-type>", nullptr, semantic::SymbolFlags::kBuiltinType};
+const semantic::Symbol kTypeError{"<error-type>", nullptr, semantic::SymbolFlags::kBuiltinType};
 
 const semantic::Symbol kVoidType{"<void>", nullptr, semantic::SymbolFlags::kBuiltinType};
 
@@ -31,55 +31,39 @@ const semantic::Symbol kQuestionType{
 
 namespace utils {
 
-[[nodiscard]] std::string_view GetReadableTypeName(const SourceFile& sf, const semantic::Symbol* sym) {
+[[nodiscard]] std::string_view GetReadableTypeName(const SourceFile* sf, const semantic::Symbol* sym) {
   const auto* decl = sym->Declaration();
   switch (decl->nkind) {
     case ast::NodeKind::StructTypeDecl: {
       const auto* m = decl->As<ast::nodes::StructTypeDecl>();
-      return sf.Text(ast::Range{
+      return sf->Text(ast::Range{
           .begin = m->kind.range.begin,
           .end = m->name->nrange.end,
       });
     }
     case ast::NodeKind::SubTypeDecl: {
       const auto* m = decl->As<ast::nodes::SubTypeDecl>();
-      return sf.Text(ast::Range{
+      return sf->Text(ast::Range{
           .begin = m->field->nrange.begin,
           .end = m->field->name->nrange.end,
       });
     }
     case ast::NodeKind::ClassTypeDecl: {
       const auto* m = decl->As<ast::nodes::ClassTypeDecl>();
-      return sf.Text(ast::Range{
+      return sf->Text(ast::Range{
           .begin = m->kind.range.begin,
           .end = m->name->nrange.end,
       });
     }
     default:
-      return sf.Text(sym->Declaration());
+      return sf->Text(sym->Declaration());
   }
 }
 [[nodiscard]] std::string_view GetReadableTypeName(const semantic::Symbol* sym) {
   if (sym->Flags() & semantic::SymbolFlags::kBuiltin) {
     return sym->GetName();
   }
-  return GetReadableTypeName(*ast::utils::SourceFileOf(sym->Declaration()), sym);
-}
-
-[[nodiscard]] const semantic::Symbol* ResolvePotentiallyAliasedType(const semantic::Symbol* sym) {
-  const auto* decl = sym->Declaration();
-
-  if (decl && decl->nkind == ast::NodeKind::SubTypeDecl) {
-    decl = decl->As<ast::nodes::SubTypeDecl>()->field->type;
-
-    while (decl && decl->nkind == ast::NodeKind::RefSpec) {
-      const auto* file = ast::utils::SourceFileOf(decl);
-      sym = file->module->scope->Resolve(file->Text(decl->As<ast::nodes::RefSpec>()->x));
-      decl = sym->Declaration();
-    }
-  }
-
-  return sym;
+  return GetReadableTypeName(ast::utils::SourceFileOf(sym->Declaration()), sym);
 }
 
 }  // namespace utils
@@ -121,14 +105,26 @@ template <typename TypeResolver, typename OnNonStructuralType, typename OnUnknow
                                  const ast::nodes::Expr*> &&
            std::is_invocable_v<OnNonStructuralType, const ast::Node*, const semantic::Symbol*> &&
            std::is_invocable_v<OnUnknownProperty, const ast::nodes::SelectorExpr*, const semantic::Symbol*>)
-struct SelectorExprResolver {
-  const SourceFile* sf;
-  const semantic::Scope* scope;
-
+struct SelectorExprResolverOptions {
   TypeResolver resolve_type;
   OnNonStructuralType on_non_structural_type;
   OnUnknownProperty on_unknown_property;
+};
 
+template <typename Options>
+class SelectorExprResolver {
+ public:
+  SelectorExprResolver(Options options) : options_(std::move(options)) {}
+
+  const semantic::Symbol* Resolve(const SourceFile* sf, const semantic::Scope* scope,
+                                  const ast::nodes::SelectorExpr* se) {
+    sf_ = sf;
+    scope_ = scope;
+    se_tgt_ = se;
+    return ResolveSelectorExpr(se);
+  }
+
+ private:
   const semantic::Symbol* ResolveSelectorExpr(const ast::nodes::SelectorExpr* se) const {
     if (se->sel == nullptr) [[unlikely]] {
       return nullptr;
@@ -138,7 +134,7 @@ struct SelectorExprResolver {
     if (se->x->nkind == ast::NodeKind::SelectorExpr) {
       x_sym = ResolveSelectorExpr(se->x->As<ast::nodes::SelectorExpr>());
     } else {
-      x_sym = resolve_type(sf, scope, se->x);
+      x_sym = options_.resolve_type(sf_, scope_, se->x);
     }
 
     if (!x_sym) {
@@ -146,11 +142,11 @@ struct SelectorExprResolver {
     }
 
     if (!(x_sym->Flags() & (semantic::SymbolFlags::kStructural | semantic::SymbolFlags::kClass))) {
-      on_non_structural_type(se->sel, x_sym);
+      options_.on_non_structural_type(se->sel, x_sym);
       return nullptr;
     }
 
-    const auto property_name = sf->Text(se->sel);
+    const auto property_name = sf_->Text(se->sel);
     const semantic::Symbol* property_sym = [&] {
       if (x_sym->Flags() & semantic::SymbolFlags::kStructural) {
         return x_sym->Members()->Lookup(property_name);
@@ -160,11 +156,11 @@ struct SelectorExprResolver {
     }();
     if (!property_sym) {
       // TODO: remove file lookup from contract
-      on_unknown_property(se, x_sym);
+      options_.on_unknown_property(se, x_sym);
       return nullptr;
     }
 
-    if (se->parent->nkind != ast::NodeKind::SelectorExpr) {
+    if (se == se_tgt_) {
       // we don't need to resolve type then
       return property_sym;
     }
@@ -173,21 +169,40 @@ struct SelectorExprResolver {
     return ResolveDeclarationType(property_file, property_file->module->scope,
                                   property_sym->Declaration()->As<ast::nodes::Decl>());
   }
+
+  const SourceFile* sf_;
+  const semantic::Scope* scope_;
+  const ast::nodes::SelectorExpr* se_tgt_;
+  Options options_;
 };
 const semantic::Symbol* ResolveSelectorExprSymbol(const SourceFile* sf, const semantic::Scope* scope,
                                                   const ast::nodes::SelectorExpr* se) {
-  const SelectorExprResolver resolver{
-      .sf = sf,
-      .scope = scope,
+  SelectorExprResolver resolver{SelectorExprResolverOptions{
       .resolve_type = ResolveExprType,
       .on_non_structural_type = [](const auto*, auto) {},
       .on_unknown_property = [](const auto*, auto) {},
-  };
-  return resolver.ResolveSelectorExpr(se);
+  }};
+  return resolver.Resolve(sf, scope, se);
 }
 
 }  // namespace detail
 }  // namespace
+
+[[nodiscard]] const semantic::Symbol* ResolvePotentiallyAliasedType(const semantic::Symbol* sym) {
+  const auto* decl = sym->Declaration();
+
+  if (decl && decl->nkind == ast::NodeKind::SubTypeDecl) {
+    decl = decl->As<ast::nodes::SubTypeDecl>()->field->type;
+
+    while (decl && decl->nkind == ast::NodeKind::RefSpec) {
+      const auto* file = ast::utils::SourceFileOf(decl);
+      sym = file->module->scope->Resolve(file->Text(decl->As<ast::nodes::RefSpec>()->x));
+      decl = sym->Declaration();
+    }
+  }
+
+  return sym;
+}
 
 // Expression -> Declaration
 const semantic::Symbol* ResolveExprSymbol(const SourceFile* file, const semantic::Scope* scope,
@@ -312,7 +327,7 @@ class BasicTypeChecker {
   void InspectScope(const semantic::Scope* scope) {
     const auto* prev_scope = scope_;
     scope_ = scope;
-    Visit(scope->GetContainer());
+    Visit(scope->Container());
     scope_ = prev_scope;
   }
 
@@ -376,7 +391,7 @@ void BasicTypeChecker::MatchTypes(const ast::Range& range, const semantic::Symbo
   }
 
   // TODO: read language spec and maybe make something more precise
-  if (utils::ResolvePotentiallyAliasedType(expected) == utils::ResolvePotentiallyAliasedType(actual)) {
+  if (ResolvePotentiallyAliasedType(expected) == ResolvePotentiallyAliasedType(actual)) {
     return;
   }
 
@@ -444,7 +459,7 @@ void BasicTypeChecker::PerformArgumentsTypeCheck(std::span<const ast::nodes::Exp
           errors_.emplace_back(TypeError{
               .range = ae->property->nrange,
               .message = std::format("property '{}' does not exist on type '{}'", property_name,
-                                     utils::GetReadableTypeName(*params_file, params_type_sym)),
+                                     utils::GetReadableTypeName(params_file, params_type_sym)),
           });
           Visit(argnode);
         }
@@ -530,7 +545,7 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
 
       if (!(desired_type->Flags() & (semantic::SymbolFlags::kStructural | semantic::SymbolFlags::kSubType))) {
         //
-        resulting_type = &symbols::kErrorType;
+        resulting_type = &symbols::kTypeError;
         //
         break;
       }
@@ -608,9 +623,7 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
     case ast::NodeKind::SelectorExpr: {
       const auto* se = n->As<ast::nodes::SelectorExpr>();
 
-      const detail::SelectorExprResolver resolver{
-          .sf = module_.sf,
-          .scope = scope_,
+      detail::SelectorExprResolver resolver{detail::SelectorExprResolverOptions{
           .resolve_type =
               [&](const auto*, const auto*, const ast::nodes::Expr* expr) {
                 return CheckType(expr);
@@ -634,9 +647,9 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
                                            utils::GetReadableTypeName(sym)),
                 });
               },
-      };
+      }};
 
-      const auto* property_sym = resolver.ResolveSelectorExpr(se);
+      const auto* property_sym = resolver.Resolve(module_.sf, scope_, se);
       if (!property_sym) {
         break;
       }
@@ -653,7 +666,7 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
       resulting_type = ResolveDeclarationType(property_file, property_file->module->scope,
                                               property_sym->Declaration()->As<ast::nodes::Decl>());
       if (!resulting_type) {
-        resulting_type = &symbols::kErrorType;
+        resulting_type = &symbols::kTypeError;
       }
       //
       break;
@@ -709,7 +722,7 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
 
 bool BasicTypeChecker::Inspect(const ast::Node* n) {
   for (const auto& child : scope_->GetChildren()) {
-    if (child->GetContainer()->nrange.Contains(n->nrange)) {
+    if (child->Container()->nrange.Contains(n->nrange)) {
       InspectScope(child);
       return false;
     }

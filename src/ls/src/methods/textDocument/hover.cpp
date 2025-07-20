@@ -11,8 +11,8 @@
 #include "LanguageServerConv.h"
 #include "LanguageServerMethods.h"
 #include "Semantic.h"
+#include "domain/LanguageServerSymbolDef.h"
 #include "utils/ASTUtils.h"
-#include "utils/SemanticUtils.h"
 
 namespace vanadium::ls {
 
@@ -66,26 +66,21 @@ rpc::ExpectedResult<lsp::HoverResult> methods::textDocument::hover::operator()(L
   const auto& [project, path] = ctx->ResolveFile(params.textDocument.uri);
   const auto* file = project.program.GetFile(path);
 
-  const auto* n = core::ast::utils::GetNodeAt(file->ast, file->ast.lines.GetPosition(core::ast::Location{
-                                                             .line = params.position.line,
-                                                             .column = params.position.character,
-                                                         }));
-
-  if (n->nkind != core::ast::NodeKind::Ident) {
+  const auto result = domain::FindSymbol(file, params.position);
+  if (!result) {
     return nullptr;
   }
+  const auto* n = result->node;
+  const auto* sym = result->symbol;
 
-  const core::semantic::Scope* scope = core::semantic::utils::FindScope(file->module->scope, n);
-  const auto* sym = scope->Resolve(n->On(file->ast.src));
   if (!sym || (sym->Flags() & core::semantic::SymbolFlags::kBuiltin)) {
     return nullptr;
   }
+  const auto* decl = sym->Declaration();
+  const auto* provider_file = core::ast::utils::SourceFileOf(decl);
 
   auto& content = *ctx->GetTemporaryArena().Alloc<std::string>();
   content.reserve(256);  // TODO: check if it is justified actually
-
-  const auto* decl = sym->Declaration();
-  const auto* provider_file = core::ast::utils::SourceFileOf(decl);
 
   switch (decl->nkind) {
     case core::ast::NodeKind::FuncDecl: {
@@ -150,6 +145,22 @@ Fields:
                              provider_file->Text(m->kind.range),  //
                              provider_file->ast.Text(*m->name),
                              BuildMarkdownParameterList<core::ast::nodes::Field>(provider_file->ast, m->fields),
+                             provider_file->ast.Text(core::ast::Range{
+                                 .begin = m->nrange.begin,
+                                 .end = m->name->nrange.end,
+                             }));
+      break;
+    }
+    case core::ast::NodeKind::ClassTypeDecl: {
+      const auto* m = decl->As<core::ast::nodes::ClassTypeDecl>();
+      content += std::format(R"(
+### class `{}`
+---
+```ttcn
+{}
+```
+)",
+                             provider_file->ast.Text(*m->name),
                              provider_file->ast.Text(core::ast::Range{
                                  .begin = m->nrange.begin,
                                  .end = m->name->nrange.end,
@@ -249,6 +260,21 @@ Values:
                                  .begin = m->nrange.begin,
                                  .end = m->name->nrange.end,
                              }));
+      break;
+    }
+    case core::ast::NodeKind::Field: {
+      const auto* m = decl->As<core::ast::nodes::Field>();
+
+      content += std::format(
+          R"(
+### field `{}`
+---
+```ttcn
+{}
+```
+)",
+          provider_file->ast.Text(*m->name),  //
+          provider_file->ast.Text(m));
       break;
     }
     default:

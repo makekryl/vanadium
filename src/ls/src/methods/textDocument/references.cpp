@@ -54,18 +54,24 @@ rpc::ExpectedResult<lsp::ReferencesResult> methods::textDocument::references::op
     });
   }
 
-  const core::ast::Node* container = sym->Declaration();
-  while (container->nkind != core::ast::NodeKind::BlockStmt) {
-    container = container->parent;
-  }
-  container->Accept([&](const core::ast::Node* vn) {
-    if (vn->nkind == core::ast::NodeKind::Ident && file->ast.Text(vn) == sym_name) {
+  scope->Container()->Accept([&](const core::ast::Node* vn) {
+    bool should_introspect{true};
+    if (vn->nkind == core::ast::NodeKind::AssignmentExpr &&
+        (vn->parent->nkind == core::ast::NodeKind::CompositeLiteral ||
+         vn->parent->nkind == core::ast::NodeKind::ParenExpr)) {
+      should_introspect = false;
+      vn = vn->As<core::ast::nodes::AssignmentExpr>()->value;
+    }
+    if (vn->nkind == core::ast::NodeKind::Ident &&
+        (vn->parent->nkind != core::ast::NodeKind::SelectorExpr ||
+         vn->parent->As<core::ast::nodes::SelectorExpr>()->x == vn) &&
+        file->ast.Text(vn) == sym_name) {
       refs.emplace_back(lsp::Location{
           .uri = params.textDocument.uri,
           .range = conv::ToLSPRange(vn->nrange, file->ast),
       });
     }
-    return true;
+    return should_introspect;
   });
 
   return refs;

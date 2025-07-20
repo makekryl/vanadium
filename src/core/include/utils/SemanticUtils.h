@@ -7,7 +7,7 @@ namespace vanadium::core::semantic {
 namespace utils {
 
 inline const Scope* FindScope(const Scope* where, const ast::Node* n) {
-  if (!where->GetContainer()->Contains(n)) [[unlikely]] {
+  if (!where->Container()->Contains(n)) [[unlikely]] {
     return nullptr;
   }
 
@@ -15,7 +15,7 @@ inline const Scope* FindScope(const Scope* where, const ast::Node* n) {
   while (true) {
     const Scope* narrowed = nullptr;
     for (const auto* child : candidate->GetChildren()) {
-      if (child->GetContainer()->Contains(n)) {
+      if (child->Container()->Contains(n)) {
         narrowed = child;
         break;
       }

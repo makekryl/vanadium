@@ -78,7 +78,7 @@ struct ScopeChecker {
       return true;
     };
 
-    const auto* container = scope->GetContainer();
+    const auto* container = scope->Container();
     if (container != nullptr) {
       container->Accept(inspector);
     }

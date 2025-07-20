@@ -194,6 +194,11 @@ int PrecedenceOf(TokenKind kind) {
       return kLowestPrec;
   }
 }
+
+inline void ExtendByIncorporatedNode(Node* n, Node* x) {
+  n->parent = std::exchange(x->parent, n);
+  n->nrange.begin = x->nrange.begin;
+}
 }  // namespace
 
 Parser::Parser(lib::Arena& arena, std::string_view src) : scanner_(src), src_(src), arena_(&arena) {}
@@ -1743,7 +1748,7 @@ nodes::Expr* Parser::ParseBinaryExpr(int prec) {
         ConsumeInvariant(TokenKind::ASSIGN);
         be.value = ParseBinaryExpr(prec + 1);
       });
-      x->nrange.begin = x->As<nodes::AssignmentExpr>()->property->nrange.begin;
+      ExtendByIncorporatedNode(x, x->As<nodes::AssignmentExpr>()->property);
       continue;
     }
 
@@ -1752,6 +1757,7 @@ nodes::Expr* Parser::ParseBinaryExpr(int prec) {
       be.op = Consume();
       be.y = ParseBinaryExpr(prec + 1);
     });
+    ExtendByIncorporatedNode(x, x->As<nodes::BinaryExpr>()->x);
   }
 }
 
@@ -2027,7 +2033,7 @@ nodes::SelectorExpr* Parser::ParseSelectorExpr(nodes::Expr* x) {
     ConsumeInvariant(TokenKind::DOT);
     se.sel = ParseRef();
   });
-  se->parent = std::exchange(se->x->parent, se);
+  ExtendByIncorporatedNode(se, se->x);
   return se;
 }
 
@@ -2039,8 +2045,7 @@ nodes::IndexExpr* Parser::ParseIndexExpr(nodes::Expr* x) {
     Expect(TokenKind::RBRACK);
   });
   if (x) [[likely]] {
-    r->parent = std::exchange(r->x->parent, r);
-    r->nrange.begin = x->nrange.begin;
+    ExtendByIncorporatedNode(r, r->x);
   }
   return r;
 }
@@ -2073,8 +2078,7 @@ nodes::CallExpr* Parser::ParseCallExpr(nodes::Expr* x) {
     });
   });
   if (x) [[likely]] {
-    r->parent = std::exchange(r->fun->parent, r);
-    r->nrange.begin = x->nrange.begin;
+    ExtendByIncorporatedNode(r, r->fun);
   }
   return r;
 }
@@ -2086,8 +2090,7 @@ nodes::LengthExpr* Parser::ParseLengthExpr(nodes::Expr* x) {
     le.size = ParseParenExpr();
   });
   if (x) [[likely]] {
-    r->parent = std::exchange(r->x->parent, r);
-    r->nrange.begin = x->nrange.begin;
+    ExtendByIncorporatedNode(r, r->x);
   }
   return r;
 }
@@ -2134,8 +2137,7 @@ nodes::RedirectExpr* Parser::ParseRedirect(nodes::Expr* x) {
     }
   });
   if (x) [[likely]] {
-    r->parent = std::exchange(r->x->parent, r);
-    r->nrange.begin = x->nrange.begin;
+    ExtendByIncorporatedNode(r, r->x);
   }
   return r;
 }

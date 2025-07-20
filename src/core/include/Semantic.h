@@ -186,7 +186,7 @@ class Scope {
     return nullptr;
   }
 
-  const ast::Node* GetContainer() const {
+  const ast::Node* Container() const {
     return container_;
   }
 
