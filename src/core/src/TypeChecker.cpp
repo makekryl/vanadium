@@ -965,7 +965,7 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
       const auto* m = n->As<ast::nodes::ValueDecl>();
       const auto* expected_type = module_.scope->Resolve(module_.sf->Text(m->type));
       for (const auto* decl : m->decls) {
-        if (!decl->value) {
+        if (!decl->value) [[unlikely]] {
           continue;
         }
 
