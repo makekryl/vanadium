@@ -100,10 +100,12 @@ std::optional<std::pair<std::size_t, std::size_t>> GetLengthExprBounds(const Sou
   return std::make_pair(min_args, max_args);
 }
 
-template <typename TypeResolver, typename OnNonStructuralType, typename OnUnknownProperty>
-  requires(std::is_invocable_r_v<const semantic::Symbol*, TypeResolver, const SourceFile*, const semantic::Scope*,
-                                 const ast::nodes::Expr*> &&
-           std::is_invocable_v<OnNonStructuralType, const ast::Node*, const semantic::Symbol*> &&
+template <typename F>
+concept IsTypeResolver = std::is_invocable_r_v<const semantic::Symbol*, F, const SourceFile*, const semantic::Scope*,
+                                               const ast::nodes::Expr*>;
+
+template <IsTypeResolver TypeResolver, typename OnNonStructuralType, typename OnUnknownProperty>
+  requires(std::is_invocable_v<OnNonStructuralType, const ast::Node*, const semantic::Symbol*> &&
            std::is_invocable_v<OnUnknownProperty, const ast::nodes::SelectorExpr*, const semantic::Symbol*>)
 struct SelectorExprResolverOptions {
   TypeResolver resolve_type;
@@ -185,6 +187,69 @@ const semantic::Symbol* ResolveSelectorExprSymbol(const SourceFile* sf, const se
   return resolver.Resolve(sf, scope, se);
 }
 
+template <IsTypeResolver TypeResolver, typename OnNonSubscriptableType>
+  requires(std::is_invocable_v<OnNonSubscriptableType, const ast::Node*, const semantic::Symbol*>)
+struct IndexExprResolverOptions {
+  TypeResolver resolve_type;
+  OnNonSubscriptableType on_non_subscriptable_type;
+};
+
+template <typename Options>
+class IndexExprResolver {
+ public:
+  IndexExprResolver(Options options) : options_(std::move(options)) {}
+
+  const semantic::Symbol* Resolve(const SourceFile* sf, const semantic::Scope* scope, const ast::nodes::IndexExpr* ie) {
+    sf_ = sf;
+    scope_ = scope;
+    return ResolveIndexExpr(ie);
+  }
+
+ private:
+  const semantic::Symbol* ResolveIndexExpr(const ast::nodes::IndexExpr* ie) const {
+    const semantic::Symbol* x_sym{nullptr};
+    if (ie->x->nkind == ast::NodeKind::IndexExpr) {
+      x_sym = ResolveIndexExpr(ie->x->As<ast::nodes::IndexExpr>());
+    } else {
+      x_sym = options_.resolve_type(sf_, scope_, ie->x);
+    }
+
+    if (!x_sym) {
+      return nullptr;
+    }
+
+    if (!(x_sym->Flags() & semantic::SymbolFlags::kSubType)) {
+      options_.on_non_subscriptable_type(ie->x, x_sym);
+      return nullptr;
+    }
+
+    const auto* subtype_decl = x_sym->Declaration()->As<ast::nodes::SubTypeDecl>();
+    const auto* subtype_file = ast::utils::SourceFileOf(subtype_decl);
+
+    const auto* f = subtype_decl->field;
+    if (f->type->nkind != ast::NodeKind::ListSpec) {
+      options_.on_non_subscriptable_type(ie->x, x_sym);
+      return nullptr;
+    }
+    const auto* ls = f->type->As<ast::nodes::ListSpec>();
+    const auto* rs = ls->elemtype->As<ast::nodes::RefSpec>();
+
+    return subtype_file->module->scope->Resolve(subtype_file->Text(rs->x));
+  }
+
+  const SourceFile* sf_;
+  const semantic::Scope* scope_;
+  Options options_;
+};
+const semantic::Symbol* ResolveIndexExprType(const SourceFile* sf, const semantic::Scope* scope,
+                                             const ast::nodes::IndexExpr* se) {
+  IndexExprResolver resolver{IndexExprResolverOptions{
+      .resolve_type = ResolveExprType,
+      .on_non_subscriptable_type = [](const auto*, auto) {},
+  }};
+  return resolver.Resolve(sf, scope, se);
+}
+
 }  // namespace detail
 }  // namespace
 
@@ -220,6 +285,10 @@ const semantic::Symbol* ResolveExprSymbol(const SourceFile* file, const semantic
     case ast::NodeKind::SelectorExpr: {
       const auto* m = expr->As<ast::nodes::SelectorExpr>();
       return detail::ResolveSelectorExprSymbol(file, scope, m);
+    }
+    case ast::NodeKind::IndexExpr: {
+      const auto* m = expr->As<ast::nodes::IndexExpr>();
+      return detail::ResolveIndexExprType(file, scope, m);
     }
     default: {
       return nullptr;
@@ -672,6 +741,32 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
       break;
     }
 
+    case ast::NodeKind::IndexExpr: {
+      const auto* ie = n->As<ast::nodes::IndexExpr>();
+
+      detail::IndexExprResolver resolver{detail::IndexExprResolverOptions{
+          .resolve_type =
+              [&](const auto*, const auto*, const ast::nodes::Expr* expr) {
+                return CheckType(expr);
+              },
+          .on_non_subscriptable_type =
+              [&](const ast::Node* x, const semantic::Symbol* sym) {
+                errors_.emplace_back(TypeError{
+                    .range = x->nrange,
+                    .message = std::format("type '{}' is not subscriptable", utils::GetReadableTypeName(sym)),
+                });
+              },
+      }};
+
+      //
+      resulting_type = resolver.Resolve(module_.sf, scope_, ie);
+      if (!resulting_type) {
+        resulting_type = &symbols::kTypeError;
+      }
+      //
+      break;
+    }
+
     case ast::NodeKind::Ident: {
       resulting_type = ResolveExprType(module_.sf, scope_, n->As<ast::nodes::Ident>());
       break;
@@ -734,6 +829,7 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
     }
 
     case ast::NodeKind::SelectorExpr:
+    case ast::NodeKind::IndexExpr:
     case ast::NodeKind::CallExpr: {
       CheckType(n);
       return false;
@@ -790,6 +886,49 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
           CheckType(item, sym);
         }
       }
+
+      return false;
+    }
+
+    case ast::NodeKind::TemplateDecl: {
+      const auto* m = n->As<ast::nodes::TemplateDecl>();
+
+      const auto* expected_type = module_.scope->Resolve(module_.sf->Text(m->type));
+      const auto* actual_type = CheckType(m->value, expected_type);
+      MatchTypes(m->value->nrange, actual_type, expected_type);
+
+      return false;
+    }
+
+    case ast::NodeKind::ReturnStmt: {
+      const auto* m = n->As<ast::nodes::ReturnStmt>();
+
+      const ast::Node* fnode;
+      for (fnode = m->parent; fnode != nullptr; fnode = fnode->parent) {
+        if (fnode->nkind == ast::NodeKind::FuncDecl) {
+          break;
+        }
+      }
+
+      if (fnode == nullptr) {
+        // TODO: maybe do something with it - we somehow have return outside of a function! (really?)
+        break;
+      }
+      const auto* fdecl = fnode->As<ast::nodes::FuncDecl>();
+
+      if (!fdecl->ret) {
+        if (m->result) {
+          errors_.emplace_back(TypeError{
+              .range = m->result->nrange,
+              .message = "void function should not return a value",
+          });
+        }
+        break;
+      }
+
+      const auto* expected_type = module_.scope->Resolve(module_.sf->Text(fdecl->ret));
+      const auto* actual_type = CheckType(m->result, expected_type);
+      MatchTypes(m->result->nrange, actual_type, expected_type);
 
       return false;
     }
