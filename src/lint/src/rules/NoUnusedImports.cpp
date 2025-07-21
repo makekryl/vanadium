@@ -32,7 +32,7 @@ NoUnusedImports::NoUnusedImports() : Rule("no-unused-imports") {}
 
 void NoUnusedImports::Exit(Context& ctx) {
   const auto report_import = [&](const core::ast::nodes::ImportDecl* decl, std::string&& message) {
-    ctx.Report(this, decl->nrange, std::move(message), Autofix::Removal(decl->parent->nrange));
+    ctx.Report(this, decl->nrange, std::move(message), Autofix::Removal(ctx.GetFile(), decl->parent->nrange));
   };
 
   std::unordered_set<std::string_view> unused_imports;

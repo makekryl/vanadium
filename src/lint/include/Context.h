@@ -17,9 +17,13 @@ struct Autofix {
     return range <=> other.range;
   }
 
-  static Autofix Removal(const core::ast::Range& range) {
+  static Autofix Removal(const core::SourceFile& file, const core::ast::Range& range) {
     return {
-        .range = range,
+        .range =
+            {
+                .begin = range.begin,
+                .end = range.end + (file.ast.src[range.end] == '\n' ? 1 : 0),
+            },
         .replacement = "",
     };
   }
