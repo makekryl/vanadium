@@ -71,9 +71,7 @@ std::pair<std::optional<std::string>, ProblemSet> Linter::Fix(const core::Progra
     sbuf.reserve(predicted_size);
 
     auto last_index = source.length();
-    for (auto fix : fixes | std::ranges::views::reverse) {
-      fix.range.end += 2;  // ; \n
-
+    for (const auto& fix : fixes | std::ranges::views::reverse) {
       if (fix.range.end > last_index) {
         continue;
       }
