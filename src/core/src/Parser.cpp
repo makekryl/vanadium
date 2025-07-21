@@ -1293,7 +1293,7 @@ nodes::Ident* Parser::ParseName() {
         Consume();
       });
     default:
-      EmitErrorExpected("ident");
+      EmitErrorExpected("name ident");
       return nullptr;
   }
 }
@@ -1301,6 +1301,7 @@ nodes::Ident* Parser::ParseName() {
 void Parser::ParseName(std::optional<nodes::Ident>& ident) {
   switch (tok_) {
     case TokenKind::IDENT:
+    case TokenKind::CREATE:
     case TokenKind::ADDRESS:
     case TokenKind::CONTROL:
     case TokenKind::CLASS:
@@ -1309,7 +1310,7 @@ void Parser::ParseName(std::optional<nodes::Ident>& ident) {
       ident->nrange = Consume().range;
       break;
     default:
-      Expect(TokenKind::IDENT);
+      EmitErrorExpected("name ident");
       break;
   }
 }
