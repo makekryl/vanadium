@@ -600,7 +600,7 @@ bool Binder::Inspect(const ast::Node* n) {
           semantic::Symbol sym{
               item_name,
               valname,
-              SymbolFlags::kEnumValue,
+              SymbolFlags::kEnumMember,
           };
           enum_values_syms_.emplace(item_name, sym);
           AddSymbol(members, std::move(sym));

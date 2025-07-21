@@ -66,7 +66,7 @@ void PerformCompletion(const core::SourceFile* file, const core::ast::Node* n, l
                   return lsp::CompletionItemKind::kStruct;
                 case core::semantic::SymbolFlags::kEnum:
                   return lsp::CompletionItemKind::kEnum;
-                case core::semantic::SymbolFlags::kEnumValue:
+                case core::semantic::SymbolFlags::kEnumMember:
                   return lsp::CompletionItemKind::kEnummember;
                 case core::semantic::SymbolFlags::kClass:
                   return lsp::CompletionItemKind::kClass;
@@ -76,25 +76,25 @@ void PerformCompletion(const core::SourceFile* file, const core::ast::Node* n, l
             }(),
             .detail = module.name,
             .sortText = "0",
-            .additionalTextEdits =
-                std::vector<lsp::TextEdit>{
-                    lsp::TextEdit{
-                        .range =
-                            lsp::Range{
-                                .start =
-                                    lsp::Position{
-                                        .line = 1,
-                                        .character = 0,
-                                    },
-                                .end =
-                                    lsp::Position{
-                                        .line = 1,
-                                        .character = 0,
-                                    },
-                            },
-                        .newText = *arena.Alloc<std::string>(std::format("import from {} all;\n", module.name)),
-                    },
+            .additionalTextEdits = {{
+                lsp::TextEdit{
+                    .range =
+                        lsp::Range{
+                            .start =
+                                lsp::Position{
+                                    .line = 1,
+                                    .character = 0,
+                                },
+                            .end =
+                                lsp::Position{
+                                    .line = 1,
+                                    .character = 0,
+                                },
+                        },
+                    .newText = *arena.Alloc<std::string>(std::format("import from {} all;\n", module.name)),
                 },
+            }},
+            .commitCharacters = {{"("}},
         });
         if (items.size() >= limit) {
           return false;

@@ -64,7 +64,7 @@ enum Value : std::uint32_t {
 
   kThis = 1 << 13,
   kField = 1 << 14,
-  kEnumValue = 1 << 15,
+  kEnumMember = 1 << 15,
 
   kArray = 1 << 16,
 
