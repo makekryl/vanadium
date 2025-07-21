@@ -637,6 +637,95 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
       break;
     }
 
+    case ast::NodeKind::UnaryExpr: {
+      const auto* m = n->As<ast::nodes::UnaryExpr>();
+
+      const auto* x_sym = CheckType(m->x);
+      const auto match = [&](const semantic::Symbol* expected_sym) {
+        //
+        resulting_type = expected_sym;
+        //
+        MatchTypes(m->x->nrange, x_sym, expected_sym);
+      };
+
+      switch (m->op.kind) {
+        case core::ast::TokenKind::INC:
+        case core::ast::TokenKind::ADD:
+        case core::ast::TokenKind::SUB:
+        case core::ast::TokenKind::DEC:
+        case core::ast::TokenKind::MUL:
+        case core::ast::TokenKind::DIV:
+          match(&builtins::kInteger);
+          break;
+        default:
+          break;
+      }
+      break;
+    }
+    case ast::NodeKind::BinaryExpr: {
+      const auto* m = n->As<ast::nodes::BinaryExpr>();
+
+      const auto* x_sym = CheckType(m->x);
+      const auto* y_sym = CheckType(m->y);
+      const auto match_both = [&](const semantic::Symbol* expected_sym) {
+        //
+        resulting_type = expected_sym;
+        //
+        MatchTypes(m->x->nrange, x_sym, expected_sym);
+        MatchTypes(m->y->nrange, y_sym, expected_sym);
+      };
+
+      switch (m->op.kind) {
+        case ast::TokenKind::CONCAT:
+          match_both(&builtins::kCharstring);
+          break;
+        case ast::TokenKind::INC:
+        case ast::TokenKind::ADD:
+        case ast::TokenKind::SUB:
+        case ast::TokenKind::DEC:
+        case ast::TokenKind::MUL:
+        case ast::TokenKind::DIV:
+        case ast::TokenKind::SHL:
+        case ast::TokenKind::ROL:
+        case ast::TokenKind::SHR:
+        case ast::TokenKind::ROR:
+          match_both(&builtins::kInteger);
+          break;
+        case ast::TokenKind::EQ:
+        case ast::TokenKind::NE:
+        case ast::TokenKind::LT:
+        case ast::TokenKind::LE:
+        case ast::TokenKind::GT:
+        case ast::TokenKind::GE:
+          if (x_sym != &builtins::kInteger && x_sym != &builtins::kFloat) [[unlikely]] {
+            errors_.emplace_back(TypeError{
+                .range = m->x->nrange,
+                .message = "integer or float expected",
+            });
+            break;
+          }
+          //
+          resulting_type = x_sym;
+          MatchTypes(m->y->nrange, y_sym, x_sym);
+          //
+          break;
+        case ast::TokenKind::AND:
+        case ast::TokenKind::OR:
+        case ast::TokenKind::XOR:
+        case ast::TokenKind::NOT:
+          match_both(&builtins::kBoolean);
+          break;
+        case ast::TokenKind::DECODE:
+          //
+          resulting_type = y_sym;
+          //
+          break;
+        default:
+          break;
+      }
+      break;
+    }
+
     case ast::NodeKind::CompositeLiteral: {
       const auto* m = n->As<ast::nodes::CompositeLiteral>();
       if (!desired_type) {
@@ -866,6 +955,7 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
 
     case ast::NodeKind::SelectorExpr:
     case ast::NodeKind::IndexExpr:
+    case ast::NodeKind::BinaryExpr:
     case ast::NodeKind::CallExpr: {
       CheckType(n);
       return false;
