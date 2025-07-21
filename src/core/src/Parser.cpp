@@ -1285,7 +1285,7 @@ nodes::Ident* Parser::ParseName() {
         Consume();
       });
     default:
-      Expect(TokenKind::IDENT);
+      EmitErrorExpected("ident");
       return nullptr;
   }
 }
@@ -2500,7 +2500,7 @@ void Parser::EmitError(const ast::Range& range, std::string&& message) {
   errors_.emplace_back(range, std::move(message));
 }
 void Parser::EmitErrorExpected(std::string&& what) {
-  errors_.emplace_back(Peek(1).range, std::format("expected '{}'", what));
+  errors_.emplace_back(Peek(1).range, std::format("expected {}", what));
 }
 
 //
