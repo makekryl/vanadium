@@ -9,7 +9,7 @@
 #include "LanguageServerConv.h"
 #include "LanguageServerMethods.h"
 #include "Semantic.h"
-#include "domain/LanguageServerSymbolDef.h"
+#include "detail/LanguageServerSymbolDef.h"
 #include "utils/ASTUtils.h"
 #include "utils/SemanticUtils.h"
 

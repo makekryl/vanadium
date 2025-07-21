@@ -5,7 +5,7 @@
 #include "LanguageServerContext.h"
 #include "LanguageServerConv.h"
 #include "LanguageServerMethods.h"
-#include "domain/LanguageServerDiagnostic.h"
+#include "detail/LanguageServerDiagnostic.h"
 
 namespace vanadium::ls {
 template <>
@@ -37,7 +37,7 @@ void methods::textDocument::didChange::operator()(LsContext& ctx, const lsp::Did
 
   ctx.Notify<"textDocument/publishDiagnostics">(lsp::PublishDiagnosticsParams{
       .uri = params.textDocument.uri,
-      .diagnostics = domain::CollectDiagnostics(ctx, project.program, *project.program.GetFile(path)),
+      .diagnostics = detail::CollectDiagnostics(ctx, project.program, *project.program.GetFile(path)),
   });
 }
 }  // namespace vanadium::ls

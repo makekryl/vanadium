@@ -1,7 +1,7 @@
 #include "LSProtocol.h"
 #include "LanguageServerContext.h"
 #include "LanguageServerMethods.h"
-#include "domain/LanguageServerDiagnostic.h"
+#include "detail/LanguageServerDiagnostic.h"
 
 namespace vanadium::ls {
 template <>
@@ -18,7 +18,7 @@ rpc::ExpectedResult<lsp::DocumentDiagnosticReport> methods::textDocument::diagno
 
   return lsp::RelatedFullDocumentDiagnosticReport{
       .kind = "full",
-      .items = domain::CollectDiagnostics(ctx, project.program, *file),
+      .items = detail::CollectDiagnostics(ctx, project.program, *file),
   };
 }
 }  // namespace vanadium::ls

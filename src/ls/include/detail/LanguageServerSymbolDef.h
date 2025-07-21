@@ -6,7 +6,7 @@
 #include "Semantic.h"
 
 namespace vanadium::ls {
-namespace domain {
+namespace detail {
 
 const core::ast::Node* FindNode(const core::SourceFile*, lsp::Position pos);
 
@@ -20,5 +20,5 @@ std::optional<SymbolSearchResult> FindSymbol(const core::SourceFile*, lsp::Posit
 
 const core::ast::Node* GetReadableDeclaration(const core::ast::Node* n);
 
-}  // namespace domain
+}  // namespace detail
 }  // namespace vanadium::ls

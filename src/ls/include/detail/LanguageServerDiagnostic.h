@@ -8,7 +8,7 @@
 #include "Program.h"
 
 namespace vanadium::ls {
-namespace domain {
+namespace detail {
 
 enum DiagnosticKind : std::uint8_t {
   kUnresolvedName,
@@ -17,5 +17,5 @@ enum DiagnosticKind : std::uint8_t {
 std::vector<lsp::Diagnostic> CollectDiagnostics(LsContext& ctx, const core::Program& program,
                                                 const core::SourceFile& file);
 
-}  // namespace domain
+}  // namespace detail
 }  // namespace vanadium::ls

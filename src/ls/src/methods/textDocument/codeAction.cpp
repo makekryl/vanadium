@@ -37,50 +37,48 @@ rpc::ExpectedResult<lsp::CodeActionResult> methods::textDocument::codeAction::op
                                                              }));
       const auto text = n->On(file->ast.src);
 
-      auto modules = project.program.Modules();
-      // TODO: multiple modules can provide resolution
-      const auto it = std::ranges::find_if(modules, [&](const auto& module) {
-        return module.scope->ResolveDirect(text) != nullptr;
-      });
-      if (it != modules.end()) {
-        const auto& module = *it;
-        const auto& title =
-            ctx->Temp<std::string>(std::format("Import module '{}' for symbol '{}'", module.name, text));
+      // TODO: multiple modules can provide resolution - consider continuing search
+      project.program.VisitAccessibleModules([&](const core::ModuleDescriptor& module) {
+        if (module.scope->ResolveDirect(text) == nullptr) {
+          // continue search
+          return true;
+        }
 
         const auto& replacement = ctx->Temp<std::string>(std::format("import from {} all;\n", module.name));
 
-        actions
-            .emplace_back(
-                lsp::CodeAction{
-                    .title = title,
-                    .kind = lsp::CodeActionKind::kQuickfix,
-                    .isPreferred = true,
-                    .edit =
-                        lsp::WorkspaceEdit{
-                            .changes =
-                                std::unordered_map<std::string_view, std::vector<lsp::TextEdit>>{
-                                    {
-                                        params.textDocument.uri,
-                                        {lsp::TextEdit{
-                                            .range =
-                                                lsp::Range{
-                                                    .start =
-                                                        lsp::Position{
-                                                            .line = 2,
-                                                            .character = 0,
-                                                        },
-                                                    .end =
-                                                        lsp::Position{
-                                                            .line = 2,
-                                                            .character = 0,
-                                                        },
-                                                },
-                                            .newText = replacement,
-                                        }},
+        actions.emplace_back(
+            lsp::CodeAction{
+                .title = ctx->Temp<std::string>(std::format("Import module '{}' for symbol '{}'", module.name, text)),
+                .kind = lsp::CodeActionKind::kQuickfix,
+                .isPreferred = true,
+                .edit =
+                    lsp::WorkspaceEdit{
+                        .changes =
+                            std::unordered_map<std::string_view, std::vector<lsp::TextEdit>>{
+                                {
+                                    params.textDocument.uri,
+                                    {lsp::TextEdit{
+                                        .range =
+                                            lsp::Range{
+                                                .start =
+                                                    lsp::Position{
+                                                        .line = 2,
+                                                        .character = 0,
+                                                    },
+                                                .end =
+                                                    lsp::Position{
+                                                        .line = 2,
+                                                        .character = 0,
+                                                    },
+                                            },
+                                        .newText = replacement,
                                     }},
-                        },
-                });
-      }
+                                }},
+                    },
+            });
+
+        return false;
+      });
     } else if (data.contains("autofix")) {
       actions.emplace_back(
           lsp::CodeAction{

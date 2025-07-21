@@ -1,4 +1,4 @@
-#include "domain/LanguageServerDiagnostic.h"
+#include "detail/LanguageServerDiagnostic.h"
 
 #include <format>
 #include <vector>
@@ -9,7 +9,7 @@
 #include "Program.h"
 #include "magic_enum/magic_enum.hpp"
 
-namespace vanadium::ls::domain {
+namespace vanadium::ls::detail {
 
 namespace {
 void CollectModuleDiagnostics(LsContext& ctx, const core::Program& program, const core::SourceFile& file,
@@ -112,4 +112,4 @@ std::vector<lsp::Diagnostic> CollectDiagnostics(LsContext& ctx, const core::Prog
 
   return diags;
 }
-}  // namespace vanadium::ls::domain
+}  // namespace vanadium::ls::detail

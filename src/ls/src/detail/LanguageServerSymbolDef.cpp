@@ -1,4 +1,4 @@
-#include "domain/LanguageServerSymbolDef.h"
+#include "detail/LanguageServerSymbolDef.h"
 
 #include "AST.h"
 #include "ASTNodes.h"
@@ -10,7 +10,7 @@
 #include "utils/ASTUtils.h"
 #include "utils/SemanticUtils.h"
 
-namespace vanadium::ls::domain {
+namespace vanadium::ls::detail {
 
 namespace {
 const core::semantic::Symbol* ResolvePropertyAssignmentTarget(const core::SourceFile* file,
@@ -138,4 +138,4 @@ const core::ast::Node* GetReadableDeclaration(const core::ast::Node* n) {
   }
 }
 
-}  // namespace vanadium::ls::domain
+}  // namespace vanadium::ls::detail

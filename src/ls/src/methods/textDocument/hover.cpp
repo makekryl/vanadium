@@ -11,7 +11,7 @@
 #include "LanguageServerConv.h"
 #include "LanguageServerMethods.h"
 #include "Semantic.h"
-#include "domain/LanguageServerSymbolDef.h"
+#include "detail/LanguageServerSymbolDef.h"
 #include "utils/ASTUtils.h"
 
 namespace vanadium::ls {
@@ -66,7 +66,7 @@ rpc::ExpectedResult<lsp::HoverResult> methods::textDocument::hover::operator()(L
   const auto& [project, path] = ctx->ResolveFile(params.textDocument.uri);
   const auto* file = project.program.GetFile(path);
 
-  const auto result = domain::FindSymbol(file, params.position);
+  const auto result = detail::FindSymbol(file, params.position);
   if (!result) {
     return nullptr;
   }
