@@ -24,11 +24,6 @@ std::string BuildMarkdownParameterList(const core::ast::AST& ast, std::span<cons
 
   const auto last_idx = static_cast<decltype(params)::difference_type>(params.size()) - 1;
   for (const auto& [idx, param] : params | std::views::enumerate) {
-    const core::ast::Node* typenode = param->type;
-    if (typenode->nkind == core::ast::NodeKind::SelectorExpr) {
-      typenode = core::ast::utils::TraverseSelectorExpressionStart(typenode->As<core::ast::nodes::SelectorExpr>());
-    }
-
     buf += "- `";
 
     // TODO: cleanup builder from this
@@ -39,7 +34,7 @@ std::string BuildMarkdownParameterList(const core::ast::AST& ast, std::span<cons
       }
     }
 
-    buf += ast.Text(typenode);
+    buf += ast.Text(param->type);
     buf += " ";
     buf += ast.Text(*param->name);
 
@@ -92,11 +87,15 @@ rpc::ExpectedResult<lsp::HoverResult> methods::textDocument::hover::operator()(L
       const auto* m = decl->As<core::ast::nodes::FuncDecl>();
       content += std::format(
           R"(
-  ### {} `{}`
+### {} `{}`
+
 ---
+
 → `{}`
 {}
+
 ---
+
 ```ttcn
 {}
 ```
@@ -119,10 +118,14 @@ rpc::ExpectedResult<lsp::HoverResult> methods::textDocument::hover::operator()(L
       content +=
           std::format(R"(
 ### template `{}`
+
 ---
+
 Parameters:
 {}
+
 ---
+
 ```ttcn
 {}
 ```
@@ -140,9 +143,12 @@ Parameters:
       content += std::format(R"(
 ### {} `{}`
 ---
+
 Fields:
 {}
+
 ---
+
 ```ttcn
 {}
 ```
@@ -161,6 +167,7 @@ Fields:
       content += std::format(R"(
 ### class `{}`
 ---
+
 ```ttcn
 {}
 ```
@@ -178,9 +185,12 @@ Fields:
           R"(
 ### enumerated `{}`
 ---
+
 Values:
 {}
+
 ---
+
 ```ttcn
 {}
 ```
@@ -212,7 +222,9 @@ Values:
       const auto* m = decl->As<core::ast::nodes::SubTypeDecl>();
       content += std::format(R"(
 ### subtype `{}`
+
 ---
+
 ```ttcn
 {}
 ```
@@ -231,13 +243,20 @@ Values:
       content += std::format(
           R"(
 ### {} `{}`
+
 ---
+
+Type: `{}`
+
+---
+
 ```ttcn
 {} {} {}
 ```
 )",
           provider_file->ast.Text(vd->kind->range),  //
           provider_file->ast.Text(*m->name),         //
+          provider_file->ast.Text(vd->type),         //
           provider_file->ast.Text(core::ast::Range{
               .begin = vd->kind->range.begin,
               .end = vd->type->nrange.end,
@@ -254,12 +273,19 @@ Values:
       const auto* m = decl->As<core::ast::nodes::FormalPar>();
       content += std::format(R"(
 ### param `{}`
+
 ---
+
+Type: `{}`
+
+---
+
 ```ttcn
 {}
 ```
 )",
                              provider_file->ast.Text(*m->name),  //
+                             provider_file->ast.Text(m->type),   //
                              provider_file->ast.Text(m),
                              provider_file->ast.Text(core::ast::Range{
                                  .begin = m->nrange.begin,
@@ -278,13 +304,19 @@ Values:
       content += std::format(
           R"(
 ### field `{}{}`
+
 ---
+
+Type: `{}`
+---
+
 ```ttcn
 {}
 ```
 )",
           prefix,
           provider_file->ast.Text(*m->name),  //
+          provider_file->ast.Text(*m->type),  //
           provider_file->ast.Text(m));
       break;
     }
@@ -324,9 +356,10 @@ Transitively imports modules:
   }
 
   if (provider_file != file) {
-    const auto source_loc = conv::ToLSPPosition(provider_file->ast.lines.Translate(decl->nrange.begin));
+    const auto source_loc = conv::ToLSPPosition(provider_file->ast.lines.Translate(decl->nrange.begin + 1));
     content += std::format(R"(
 ---
+
 [module {}]({}#L{}C{}))",
                            provider_file->module->name, ctx->PathToFileUri(provider_file->path), source_loc.line,
                            source_loc.character);
