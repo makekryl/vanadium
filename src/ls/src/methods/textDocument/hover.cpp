@@ -357,12 +357,12 @@ Transitively imports modules:
   }
 
   if (provider_file != file) {
-    const auto source_loc = conv::ToLSPPosition(provider_file->ast.lines.Translate(decl->nrange.begin + 1));
+    const auto source_loc = conv::ToLSPPosition(provider_file->ast.lines.Translate(decl->nrange.begin));
     content += std::format(R"(
 ---
 
 [module {}]({}#L{}C{}))",
-                           provider_file->module->name, ctx->PathToFileUri(provider_file->path), source_loc.line,
+                           provider_file->module->name, ctx->PathToFileUri(provider_file->path), source_loc.line + 1,
                            source_loc.character);
   }
   return lsp::Hover{
