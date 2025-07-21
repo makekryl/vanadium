@@ -1623,8 +1623,22 @@ nodes::Stmt* Parser::ParseForLoop() {  // CRITICAL TODO : for loop
     });
   }
 
+  const auto has_assignment = [](this auto& self, const Node* n) -> bool {
+    switch (n->nkind) {
+      case NodeKind::DeclStmt:
+        return self(n->As<nodes::DeclStmt>()->decl);
+      case NodeKind::ExprStmt:
+        return self(n->As<nodes::ExprStmt>()->expr);
+      case NodeKind::ValueDecl:
+      case NodeKind::AssignmentExpr:
+        return true;
+      default:
+        return false;
+    }
+  };
+
   nodes::Stmt* n;
-  if (tok_ == TokenKind::IN) {
+  if (tok_ == TokenKind::IN && !has_assignment(init)) [[unlikely]] {
     n = NewNode<nodes::ForRangeStmt>([&](auto& s) {
       s.init = init;
       ConsumeInvariant(TokenKind::IN);
@@ -1632,7 +1646,7 @@ nodes::Stmt* Parser::ParseForLoop() {  // CRITICAL TODO : for loop
       Expect(TokenKind::RPAREN);
       s.body = ParseBlockStmt();
     });
-  } else {
+  } else [[likely]] {
     n = NewNode<nodes::ForStmt>([&](auto& s) {
       s.init = init;
       Expect(TokenKind::SEMICOLON);
@@ -2580,13 +2594,18 @@ T* Parser::NewNode(Initializer f) {
 
 template <IsNode ConcreteNode>
 ConcreteNode* Parser::NewErrorNode() {
+  ConcreteNode* n;
   if constexpr (std::is_constructible_v<ConcreteNode, NodeKind>) {
-    return arena_->Alloc<ConcreteNode>(NodeKind::ErrorNode);
+    n = arena_->Alloc<ConcreteNode>(NodeKind::ErrorNode);
   } else {
-    auto* n = arena_->Alloc<ConcreteNode>();
+    n = arena_->Alloc<ConcreteNode>();
     const_cast<NodeKind&>(n->nkind) = NodeKind::ErrorNode;
-    return n;
   }
+  n->nrange = {
+      .begin = last_consumed_pos_,
+      .end = last_consumed_pos_,
+  };
+  return n;
 }
 
 }  // namespace parser

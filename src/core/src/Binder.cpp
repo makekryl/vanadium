@@ -135,6 +135,10 @@ class Binder {
 
   template <SymbolAdditionOptions Options = {}>
   void AddSymbol(SymbolTable& table, Symbol&& sym) {
+    if (!scope_) [[unlikely]] {
+      // parser leniency: more }'s than {'s
+      return;
+    }
     if (table.Has(sym.GetName())) {
       if constexpr (!Options.redefine_if_exists) {
         return;
