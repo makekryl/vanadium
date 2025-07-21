@@ -187,11 +187,13 @@ const semantic::Symbol* ResolveSelectorExprSymbol(const SourceFile* sf, const se
   return resolver.Resolve(sf, scope, se);
 }
 
-template <IsTypeResolver TypeResolver, typename OnNonSubscriptableType>
-  requires(std::is_invocable_v<OnNonSubscriptableType, const ast::Node*, const semantic::Symbol*>)
+template <IsTypeResolver TypeResolver, typename OnNonSubscriptableType, typename IndexChecker>
+  requires(std::is_invocable_v<OnNonSubscriptableType, const ast::Node*, const semantic::Symbol*> &&
+           std::is_invocable_v<IndexChecker, const ast::nodes::Expr*>)
 struct IndexExprResolverOptions {
   TypeResolver resolve_type;
   OnNonSubscriptableType on_non_subscriptable_type;
+  IndexChecker check_index;
 };
 
 template <typename Options>
@@ -207,6 +209,8 @@ class IndexExprResolver {
 
  private:
   const semantic::Symbol* ResolveIndexExpr(const ast::nodes::IndexExpr* ie) const {
+    options_.check_index(ie->index);
+
     const semantic::Symbol* x_sym{nullptr};
     if (ie->x->nkind == ast::NodeKind::IndexExpr) {
       x_sym = ResolveIndexExpr(ie->x->As<ast::nodes::IndexExpr>());
@@ -246,6 +250,7 @@ const semantic::Symbol* ResolveIndexExprType(const SourceFile* sf, const semanti
   IndexExprResolver resolver{IndexExprResolverOptions{
       .resolve_type = ResolveExprType,
       .on_non_subscriptable_type = [](const auto*, auto) {},
+      .check_index = [](const auto*) {},
   }};
   return resolver.Resolve(sf, scope, se);
 }
@@ -468,7 +473,7 @@ void BasicTypeChecker::MatchTypes(const ast::Range& range, const semantic::Symbo
 
   errors_.emplace_back(TypeError{
       .range = range,
-      .message = std::format("expected argument of type '{}', got '{}'", utils::GetReadableTypeName(expected),
+      .message = std::format("expected value of type '{}', got '{}'", utils::GetReadableTypeName(expected),
                              utils::GetReadableTypeName(actual)),
   });
 }
@@ -771,6 +776,10 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
                     .range = x->nrange,
                     .message = std::format("type '{}' is not subscriptable", utils::GetReadableTypeName(sym)),
                 });
+              },
+          .check_index =
+              [&](const ast::nodes::Expr* index) {
+                MatchTypes(index->nrange, CheckType(index, nullptr), &builtins::kInteger);
               },
       }};
 
