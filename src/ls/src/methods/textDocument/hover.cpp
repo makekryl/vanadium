@@ -339,6 +339,7 @@ Type: `{}`
       if (!m->list.empty() && m->list[0]->kind.kind == core::ast::TokenKind::IMPORT) {
         content += R"(
 ---
+
 Transitively imports modules:
 )";
         for (const auto& [import, descriptor] : module->imports) {
@@ -347,8 +348,10 @@ Transitively imports modules:
           }
           content += std::format("- `{}`\n", import);
         }
-        content += "---\n";
+        content += "\n---\n";
       }
+
+      content += std::format("\n---\n`{}`", module->sf->path);
       break;
     }
     default:
