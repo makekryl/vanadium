@@ -28,6 +28,17 @@ rpc::ExpectedResult<lsp::DefinitionResult> methods::textDocument::definition::op
   if (!sym || (sym->Flags() & core::semantic::SymbolFlags::kBuiltin)) {
     return nullptr;
   }
+  if (sym->Flags() & core::semantic::SymbolFlags::kImportedModule) {
+    const auto* module = project.program.GetModule(sym->GetName());
+    if (!module) {
+      return nullptr;
+    }
+    return lsp::Location{
+        .uri = ctx->Temp<std::string>(ctx->PathToFileUri(module->sf->path)),
+        .range = {},
+    };
+  }
+
   const auto* decl = sym->Declaration();
   const auto* provider_file = core::ast::utils::SourceFileOf(decl);
 
