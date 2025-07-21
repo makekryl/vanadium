@@ -103,11 +103,11 @@ ForRangeStmt:
   range: Expr*
   body: BlockStmt*
 WhileStmt:
-  cond: Expr*
-  body: BlockStmt*
+  cond: Expr*?
+  body: BlockStmt*?
 DoWhileStmt:
-  body: BlockStmt*
-  cond: Expr*
+  body: BlockStmt*?
+  cond: Expr*?
 IfStmt:
   cond: Expr*
   consequent: BlockStmt*

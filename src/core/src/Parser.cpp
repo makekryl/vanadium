@@ -1590,6 +1590,9 @@ nodes::Stmt* Parser::ParseStmt() {
 }
 
 nodes::BlockStmt* Parser::ParseBlockStmt() {
+  if (tok_ != TokenKind::LBRACE) [[unlikely]] {
+    return NewErrorNode<nodes::BlockStmt>();
+  }
   return NewNode<nodes::BlockStmt>([&](auto& s) {
     Expect(TokenKind::LBRACE);
     while (tok_ != TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
@@ -1603,7 +1606,11 @@ nodes::BlockStmt* Parser::ParseBlockStmt() {
 
 nodes::Stmt* Parser::ParseForLoop() {  // CRITICAL TODO : for loop
   const auto begin_pos = ConsumeInvariant(TokenKind::FOR).range.begin;
-  Expect(TokenKind::LPAREN);
+  if (tok_ != TokenKind::LPAREN) {
+    Expect(TokenKind::LPAREN);
+    return NewErrorNode<nodes::Stmt>();
+  }
+  ConsumeInvariant(TokenKind::LPAREN);
 
   nodes::Stmt* init;
   if (tok_ == TokenKind::VAR) {
@@ -1644,8 +1651,12 @@ nodes::Stmt* Parser::ParseForLoop() {  // CRITICAL TODO : for loop
 nodes::WhileStmt* Parser::ParseWhileLoop() {
   return NewNode<nodes::WhileStmt>([&](auto& s) {
     ConsumeInvariant(TokenKind::WHILE);
-    Expect(TokenKind::LPAREN);
-    s.cond = ParseExpr();
+    if (tok_ == TokenKind::LPAREN) {
+      ConsumeInvariant(TokenKind::LPAREN);
+      s.cond = ParseExpr();
+    } else {
+      Expect(TokenKind::LPAREN);
+    }
     Expect(TokenKind::RPAREN);
     s.body = ParseBlockStmt();
   });
@@ -1656,8 +1667,12 @@ nodes::DoWhileStmt* Parser::ParseDoWhileLoop() {
     ConsumeInvariant(TokenKind::DO);
     s.body = ParseBlockStmt();
     Expect(TokenKind::WHILE);
-    Expect(TokenKind::LPAREN);
-    s.cond = ParseExpr();
+    if (tok_ == TokenKind::LPAREN) {
+      ConsumeInvariant(TokenKind::LPAREN);
+      s.cond = ParseExpr();
+    } else {
+      Expect(TokenKind::LPAREN);
+    }
     Expect(TokenKind::RPAREN);
   });
 }
@@ -2433,10 +2448,9 @@ ast::pos_t Parser::Pos(std::uint8_t i) {
 }
 
 Token Parser::Expect(TokenKind expected) {
-  if (tok_ != expected) {
-    std::stringstream ss;
-    ss << magic_enum::enum_name(expected);
-    EmitErrorExpected(ss.str());
+  if (tok_ != expected) [[unlikely]] {
+    EmitErrorExpected(magic_enum::enum_name(expected));
+    return {};
   }
   return Consume();
 }
@@ -2530,7 +2544,7 @@ inline bool Parser::IsSpeculating() const noexcept {
 void Parser::EmitError(const ast::Range& range, std::string&& message) {
   errors_.emplace_back(range, std::move(message));
 }
-void Parser::EmitErrorExpected(std::string&& what) {
+void Parser::EmitErrorExpected(std::string_view what) {
   errors_.emplace_back(Peek(1).range, std::format("expected {}", what));
 }
 
@@ -2566,7 +2580,13 @@ T* Parser::NewNode(Initializer f) {
 
 template <IsNode ConcreteNode>
 ConcreteNode* Parser::NewErrorNode() {
-  return arena_->Alloc<ConcreteNode>(NodeKind::ErrorNode);
+  if constexpr (std::is_constructible_v<ConcreteNode, NodeKind>) {
+    return arena_->Alloc<ConcreteNode>(NodeKind::ErrorNode);
+  } else {
+    auto* n = arena_->Alloc<ConcreteNode>();
+    const_cast<NodeKind&>(n->nkind) = NodeKind::ErrorNode;
+    return n;
+  }
 }
 
 }  // namespace parser

@@ -162,7 +162,7 @@ class Parser {
   [[nodiscard]] bool IsSpeculating() const noexcept;
 
   void EmitError(const ast::Range& range, std::string&& message);
-  void EmitErrorExpected(std::string&& what);
+  void EmitErrorExpected(std::string_view what);
 
   Token* TokAlloc(Token&& token);
 

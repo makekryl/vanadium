@@ -656,12 +656,16 @@ struct WhileStmt : Stmt {
 
   WhileStmt() : Stmt(NodeKind::WhileStmt) {}
 
-  Expr* cond;
-  BlockStmt* body;
+  Expr* cond{nullptr};
+  BlockStmt* body{nullptr};
 
   void Accept(const NodeInspector& inspector) const {
-    Inspect(cond, inspector);
-    Inspect(body, inspector);
+    if (cond != nullptr) {
+      Inspect(cond, inspector);
+    }
+    if (body != nullptr) {
+      Inspect(body, inspector);
+    }
   }
 };
 
@@ -670,12 +674,16 @@ struct DoWhileStmt : Stmt {
 
   DoWhileStmt() : Stmt(NodeKind::DoWhileStmt) {}
 
-  BlockStmt* body;
-  Expr* cond;
+  BlockStmt* body{nullptr};
+  Expr* cond{nullptr};
 
   void Accept(const NodeInspector& inspector) const {
-    Inspect(body, inspector);
-    Inspect(cond, inspector);
+    if (body != nullptr) {
+      Inspect(body, inspector);
+    }
+    if (cond != nullptr) {
+      Inspect(cond, inspector);
+    }
   }
 };
 
