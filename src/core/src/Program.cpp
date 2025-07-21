@@ -10,7 +10,6 @@
 #include <cstddef>
 #include <cstdio>
 #include <memory>
-#include <print>
 #include <ranges>
 #include <string_view>
 #include <type_traits>
@@ -19,7 +18,7 @@
 #include "ASTNodes.h"
 #include "Arena.h"
 #include "Bitset.h"
-#include "LruCache.h"
+#include "ImportVisitor.h"
 #include "Parser.h"
 #include "Semantic.h"
 #include "TypeChecker.h"
@@ -162,52 +161,6 @@ const ModuleDescriptor* Program::GetModule(std::string_view name) const {
   return nullptr;
 }
 
-template <Program::ImportVisitorOptions Options>
-bool Program::ForEachImport(const ModuleDescriptor& module, auto on_incomplete,
-                            std::predicate<ModuleDescriptor*, ModuleDescriptor*> auto f, ModuleDescriptor* via) {
-  bool incomplete = false;
-  const auto report_incomplete = [&] {
-    if (via != nullptr && !incomplete) {
-      on_incomplete(via);
-      incomplete = true;
-    }
-  };
-
-  for (const auto& [import, descriptor] : module.imports) {
-    if ((!Options.accept_private_imports && !descriptor.is_public) || descriptor.transit) {
-      continue;
-    }
-
-    auto* imported_module = GetModule(import);
-    if (!imported_module) {
-      report_incomplete();
-      continue;
-    }
-
-    if (!f(imported_module, via)) {
-      return false;
-    }
-  }
-
-  for (const auto& [import, descriptor] : module.imports) {
-    if ((!Options.accept_private_imports && !descriptor.is_public) || !descriptor.transit) {
-      continue;
-    }
-    auto* imported_module = GetModule(import);
-    if (!imported_module) {
-      report_incomplete();
-      continue;
-    }
-
-    if (!ForEachImport<{.accept_private_imports = false}>(*imported_module, on_incomplete, f,
-                                                          via ? via : imported_module)) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
 namespace {
 template <typename NodeTextProvider>
   requires std::is_invocable_r_v<std::string_view, NodeTextProvider, const ast::nodes::Ident*>
@@ -299,71 +252,73 @@ void Program::Crossbind() {
                               });
         };
 
-        ForEachImport<{.accept_private_imports = true}>(module, on_incomplete, [&](auto* imported_module, auto* via) {
-          const auto* sym = imported_module->scope->ResolveDirect(ext_group.augmentation_provider);
-          if (!sym) {
-            // continue search
-            return true;
-          }
+        semantic::VisitImports<{.accept_private_imports = true}>(
+            this, module, on_incomplete, [&](auto* imported_module, auto* via) {
+              const auto* sym = imported_module->scope->ResolveDirect(ext_group.augmentation_provider);
+              if (!sym) {
+                // continue search
+                return true;
+              }
 
-          resolve_through(sym, imported_module);
-          if (via != nullptr) {
-            register_transitive_dependency(module, via);
-          }
-          return false;
-        });
+              resolve_through(sym, imported_module);
+              if (via != nullptr) {
+                register_transitive_dependency(module, via);
+              }
+              return false;
+            });
       }
 
       if (!ext_group.IsResolved()) {
-        ForEachImport<{.accept_private_imports = true}>(module, on_incomplete, [&](auto* imported_module, auto* via) {
-          if (ext_group.IsResolved()) {
-            return false;
-          }
+        semantic::VisitImports<{.accept_private_imports = true}>(
+            this, module, on_incomplete, [&](auto* imported_module, auto* via) {
+              if (ext_group.IsResolved()) {
+                return false;
+              }
 
-          const semantic::SymbolTable& imported_table = imported_module->scope->symbols;
-          const auto contribution_opt = ResolveContribution(
-              ext_group,
-              [&sf](const ast::nodes::Ident* ident) {
-                return sf.Text(ident);
-              },
-              imported_table,
-              [&ext_group](const std::size_t idx) {
-                return !ext_group.resolution_set.Get(idx);
-              });
+              const semantic::SymbolTable& imported_table = imported_module->scope->symbols;
+              const auto contribution_opt = ResolveContribution(
+                  ext_group,
+                  [&sf](const ast::nodes::Ident* ident) {
+                    return sf.Text(ident);
+                  },
+                  imported_table,
+                  [&ext_group](const std::size_t idx) {
+                    return !ext_group.resolution_set.Get(idx);
+                  });
 
-          if (!contribution_opt) {
-            // there's still unresolved symbols as nothing new has been resolved
-            // continue search
-            return true;
-          }
-          ext_group.resolution_set |= *contribution_opt;
+              if (!contribution_opt) {
+                // there's still unresolved symbols as nothing new has been resolved
+                // continue search
+                return true;
+              }
+              ext_group.resolution_set |= *contribution_opt;
 
-          // About ".injected_to = module.scope," - we've noticed that some unresolved symbols from this group
-          // are actually are global symbols imported into this scope from another module.
-          // We bind dependency to ext_group as we would want to recheck this group only if dependent symbol
-          // goes out of the imported module scope.
-          const bool is_new_dependency = register_dependency(module, imported_module,
-                                                             DependencyEntry{
-                                                                 .provider = &imported_table,
-                                                                 .injected_to = module.scope,
-                                                                 .ext_group = &ext_group,
-                                                                 .contribution = *contribution_opt,
-                                                                 .augmenting_locals = false,
-                                                             });
+              // About ".injected_to = module.scope," - we've noticed that some unresolved symbols from this group
+              // are actually are global symbols imported into this scope from another module.
+              // We bind dependency to ext_group as we would want to recheck this group only if dependent symbol
+              // goes out of the imported module scope.
+              const bool is_new_dependency = register_dependency(module, imported_module,
+                                                                 DependencyEntry{
+                                                                     .provider = &imported_table,
+                                                                     .injected_to = module.scope,
+                                                                     .ext_group = &ext_group,
+                                                                     .contribution = *contribution_opt,
+                                                                     .augmenting_locals = false,
+                                                                 });
 
-          // better to double check than capture mutex in register_transitive_dependency
-          if (is_new_dependency ||
-              std::ranges::all_of(module.dependencies[imported_module], [](const DependencyEntry& entry) {
-                return entry.augmenting_locals;
-              })) {
-            module.scope->augmentation.push_back(&imported_table);
-            if (via != nullptr) {
-              register_transitive_dependency(module, via);
-            }
-          }
+              // better to double check than capture mutex in register_transitive_dependency
+              if (is_new_dependency ||
+                  std::ranges::all_of(module.dependencies[imported_module], [](const DependencyEntry& entry) {
+                    return entry.augmenting_locals;
+                  })) {
+                module.scope->augmentation.push_back(&imported_table);
+                if (via != nullptr) {
+                  register_transitive_dependency(module, via);
+                }
+              }
 
-          return !ext_group.IsResolved();
-        });
+              return !ext_group.IsResolved();
+            });
       }
 
       if (!ext_group.IsResolved()) {  // IsResolved() is very fast, faster than checking individual bits

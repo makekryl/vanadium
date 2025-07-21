@@ -21,8 +21,7 @@ void CollectModuleDiagnostics(LsContext& ctx, const core::Program& program, cons
     if (program.GetModule(import_name)) {
       continue;
     }
-    const auto& message =
-        *ctx->GetTemporaryArena().Alloc<std::string>(std::format("module '{}' not found", import_name));
+    const auto& message = ctx->Temp<std::string>(std::format("module '{}' not found", import_name));
     diags.emplace_back(lsp::Diagnostic{
         .range = conv::ToLSPRange(import.declaration->nrange, file.ast),
         .severity = lsp::DiagnosticSeverity::kError,
@@ -33,8 +32,7 @@ void CollectModuleDiagnostics(LsContext& ctx, const core::Program& program, cons
 
   for (const auto& ident : module.unresolved) {
     // TODO: check fmt lib custom allocators or precalcuate size and fill string buffer manually, preferable via helper
-    const auto& message = *ctx->GetTemporaryArena().Alloc<std::string>(
-        std::format("use of unknown symbol '{}'", ident->On(file.ast.src)));
+    const auto& message = ctx->Temp<std::string>(std::format("use of unknown symbol '{}'", ident->On(file.ast.src)));
 
     diags.emplace_back(lsp::Diagnostic{
         .range = conv::ToLSPRange(ident->nrange, file.ast),
@@ -48,7 +46,7 @@ void CollectModuleDiagnostics(LsContext& ctx, const core::Program& program, cons
     // item.data. // TODO
   }
 
-  const auto& problems = *ctx->GetTemporaryArena().Alloc<lint::ProblemSet>(ctx->linter.Lint(program, file));
+  const auto& problems = ctx->Temp<lint::ProblemSet>(ctx->linter.Lint(program, file));
   for (const auto& problem : problems) {
     diags.emplace_back(lsp::Diagnostic{
         .range = conv::ToLSPRange(problem.range, file.ast),

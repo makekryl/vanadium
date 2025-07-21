@@ -106,7 +106,7 @@ rpc::ExpectedResult<lsp::TypeDefinitionResult> methods::textDocument::typeDefini
   const auto* type_decl = domain::GetReadableDeclaration(type_sym->Declaration());
   const auto* type_file = core::ast::utils::SourceFileOf(type_decl);
 
-  const auto& uri = *ctx->GetTemporaryArena().Alloc<std::string>(ctx->PathToFileUri(type_file->path));
+  const auto& uri = ctx->Temp<std::string>(ctx->PathToFileUri(type_file->path));
   return lsp::Location{
       .uri = uri,
       .range = conv::ToLSPRange(type_decl->nrange, type_file->ast),

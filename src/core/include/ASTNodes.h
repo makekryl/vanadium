@@ -364,6 +364,8 @@ struct TypeSpec : Node {
 };
 
 struct DeclStmt : Stmt {
+  static constexpr NodeKind kKind = NodeKind::DeclStmt;
+
   DeclStmt() : Stmt(NodeKind::DeclStmt) {}
 
   Decl* decl;
@@ -373,6 +375,8 @@ struct DeclStmt : Stmt {
   }
 };
 struct ExprStmt : Stmt {
+  static constexpr NodeKind kKind = NodeKind::ExprStmt;
+
   ExprStmt() : Stmt(NodeKind::ExprStmt) {}
 
   Expr* expr;
@@ -383,6 +387,8 @@ struct ExprStmt : Stmt {
 };
 
 struct Ident : Expr {
+  static constexpr NodeKind kKind = NodeKind::Ident;
+
   Ident() : Expr(NodeKind::Ident) {}
 
   [[nodiscard]] constexpr bool IsName() const noexcept {
@@ -399,12 +405,16 @@ struct Ident : Expr {
   Ident(NodeKind nkind) : Expr(nkind) {}
 };
 struct CompositeIdent : Ident {
+  static constexpr NodeKind kKind = NodeKind::CompositeIdent;
+
   CompositeIdent() : Ident(NodeKind::CompositeIdent) {}
 
   Token tok1;
   Token tok2;
 };
 struct NameIdent : Ident {
+  static constexpr NodeKind kKind = NodeKind::NameIdent;
+
   NameIdent() : Ident(NodeKind::NameIdent) {}
 };
 

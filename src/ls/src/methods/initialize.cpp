@@ -33,7 +33,7 @@ rpc::ExpectedResult<lsp::InitializeResult> methods::initialize::operator()(LsCon
   return lsp::InitializeResult{
       .capabilities =
           lsp::ServerCapabilities{
-              .textDocumentSync = lsp::TextDocumentSyncKind::kIncremental,
+              .textDocumentSync = lsp::TextDocumentSyncKind::kFull,  // TODO: diagnose & fix incremental sync
               .completionProvider =
                   lsp::CompletionOptions{
                       .triggerCharacters = {{"."}},

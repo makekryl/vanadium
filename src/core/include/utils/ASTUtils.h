@@ -9,6 +9,16 @@ namespace utils {
 
 const Range& GetActualNameRange(const Node* n);
 
+template <IsNode ConcreteNode>
+inline const ConcreteNode* GetPredecessor(const Node* n) {
+  for (const Node* c = n->parent; c != nullptr; c = c->parent) {
+    if (c->nkind == ConcreteNode::kKind) {
+      return c->As<ConcreteNode>();
+    }
+  }
+  return nullptr;
+}
+
 inline const nodes::Ident* GetEnumValueNamePart(const nodes::Expr* n) {
   switch (n->nkind) {
     case NodeKind::Ident:

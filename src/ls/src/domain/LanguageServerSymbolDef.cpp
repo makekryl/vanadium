@@ -57,9 +57,7 @@ const core::ast::Node* FindNode(const core::SourceFile* file, lsp::Position pos)
   return core::ast::utils::GetNodeAt(file->ast, file->ast.lines.GetPosition(conv::FromLSPPosition(pos)));
 }
 
-std::optional<SymbolSearchResult> FindSymbol(const core::SourceFile* file, lsp::Position pos) {
-  const auto* n = FindNode(file, pos);
-
+std::optional<SymbolSearchResult> FindSymbol(const core::SourceFile* file, const core::ast::Node* n) {
   if (n->nkind != core::ast::NodeKind::Ident) {
     return std::nullopt;
   }
@@ -117,6 +115,10 @@ std::optional<SymbolSearchResult> FindSymbol(const core::SourceFile* file, lsp::
       .scope = scope,
       .symbol = sym,
   };
+}
+
+std::optional<SymbolSearchResult> FindSymbol(const core::SourceFile* file, lsp::Position pos) {
+  return FindSymbol(file, FindNode(file, pos));
 }
 
 const core::ast::Node* GetReadableDeclaration(const core::ast::Node* n) {

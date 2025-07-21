@@ -44,11 +44,10 @@ rpc::ExpectedResult<lsp::CodeActionResult> methods::textDocument::codeAction::op
       });
       if (it != modules.end()) {
         const auto& module = *it;
-        const auto& title = *ctx->GetTemporaryArena().Alloc<std::string>(
-            std::format("Import module '{}' for symbol '{}'", module.name, text));
+        const auto& title =
+            ctx->Temp<std::string>(std::format("Import module '{}' for symbol '{}'", module.name, text));
 
-        const auto& replacement =
-            *ctx->GetTemporaryArena().Alloc<std::string>(std::format("import from {} all;\n", module.name));
+        const auto& replacement = ctx->Temp<std::string>(std::format("import from {} all;\n", module.name));
 
         actions
             .emplace_back(

@@ -79,7 +79,7 @@ rpc::ExpectedResult<lsp::HoverResult> methods::textDocument::hover::operator()(L
   const auto* decl = sym->Declaration();
   const auto* provider_file = core::ast::utils::SourceFileOf(decl);
 
-  auto& content = *ctx->GetTemporaryArena().Alloc<std::string>();
+  auto& content = ctx->Temp<std::string>();
   content.reserve(256);  // TODO: check if it is justified actually
 
   switch (decl->nkind) {

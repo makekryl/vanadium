@@ -157,21 +157,30 @@ class Program {
     return it == files_.end() ? nullptr : &it->second;
   }
 
+  std::span<const Program* const> References() const {
+    return references_;
+  }
+
   void AddReference(Program* program) {
     references_.push_back(program);
     program->dependents_.push_back(this);
+  }
+
+  void VisitAccessibleModules(std::predicate<const ModuleDescriptor&> auto visit) const {
+    for (const auto& module : Modules()) {
+      if (!visit(module)) {
+        return;
+      }
+    }
+    for (const auto& ref : References()) {
+      ref->VisitAccessibleModules(visit);
+    }
   }
 
  private:
   void AttachFile(SourceFile&);
   void DetachFile(SourceFile&);
 
-  struct ImportVisitorOptions {
-    bool accept_private_imports;
-  };
-  template <ImportVisitorOptions>
-  bool ForEachImport(const ModuleDescriptor& module, auto on_incomplete,
-                     std::predicate<ModuleDescriptor*, ModuleDescriptor*> auto f, ModuleDescriptor* via = nullptr);
   void Crossbind();
 
   std::unordered_map<std::string, SourceFile> files_;

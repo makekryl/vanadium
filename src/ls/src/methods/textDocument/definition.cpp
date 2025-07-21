@@ -31,7 +31,7 @@ rpc::ExpectedResult<lsp::DefinitionResult> methods::textDocument::definition::op
   const auto* decl = sym->Declaration();
   const auto* provider_file = core::ast::utils::SourceFileOf(decl);
 
-  const auto& uri = *ctx->GetTemporaryArena().Alloc<std::string>(ctx->PathToFileUri(provider_file->path));
+  const auto& uri = ctx->Temp<std::string>(ctx->PathToFileUri(provider_file->path));
   return lsp::Location{
       .uri = uri,
       .range = conv::ToLSPRange(decl->nrange, provider_file->ast),

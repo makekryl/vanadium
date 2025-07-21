@@ -32,6 +32,11 @@ struct LsState {
     return temporary_arena_.local();
   }
 
+  template <typename T, typename... Args>
+  T& Temp(Args&&... args) {
+    return *GetTemporaryArena().Alloc<T>(std::forward<Args>(args)...);
+  }
+
   // TODO: those three functions are a temporary solution
   [[nodiscard]] std::pair<tooling::ProjectEntry&, std::string> ResolveFile(std::string_view file_uri) {
     constexpr std::size_t kSchemaLength = std::string_view{"file://"}.size();

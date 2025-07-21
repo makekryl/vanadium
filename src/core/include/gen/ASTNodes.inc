@@ -1,4 +1,6 @@
 struct LanguageSpec : TypeSpec {
+  static constexpr NodeKind kKind = NodeKind::LanguageSpec;
+
   LanguageSpec() : TypeSpec(NodeKind::LanguageSpec) {}
 
   std::vector<Token> list;
@@ -8,6 +10,8 @@ struct LanguageSpec : TypeSpec {
 };
 
 struct Definition : Node {
+  static constexpr NodeKind kKind = NodeKind::Definition;
+
   Definition() : Node(NodeKind::Definition) {}
 
   Token* visibility{nullptr};
@@ -21,6 +25,8 @@ struct Definition : Node {
 };
 
 struct ParenExpr : Expr {
+  static constexpr NodeKind kKind = NodeKind::ParenExpr;
+
   ParenExpr() : Expr(NodeKind::ParenExpr) {}
 
   std::vector<Expr*> list;
@@ -33,6 +39,8 @@ struct ParenExpr : Expr {
 };
 
 struct RefSpec : TypeSpec {
+  static constexpr NodeKind kKind = NodeKind::RefSpec;
+
   RefSpec() : TypeSpec(NodeKind::RefSpec) {}
 
   Expr* x;
@@ -43,6 +51,8 @@ struct RefSpec : TypeSpec {
 };
 
 struct MapSpec : TypeSpec {
+  static constexpr NodeKind kKind = NodeKind::MapSpec;
+
   MapSpec() : TypeSpec(NodeKind::MapSpec) {}
 
   TypeSpec* from;
@@ -55,6 +65,8 @@ struct MapSpec : TypeSpec {
 };
 
 struct EnumSpec : TypeSpec {
+  static constexpr NodeKind kKind = NodeKind::EnumSpec;
+
   EnumSpec() : TypeSpec(NodeKind::EnumSpec) {}
 
   std::vector<Expr*> enums;
@@ -67,6 +79,8 @@ struct EnumSpec : TypeSpec {
 };
 
 struct RunsOnSpec : TypeSpec {
+  static constexpr NodeKind kKind = NodeKind::RunsOnSpec;
+
   RunsOnSpec() : TypeSpec(NodeKind::RunsOnSpec) {}
 
   Ident* comp;
@@ -77,6 +91,8 @@ struct RunsOnSpec : TypeSpec {
 };
 
 struct SystemSpec : TypeSpec {
+  static constexpr NodeKind kKind = NodeKind::SystemSpec;
+
   SystemSpec() : TypeSpec(NodeKind::SystemSpec) {}
 
   Ident* comp;
@@ -87,6 +103,8 @@ struct SystemSpec : TypeSpec {
 };
 
 struct RestrictionSpec : TypeSpec {
+  static constexpr NodeKind kKind = NodeKind::RestrictionSpec;
+
   RestrictionSpec() : TypeSpec(NodeKind::RestrictionSpec) {}
 
   bool is_template{false};
@@ -97,6 +115,8 @@ struct RestrictionSpec : TypeSpec {
 };
 
 struct MtcSpec : TypeSpec {
+  static constexpr NodeKind kKind = NodeKind::MtcSpec;
+
   MtcSpec() : TypeSpec(NodeKind::MtcSpec) {}
 
   Ident* comp;
@@ -107,6 +127,8 @@ struct MtcSpec : TypeSpec {
 };
 
 struct BlockStmt : Stmt {
+  static constexpr NodeKind kKind = NodeKind::BlockStmt;
+
   BlockStmt() : Stmt(NodeKind::BlockStmt) {}
 
   std::vector<Stmt*> stmts;
@@ -119,6 +141,8 @@ struct BlockStmt : Stmt {
 };
 
 struct BranchStmt : Stmt {
+  static constexpr NodeKind kKind = NodeKind::BranchStmt;
+
   BranchStmt() : Stmt(NodeKind::BranchStmt) {}
 
   Token kind;
@@ -132,6 +156,8 @@ struct BranchStmt : Stmt {
 };
 
 struct ReturnStmt : Stmt {
+  static constexpr NodeKind kKind = NodeKind::ReturnStmt;
+
   ReturnStmt() : Stmt(NodeKind::ReturnStmt) {}
 
   Expr* result{nullptr};
@@ -144,6 +170,8 @@ struct ReturnStmt : Stmt {
 };
 
 struct WithStmt : Stmt {
+  static constexpr NodeKind kKind = NodeKind::WithStmt;
+
   WithStmt() : Stmt(NodeKind::WithStmt) {}
 
   Token kind;
@@ -160,6 +188,8 @@ struct WithStmt : Stmt {
 };
 
 struct ValueLiteral : Expr {
+  static constexpr NodeKind kKind = NodeKind::ValueLiteral;
+
   ValueLiteral() : Expr(NodeKind::ValueLiteral) {}
 
   Token tok;
@@ -169,6 +199,8 @@ struct ValueLiteral : Expr {
 };
 
 struct SelectorExpr : Expr {
+  static constexpr NodeKind kKind = NodeKind::SelectorExpr;
+
   SelectorExpr() : Expr(NodeKind::SelectorExpr) {}
 
   Expr* x;
@@ -183,6 +215,8 @@ struct SelectorExpr : Expr {
 };
 
 struct DefKindExpr : Expr {
+  static constexpr NodeKind kKind = NodeKind::DefKindExpr;
+
   DefKindExpr() : Expr(NodeKind::DefKindExpr) {}
 
   Token kind;
@@ -196,6 +230,8 @@ struct DefKindExpr : Expr {
 };
 
 struct ExceptExpr : Expr {
+  static constexpr NodeKind kKind = NodeKind::ExceptExpr;
+
   ExceptExpr() : Expr(NodeKind::ExceptExpr) {}
 
   Expr* x;
@@ -210,6 +246,8 @@ struct ExceptExpr : Expr {
 };
 
 struct FromExpr : Expr {
+  static constexpr NodeKind kKind = NodeKind::FromExpr;
+
   FromExpr() : Expr(NodeKind::FromExpr) {}
 
   Token kind;
@@ -222,6 +260,8 @@ struct FromExpr : Expr {
 };
 
 struct ModifiesExpr : Expr {
+  static constexpr NodeKind kKind = NodeKind::ModifiesExpr;
+
   ModifiesExpr() : Expr(NodeKind::ModifiesExpr) {}
 
   Expr* x;
@@ -234,6 +274,8 @@ struct ModifiesExpr : Expr {
 };
 
 struct PostExpr : Expr {
+  static constexpr NodeKind kKind = NodeKind::PostExpr;
+
   PostExpr() : Expr(NodeKind::PostExpr) {}
 
   Expr* x;
@@ -245,6 +287,8 @@ struct PostExpr : Expr {
 };
 
 struct BinaryExpr : Expr {
+  static constexpr NodeKind kKind = NodeKind::BinaryExpr;
+
   BinaryExpr() : Expr(NodeKind::BinaryExpr) {}
 
   Expr* x;
@@ -258,6 +302,8 @@ struct BinaryExpr : Expr {
 };
 
 struct UnaryExpr : Expr {
+  static constexpr NodeKind kKind = NodeKind::UnaryExpr;
+
   UnaryExpr() : Expr(NodeKind::UnaryExpr) {}
 
   Token op;
@@ -269,6 +315,8 @@ struct UnaryExpr : Expr {
 };
 
 struct ValueExpr : Expr {
+  static constexpr NodeKind kKind = NodeKind::ValueExpr;
+
   ValueExpr() : Expr(NodeKind::ValueExpr) {}
 
   Expr* x;
@@ -281,6 +329,8 @@ struct ValueExpr : Expr {
 };
 
 struct ParamExpr : Expr {
+  static constexpr NodeKind kKind = NodeKind::ParamExpr;
+
   ParamExpr() : Expr(NodeKind::ParamExpr) {}
 
   Expr* x;
@@ -293,6 +343,8 @@ struct ParamExpr : Expr {
 };
 
 struct PortAttribute : Node {
+  static constexpr NodeKind kKind = NodeKind::PortAttribute;
+
   PortAttribute() : Node(NodeKind::PortAttribute) {}
 
   Token kind;
@@ -306,6 +358,8 @@ struct PortAttribute : Node {
 };
 
 struct IndexExpr : Expr {
+  static constexpr NodeKind kKind = NodeKind::IndexExpr;
+
   IndexExpr() : Expr(NodeKind::IndexExpr) {}
 
   Expr* x{nullptr};
@@ -320,6 +374,8 @@ struct IndexExpr : Expr {
 };
 
 struct RedirectToIndex : Node {
+  static constexpr NodeKind kKind = NodeKind::RedirectToIndex;
+
   RedirectToIndex() : Node(NodeKind::RedirectToIndex) {}
 
   bool value{false};
@@ -331,6 +387,8 @@ struct RedirectToIndex : Node {
 };
 
 struct CompositeLiteral : Expr {
+  static constexpr NodeKind kKind = NodeKind::CompositeLiteral;
+
   CompositeLiteral() : Expr(NodeKind::CompositeLiteral) {}
 
   std::vector<Expr*> list;
@@ -343,6 +401,8 @@ struct CompositeLiteral : Expr {
 };
 
 struct RegexpExpr : Expr {
+  static constexpr NodeKind kKind = NodeKind::RegexpExpr;
+
   RegexpExpr() : Expr(NodeKind::RegexpExpr) {}
 
   bool nocase{false};
@@ -354,6 +414,8 @@ struct RegexpExpr : Expr {
 };
 
 struct PatternExpr : Expr {
+  static constexpr NodeKind kKind = NodeKind::PatternExpr;
+
   PatternExpr() : Expr(NodeKind::PatternExpr) {}
 
   bool nocase{false};
@@ -365,6 +427,8 @@ struct PatternExpr : Expr {
 };
 
 struct DecodedExpr : Expr {
+  static constexpr NodeKind kKind = NodeKind::DecodedExpr;
+
   DecodedExpr() : Expr(NodeKind::DecodedExpr) {}
 
   Expr* params{nullptr};
@@ -379,6 +443,8 @@ struct DecodedExpr : Expr {
 };
 
 struct DecmatchExpr : Expr {
+  static constexpr NodeKind kKind = NodeKind::DecmatchExpr;
+
   DecmatchExpr() : Expr(NodeKind::DecmatchExpr) {}
 
   Expr* params{nullptr};
@@ -393,6 +459,8 @@ struct DecmatchExpr : Expr {
 };
 
 struct AssignmentExpr : Expr {
+  static constexpr NodeKind kKind = NodeKind::AssignmentExpr;
+
   AssignmentExpr() : Expr(NodeKind::AssignmentExpr) {}
 
   Expr* property;
@@ -405,6 +473,8 @@ struct AssignmentExpr : Expr {
 };
 
 struct Declarator : Node {
+  static constexpr NodeKind kKind = NodeKind::Declarator;
+
   Declarator() : Node(NodeKind::Declarator) {}
 
   std::optional<Ident> name;
@@ -427,6 +497,8 @@ struct Declarator : Node {
 };
 
 struct LengthExpr : Expr {
+  static constexpr NodeKind kKind = NodeKind::LengthExpr;
+
   LengthExpr() : Expr(NodeKind::LengthExpr) {}
 
   Expr* x{nullptr};
@@ -441,6 +513,8 @@ struct LengthExpr : Expr {
 };
 
 struct CallExpr : Expr {
+  static constexpr NodeKind kKind = NodeKind::CallExpr;
+
   CallExpr() : Expr(NodeKind::CallExpr) {}
 
   Expr* fun;
@@ -453,6 +527,8 @@ struct CallExpr : Expr {
 };
 
 struct ParametrizedIdent : Ident {
+  static constexpr NodeKind kKind = NodeKind::ParametrizedIdent;
+
   ParametrizedIdent() : Ident(NodeKind::ParametrizedIdent) {}
 
   Ident* ident;
@@ -465,6 +541,8 @@ struct ParametrizedIdent : Ident {
 };
 
 struct FormalPar : Node {
+  static constexpr NodeKind kKind = NodeKind::FormalPar;
+
   FormalPar() : Node(NodeKind::FormalPar) {}
 
   Token* direction{nullptr};
@@ -495,6 +573,8 @@ struct FormalPar : Node {
 };
 
 struct ReturnSpec : TypeSpec {
+  static constexpr NodeKind kKind = NodeKind::ReturnSpec;
+
   ReturnSpec() : TypeSpec(NodeKind::ReturnSpec) {}
 
   RestrictionSpec* restriction{nullptr};
@@ -510,6 +590,8 @@ struct ReturnSpec : TypeSpec {
 };
 
 struct AltStmt : Stmt {
+  static constexpr NodeKind kKind = NodeKind::AltStmt;
+
   AltStmt() : Stmt(NodeKind::AltStmt) {}
 
   Token kind;
@@ -522,6 +604,8 @@ struct AltStmt : Stmt {
 };
 
 struct CallStmt : Stmt {
+  static constexpr NodeKind kKind = NodeKind::CallStmt;
+
   CallStmt() : Stmt(NodeKind::CallStmt) {}
 
   Stmt* stmt;
@@ -534,6 +618,8 @@ struct CallStmt : Stmt {
 };
 
 struct ForStmt : Stmt {
+  static constexpr NodeKind kKind = NodeKind::ForStmt;
+
   ForStmt() : Stmt(NodeKind::ForStmt) {}
 
   Stmt* init;
@@ -550,6 +636,8 @@ struct ForStmt : Stmt {
 };
 
 struct ForRangeStmt : Stmt {
+  static constexpr NodeKind kKind = NodeKind::ForRangeStmt;
+
   ForRangeStmt() : Stmt(NodeKind::ForRangeStmt) {}
 
   Stmt* init;
@@ -564,6 +652,8 @@ struct ForRangeStmt : Stmt {
 };
 
 struct WhileStmt : Stmt {
+  static constexpr NodeKind kKind = NodeKind::WhileStmt;
+
   WhileStmt() : Stmt(NodeKind::WhileStmt) {}
 
   Expr* cond;
@@ -576,6 +666,8 @@ struct WhileStmt : Stmt {
 };
 
 struct DoWhileStmt : Stmt {
+  static constexpr NodeKind kKind = NodeKind::DoWhileStmt;
+
   DoWhileStmt() : Stmt(NodeKind::DoWhileStmt) {}
 
   BlockStmt* body;
@@ -588,6 +680,8 @@ struct DoWhileStmt : Stmt {
 };
 
 struct IfStmt : Stmt {
+  static constexpr NodeKind kKind = NodeKind::IfStmt;
+
   IfStmt() : Stmt(NodeKind::IfStmt) {}
 
   Expr* cond;
@@ -604,6 +698,8 @@ struct IfStmt : Stmt {
 };
 
 struct CaseClause : Node {
+  static constexpr NodeKind kKind = NodeKind::CaseClause;
+
   CaseClause() : Node(NodeKind::CaseClause) {}
 
   ParenExpr* cond{nullptr};
@@ -618,6 +714,8 @@ struct CaseClause : Node {
 };
 
 struct CommClause : Stmt {
+  static constexpr NodeKind kKind = NodeKind::CommClause;
+
   CommClause() : Stmt(NodeKind::CommClause) {}
 
   bool is_else{false};
@@ -637,6 +735,8 @@ struct CommClause : Stmt {
 };
 
 struct DynamicExpr : Expr {
+  static constexpr NodeKind kKind = NodeKind::DynamicExpr;
+
   DynamicExpr() : Expr(NodeKind::DynamicExpr) {}
 
   BlockStmt* body;
@@ -647,6 +747,8 @@ struct DynamicExpr : Expr {
 };
 
 struct WithSpec : TypeSpec {
+  static constexpr NodeKind kKind = NodeKind::WithSpec;
+
   WithSpec() : TypeSpec(NodeKind::WithSpec) {}
 
   std::vector<WithStmt*> list;
@@ -659,6 +761,8 @@ struct WithSpec : TypeSpec {
 };
 
 struct RedirectExpr : Expr {
+  static constexpr NodeKind kKind = NodeKind::RedirectExpr;
+
   RedirectExpr() : Expr(NodeKind::RedirectExpr) {}
 
   Expr* x;
@@ -693,6 +797,8 @@ struct RedirectExpr : Expr {
 };
 
 struct ListSpec : TypeSpec {
+  static constexpr NodeKind kKind = NodeKind::ListSpec;
+
   ListSpec() : TypeSpec(NodeKind::ListSpec) {}
 
   LengthExpr* length{nullptr};
@@ -707,6 +813,8 @@ struct ListSpec : TypeSpec {
 };
 
 struct FormalPars : Node {
+  static constexpr NodeKind kKind = NodeKind::FormalPars;
+
   FormalPars() : Node(NodeKind::FormalPars) {}
 
   std::vector<FormalPar*> list;
@@ -719,6 +827,8 @@ struct FormalPars : Node {
 };
 
 struct SelectStmt : Stmt {
+  static constexpr NodeKind kKind = NodeKind::SelectStmt;
+
   SelectStmt() : Stmt(NodeKind::SelectStmt) {}
 
   bool is_union{false};
@@ -734,6 +844,8 @@ struct SelectStmt : Stmt {
 };
 
 struct Module : Node {
+  static constexpr NodeKind kKind = NodeKind::Module;
+
   Module() : Node(NodeKind::Module) {}
 
   std::optional<Ident> name;
@@ -758,6 +870,8 @@ struct Module : Node {
 };
 
 struct ValueDecl : Decl {
+  static constexpr NodeKind kKind = NodeKind::ValueDecl;
+
   ValueDecl() : Decl(NodeKind::ValueDecl) {}
 
   Token* kind{nullptr};
@@ -782,6 +896,8 @@ struct ValueDecl : Decl {
 };
 
 struct ImportDecl : Decl {
+  static constexpr NodeKind kKind = NodeKind::ImportDecl;
+
   ImportDecl() : Decl(NodeKind::ImportDecl) {}
 
   std::optional<Ident> module;
@@ -806,6 +922,8 @@ struct ImportDecl : Decl {
 };
 
 struct GroupDecl : Decl {
+  static constexpr NodeKind kKind = NodeKind::GroupDecl;
+
   GroupDecl() : Decl(NodeKind::GroupDecl) {}
 
   std::optional<Ident> name;
@@ -826,6 +944,8 @@ struct GroupDecl : Decl {
 };
 
 struct FriendDecl : Decl {
+  static constexpr NodeKind kKind = NodeKind::FriendDecl;
+
   FriendDecl() : Decl(NodeKind::FriendDecl) {}
 
   std::optional<Ident> module;
@@ -842,6 +962,8 @@ struct FriendDecl : Decl {
 };
 
 struct ClassTypeDecl : Decl {
+  static constexpr NodeKind kKind = NodeKind::ClassTypeDecl;
+
   ClassTypeDecl() : Decl(NodeKind::ClassTypeDecl) {}
 
   Token kind;
@@ -882,6 +1004,8 @@ struct ClassTypeDecl : Decl {
 };
 
 struct ControlPart : Node {
+  static constexpr NodeKind kKind = NodeKind::ControlPart;
+
   ControlPart() : Node(NodeKind::ControlPart) {}
 
   BlockStmt* body;
@@ -896,6 +1020,8 @@ struct ControlPart : Node {
 };
 
 struct Field : Node {
+  static constexpr NodeKind kKind = NodeKind::Field;
+
   Field() : Node(NodeKind::Field) {}
 
   Token* default_tok{nullptr};
@@ -926,6 +1052,8 @@ struct Field : Node {
 };
 
 struct BehaviourSpec : TypeSpec {
+  static constexpr NodeKind kKind = NodeKind::BehaviourSpec;
+
   BehaviourSpec() : TypeSpec(NodeKind::BehaviourSpec) {}
 
   Token kind;
@@ -949,6 +1077,8 @@ struct BehaviourSpec : TypeSpec {
 };
 
 struct TemplateDecl : Decl {
+  static constexpr NodeKind kKind = NodeKind::TemplateDecl;
+
   TemplateDecl() : Decl(NodeKind::TemplateDecl) {}
 
   RestrictionSpec* restriction{nullptr};
@@ -986,6 +1116,8 @@ struct TemplateDecl : Decl {
 };
 
 struct FuncDecl : Decl {
+  static constexpr NodeKind kKind = NodeKind::FuncDecl;
+
   FuncDecl() : Decl(NodeKind::FuncDecl) {}
 
   bool external{false};
@@ -1033,6 +1165,8 @@ struct FuncDecl : Decl {
 };
 
 struct ConstructorDecl : Decl {
+  static constexpr NodeKind kKind = NodeKind::ConstructorDecl;
+
   ConstructorDecl() : Decl(NodeKind::ConstructorDecl) {}
 
   FormalPars* params{nullptr};
@@ -1047,6 +1181,8 @@ struct ConstructorDecl : Decl {
 };
 
 struct SignatureDecl : Decl {
+  static constexpr NodeKind kKind = NodeKind::SignatureDecl;
+
   SignatureDecl() : Decl(NodeKind::SignatureDecl) {}
 
   std::optional<Ident> name;
@@ -1078,6 +1214,8 @@ struct SignatureDecl : Decl {
 };
 
 struct MapTypeDecl : Decl {
+  static constexpr NodeKind kKind = NodeKind::MapTypeDecl;
+
   MapTypeDecl() : Decl(NodeKind::MapTypeDecl) {}
 
   MapSpec* spec;
@@ -1100,6 +1238,8 @@ struct MapTypeDecl : Decl {
 };
 
 struct EnumTypeDecl : Decl {
+  static constexpr NodeKind kKind = NodeKind::EnumTypeDecl;
+
   EnumTypeDecl() : Decl(NodeKind::EnumTypeDecl) {}
 
   std::optional<Ident> name;
@@ -1124,6 +1264,8 @@ struct EnumTypeDecl : Decl {
 };
 
 struct BehaviourTypeDecl : Decl {
+  static constexpr NodeKind kKind = NodeKind::BehaviourTypeDecl;
+
   BehaviourTypeDecl() : Decl(NodeKind::BehaviourTypeDecl) {}
 
   Token kind;
@@ -1159,6 +1301,8 @@ struct BehaviourTypeDecl : Decl {
 };
 
 struct PortTypeDecl : Decl {
+  static constexpr NodeKind kKind = NodeKind::PortTypeDecl;
+
   PortTypeDecl() : Decl(NodeKind::PortTypeDecl) {}
 
   std::optional<Ident> name;
@@ -1184,6 +1328,8 @@ struct PortTypeDecl : Decl {
 };
 
 struct PortMapAttribute : Node {
+  static constexpr NodeKind kKind = NodeKind::PortMapAttribute;
+
   PortMapAttribute() : Node(NodeKind::PortMapAttribute) {}
 
   Token kind;
@@ -1195,6 +1341,8 @@ struct PortMapAttribute : Node {
 };
 
 struct ComponentTypeDecl : Decl {
+  static constexpr NodeKind kKind = NodeKind::ComponentTypeDecl;
+
   ComponentTypeDecl() : Decl(NodeKind::ComponentTypeDecl) {}
 
   std::optional<Ident> name;
@@ -1223,6 +1371,8 @@ struct ComponentTypeDecl : Decl {
 };
 
 struct ModuleParameterGroup : Decl {
+  static constexpr NodeKind kKind = NodeKind::ModuleParameterGroup;
+
   ModuleParameterGroup() : Decl(NodeKind::ModuleParameterGroup) {}
 
   std::vector<ValueDecl*> decls;
@@ -1239,6 +1389,8 @@ struct ModuleParameterGroup : Decl {
 };
 
 struct StructSpec : TypeSpec {
+  static constexpr NodeKind kKind = NodeKind::StructSpec;
+
   StructSpec() : TypeSpec(NodeKind::StructSpec) {}
 
   Token kind;
@@ -1252,6 +1404,8 @@ struct StructSpec : TypeSpec {
 };
 
 struct SubTypeDecl : Decl {
+  static constexpr NodeKind kKind = NodeKind::SubTypeDecl;
+
   SubTypeDecl() : Decl(NodeKind::SubTypeDecl) {}
 
   Field* field;
@@ -1266,6 +1420,8 @@ struct SubTypeDecl : Decl {
 };
 
 struct StructTypeDecl : Decl {
+  static constexpr NodeKind kKind = NodeKind::StructTypeDecl;
+
   StructTypeDecl() : Decl(NodeKind::StructTypeDecl) {}
 
   Token kind;

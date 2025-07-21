@@ -203,6 +203,8 @@ def generate_nodes_descriptors(nodes: AstNodesDict) -> str:
     node = nodes[name]
     buf.write(f"struct {name} : {node.basic_type} {{")
     with buf.indented():
+      buf.write(f"static constexpr NodeKind kKind = NodeKind::{name};")
+      buf.newline()
       buf.write(f"{name}() : {node.basic_type}(NodeKind::{name}) {{}}")
       buf.newline()
 
