@@ -89,6 +89,19 @@ std::optional<SymbolSearchResult> FindSymbol(const core::SourceFile* file, lsp::
       }
       break;
     }
+    case core::ast::NodeKind::Field: {
+      const auto* f = n->parent->As<core::ast::nodes::Field>();
+      if (f->parent->nkind == core::ast::NodeKind::StructTypeDecl) {
+        const auto* stdecl = f->parent->As<core::ast::nodes::StructTypeDecl>();
+        const auto* structsym = file->module->scope->ResolveDirect(file->Text(*stdecl->name));
+        return SymbolSearchResult{
+            .node = n,
+            .scope = nullptr,
+            .symbol = structsym->Members()->Lookup(file->Text(*f->name)),
+        };
+      }
+      break;
+    }
     default:
       break;
   }
