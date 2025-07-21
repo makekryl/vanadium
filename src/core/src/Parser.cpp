@@ -297,8 +297,9 @@ nodes::Module* Parser::ParseModule() {
     }
     Expect(TokenKind::LBRACE);
     while (tok_ != TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
-      m.defs.emplace_back(ParseDefinition());
-      ExpectSemi();
+      auto* r = ParseDefinition();
+      m.defs.emplace_back(r);
+      ExpectSemiAfter(r);
     }
     Expect(TokenKind::RBRACE);
     m.with = ParseWith();
@@ -426,6 +427,7 @@ nodes::ImportDecl* Parser::ParseImport() {
               ee.list = ParseExceptStmts();
               Expect(TokenKind::RBRACE);
             });
+            ExtendByIncorporatedNode(z, z->As<nodes::ExceptExpr>()->x);
           }
           dk.list = {z};
         });
@@ -515,8 +517,9 @@ nodes::DefKindExpr* Parser::ParseImportStmt() {
 std::vector<nodes::Expr*> Parser::ParseExceptStmts() {
   std::vector<nodes::Expr*> v;
   while (tok_ != TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
-    v.push_back(ParseExceptStmt());
-    ExpectSemi();
+    auto* r = ParseExceptStmt();
+    v.push_back(r);
+    ExpectSemiAfter(r);
   }
   return v;
 }
@@ -555,8 +558,9 @@ nodes::GroupDecl* Parser::ParseGroup() {
     ParseName(g.name);
     Expect(TokenKind::LBRACE);
     while (tok_ != TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
-      g.defs.emplace_back(ParseDefinition());
-      ExpectSemi();
+      auto* r = ParseDefinition();
+      g.defs.emplace_back(r);
+      ExpectSemiAfter(r);
     }
     Expect(TokenKind::RBRACE);
     g.with = ParseWith();
@@ -661,8 +665,9 @@ nodes::PortTypeDecl* Parser::ParsePortTypeDecl() {
 
     Expect(TokenKind::LBRACE);
     while (tok_ != TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
-      ptd.attrs.push_back(ParsePortAttribute());
-      ExpectSemi();
+      auto* r = ParsePortAttribute();
+      ptd.attrs.push_back(r);
+      ExpectSemiAfter(r);
     }
     Expect(TokenKind::RBRACE);
     ptd.with = ParseWith();
@@ -755,8 +760,9 @@ nodes::ClassTypeDecl* Parser::ParseClassTypeDecl() {
     }
     Expect(TokenKind::LBRACE);
     while (tok_ != TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
-      ctd.defs.push_back(ParseDefinition());
-      ExpectSemi();
+      auto* r = ParseDefinition();
+      ctd.defs.push_back(r);
+      ExpectSemiAfter(r);
     }
     Expect(TokenKind::RBRACE);
     ctd.with = ParseWith();
@@ -1587,8 +1593,9 @@ nodes::BlockStmt* Parser::ParseBlockStmt() {
   return NewNode<nodes::BlockStmt>([&](auto& s) {
     Expect(TokenKind::LBRACE);
     while (tok_ != TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
-      s.stmts.push_back(ParseStmt());
-      ExpectSemi();
+      auto* r = ParseStmt();
+      s.stmts.push_back(r);
+      ExpectSemiAfter(r);
     }
     Expect(TokenKind::RBRACE);
   });
@@ -2434,18 +2441,31 @@ Token Parser::Expect(TokenKind expected) {
   return Consume();
 }
 
+// TODO: get rid of code duplication in these three functions
 inline void Parser::MaybeExpectSemi() {
   if (tok_ == TokenKind::SEMICOLON) {
     Consume();
-    last_node_->nrange.end = last_consumed_pos_;
     return;
   }
 }
-
 void Parser::ExpectSemi() {
   if (tok_ == TokenKind::SEMICOLON) {
     Consume();
-    last_node_->nrange.end = last_consumed_pos_;
+    return;
+  }
+
+  constexpr bool kPedanticSemi = false;
+  if (kPedanticSemi) {
+    if (!seen_closing_brace_ && tok_ == TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
+      EmitErrorExpected(";");
+      // Advance(TOK_STMT_START); // TODO: is this really needed?
+    }
+  }
+}
+void Parser::ExpectSemiAfter(Node* n) {
+  if (tok_ == TokenKind::SEMICOLON) {
+    Consume();
+    n->nrange.end = last_consumed_pos_;
     return;
   }
 

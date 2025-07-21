@@ -153,6 +153,7 @@ class Parser {
   Token Expect(TokenKind expected);
   void MaybeExpectSemi();
   void ExpectSemi();
+  void ExpectSemiAfter(Node*);
   void Advance(const std::set<TokenKind>& to);
 
   void Mark();
