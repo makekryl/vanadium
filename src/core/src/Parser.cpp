@@ -2437,6 +2437,7 @@ Token Parser::Expect(TokenKind expected) {
 inline void Parser::MaybeExpectSemi() {
   if (tok_ == TokenKind::SEMICOLON) {
     Consume();
+    last_node_->nrange.end = last_consumed_pos_;
     return;
   }
 }
@@ -2444,6 +2445,7 @@ inline void Parser::MaybeExpectSemi() {
 void Parser::ExpectSemi() {
   if (tok_ == TokenKind::SEMICOLON) {
     Consume();
+    last_node_->nrange.end = last_consumed_pos_;
     return;
   }
 
