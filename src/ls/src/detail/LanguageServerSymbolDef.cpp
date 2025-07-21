@@ -73,8 +73,8 @@ std::optional<SymbolSearchResult> FindSymbol(const core::SourceFile* file, const
     }
     case core::ast::NodeKind::AssignmentExpr: {
       const auto* ae = n->parent->As<core::ast::nodes::AssignmentExpr>();
-      if (ae->parent->nkind == core::ast::NodeKind::CompositeLiteral ||
-          ae->parent->nkind == core::ast::NodeKind::ParenExpr) {
+      if (n == ae->property && (ae->parent->nkind == core::ast::NodeKind::CompositeLiteral ||
+                                ae->parent->nkind == core::ast::NodeKind::ParenExpr)) {
         const auto* sym = ResolvePropertyAssignmentTarget(file, ae);
         if (!sym) {
           return std::nullopt;
