@@ -434,8 +434,6 @@ class BasicTypeChecker {
     bool is_union{false};
   };
 
-  void ValidateParams(std::span<const ast::nodes::FormalPar* const> params);
-
   template <ast::IsNode TParamDescriptorNode, ArgumentsTypeCheckOptions Options>
   void PerformArgumentsTypeCheck(std::span<const ast::nodes::Expr* const> args, const ast::Range& args_range,
                                  const SourceFile* params_file, const semantic::Symbol* params_type_sym,
@@ -487,20 +485,6 @@ void BasicTypeChecker::MatchTypes(const ast::Range& range, const semantic::Symbo
       .message = std::format("expected value of type '{}', got '{}'", utils::GetReadableTypeName(expected),
                              utils::GetReadableTypeName(actual)),
   });
-}
-
-void BasicTypeChecker::ValidateParams(std::span<const ast::nodes::FormalPar* const> params) {
-  bool seen_default_valued{false};
-  for (const auto* param : params) {
-    if (param->value) {
-      seen_default_valued = true;
-    } else if (seen_default_valued) {
-      errors_.emplace_back(TypeError{
-          .range = param->nrange,
-          .message = "parameter without a default value cannot be placed defaulted parameters",
-      });
-    }
-  }
 }
 
 template <ast::IsNode TParamDescriptorNode, BasicTypeChecker::ArgumentsTypeCheckOptions Options = {}>
@@ -697,10 +681,10 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
         case ast::TokenKind::LE:
         case ast::TokenKind::GT:
         case ast::TokenKind::GE:
-          if (x_sym != &builtins::kInteger && x_sym != &builtins::kFloat) [[unlikely]] {
+          if (x_sym && x_sym != &builtins::kInteger && x_sym != &builtins::kFloat) [[unlikely]] {
             errors_.emplace_back(TypeError{
                 .range = m->x->nrange,
-                .message = "integer or float expected",
+                .message = std::format("integer or float expected, got '{}'", x_sym->GetName()),
             });
             break;
           }
@@ -1028,12 +1012,6 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
       MatchTypes(m->value->nrange, actual_type, expected_type);
 
       return false;
-    }
-
-    case ast::NodeKind::FormalPars: {
-      const auto* m = n->As<ast::nodes::FormalPars>();
-      ValidateParams(m->list);
-      return true;  // <-- we still need to introspect them
     }
 
     case ast::NodeKind::ReturnStmt: {
