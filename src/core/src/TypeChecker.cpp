@@ -418,6 +418,8 @@ class BasicTypeChecker {
     bool is_union{false};
   };
 
+  void ValidateParams(std::span<const ast::nodes::FormalPar* const> params);
+
   template <ast::IsNode TParamDescriptorNode, ArgumentsTypeCheckOptions Options>
   void PerformArgumentsTypeCheck(std::span<const ast::nodes::Expr* const> args, const ast::Range& args_range,
                                  const SourceFile* params_file, const semantic::Symbol* params_type_sym,
@@ -469,6 +471,20 @@ void BasicTypeChecker::MatchTypes(const ast::Range& range, const semantic::Symbo
       .message = std::format("expected argument of type '{}', got '{}'", utils::GetReadableTypeName(expected),
                              utils::GetReadableTypeName(actual)),
   });
+}
+
+void BasicTypeChecker::ValidateParams(std::span<const ast::nodes::FormalPar* const> params) {
+  bool seen_default_valued{false};
+  for (const auto* param : params) {
+    if (param->value) {
+      seen_default_valued = true;
+    } else if (seen_default_valued) {
+      errors_.emplace_back(TypeError{
+          .range = param->nrange,
+          .message = "parameter without a default value cannot be placed defaulted parameters",
+      });
+    }
+  }
 }
 
 template <ast::IsNode TParamDescriptorNode, BasicTypeChecker::ArgumentsTypeCheckOptions Options = {}>
@@ -592,7 +608,7 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
 
       const ast::nodes::FormalPars* params = ast::utils::GetCallableDeclParams(callee_decl);
       if (!params) [[unlikely]] {
-        // this should not be possible because of flags&kFunction check, TODO: make sure and remove this branch
+        // this is guaranteed to be possible due to parser leniency
         Introspect(m);
         break;
       }
@@ -893,11 +909,21 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
     case ast::NodeKind::TemplateDecl: {
       const auto* m = n->As<ast::nodes::TemplateDecl>();
 
+      if (m->params) {
+        CheckType(m->params);
+      }
+
       const auto* expected_type = module_.scope->Resolve(module_.sf->Text(m->type));
       const auto* actual_type = CheckType(m->value, expected_type);
       MatchTypes(m->value->nrange, actual_type, expected_type);
 
       return false;
+    }
+
+    case ast::NodeKind::FormalPars: {
+      const auto* m = n->As<ast::nodes::FormalPars>();
+      ValidateParams(m->list);
+      return true;  // <-- we still need to introspect them
     }
 
     case ast::NodeKind::ReturnStmt: {
@@ -926,7 +952,7 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
         break;
       }
 
-      const auto* expected_type = module_.scope->Resolve(module_.sf->Text(fdecl->ret));
+      const auto* expected_type = module_.scope->Resolve(module_.sf->Text(fdecl->ret->type));
       const auto* actual_type = CheckType(m->result, expected_type);
       MatchTypes(m->result->nrange, actual_type, expected_type);
 

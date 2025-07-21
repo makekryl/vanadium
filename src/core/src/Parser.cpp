@@ -1171,7 +1171,7 @@ nodes::FormalPars* Parser::ParseFormalPars() {
     Expect(TokenKind::LPAREN);
     while (tok_ != TokenKind::RPAREN) {
       fp.list.push_back(ParseFormalPar());
-      if (tok_ != TokenKind::COMMA) {
+      if (tok_ == TokenKind::RPAREN) {
         break;
       }
       Consume();
