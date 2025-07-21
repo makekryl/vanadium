@@ -15,6 +15,7 @@ using DocumentHighlightResults = std::variant<std::vector<DocumentHighlight>, st
 using HoverResult = std::variant<Hover, std::nullptr_t>;
 using RenameResult = std::variant<WorkspaceEdit, std::nullptr_t>;
 using CompletionResult = std::variant<std::vector<CompletionItem>, CompletionList, std::nullptr_t>;
+using CompletionResolutionResult = std::variant<CompletionItem, std::nullptr_t>;
 }  // namespace lsp
 
 namespace glz {

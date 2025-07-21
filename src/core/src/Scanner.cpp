@@ -5,6 +5,7 @@
 #include <unordered_map>
 
 #include "ASTNodes.h"
+#include "ASTTypes.h"
 
 namespace vanadium::core::ast {
 namespace parser {
@@ -122,7 +123,7 @@ const std::unordered_map<std::string_view, TokenKind> kKeywordLookup{
     {"with", TokenKind::WITH},
 };
 
-Scanner::Scanner(std::string_view src) : src_(src), pos_(0), lines_({0}) {}
+Scanner::Scanner(std::string_view src, pos_t start_pos) : src_(src), pos_(start_pos), lines_({0}) {}
 
 Token Scanner::Scan() {
   ScanWhitespace();
@@ -339,7 +340,10 @@ Token Scanner::Scan() {
     }
   }
 
-  return {kind, ast::Range{start_pos, pos_}};
+  return {
+      .kind = kind,
+      .range = {.begin = start_pos, .end = pos_},
+  };
 }
 
 void Scanner::ScanWhitespace() {

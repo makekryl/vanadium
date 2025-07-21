@@ -10,7 +10,7 @@ namespace parser {
 
 class Scanner {
  public:
-  Scanner(std::string_view src);
+  Scanner(std::string_view src, ast::pos_t start_pos = 0);
 
   Token Scan();
   [[nodiscard]] ast::pos_t Pos() const {

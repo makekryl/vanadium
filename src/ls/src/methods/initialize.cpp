@@ -37,6 +37,7 @@ rpc::ExpectedResult<lsp::InitializeResult> methods::initialize::operator()(LsCon
               .completionProvider =
                   lsp::CompletionOptions{
                       .triggerCharacters = {{"."}},
+                      .resolveProvider = true,
                   },
               .hoverProvider = true,
               .definitionProvider = true,

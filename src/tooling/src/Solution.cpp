@@ -107,7 +107,7 @@ std::expected<Solution, Error> Solution::Load(const std::filesystem::path& direc
 
 const ProjectEntry* Solution::ProjectOf(std::string_view path) const {
   const ProjectEntry* project{nullptr};
-  for (auto& candidate : projects_ | std::views::values) {
+  for (const auto& candidate : projects_ | std::views::values) {
     if (path.starts_with(candidate.dir->Path())) {
       project = &candidate;
 

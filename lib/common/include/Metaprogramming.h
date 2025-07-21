@@ -2,6 +2,11 @@
 
 namespace mp {
 
+template <class... Ts>
+struct Overloaded : Ts... {
+  using Ts::operator()...;
+};
+
 template <typename... Ts>
 struct Typelist {
   template <typename Fn>

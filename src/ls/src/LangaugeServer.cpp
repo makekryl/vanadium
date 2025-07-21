@@ -34,8 +34,10 @@ using ServerMethods = mp::Typelist<methods::initialize,   //
                                    methods::textDocument::hover,              //
                                    methods::textDocument::documentHighlight,  //
                                    methods::textDocument::rename,             //
-                                   methods::textDocument::completion          //
-                                   >;                                         //
+                                   methods::textDocument::completion,         //
+                                   //
+                                   methods::completionItem::resolve  //
+                                   >;                                //
 
 template <class... Methods>
 using JsonRpcServer = glz::rpc::server<typename Methods::RpcMethod...>;

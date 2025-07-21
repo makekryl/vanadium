@@ -68,6 +68,9 @@ DECL_REQUEST_1(textDocument, hover, lsp::HoverParams, lsp::HoverResult);
 DECL_REQUEST_1(textDocument, rename, lsp::RenameParams, lsp::RenameResult);
 DECL_REQUEST_1(textDocument, completion, lsp::CompletionParams, lsp::CompletionResult);
 
+// completionItem
+DECL_REQUEST_1(completionItem, resolve, lsp::CompletionItem, lsp::CompletionResolutionResult);
+
 }  // namespace methods
 
 #undef DECL_NOTIFIC_2

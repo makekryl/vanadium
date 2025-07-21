@@ -15,9 +15,10 @@ rpc::ExpectedResult<lsp::CompletionResult> methods::textDocument::completion::op
 
   const auto* n = detail::FindNode(file, params.position);
 
-  std::vector<lsp::CompletionItem> items;
   constexpr std::size_t kMaxCompletionItems = 80;
-  detail::PerformCompletion(file, n, ctx->GetTemporaryArena(), items, kMaxCompletionItems);
+
+  std::vector<lsp::CompletionItem> items;
+  detail::CollectCompletions(file, n, ctx->GetTemporaryArena(), items, kMaxCompletionItems);
   return items;
 }
 }  // namespace vanadium::ls
