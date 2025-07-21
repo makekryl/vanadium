@@ -84,9 +84,12 @@ struct ModuleDescriptor {
   }
 };
 
+class Program;
 struct SourceFile {
   lib::Arena arena;
   std::string path;
+
+  Program* program;
 
   std::string src;
   ast::AST ast;

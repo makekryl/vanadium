@@ -61,6 +61,7 @@ void Program::UpdateFile(const std::string& path, const FileReadFn& read) {
   auto& sf = it->second;
   if (inserted) {
     sf.path = path;
+    sf.program = this;
   } else {
     DetachFile(sf);
     sf.module = std::nullopt;

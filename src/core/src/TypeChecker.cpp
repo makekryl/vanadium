@@ -143,18 +143,29 @@ class SelectorExprResolver {
       return nullptr;
     }
 
-    if (!(x_sym->Flags() & (semantic::SymbolFlags::kStructural | semantic::SymbolFlags::kClass))) {
+    if (!(x_sym->Flags() & (semantic::SymbolFlags::kStructural | semantic::SymbolFlags::kClass |
+                            semantic::SymbolFlags::kImportedModule))) {
       options_.on_non_structural_type(se->sel, x_sym);
       return nullptr;
     }
 
     const auto property_name = sf_->Text(se->sel);
-    const semantic::Symbol* property_sym = [&] {
-      if (x_sym->Flags() & semantic::SymbolFlags::kStructural) {
+    const semantic::Symbol* property_sym = [&] -> const semantic::Symbol* {
+      if (x_sym->Flags() & semantic::SymbolFlags::kStructural) [[likely]] {
         return x_sym->Members()->Lookup(property_name);
       }
-      // kClass
-      return x_sym->OriginatedScope()->ResolveOwn(property_name);
+      if (x_sym->Flags() & semantic::SymbolFlags::kClass) [[likely]] {
+        return x_sym->OriginatedScope()->ResolveOwn(property_name);
+      }
+      if (x_sym->Flags() & semantic::SymbolFlags::kImportedModule) {
+        const auto* tgt_module = sf_->program->GetModule(x_sym->GetName());
+        if (!tgt_module) {
+          return nullptr;
+        }
+        return tgt_module->scope->ResolveDirect(property_name);
+      }
+      assert(false);
+      return nullptr;
     }();
     if (!property_sym) {
       // TODO: remove file lookup from contract
@@ -365,7 +376,7 @@ const semantic::Symbol* ResolveExprType(const SourceFile* file, const semantic::
     return nullptr;
   }
 
-  if ((decl_sym->Flags() & semantic::SymbolFlags::kType) ||
+  if ((decl_sym->Flags() & (semantic::SymbolFlags::kType | semantic::SymbolFlags::kImportedModule)) ||
       (expr->nkind != ast::NodeKind::CallExpr && (decl_sym->Flags() & semantic::SymbolFlags::kFunction))) {
     return decl_sym;
   }
