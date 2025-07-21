@@ -61,7 +61,7 @@ FuncDecl:
   name: Ident
   modif: Token*?
   pars: FormalPars*?
-  params: FormalPars*
+  params: FormalPars*?
   runs_on: RunsOnSpec*?
   mtc: MtcSpec*?
   system: SystemSpec*?
@@ -69,7 +69,7 @@ FuncDecl:
   body: BlockStmt*?
   with: WithSpec*?
 ConstructorDecl:
-  params: FormalPars*
+  params: FormalPars*?
   body: BlockStmt*
 SignatureDecl:
   name: Ident

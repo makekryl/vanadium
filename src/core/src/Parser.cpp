@@ -1069,7 +1069,11 @@ nodes::FuncDecl* Parser::ParseFuncDecl() {
     if (tok_ == TokenKind::LT) {
       d.pars = ParseTypeFormalPars();
     }
-    d.params = ParseFormalPars();
+    if (tok_ == TokenKind::LPAREN) [[likely]] {
+      d.params = ParseFormalPars();
+    } else {
+      EmitErrorExpected("parameters parens");
+    }
     if (tok_ == TokenKind::RUNS) {
       d.runs_on = ParseRunsOn();
     }
@@ -1119,7 +1123,11 @@ nodes::FuncDecl* Parser::ParseExtFuncDecl() {
 nodes::ConstructorDecl* Parser::ParseConstructorDecl() {
   return NewNode<nodes::ConstructorDecl>([&](auto& d) {
     Consume();  // CreateTok
-    d.params = ParseFormalPars();
+    if (tok_ == TokenKind::LPAREN) [[likely]] {
+      d.params = ParseFormalPars();
+    } else {
+      EmitErrorExpected("parameters parens");
+    }
     d.body = ParseBlockStmt();
   });
 }

@@ -371,7 +371,7 @@ struct DecodedExpr : Expr {
   Expr* x;
 
   void Accept(const NodeInspector& inspector) const {
-    if (params != nullptr) {
+    if (params != nullptr) [[likely]] {
       Inspect(params, inspector);
     }
     Inspect(x, inspector);
@@ -385,7 +385,7 @@ struct DecmatchExpr : Expr {
   Expr* x;
 
   void Accept(const NodeInspector& inspector) const {
-    if (params != nullptr) {
+    if (params != nullptr) [[likely]] {
       Inspect(params, inspector);
     }
     Inspect(x, inspector);
@@ -972,7 +972,7 @@ struct TemplateDecl : Decl {
     if (pars != nullptr) {
       Inspect(pars, inspector);
     }
-    if (params != nullptr) {
+    if (params != nullptr) [[likely]] {
       Inspect(params, inspector);
     }
     if (base != nullptr) {
@@ -993,7 +993,7 @@ struct FuncDecl : Decl {
   std::optional<Ident> name;
   Token* modif{nullptr};
   FormalPars* pars{nullptr};
-  FormalPars* params;
+  FormalPars* params{nullptr};
   RunsOnSpec* runs_on{nullptr};
   MtcSpec* mtc{nullptr};
   SystemSpec* system{nullptr};
@@ -1008,7 +1008,9 @@ struct FuncDecl : Decl {
     if (pars != nullptr) {
       Inspect(pars, inspector);
     }
-    Inspect(params, inspector);
+    if (params != nullptr) [[likely]] {
+      Inspect(params, inspector);
+    }
     if (runs_on != nullptr) {
       Inspect(runs_on, inspector);
     }
@@ -1033,11 +1035,13 @@ struct FuncDecl : Decl {
 struct ConstructorDecl : Decl {
   ConstructorDecl() : Decl(NodeKind::ConstructorDecl) {}
 
-  FormalPars* params;
+  FormalPars* params{nullptr};
   BlockStmt* body;
 
   void Accept(const NodeInspector& inspector) const {
-    Inspect(params, inspector);
+    if (params != nullptr) [[likely]] {
+      Inspect(params, inspector);
+    }
     Inspect(body, inspector);
   }
 };

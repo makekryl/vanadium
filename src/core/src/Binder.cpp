@@ -432,7 +432,7 @@ bool Binder::Inspect(const ast::Node* n) {
       }
 
       auto* originated_scope = Scoped(m, [&] {
-        Visit(m->params);
+        MaybeVisit(m->params);
         const auto process = [&] {
           MaybeVisit(m->body);
         };

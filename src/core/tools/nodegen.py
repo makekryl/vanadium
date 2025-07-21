@@ -166,7 +166,8 @@ def generate_node_inspecting_code(
 
     if field.indirect:
       if field.optional:
-        buf.write(f"if ({variable} != nullptr) {{")
+        prediction = " [[likely]]" if field.name in ["params"] else ""
+        buf.write(f"if ({variable} != nullptr){prediction} {{")
         buf.indent()
       emit_inspect(variable)
       if field.optional:

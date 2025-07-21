@@ -72,6 +72,10 @@ class Dumper {
         });
         break;
       }
+      case NodeKind::ErrorNode: {
+        DumpGroup("ErrorNode", [&] {});
+        break;
+      }
 #include "gen/Dumper.inc"
       default:
         assert(false && "Unhandled node");
