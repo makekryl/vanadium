@@ -124,6 +124,12 @@ const core::ast::Node* GetReadableDefinition(const core::ast::Node* n) {
       return std::addressof(*(n->As<core::ast::nodes::StructTypeDecl>()->name));
     case core::ast::NodeKind::SubTypeDecl:
       return std::addressof(*(n->As<core::ast::nodes::SubTypeDecl>()->field->name));
+    case core::ast::NodeKind::Field:
+      return std::addressof(*(n->As<core::ast::nodes::Field>()->name));
+    case core::ast::NodeKind::Declarator:
+      return std::addressof(*(n->As<core::ast::nodes::Declarator>()->name));
+    case core::ast::NodeKind::CallExpr:
+      return std::addressof(*(n->As<core::ast::nodes::CallExpr>()->fun));
     default:
       return n;
   }

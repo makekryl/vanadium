@@ -45,7 +45,7 @@ rpc::ExpectedResult<lsp::DefinitionResult> methods::textDocument::definition::op
   const auto& uri = ctx->Temp<std::string>(ctx->PathToFileUri(provider_file->path));
   return lsp::Location{
       .uri = uri,
-      .range = conv::ToLSPRange(decl->nrange, provider_file->ast),
+      .range = conv::ToLSPRange(detail::GetReadableDefinition(decl)->nrange, provider_file->ast),
   };
 }
 }  // namespace vanadium::ls
