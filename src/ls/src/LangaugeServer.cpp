@@ -35,6 +35,7 @@ using ServerMethods = mp::Typelist<methods::initialize,   //
                                    methods::textDocument::documentHighlight,  //
                                    methods::textDocument::rename,             //
                                    methods::textDocument::completion,         //
+                                   methods::textDocument::inlayHint,          //
                                    //
                                    methods::completionItem::resolve  //
                                    >;                                //

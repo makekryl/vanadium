@@ -24,7 +24,7 @@ const core::semantic::Symbol* ResolvePropertyAssignmentTarget(const core::Source
 
       const auto* ce = m->parent->As<core::ast::nodes::CallExpr>();
       const auto* callee_sym = core::checker::ResolveExprSymbol(file, scope, ce->fun);
-      if (!(callee_sym->Flags() & core::semantic::SymbolFlags::kFunction)) {
+      if (!callee_sym || !(callee_sym->Flags() & core::semantic::SymbolFlags::kFunction)) {
         return nullptr;
       }
 

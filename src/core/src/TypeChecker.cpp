@@ -306,7 +306,29 @@ const semantic::Symbol* DeduceCompositeLiteralType(const SourceFile* file, const
   switch (n->parent->nkind) {
     case ast::NodeKind::CompositeLiteral: {
       const auto* cl = n->parent->As<ast::nodes::CompositeLiteral>();
-      return DeduceCompositeLiteralType(file, scope, cl);
+
+      const auto* sym = DeduceCompositeLiteralType(file, scope, cl);
+      if (!sym) {
+        return nullptr;
+      }
+
+      const auto* decl = sym->Declaration();
+      if (decl->nkind != core::ast::NodeKind::StructTypeDecl) {
+        return nullptr;
+      }
+
+      const auto* stdecl = decl->As<core::ast::nodes::StructTypeDecl>();
+
+      const auto param_index = std::ranges::find(cl->list, n) - cl->list.begin();
+      if (param_index >= std::ssize(stdecl->fields)) {
+        return nullptr;
+      }
+
+      const auto* param = stdecl->fields[param_index];
+      const auto* stdecl_file = core::ast::utils::SourceFileOf(stdecl);
+
+      return ResolveExprType(stdecl_file, stdecl_file->module->scope,
+                             param->type->As<ast::nodes::Expr>());  // TODO: TypeSpec (field->type) is not Expr actually
     }
     case ast::NodeKind::AssignmentExpr: {
       const auto* ae = n->parent->As<ast::nodes::AssignmentExpr>();
@@ -403,6 +425,10 @@ const semantic::Symbol* ResolveExprSymbol(const SourceFile* file, const semantic
     case ast::NodeKind::IndexExpr: {
       const auto* m = expr->As<ast::nodes::IndexExpr>();
       return detail::ResolveIndexExprType(file, scope, m);
+    }
+    case ast::NodeKind::RefSpec: {
+      const auto* m = expr->As<ast::nodes::RefSpec>();
+      return ResolveExprSymbol(file, scope, m->x);
     }
     default: {
       return nullptr;
