@@ -18,7 +18,7 @@ struct SymbolSearchResult {
 std::optional<SymbolSearchResult> FindSymbol(const core::SourceFile*, const core::ast::Node*);
 std::optional<SymbolSearchResult> FindSymbol(const core::SourceFile*, lsp::Position pos);
 
-const core::ast::Node* GetReadableDeclaration(const core::ast::Node* n);
+const core::ast::Node* GetReadableDefinition(const core::ast::Node* n);
 
 }  // namespace detail
 }  // namespace vanadium::ls

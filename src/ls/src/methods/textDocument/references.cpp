@@ -6,9 +6,9 @@
 #include "LSProtocol.h"
 #include "LSProtocolEx.h"
 #include "LanguageServerContext.h"
-#include "LanguageServerConv.h"
 #include "LanguageServerMethods.h"
 #include "Semantic.h"
+#include "detail/LanguageServerConv.h"
 #include "detail/LanguageServerSymbolDef.h"
 #include "utils/ASTUtils.h"
 #include "utils/SemanticUtils.h"
@@ -45,7 +45,7 @@ rpc::ExpectedResult<lsp::ReferencesResult> methods::textDocument::references::op
   std::vector<lsp::Location> refs;
 
   if (params.context.includeDeclaration) {
-    const auto* decl = detail::GetReadableDeclaration(sym->Declaration());
+    const auto* decl = detail::GetReadableDefinition(sym->Declaration());
     const auto* target_file = core::ast::utils::SourceFileOf(decl);
     const auto& uri = ctx->Temp<std::string>(ctx->PathToFileUri(target_file->path));
     refs.emplace_back(lsp::Location{

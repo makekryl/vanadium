@@ -5,15 +5,11 @@
 #include <tbb/task_arena.h>
 
 #include <filesystem>
-#include <ranges>
 
 #include "Arena.h"
 #include "LSConnection.h"
 #include "Linter.h"
-#include "Program.h"
-#include "Project.h"
 #include "Solution.h"
-#include "VirtualFS.h"
 
 // TODO:
 // Limitations:

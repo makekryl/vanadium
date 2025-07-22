@@ -3,8 +3,8 @@
 
 #include "LSProtocol.h"
 #include "LanguageServerContext.h"
-#include "LanguageServerConv.h"
 #include "LanguageServerMethods.h"
+#include "detail/LanguageServerConv.h"
 #include "detail/LanguageServerDiagnostic.h"
 
 namespace vanadium::ls {

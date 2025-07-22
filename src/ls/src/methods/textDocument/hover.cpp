@@ -9,9 +9,9 @@
 #include "LSProtocol.h"
 #include "LSProtocolEx.h"
 #include "LanguageServerContext.h"
-#include "LanguageServerConv.h"
 #include "LanguageServerMethods.h"
 #include "Semantic.h"
+#include "detail/LanguageServerConv.h"
 #include "detail/LanguageServerSymbolDef.h"
 #include "utils/ASTUtils.h"
 

@@ -4,9 +4,9 @@
 #include "ASTNodes.h"
 #include "ASTTypes.h"
 #include "LSProtocol.h"
-#include "LanguageServerConv.h"
 #include "Semantic.h"
 #include "TypeChecker.h"
+#include "detail/LanguageServerConv.h"
 #include "utils/ASTUtils.h"
 #include "utils/SemanticUtils.h"
 
@@ -112,7 +112,7 @@ std::optional<SymbolSearchResult> FindSymbol(const core::SourceFile* file, lsp::
   return FindSymbol(file, FindNode(file, pos));
 }
 
-const core::ast::Node* GetReadableDeclaration(const core::ast::Node* n) {
+const core::ast::Node* GetReadableDefinition(const core::ast::Node* n) {
   switch (n->nkind) {
     case core::ast::NodeKind::FuncDecl:
       return std::addressof(*(n->As<core::ast::nodes::FuncDecl>()->name));
