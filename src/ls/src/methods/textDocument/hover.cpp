@@ -1,5 +1,6 @@
 #include <glaze/ext/jsonrpc.hpp>
 #include <glaze/json/write.hpp>
+#include <iterator>
 #include <ranges>
 
 #include "AST.h"
@@ -22,7 +23,7 @@ std::string BuildMarkdownParameterList(const core::ast::AST& ast, std::span<cons
   std::string buf;
   buf.reserve(params.size() * 32);
 
-  const auto last_idx = static_cast<decltype(params)::difference_type>(params.size()) - 1;
+  const auto last_idx = std::ssize(params) - 1;
   for (const auto& [idx, param] : params | std::views::enumerate) {
     buf += "- `";
 
@@ -200,7 +201,7 @@ Values:
             std::string buf;
             buf.reserve(m->enums.size() * 32);
 
-            const auto last_idx = static_cast<decltype(m->enums)::difference_type>(m->enums.size()) - 1;
+            const auto last_idx = std::ssize(m->enums) - 1;
             for (const auto& [idx, v] : m->enums | std::views::enumerate) {
               buf += "- `";
               buf += provider_file->Text(v);

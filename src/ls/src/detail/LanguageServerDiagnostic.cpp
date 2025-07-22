@@ -23,7 +23,7 @@ void CollectModuleDiagnostics(LsContext& ctx, const core::Program& program, cons
     }
     const auto& message = ctx->Temp<std::string>(std::format("module '{}' not found", import_name));
     diags.emplace_back(lsp::Diagnostic{
-        .range = conv::ToLSPRange(import.declaration->nrange, file.ast),
+        .range = conv::ToLSPRange(import.declaration->parent->nrange, file.ast),
         .severity = lsp::DiagnosticSeverity::kError,
         .source = "vanadium",
         .message = message,

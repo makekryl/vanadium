@@ -1658,7 +1658,8 @@ nodes::Stmt* Parser::ParseForLoop() {  // CRITICAL TODO : for loop
     });
   }
 
-  n->nrange.begin = begin_pos;
+  ExtendByIncorporatedNode(n, init);
+
   return n;
 }
 

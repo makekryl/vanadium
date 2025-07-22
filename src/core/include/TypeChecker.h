@@ -27,8 +27,13 @@ const semantic::Symbol* ResolveDeclarationType(const SourceFile*, const semantic
 const semantic::Symbol* ResolveCallableReturnType(const SourceFile*, const semantic::Scope*, const ast::nodes::Decl*);
 const semantic::Symbol* ResolveExprType(const SourceFile*, const semantic::Scope*, const ast::nodes::Expr*);
 const semantic::Symbol* ResolvePotentiallyAliasedType(const semantic::Symbol*);
+const semantic::Symbol* DeduceCompositeLiteralType(const SourceFile*, const semantic::Scope*,
+                                                   const ast::nodes::CompositeLiteral*);
 
 namespace utils {
+[[nodiscard]] const ast::nodes::FormalPars* ResolveCallableParams(const SourceFile*, const semantic::Scope*,
+                                                                  const ast::nodes::ParenExpr*);
+
 [[nodiscard]] std::string_view GetReadableTypeName(const SourceFile*, const semantic::Symbol*);
 [[nodiscard]] std::string_view GetReadableTypeName(const semantic::Symbol*);
 }  // namespace utils

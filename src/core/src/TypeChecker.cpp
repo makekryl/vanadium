@@ -31,7 +31,23 @@ const semantic::Symbol kQuestionType{
 
 namespace utils {
 
-[[nodiscard]] std::string_view GetReadableTypeName(const SourceFile* sf, const semantic::Symbol* sym) {
+const ast::nodes::FormalPars* ResolveCallableParams(const SourceFile* file, const semantic::Scope* scope,
+                                                    const ast::nodes::ParenExpr* pe) {
+  if (pe->parent->nkind != ast::NodeKind::CallExpr) {
+    // such cases should be checked, I don't have code samples though
+    return nullptr;
+  }
+
+  const auto* ce = pe->parent->As<ast::nodes::CallExpr>();
+  const auto* fun_sym = ResolveExprType(file, scope, ce->fun);
+  if (!fun_sym || !(fun_sym->Flags() & (semantic::SymbolFlags::kFunction | semantic::SymbolFlags::kTemplate))) {
+    return nullptr;
+  }
+
+  return ast::utils::GetCallableDeclParams(fun_sym->Declaration()->As<ast::nodes::Decl>());
+}
+
+std::string_view GetReadableTypeName(const SourceFile* sf, const semantic::Symbol* sym) {
   const auto* decl = sym->Declaration();
   switch (decl->nkind) {
     case ast::NodeKind::StructTypeDecl: {
@@ -59,7 +75,7 @@ namespace utils {
       return sf->Text(sym->Declaration());
   }
 }
-[[nodiscard]] std::string_view GetReadableTypeName(const semantic::Symbol* sym) {
+std::string_view GetReadableTypeName(const semantic::Symbol* sym) {
   if (sym->Flags() & semantic::SymbolFlags::kBuiltin) {
     return sym->GetName();
   }
@@ -269,10 +285,10 @@ const semantic::Symbol* ResolveIndexExprType(const SourceFile* sf, const semanti
 }  // namespace detail
 }  // namespace
 
-[[nodiscard]] const semantic::Symbol* ResolvePotentiallyAliasedType(const semantic::Symbol* sym) {
+const semantic::Symbol* ResolvePotentiallyAliasedType(const semantic::Symbol* sym) {
   const auto* decl = sym->Declaration();
 
-  if (decl && decl->nkind == ast::NodeKind::SubTypeDecl) {
+  if (decl && decl->nkind == ast::NodeKind::SubTypeDecl) [[unlikely]] {
     decl = decl->As<ast::nodes::SubTypeDecl>()->field->type;
 
     while (decl && decl->nkind == ast::NodeKind::RefSpec) {
@@ -283,6 +299,88 @@ const semantic::Symbol* ResolveIndexExprType(const SourceFile* sf, const semanti
   }
 
   return sym;
+}
+
+const semantic::Symbol* DeduceCompositeLiteralType(const SourceFile* file, const semantic::Scope* scope,
+                                                   const ast::nodes::CompositeLiteral* n) {
+  switch (n->parent->nkind) {
+    case ast::NodeKind::CompositeLiteral: {
+      const auto* cl = n->parent->As<ast::nodes::CompositeLiteral>();
+      return DeduceCompositeLiteralType(file, scope, cl);
+    }
+    case ast::NodeKind::AssignmentExpr: {
+      const auto* ae = n->parent->As<ast::nodes::AssignmentExpr>();
+      const auto* property = ae->property;
+      const auto property_name = file->Text(property);
+      switch (ae->parent->nkind) {
+        case ast::NodeKind::CompositeLiteral: {
+          const auto* cl = property->parent->As<ast::nodes::CompositeLiteral>();
+          const auto* cl_sym = DeduceCompositeLiteralType(file, scope, cl);
+          if (!cl_sym) {
+            return nullptr;
+          }
+
+          const auto* property_sym = cl_sym->Members()->Lookup(property_name);
+          if (!property_sym) {
+            return nullptr;
+          }
+          const auto* property_file = ast::utils::SourceFileOf(property_sym->Declaration());
+
+          return ResolveDeclarationType(property_file, property_file->module->scope,
+                                        property_sym->Declaration()->As<ast::nodes::Decl>());
+        }
+        case ast::NodeKind::ParenExpr: {
+          const auto* pe = property->parent->As<ast::nodes::ParenExpr>();
+          const auto* params = utils::ResolveCallableParams(file, scope, pe);
+          if (!params) {
+            return nullptr;
+          }
+
+          const auto* params_file = ast::utils::SourceFileOf(params);
+
+          const auto it = std::ranges::find_if(params->list, [&](const ast::nodes::FormalPar* par) {
+            return par->name && params_file->Text(*par->name) == property_name;
+          });
+          if (it == params->list.end()) {
+            return nullptr;
+          }
+
+          const auto* param = *it;
+          return ResolveExprType(params_file, params_file->module->scope, param->type);
+        }
+        case ast::NodeKind::ExprStmt: {
+          const auto* es = property->parent->As<ast::nodes::ExprStmt>();
+          return ResolveExprType(file, scope, es->expr);
+        }
+        default:
+          break;
+      }
+    }
+    case ast::NodeKind::ParenExpr: {
+      const auto* pe = n->parent->As<ast::nodes::ParenExpr>();
+      const auto* params = utils::ResolveCallableParams(file, scope, pe);
+      if (!params) {
+        return nullptr;
+      }
+
+      const auto param_index = std::ranges::find(pe->list, n) - pe->list.begin();
+      if (param_index >= std::ssize(params->list)) {
+        return nullptr;
+      }
+
+      const auto* param = params->list[param_index];
+      const auto* params_file = ast::utils::SourceFileOf(params);
+
+      return ResolveExprType(params_file, params_file->module->scope, param->type);
+    }
+    case ast::NodeKind::Declarator: {
+      const auto* decl = n->parent->As<ast::nodes::Declarator>();
+      const auto* vd = decl->parent->As<ast::nodes::ValueDecl>();
+      return ResolveExprType(file, scope, vd->type);
+    }
+    default:
+      return nullptr;
+  }
 }
 
 // Expression -> Declaration
@@ -334,6 +432,16 @@ const semantic::Symbol* ResolveDeclarationType(const SourceFile* file, const sem
       // use direct module symbol table for speed up
       const auto* m = decl->As<ast::nodes::ClassTypeDecl>();
       return file->module->scope->ResolveDirect(file->Text(*m->name));
+    }
+    case ast::NodeKind::FuncDecl: {
+      const auto* m = decl->As<ast::nodes::FuncDecl>();
+      const auto* declfile = ast::utils::SourceFileOf(m);
+      return declfile->module->scope->ResolveDirect(declfile->Text(*m->name));
+    }
+    case ast::NodeKind::TemplateDecl: {
+      const auto* m = decl->As<ast::nodes::TemplateDecl>();
+      const auto* declfile = ast::utils::SourceFileOf(m);
+      return declfile->module->scope->ResolveDirect(declfile->Text(*m->name));
     }
     default: {
       return nullptr;
@@ -436,7 +544,7 @@ class BasicTypeChecker {
 
   template <ast::IsNode TParamDescriptorNode, ArgumentsTypeCheckOptions Options>
   void PerformArgumentsTypeCheck(std::span<const ast::nodes::Expr* const> args, const ast::Range& args_range,
-                                 const SourceFile* params_file, const semantic::Symbol* params_type_sym,
+                                 const SourceFile* params_file, const semantic::Symbol* subject_type_sym,
                                  std::span<const TParamDescriptorNode* const> params,
                                  std::predicate<const TParamDescriptorNode*> auto is_param_required);
 
@@ -490,7 +598,7 @@ void BasicTypeChecker::MatchTypes(const ast::Range& range, const semantic::Symbo
 template <ast::IsNode TParamDescriptorNode, BasicTypeChecker::ArgumentsTypeCheckOptions Options = {}>
 void BasicTypeChecker::PerformArgumentsTypeCheck(std::span<const ast::nodes::Expr* const> args,
                                                  const ast::Range& args_range, const SourceFile* params_file,
-                                                 const semantic::Symbol* params_type_sym,
+                                                 const semantic::Symbol* subject_type_sym,
                                                  std::span<const TParamDescriptorNode* const> params,
                                                  std::predicate<const TParamDescriptorNode*> auto is_param_required) {
   const auto args_count = args.size();
@@ -512,7 +620,8 @@ void BasicTypeChecker::PerformArgumentsTypeCheck(std::span<const ast::nodes::Exp
   }
 
   const auto check_argument = [&](const TParamDescriptorNode* param, const ast::Node* n) {
-    const auto* exp_sym = params_file->module->scope->Resolve(params_file->Text(param->type));
+    const auto* exp_sym =  // TODO: TypeSpec (field->type) is not Expr actually
+        ResolveExprType(params_file, params_file->module->scope, param->type->template As<ast::nodes::Expr>());
     const auto* actual_sym = CheckType(n, exp_sym);
     MatchTypes(n->nrange, actual_sym, exp_sym);
   };
@@ -534,17 +643,27 @@ void BasicTypeChecker::PerformArgumentsTypeCheck(std::span<const ast::nodes::Exp
         }
 
         const auto property_name = module_.sf->Text(ae->property);
-        auto param_it = std::ranges::find_if(params, [&](const auto* p) {
-          return p->name && params_file->Text(*p->name) == property_name;
-        });
-
-        if (param_it != params.end()) {
-          check_argument(*param_it, ae->value);
+        const semantic::Symbol* property_sym = [&] {
+          if constexpr (std::is_same_v<TParamDescriptorNode, ast::nodes::FormalPar>) {
+            return subject_type_sym->OriginatedScope()->ResolveDirect(property_name);
+          } else {
+            return subject_type_sym->Members()->Lookup(property_name);
+          }
+        }();
+        if (property_sym) {
+          check_argument(property_sym->Declaration()->As<TParamDescriptorNode>(), ae->value);
         } else {
           errors_.emplace_back(TypeError{
               .range = ae->property->nrange,
-              .message = std::format("property '{}' does not exist on type '{}'", property_name,
-                                     utils::GetReadableTypeName(params_file, params_type_sym)),
+              .message = [&] -> std::string {
+                if constexpr (std::is_same_v<TParamDescriptorNode, ast::nodes::FormalPar>) {
+                  return std::format("callable '{}' does not have an argument with name '{}'",
+                                     utils::GetReadableTypeName(params_file, subject_type_sym), property_name);
+                } else {
+                  return std::format("property '{}' does not exist on type '{}'", property_name,
+                                     utils::GetReadableTypeName(params_file, subject_type_sym));
+                }
+              }(),
           });
           Visit(argnode);
         }
@@ -590,7 +709,7 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
         break;
       }
 
-      if (!(callee_sym->Flags() & semantic::SymbolFlags::kFunction)) {
+      if (!(callee_sym->Flags() & (semantic::SymbolFlags::kFunction | semantic::SymbolFlags::kTemplate))) {
         errors_.emplace_back(TypeError{
             .range = m->fun->nrange,
             .message = std::format("'{}' is not callable", module_.sf->Text(m->fun)),

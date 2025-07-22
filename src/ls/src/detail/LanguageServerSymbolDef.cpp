@@ -15,24 +15,7 @@ namespace vanadium::ls::detail {
 namespace {
 const core::semantic::Symbol* ResolvePropertyAssignmentTarget(const core::SourceFile* file,
                                                               const core::ast::nodes::AssignmentExpr* ae) {
-  // const core::ast::Node* subject{nullptr};
-  // for (const auto* n = ae->parent; n != nullptr; n = n->parent) {
-  //   switch (n->nkind) {
-  //     case core::ast::NodeKind::ValueDecl:
-  //     case core::ast::NodeKind::FormalPar:
-  //     case core::ast::NodeKind::CallExpr:
-  //       subject = n;
-  //     default:
-  //       continue;
-  //   }
-  //   break;
-  // }
-
-  // if (!subject) {
-  //   return nullptr;
-  // }
-
-  const auto property = file->Text(ae->property);
+  const auto property_name = file->Text(ae->property);
   const auto* scope = core::semantic::utils::FindScope(file->module->scope, ae);
 
   switch (ae->parent->nkind) {
@@ -45,7 +28,15 @@ const core::semantic::Symbol* ResolvePropertyAssignmentTarget(const core::Source
         return nullptr;
       }
 
-      return callee_sym->OriginatedScope()->ResolveDirect(property);
+      return callee_sym->OriginatedScope()->ResolveDirect(property_name);
+    }
+    case core::ast::NodeKind::CompositeLiteral: {
+      const auto* m = ae->parent->As<core::ast::nodes::CompositeLiteral>();
+      const auto* sym = core::checker::DeduceCompositeLiteralType(file, scope, m);
+      if (!sym) {
+        return nullptr;
+      }
+      return sym->Members()->Lookup(property_name);
     }
     default:
       return nullptr;
