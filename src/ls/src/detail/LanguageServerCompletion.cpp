@@ -43,12 +43,12 @@ void CollectCompletions(const core::SourceFile* file, const core::ast::Node* n, 
   const auto* parent = n->parent;
   switch (parent->nkind) {
     case core::ast::NodeKind::ImportDecl: {
-      file->program->VisitAccessibleModules([&](const core::ModuleDescriptor& module) {
-        if (module.name.contains(mask)) {
+      file->program->VisitAccessibleModules([&](const core::ModuleDescriptor& mod) {
+        if (mod.name.contains(mask) && !file->module->imports.contains(mod.name)) {
           items.emplace_back(lsp::CompletionItem{
-              .label = module.name,
+              .label = mod.name,
               .kind = lsp::CompletionItemKind::kModule,
-              .detail = module.sf->path,
+              .detail = mod.sf->path,
               .sortText = "0",
           });
         }

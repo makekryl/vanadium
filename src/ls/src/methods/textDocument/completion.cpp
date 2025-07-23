@@ -18,7 +18,7 @@ rpc::ExpectedResult<lsp::CompletionResult> methods::textDocument::completion::op
   constexpr std::size_t kMaxCompletionItems = 80;
 
   std::vector<lsp::CompletionItem> items;
-  detail::CollectCompletions(file, n, ctx->GetTemporaryArena(), items, kMaxCompletionItems);
+  detail::CollectCompletions(file, n, ctx->TemporaryArena(), items, kMaxCompletionItems);
   return items;
 }
 }  // namespace vanadium::ls

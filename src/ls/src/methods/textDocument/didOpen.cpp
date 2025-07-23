@@ -1,5 +1,6 @@
 #include <glaze/ext/jsonrpc.hpp>
 #include <glaze/json/write.hpp>
+#include <print>
 
 #include "LSProtocol.h"
 #include "LanguageServerContext.h"
@@ -10,6 +11,12 @@ namespace vanadium::ls {
 template <>
 void methods::textDocument::didOpen::operator()(LsContext& ctx, const lsp::DidOpenTextDocumentParams& params) {
   const auto& [project, path] = ctx->ResolveFile(params.textDocument.uri);
+
+  const auto [it, inserted] = ctx->file_versions.try_emplace(path, params.textDocument.version);
+  if (!inserted && it->second == params.textDocument.version) {
+    return;
+  }
+  it->second = params.textDocument.version;
 
   const auto read_file = [&](std::string_view, std::string& srcbuf) {
     srcbuf = std::move(params.textDocument.text);

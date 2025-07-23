@@ -37,8 +37,10 @@ using ServerMethods = mp::Typelist<methods::initialize,   //
                                    methods::textDocument::completion,         //
                                    methods::textDocument::inlayHint,          //
                                    //
-                                   methods::completionItem::resolve  //
-                                   >;                                //
+                                   methods::completionItem::resolve,  //
+                                   //
+                                   methods::inlayHint::resolve  //
+                                   >;                           //
 
 template <class... Methods>
 using JsonRpcServer = glz::rpc::server<typename Methods::RpcMethod...>;
@@ -75,7 +77,7 @@ void Serve(lserver::Transport& transport, std::size_t concurrency, std::size_t j
       ctx.Send(std::move(res_token));
     }
 
-    ctx->GetTemporaryArena().Reset();
+    ctx->TemporaryArena().Reset();
 
     const auto end_ts = std::chrono::steady_clock::now();
     std::println(stderr, "  ---> Completed in {} ms",

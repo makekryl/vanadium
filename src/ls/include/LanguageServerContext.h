@@ -5,6 +5,7 @@
 #include <tbb/task_arena.h>
 
 #include <filesystem>
+#include <unordered_map>
 
 #include "Arena.h"
 #include "LSConnection.h"
@@ -21,16 +22,17 @@ struct LsState {
   tbb::task_arena task_arena;
 
   std::optional<tooling::Solution> solution;
+  std::unordered_map<std::string, std::int32_t> file_versions;
 
   lint::Linter linter;
 
-  lib::Arena& GetTemporaryArena() {
+  lib::Arena& TemporaryArena() {
     return temporary_arena_.local();
   }
 
   template <typename T, typename... Args>
   T& Temp(Args&&... args) {
-    return *GetTemporaryArena().Alloc<T>(std::forward<Args>(args)...);
+    return *TemporaryArena().Alloc<T>(std::forward<Args>(args)...);
   }
 
   // TODO: those three functions are a temporary solution

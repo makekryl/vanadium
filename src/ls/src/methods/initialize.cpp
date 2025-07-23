@@ -46,7 +46,10 @@ rpc::ExpectedResult<lsp::InitializeResult> methods::initialize::operator()(LsCon
               .documentHighlightProvider = true,
               .codeActionProvider = true,
               .renameProvider = true,
-              .inlayHintProvider = true,
+              .inlayHintProvider =
+                  lsp::InlayHintOptions{
+                      .resolveProvider = true,
+                  },
               // .diagnosticProvider =
               //     lsp::DiagnosticOptions{
               //         .identifier = "vanadium",

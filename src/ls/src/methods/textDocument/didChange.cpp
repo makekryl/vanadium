@@ -12,6 +12,8 @@ template <>
 void methods::textDocument::didChange::operator()(LsContext& ctx, const lsp::DidChangeTextDocumentParams& params) {
   const auto& [project, path] = ctx->ResolveFile(params.textDocument.uri);
 
+  ctx->file_versions[path] = params.textDocument.version;
+
   const auto read_file = [&](std::string_view, std::string& srcbuf) -> void {
     if (params.contentChanges.size() == 1 &&
         std::holds_alternative<lsp::TextDocumentContentChangeWholeDocument>(params.contentChanges.front())) {

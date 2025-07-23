@@ -70,7 +70,10 @@ DECL_REQUEST_1(textDocument, completion, lsp::CompletionParams, lsp::CompletionR
 DECL_REQUEST_1(textDocument, inlayHint, lsp::InlayHintParams, lsp::InlayHintResult);
 
 // completionItem
-DECL_REQUEST_1(completionItem, resolve, lsp::CompletionItem, lsp::CompletionResolutionResult);
+DECL_REQUEST_1(completionItem, resolve, lsp::CompletionItem, lsp::CompletionItem);
+
+// inlayHint
+DECL_REQUEST_1(inlayHint, resolve, lsp::InlayHint, lsp::InlayHint);
 
 }  // namespace methods
 

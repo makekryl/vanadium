@@ -337,7 +337,7 @@ const semantic::Symbol* DeduceCompositeLiteralType(const SourceFile* file, const
       const auto property_name = file->Text(property);
       switch (ae->parent->nkind) {
         case ast::NodeKind::CompositeLiteral: {
-          const auto* cl = property->parent->As<ast::nodes::CompositeLiteral>();
+          const auto* cl = ae->parent->As<ast::nodes::CompositeLiteral>();
           const auto* cl_sym = DeduceCompositeLiteralType(file, scope, cl);
           if (!cl_sym) {
             return nullptr;
@@ -353,7 +353,7 @@ const semantic::Symbol* DeduceCompositeLiteralType(const SourceFile* file, const
                                         property_sym->Declaration()->As<ast::nodes::Decl>());
         }
         case ast::NodeKind::ParenExpr: {
-          const auto* pe = property->parent->As<ast::nodes::ParenExpr>();
+          const auto* pe = ae->parent->As<ast::nodes::ParenExpr>();
           const auto* params = utils::ResolveCallableParams(file, scope, pe);
           if (!params) {
             return nullptr;
@@ -372,7 +372,7 @@ const semantic::Symbol* DeduceCompositeLiteralType(const SourceFile* file, const
           return ResolveExprType(params_file, params_file->module->scope, param->type);
         }
         case ast::NodeKind::ExprStmt: {
-          const auto* es = property->parent->As<ast::nodes::ExprStmt>();
+          const auto* es = ae->parent->As<ast::nodes::ExprStmt>();
           return ResolveExprType(file, scope, es->expr);
         }
         default:
