@@ -43,7 +43,7 @@ struct TypeError {
   std::string message;
 };
 
-void PerformTypeCheck(const ModuleDescriptor& module, std::vector<TypeError>& errors);
+void PerformTypeCheck(SourceFile&);
 
 }  // namespace checker
 

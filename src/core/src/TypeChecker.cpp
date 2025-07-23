@@ -534,14 +534,12 @@ const semantic::Symbol* ResolveExprType(const SourceFile* file, const semantic::
 
 class BasicTypeChecker {
  public:
-  explicit BasicTypeChecker(const ModuleDescriptor& module, std::vector<TypeError>& errors)
-      : module_(module),
-        errors_(errors),
-        inspector_(ast::NodeInspector::create<BasicTypeChecker, &BasicTypeChecker::Inspect>(this)) {}
+  explicit BasicTypeChecker(SourceFile& sf)
+      : sf_(sf), inspector_(ast::NodeInspector::create<BasicTypeChecker, &BasicTypeChecker::Inspect>(this)) {}
 
   void Check() {
     semantic::InspectScope(
-        module_.scope,
+        sf_.module->scope,
         [&](const semantic::Scope* scope_under_inspection) {
           scope_ = scope_under_inspection;
         },
@@ -551,6 +549,10 @@ class BasicTypeChecker {
   }
 
  private:
+  void EmitError(TypeError&& err) {
+    sf_.type_errors.emplace_back(std::move(err));
+  }
+
   void MatchTypes(const ast::Range& range, const semantic::Symbol* actual, const semantic::Symbol* expected);
 
   const semantic::Symbol* CheckType(const ast::Node* n, const semantic::Symbol* desired_type = nullptr);
@@ -575,10 +577,9 @@ class BasicTypeChecker {
                                  std::span<const TParamDescriptorNode* const> params,
                                  std::predicate<const TParamDescriptorNode*> auto is_param_required);
 
-  const ModuleDescriptor& module_;
-  std::vector<TypeError>& errors_;
-
   const semantic::Scope* scope_;
+
+  SourceFile& sf_;
   const ast::NodeInspector inspector_;
 };
 
@@ -592,7 +593,7 @@ void BasicTypeChecker::MatchTypes(const ast::Range& range, const semantic::Symbo
     // Seems like that is is too much as right side types that cannot be resolved
     // will be reported by the semantic analyzeer
 
-    // errors_.emplace_back(TypeError{
+    // EmitError(TypeError{
     //     .range = range,
     //     .message = std::format("expected argument of type '{}', got unknown type",
     //                            utils::GetReadableTypeName(expected)),
@@ -602,7 +603,7 @@ void BasicTypeChecker::MatchTypes(const ast::Range& range, const semantic::Symbo
 
   if (expected->Flags() & semantic::SymbolFlags::kEnum) {
     if (expected != actual && !expected->Members()->Has(actual->GetName())) {
-      errors_.emplace_back(TypeError{
+      EmitError(TypeError{
           .range = range,
           .message = std::format("value '{}' does not belong to enum '{}'", actual->GetName(), expected->GetName()),
       });
@@ -615,7 +616,7 @@ void BasicTypeChecker::MatchTypes(const ast::Range& range, const semantic::Symbo
     return;
   }
 
-  errors_.emplace_back(TypeError{
+  EmitError(TypeError{
       .range = range,
       .message = std::format("expected value of type '{}', got '{}'", utils::GetReadableTypeName(expected),
                              utils::GetReadableTypeName(actual)),
@@ -635,7 +636,7 @@ void BasicTypeChecker::PerformArgumentsTypeCheck(std::span<const ast::nodes::Exp
 
   if constexpr (!Options.is_union) {
     if (args_count < minimal_args_cnt || args_count > maximal_args_cnt) {
-      errors_.emplace_back(TypeError{
+      EmitError(TypeError{
               .range = (args_count < minimal_args_cnt) ?
                   ast::Range{
                       .begin = args_range.end - 1,
@@ -662,14 +663,14 @@ void BasicTypeChecker::PerformArgumentsTypeCheck(std::span<const ast::nodes::Exp
         seen_named_argument = true;
 
         if (ae->property->nkind != ast::NodeKind::Ident) [[unlikely]] {
-          errors_.emplace_back(TypeError{
+          EmitError(TypeError{
               .range = ae->nrange,
               .message = "check if this even a valid syntax, it should not be a valid syntax [ f(g() := 1) ]",
           });
           continue;
         }
 
-        const auto property_name = module_.sf->Text(ae->property);
+        const auto property_name = sf_.Text(ae->property);
         const semantic::Symbol* property_sym = [&] {
           if constexpr (std::is_same_v<TParamDescriptorNode, ast::nodes::FormalPar>) {
             return subject_type_sym->OriginatedScope()->ResolveDirect(property_name);
@@ -680,7 +681,7 @@ void BasicTypeChecker::PerformArgumentsTypeCheck(std::span<const ast::nodes::Exp
         if (property_sym) {
           check_argument(property_sym->Declaration()->As<TParamDescriptorNode>(), ae->value);
         } else {
-          errors_.emplace_back(TypeError{
+          EmitError(TypeError{
               .range = ae->property->nrange,
               .message = [&] -> std::string {
                 if constexpr (std::is_same_v<TParamDescriptorNode, ast::nodes::FormalPar>) {
@@ -699,7 +700,7 @@ void BasicTypeChecker::PerformArgumentsTypeCheck(std::span<const ast::nodes::Exp
       }
       default: {
         if (seen_named_argument && !Options.is_union) {
-          errors_.emplace_back(TypeError{
+          EmitError(TypeError{
               .range = argnode->nrange,
               .message = "positional arguments cannot follow named ones",
           });
@@ -716,7 +717,7 @@ void BasicTypeChecker::PerformArgumentsTypeCheck(std::span<const ast::nodes::Exp
 
   if constexpr (Options.is_union) {
     if (!seen_named_argument || args_count != 1) {
-      errors_.emplace_back(TypeError{
+      EmitError(TypeError{
           .range = args_range,
           .message = std::format("exactly one named argument is expected in union"),
       });
@@ -737,9 +738,9 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
       }
 
       if (!(callee_sym->Flags() & (semantic::SymbolFlags::kFunction | semantic::SymbolFlags::kTemplate))) {
-        errors_.emplace_back(TypeError{
+        EmitError(TypeError{
             .range = m->fun->nrange,
-            .message = std::format("'{}' is not callable", module_.sf->Text(m->fun)),
+            .message = std::format("'{}' is not callable", sf_.Text(m->fun)),
         });
         Introspect(m);
         break;
@@ -828,7 +829,7 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
         case ast::TokenKind::GT:
         case ast::TokenKind::GE:
           if (x_sym && x_sym != &builtins::kInteger && x_sym != &builtins::kFloat) [[unlikely]] {
-            errors_.emplace_back(TypeError{
+            EmitError(TypeError{
                 .range = m->x->nrange,
                 .message = std::format("integer or float expected, got '{}'", x_sym->GetName()),
             });
@@ -891,7 +892,7 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
               const auto& [min_args, max_args] = *bounds_opt;
               const auto args_count = m->list.size();
               if (args_count < min_args || args_count > max_args) {
-                errors_.emplace_back(TypeError{
+                EmitError(TypeError{
                     .range =
                         ast::Range{
                             .begin = m->nrange.end - 1,
@@ -950,7 +951,7 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
               },
           .on_non_structural_type =
               [&](const ast::Node* sel, const semantic::Symbol* sym) {
-                errors_.emplace_back(TypeError{
+                EmitError(TypeError{
                     .range =
                         ast::Range{
                             .begin = sel->nrange.begin - 1,
@@ -961,15 +962,15 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
               },
           .on_unknown_property =
               [&](const ast::nodes::SelectorExpr* se, const semantic::Symbol* sym) {
-                errors_.emplace_back(TypeError{
+                EmitError(TypeError{
                     .range = se->sel->nrange,
-                    .message = std::format("property '{}' does not exist on type '{}'", module_.sf->Text(se->sel),
+                    .message = std::format("property '{}' does not exist on type '{}'", sf_.Text(se->sel),
                                            utils::GetReadableTypeName(sym)),
                 });
               },
       }};
 
-      const auto* property_sym = resolver.Resolve(module_.sf, scope_, se);
+      const auto* property_sym = resolver.Resolve(&sf_, scope_, se);
       if (!property_sym) {
         break;
       }
@@ -1002,7 +1003,7 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
               },
           .on_non_subscriptable_type =
               [&](const ast::Node* x, const semantic::Symbol* sym) {
-                errors_.emplace_back(TypeError{
+                EmitError(TypeError{
                     .range = x->nrange,
                     .message = std::format("type '{}' is not subscriptable", utils::GetReadableTypeName(sym)),
                 });
@@ -1014,7 +1015,7 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
       }};
 
       //
-      resulting_type = resolver.Resolve(module_.sf, scope_, ie);
+      resulting_type = resolver.Resolve(&sf_, scope_, ie);
       if (!resulting_type) {
         resulting_type = &symbols::kTypeError;
       }
@@ -1023,7 +1024,7 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
     }
 
     case ast::NodeKind::Ident: {
-      resulting_type = ResolveExprType(module_.sf, scope_, n->As<ast::nodes::Ident>());
+      resulting_type = ResolveExprType(&sf_, scope_, n->As<ast::nodes::Ident>());
       break;
     }
 
@@ -1086,7 +1087,7 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
 
     case ast::NodeKind::ValueDecl: {
       const auto* m = n->As<ast::nodes::ValueDecl>();
-      const auto* expected_type = module_.scope->Resolve(module_.sf->Text(m->type));
+      const auto* expected_type = sf_.module->scope->Resolve(sf_.Text(m->type));
       for (const auto* decl : m->decls) {
         if (!decl->value) [[unlikely]] {
           continue;
@@ -1101,7 +1102,7 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
     case ast::NodeKind::FormalPar: {
       const auto* m = n->As<ast::nodes::FormalPar>();
       if (const auto* default_value = m->value; default_value) {
-        const auto* expected_type = module_.scope->Resolve(module_.sf->Text(m->type));
+        const auto* expected_type = sf_.module->scope->Resolve(sf_.Text(m->type));
         const auto* actual_type = CheckType(default_value, expected_type);
         MatchTypes(default_value->nrange, actual_type, expected_type);
       }
@@ -1115,11 +1116,11 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
       if (f->type->nkind == ast::NodeKind::ListSpec) {
         const auto* ls = f->type->As<ast::nodes::ListSpec>();
         if (ls->length) {
-          const auto& bounds_opt = detail::GetLengthExprBounds(module_.sf, ls->length);
+          const auto& bounds_opt = detail::GetLengthExprBounds(&sf_, ls->length);
           if (bounds_opt) {
             const auto& [min_args, max_args] = *bounds_opt;
             if (min_args > max_args) {
-              errors_.emplace_back(TypeError{
+              EmitError(TypeError{
                   .range = ls->length->nrange,
                   .message = "lower bound cannot exceed the highest",
               });
@@ -1130,7 +1131,7 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
       }
 
       if (f->value_constraint && f->type->nkind == ast::NodeKind::RefSpec) {
-        const auto* sym = scope_->Resolve(module_.sf->Text(*f->type->As<ast::nodes::RefSpec>()->x));
+        const auto* sym = scope_->Resolve(sf_.Text(*f->type->As<ast::nodes::RefSpec>()->x));
         for (const auto* item : f->value_constraint->list) {
           CheckType(item, sym);
         }
@@ -1146,7 +1147,7 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
         CheckType(m->params);
       }
 
-      const auto* expected_type = module_.scope->Resolve(module_.sf->Text(m->type));
+      const auto* expected_type = sf_.module->scope->Resolve(sf_.Text(m->type));
       const auto* actual_type = CheckType(m->value, expected_type);
       MatchTypes(m->value->nrange, actual_type, expected_type);
 
@@ -1171,7 +1172,7 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
 
       if (!fdecl->ret) {
         if (m->result) {
-          errors_.emplace_back(TypeError{
+          EmitError(TypeError{
               .range = m->result->nrange,
               .message = "void function should not return a value",
           });
@@ -1179,7 +1180,7 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
         break;
       }
 
-      const auto* expected_type = module_.scope->Resolve(module_.sf->Text(fdecl->ret->type));
+      const auto* expected_type = sf_.module->scope->Resolve(sf_.Text(fdecl->ret->type));
       const auto* actual_type = CheckType(m->result, expected_type);
       MatchTypes(m->result->nrange, actual_type, expected_type);
 
@@ -1208,8 +1209,8 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
   return true;
 }
 
-void PerformTypeCheck(const ModuleDescriptor& module, std::vector<TypeError>& errors) {
-  BasicTypeChecker(module, errors).Check();
+void PerformTypeCheck(SourceFile& sf) {
+  BasicTypeChecker(sf).Check();
 }
 
 }  // namespace checker

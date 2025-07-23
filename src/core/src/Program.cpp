@@ -337,7 +337,7 @@ void Program::Crossbind() {
     }
 
     sf.type_errors.clear();
-    checker::PerformTypeCheck(*sf.module, sf.type_errors);
+    checker::PerformTypeCheck(sf);
 
     sf.dirty = false;
   });
