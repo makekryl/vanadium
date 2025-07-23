@@ -116,8 +116,8 @@ rpc::ExpectedResult<lsp::HoverResult> methods::textDocument::hover::operator()(L
     }
     case core::ast::NodeKind::TemplateDecl: {
       const auto* m = decl->As<core::ast::nodes::TemplateDecl>();
-      content +=
-          std::format(R"(
+      content += std::format(
+          R"(
 ### template `{}`
 
 ---
@@ -131,12 +131,12 @@ Parameters:
 {}
 ```
 )",
-                      provider_file->ast.Text(*m->name),  //
-                      BuildMarkdownParameterList<core::ast::nodes::FormalPar>(provider_file->ast, m->params->list),
-                      provider_file->ast.Text(core::ast::Range{
-                          .begin = decl->nrange.begin,
-                          .end = m->value->nrange.begin,
-                      }));
+          provider_file->ast.Text(*m->name),  //
+          m->params ? BuildMarkdownParameterList<core::ast::nodes::FormalPar>(provider_file->ast, m->params->list) : "",
+          provider_file->ast.Text(core::ast::Range{
+              .begin = decl->nrange.begin,
+              .end = m->value->nrange.begin,
+          }));
       break;
     }
     case core::ast::NodeKind::StructTypeDecl: {
