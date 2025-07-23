@@ -68,6 +68,7 @@ DECL_REQUEST_1(textDocument, hover, lsp::HoverParams, lsp::HoverResult);
 DECL_REQUEST_1(textDocument, rename, lsp::RenameParams, lsp::RenameResult);
 DECL_REQUEST_1(textDocument, completion, lsp::CompletionParams, lsp::CompletionResult);
 DECL_REQUEST_1(textDocument, inlayHint, lsp::InlayHintParams, lsp::InlayHintResult);
+DECL_REQUEST_1(textDocument, documentSymbol, lsp::DocumentSymbolParams, lsp::DocumentSybmolResult);
 
 // completionItem
 DECL_REQUEST_1(completionItem, resolve, lsp::CompletionItem, lsp::CompletionItem);

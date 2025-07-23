@@ -44,6 +44,7 @@ rpc::ExpectedResult<lsp::InitializeResult> methods::initialize::operator()(LsCon
               .typeDefinitionProvider = true,
               .referencesProvider = true,
               .documentHighlightProvider = true,
+              .documentSymbolProvider = true,
               .codeActionProvider = true,
               .renameProvider = true,
               .inlayHintProvider =

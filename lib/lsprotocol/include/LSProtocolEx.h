@@ -16,6 +16,7 @@ using HoverResult = std::variant<Hover, std::nullptr_t>;
 using RenameResult = std::variant<WorkspaceEdit, std::nullptr_t>;
 using CompletionResult = std::variant<std::vector<CompletionItem>, CompletionList, std::nullptr_t>;
 using InlayHintResult = std::variant<std::vector<InlayHint>, std::nullptr_t>;
+using DocumentSybmolResult = std::variant<std::vector<DocumentSymbol>, std::vector<SymbolInformation>, std::nullptr_t>;
 }  // namespace lsp
 
 namespace glz {
