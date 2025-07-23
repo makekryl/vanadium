@@ -10,6 +10,7 @@
 #include "ASTTypes.h"
 #include "Builtins.h"
 #include "Program.h"
+#include "ScopedNodeVisitor.h"
 #include "Semantic.h"
 #include "utils/ASTUtils.h"
 
@@ -539,17 +540,17 @@ class BasicTypeChecker {
         inspector_(ast::NodeInspector::create<BasicTypeChecker, &BasicTypeChecker::Inspect>(this)) {}
 
   void Check() {
-    InspectScope(module_.scope);
+    semantic::InspectScope(
+        module_.scope,
+        [&](const semantic::Scope* scope_under_inspection) {
+          scope_ = scope_under_inspection;
+        },
+        [&](const ast::Node* n) {
+          return Inspect(n);
+        });
   }
 
  private:
-  void InspectScope(const semantic::Scope* scope) {
-    const auto* prev_scope = scope_;
-    scope_ = scope;
-    Visit(scope->Container());
-    scope_ = prev_scope;
-  }
-
   void MatchTypes(const ast::Range& range, const semantic::Symbol* actual, const semantic::Symbol* expected);
 
   const semantic::Symbol* CheckType(const ast::Node* n, const semantic::Symbol* desired_type = nullptr);
@@ -1070,13 +1071,6 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
 }
 
 bool BasicTypeChecker::Inspect(const ast::Node* n) {
-  for (const auto& child : scope_->GetChildren()) {
-    if (child->Container()->nrange.Contains(n->nrange)) {
-      InspectScope(child);
-      return false;
-    }
-  }
-
   switch (n->nkind) {
     case ast::NodeKind::CompositeLiteral: {
       return false;
