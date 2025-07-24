@@ -25,7 +25,7 @@ rpc::ExpectedResult<lsp::DefinitionResult> methods::textDocument::definition::op
   }
   const auto* sym = result->symbol;
 
-  if (!sym || (sym->Flags() & core::semantic::SymbolFlags::kBuiltin)) {
+  if (!sym || (sym->Flags() & (core::semantic::SymbolFlags::kBuiltin | core::semantic::SymbolFlags::kBuiltinDef))) {
     return nullptr;
   }
   if (sym->Flags() & core::semantic::SymbolFlags::kImportedModule) {

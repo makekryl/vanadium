@@ -55,7 +55,7 @@ case NodeKind::MapSpec: {
 case NodeKind::EnumSpec: {
   const auto* nn = n->As<nodes::EnumSpec>();
   DumpGroup("EnumSpec", [&] {
-    Dump("enums", nn->enums);
+    Dump("values", nn->values);
   });
   break;
 }
@@ -467,7 +467,7 @@ case NodeKind::EnumTypeDecl: {
   DumpGroup("EnumTypeDecl", [&] {
     Dump("name", nn->name);
     Dump("pars", nn->pars);
-    Dump("enums", nn->enums);
+    Dump("values", nn->values);
     Dump("with", nn->with);
   });
   break;

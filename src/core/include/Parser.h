@@ -54,7 +54,7 @@ class Parser {
   nodes::ClassTypeDecl* ParseClassTypeDecl();
   nodes::MapTypeDecl* ParseMapTypeDecl();
   nodes::EnumTypeDecl* ParseEnumTypeDecl();
-  nodes::Expr* ParseEnum();
+  nodes::Expr* ParseEnumValue();
   nodes::BehaviourTypeDecl* ParseBehaviourTypeDecl();
   //
   nodes::Field* ParseField();

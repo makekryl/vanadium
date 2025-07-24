@@ -214,7 +214,7 @@ rpc::ExpectedResult<lsp::DocumentSybmolResult> methods::textDocument::documentSy
                 .range = conv::ToLSPRange(m->nrange, file->ast),
             },
             [&] {
-              for (const auto* e : m->enums) {
+              for (const auto* e : m->values) {
                 push(lsp::DocumentSymbol{
                     .name = nlit(e),
                     .kind = lsp::SymbolKind::kEnummember,

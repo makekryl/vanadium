@@ -789,33 +789,24 @@ nodes::EnumTypeDecl* Parser::ParseEnumTypeDecl() {
     if (tok_ == TokenKind::LT) {
       etd.pars = ParseTypeFormalPars();
     }
-    Expect(TokenKind::LBRACE);
-    while (tok_ != TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
-      etd.enums.push_back(ParseEnum());
-      if (tok_ != TokenKind::COMMA) {
-        break;
+    if (tok_ == TokenKind::LBRACE) {
+      ConsumeInvariant(TokenKind::LBRACE);
+      while (tok_ != TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
+        etd.values.push_back(ParseEnumValue());
+        if (tok_ != TokenKind::COMMA) {
+          break;
+        }
+        Consume();
       }
-      Consume();
+      Expect(TokenKind::RBRACE);
+      etd.with = ParseWith();
+    } else {
+      Expect(TokenKind::LBRACE);
     }
-    Expect(TokenKind::RBRACE);
-    etd.with = ParseWith();
   });
 }
 
-nodes::Expr* Parser::ParseEnum() {
-  // const auto firstIdent = [](this auto& self, nodes::Expr* e) -> nodes::Expr* {
-  // switch (e->nkind) {
-  //   case NodeKind::CallExpr:
-  //     return self(e->As<nodes::CallExpr>()->fun);
-  //   case NodeKind::SelectorExpr:
-  //     return self(e->As<nodes::SelectorExpr>()->x);
-  //   case NodeKind::Ident:
-  //     return e;
-  //   default:
-  //     return nullptr;
-  // }
-
-  // auto* x = ParseExpr();
+nodes::Expr* Parser::ParseEnumValue() {
   return ParseExpr();
 }
 
@@ -930,7 +921,7 @@ nodes::EnumSpec* Parser::ParseEnumSpec() {
     Consume();  // Tok
     Expect(TokenKind::LBRACE);
     while (tok_ != TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
-      es.enums.push_back(ParseEnum());
+      es.values.push_back(ParseEnumValue());
       if (tok_ != TokenKind::COMMA) {
         break;
       }

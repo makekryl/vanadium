@@ -257,7 +257,7 @@ bool Binder::Hoist(const ast::Node* n) {
       const auto* m = n->As<ast::nodes::EnumTypeDecl>();
       HoistName<ast::nodes::EnumTypeDecl, TargetSetPtr>(m);
 
-      for (const auto* item : m->enums) {
+      for (const auto* item : m->values) {
         const ast::nodes::Ident* valname = ast::utils::GetEnumValueNamePart(item);
         if (valname != nullptr) [[likely]] {
           (this->*TargetSetPtr).insert(Lit(valname));
@@ -597,7 +597,7 @@ bool Binder::Inspect(const ast::Node* n) {
       const auto* m = n->As<ast::nodes::EnumTypeDecl>();
 
       auto& members = NewSymbolTable();
-      for (const auto* item : m->enums) {
+      for (const auto* item : m->values) {
         const ast::nodes::Ident* valname = ast::utils::GetEnumValueNamePart(item);
         if (valname != nullptr) [[likely]] {
           const auto item_name = Lit(valname);

@@ -69,10 +69,10 @@ struct EnumSpec : TypeSpec {
 
   EnumSpec() : TypeSpec(NodeKind::EnumSpec) {}
 
-  std::vector<Expr*> enums;
+  std::vector<Expr*> values;
 
   void Accept(const NodeInspector& inspector) const {
-    for (const auto* n : enums) {
+    for (const auto* n : values) {
       Inspect(n, inspector);
     }
   }
@@ -1252,7 +1252,7 @@ struct EnumTypeDecl : Decl {
 
   std::optional<Ident> name;
   FormalPars* pars{nullptr};
-  std::vector<Expr*> enums;
+  std::vector<Expr*> values;
   WithSpec* with{nullptr};
 
   void Accept(const NodeInspector& inspector) const {
@@ -1262,7 +1262,7 @@ struct EnumTypeDecl : Decl {
     if (pars != nullptr) {
       Inspect(pars, inspector);
     }
-    for (const auto* n : enums) {
+    for (const auto* n : values) {
       Inspect(n, inspector);
     }
     if (with != nullptr) {

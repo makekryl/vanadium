@@ -29,6 +29,10 @@ std::string BuildMarkdownParameterList(const core::ast::AST& ast, std::span<cons
 
     // TODO: cleanup builder from this
     if constexpr (std::is_same_v<TParamDescriptorNode, core::ast::nodes::FormalPar>) {
+      if (param->direction) {
+        buf += ast.Text(param->direction);
+        buf += " ";
+      }
       if (param->restriction) {
         buf += ast.Text(param->restriction);
         buf += " ";
@@ -199,10 +203,10 @@ Values:
           provider_file->ast.Text(*m->name),
           [&] -> std::string {
             std::string buf;
-            buf.reserve(m->enums.size() * 32);
+            buf.reserve(m->values.size() * 32);
 
-            const auto last_idx = std::ssize(m->enums) - 1;
-            for (const auto& [idx, v] : m->enums | std::views::enumerate) {
+            const auto last_idx = std::ssize(m->values) - 1;
+            for (const auto& [idx, v] : m->values | std::views::enumerate) {
               buf += "- `";
               buf += provider_file->Text(v);
               buf += "`";
@@ -356,6 +360,21 @@ Transitively imports modules:
       break;
     }
     default:
+      if (n->parent->nkind == core::ast::NodeKind::EnumTypeDecl) {
+        content += std::format(R"(
+### enum value `{}::{}`
+
+---
+
+```ttcn
+{}
+```
+)",
+                               provider_file->ast.Text(*n->parent->As<core::ast::nodes::EnumTypeDecl>()->name),  //
+                               provider_file->ast.Text(n),  // URGENT TODO: CallExpr support -> extract real name here
+                               provider_file->ast.Text(n));
+        break;
+      }
       content += "TODO";
       break;
   }

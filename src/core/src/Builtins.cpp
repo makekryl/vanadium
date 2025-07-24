@@ -86,9 +86,11 @@ const semantic::Symbol* ResolveBuiltinDef(std::string_view name) {
         return true;
       }
       const auto* m = n->As<ast::nodes::FuncDecl>();
-      scope.symbols.Add(
-          {sf.Text(*m->name), m,
-           semantic::SymbolFlags::Value(semantic::SymbolFlags::kFunction | semantic::SymbolFlags::kBuiltinDef)});
+      scope.symbols.Add({
+          sf.Text(*m->name),
+          m,
+          semantic::SymbolFlags::Value(semantic::SymbolFlags::kFunction | semantic::SymbolFlags::kBuiltinDef),
+      });
       return false;
     });
 
