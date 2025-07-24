@@ -401,6 +401,10 @@ const semantic::Symbol* DeduceCompositeLiteralType(const SourceFile* file, const
       const auto* vd = decl->parent->As<ast::nodes::ValueDecl>();
       return ResolveExprType(file, scope, vd->type);
     }
+    case ast::NodeKind::TemplateDecl: {
+      const auto* decl = n->parent->As<ast::nodes::TemplateDecl>();
+      return ResolveExprType(file, scope, decl->type);
+    }
     default:
       return nullptr;
   }
