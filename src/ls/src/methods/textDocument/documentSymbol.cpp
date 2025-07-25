@@ -58,7 +58,7 @@ rpc::ExpectedResult<lsp::DocumentSybmolResult> methods::textDocument::documentSy
 
   const auto lit = [&](const std::optional<core::ast::nodes::Ident>& ident) -> std::string_view {
     if (!ident) {
-      return "";
+      return "<empty>";
     }
     return file->Text(*ident);
   };

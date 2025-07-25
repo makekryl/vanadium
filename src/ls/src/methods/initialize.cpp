@@ -40,6 +40,10 @@ rpc::ExpectedResult<lsp::InitializeResult> methods::initialize::operator()(LsCon
                       .resolveProvider = true,
                   },
               .hoverProvider = true,
+              .signatureHelpProvider =
+                  lsp::SignatureHelpOptions{
+                      .triggerCharacters = {{"(", ")", "{", "}", "<", ">", ","}},
+                  },
               .definitionProvider = true,
               .typeDefinitionProvider = true,
               .referencesProvider = true,

@@ -37,6 +37,7 @@ using ServerMethods = mp::Typelist<methods::initialize,   //
                                    methods::textDocument::completion,         //
                                    methods::textDocument::inlayHint,          //
                                    methods::textDocument::documentSymbol,     //
+                                   methods::textDocument::signatureHelp,      //
                                    //
                                    methods::completionItem::resolve,  //
                                    //

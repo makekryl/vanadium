@@ -999,6 +999,10 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
 
     case ast::NodeKind::IndexExpr: {
       const auto* ie = n->As<ast::nodes::IndexExpr>();
+      if (!ie->x) [[unlikely]] {
+        CheckType(ie->index);
+        break;
+      }
 
       detail::IndexExprResolver resolver{detail::IndexExprResolverOptions{
           .resolve_type =

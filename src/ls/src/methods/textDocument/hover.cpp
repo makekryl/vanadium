@@ -360,7 +360,15 @@ Transitively imports modules:
       break;
     }
     default:
-      if (n->parent->nkind == core::ast::NodeKind::EnumTypeDecl) {
+      const auto* parent = n->parent;
+      if (parent->nkind == core::ast::NodeKind::EnumTypeDecl ||
+          (parent->nkind == core::ast::NodeKind::CallExpr &&
+           parent->parent->nkind == core::ast::NodeKind::EnumTypeDecl)) {
+        const auto* decl = ((parent->nkind == core::ast::NodeKind::EnumTypeDecl) ? parent : parent->parent)
+                               ->As<core::ast::nodes::EnumTypeDecl>();
+        const auto* valname =
+            parent->nkind == core::ast::NodeKind::CallExpr ? (parent->As<core::ast::nodes::CallExpr>()->fun) : n;
+        const auto* valdecl = (parent->nkind == core::ast::NodeKind::EnumTypeDecl) ? n : parent;
         content += std::format(R"(
 ### enum value `{}::{}`
 
@@ -370,9 +378,9 @@ Transitively imports modules:
 {}
 ```
 )",
-                               provider_file->ast.Text(*n->parent->As<core::ast::nodes::EnumTypeDecl>()->name),  //
-                               provider_file->ast.Text(n),  // URGENT TODO: CallExpr support -> extract real name here
-                               provider_file->ast.Text(n));
+                               provider_file->ast.Text(*decl->name),  //
+                               provider_file->ast.Text(valname),      //
+                               provider_file->ast.Text(valdecl));
         break;
       }
       content += "TODO";

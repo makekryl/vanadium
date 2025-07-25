@@ -1650,6 +1650,7 @@ nodes::Stmt* Parser::ParseForLoop() {  // CRITICAL TODO : for loop
   }
 
   ExtendByIncorporatedNode(n, init);
+  n->nrange.begin = begin_pos;
 
   return n;
 }
@@ -2111,7 +2112,15 @@ nodes::CallExpr* Parser::ParseCallExpr(nodes::Expr* x) {
           pe.list = ParseExprList();
           break;
       }
-      Expect(TokenKind::RPAREN);
+      if (tok_ == TokenKind::RPAREN) [[likely]] {
+        ConsumeInvariant(TokenKind::RPAREN);
+      } else {
+        Expect(TokenKind::RPAREN);
+        while (tok_ != TokenKind::RPAREN) {
+          Consume();
+        }
+        ConsumeInvariant(TokenKind::RPAREN);
+      }
     });
   });
   if (x) [[likely]] {
@@ -2430,6 +2439,7 @@ void Parser::Grow(std::uint8_t n) {
 
     if (token.kind == TokenKind::MALFORMED || token.kind == TokenKind::UNTERMINATED) {
       EmitError(token.range, "malformed or unterminated token");
+      continue;
     }
     queue_.push_back(token);
     --n;
@@ -2593,6 +2603,7 @@ ConcreteNode* Parser::NewErrorNode() {
     n = arena_->Alloc<ConcreteNode>();
     const_cast<NodeKind&>(n->nkind) = NodeKind::ErrorNode;
   }
+  n->parent = last_node_;
   n->nrange = {
       .begin = last_consumed_pos_,
       .end = last_consumed_pos_,
