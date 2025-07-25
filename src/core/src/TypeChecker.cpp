@@ -529,7 +529,7 @@ const semantic::Symbol* ResolveExprType(const SourceFile* file, const semantic::
   const auto* decl_file = ast::utils::SourceFileOf(decl);
   const auto* decl_scope = decl_file->module->scope;
 
-  if (expr->nkind == ast::NodeKind::CallExpr) {
+  if (expr->nkind == ast::NodeKind::CallExpr || decl->nkind == ast::NodeKind::TemplateDecl) {
     return ResolveCallableReturnType(decl_file, decl_scope, decl);
   }
 
