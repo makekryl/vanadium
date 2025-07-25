@@ -360,15 +360,16 @@ Transitively imports modules:
       break;
     }
     default:
-      const auto* parent = n->parent;
+      const auto* parent = decl->parent;
       if (parent->nkind == core::ast::NodeKind::EnumTypeDecl ||
           (parent->nkind == core::ast::NodeKind::CallExpr &&
            parent->parent->nkind == core::ast::NodeKind::EnumTypeDecl)) {
-        const auto* decl = ((parent->nkind == core::ast::NodeKind::EnumTypeDecl) ? parent : parent->parent)
-                               ->As<core::ast::nodes::EnumTypeDecl>();
-        const auto* valname =
-            parent->nkind == core::ast::NodeKind::CallExpr ? (parent->As<core::ast::nodes::CallExpr>()->fun) : n;
-        const auto* valdecl = (parent->nkind == core::ast::NodeKind::EnumTypeDecl) ? n : parent;
+        const auto* enumdecl = ((parent->nkind == core::ast::NodeKind::EnumTypeDecl) ? parent : parent->parent)
+                                   ->As<core::ast::nodes::EnumTypeDecl>();
+        const auto* valname = parent->nkind == core::ast::NodeKind::CallExpr
+                                  ? parent->As<core::ast::nodes::CallExpr>()->fun->As<core::ast::Node>()
+                                  : decl->As<core::ast::Node>();
+        const auto* valdecl = (parent->nkind == core::ast::NodeKind::EnumTypeDecl) ? decl : parent;
         content += std::format(R"(
 ### enum value `{}::{}`
 
@@ -378,8 +379,8 @@ Transitively imports modules:
 {}
 ```
 )",
-                               provider_file->ast.Text(*decl->name),  //
-                               provider_file->ast.Text(valname),      //
+                               provider_file->ast.Text(*enumdecl->name),  //
+                               provider_file->ast.Text(valname),          //
                                provider_file->ast.Text(valdecl));
         break;
       }
