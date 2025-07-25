@@ -520,16 +520,11 @@ const semantic::Symbol* ResolveExprType(const SourceFile* file, const semantic::
     return decl_sym;
   }
 
-  const auto* declnode = decl_sym->Declaration();
-  if (!ast::nodes::Decl::IsDecl(declnode)) [[unlikely]] {
-    return nullptr;
-  }
-
-  const auto* decl = declnode->As<ast::nodes::Decl>();
+  const auto* decl = decl_sym->Declaration()->As<ast::nodes::Decl>();
   const auto* decl_file = ast::utils::SourceFileOf(decl);
   const auto* decl_scope = decl_file->module->scope;
 
-  if (expr->nkind == ast::NodeKind::CallExpr || decl->nkind == ast::NodeKind::TemplateDecl) {
+  if (expr->nkind == ast::NodeKind::CallExpr) {
     return ResolveCallableReturnType(decl_file, decl_scope, decl);
   }
 
@@ -593,6 +588,10 @@ void BasicTypeChecker::MatchTypes(const ast::Range& range, const semantic::Symbo
     return;
   }
 
+  if (actual && actual->Flags() & semantic::SymbolFlags::kTemplate) {
+    const auto* file = ast::utils::SourceFileOf(actual->Declaration());
+    actual = ResolveCallableReturnType(file, file->module->scope, actual->Declaration()->As<ast::nodes::Decl>());
+  }
   if (!actual) {
     // Seems like that is is too much as right side types that cannot be resolved
     // will be reported by the semantic analyzeer
