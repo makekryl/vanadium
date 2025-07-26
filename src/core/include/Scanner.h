@@ -30,7 +30,7 @@ class Scanner {
   TokenKind ScanMultilineComment();
 
   TokenKind ScanString();
-  TokenKind ScanBitstring();
+  TokenKind ScanSpecialString();
 
   [[nodiscard]] bool HasNext(ast::pos_t extent = 0) const;
   [[nodiscard]] char Peek(ast::pos_t offset = 0) const;

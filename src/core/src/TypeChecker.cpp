@@ -1199,10 +1199,15 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
         case ast::TokenKind::BITSTRING:
           resulting_type = &builtins::kBitstring;
           break;
+        case ast::TokenKind::HEXSTRING:
+          resulting_type = &builtins::kHexstring;
+          break;
+        case ast::TokenKind::OCTETSTRING:
+          resulting_type = &builtins::kOctetstring;
+          break;
         case ast::TokenKind::STRING:
           resulting_type = &builtins::kCharstring;
           break;
-        // TODO: octet, hex, universal char
         case ast::TokenKind::PASS:
         case ast::TokenKind::FAIL:
         case ast::TokenKind::INCONC:

@@ -64,6 +64,8 @@ constexpr auto kTokOperandStart = lib::MakeStaticSet<TokenKind>({ // +IDENT? see
   TokenKind::ANY,
   TokenKind::ANYKW,
   TokenKind::BITSTRING,
+  TokenKind::HEXSTRING,
+  TokenKind::OCTETSTRING,
   TokenKind::CHARSTRING,
   TokenKind::ERROR,
   TokenKind::FAIL,
@@ -1563,6 +1565,8 @@ nodes::Stmt* Parser::ParseStmt() {
     case TokenKind::FLOAT:
     case TokenKind::STRING:
     case TokenKind::BITSTRING:
+    case TokenKind::HEXSTRING:
+    case TokenKind::OCTETSTRING:
     case TokenKind::TRUE:
     case TokenKind::FALSE:
     case TokenKind::PASS:
@@ -2027,6 +2031,8 @@ nodes::Expr* Parser::ParseOperand() {
     case TokenKind::INT:
     case TokenKind::ANY:
     case TokenKind::BITSTRING:
+    case TokenKind::HEXSTRING:
+    case TokenKind::OCTETSTRING:
     case TokenKind::ERROR:
     case TokenKind::kNULL:
     case TokenKind::OMIT:

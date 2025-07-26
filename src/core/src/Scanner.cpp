@@ -324,7 +324,7 @@ Token Scanner::Scan() {
         }
         break;
       case '\'':
-        kind = ScanBitstring();
+        kind = ScanSpecialString();
         break;
       case '#':
         ScanLine();
@@ -467,7 +467,7 @@ TokenKind Scanner::ScanString() {
   return TokenKind::UNTERMINATED;
 }
 
-TokenKind Scanner::ScanBitstring() {
+TokenKind Scanner::ScanSpecialString() {
   while (true) {
     switch (Peek()) {
       case '\n':
@@ -487,11 +487,25 @@ TokenKind Scanner::ScanBitstring() {
   }
 exit_loop:
 
-  TokenKind kind = TokenKind::BITSTRING;
-  if (!HasNext() || !std::isalnum(Peek())) {
-    kind = TokenKind::MALFORMED;
+  TokenKind kind = TokenKind::MALFORMED;
+  if (HasNext()) {
+    switch (Peek()) {
+      case 'B':
+        kind = TokenKind::BITSTRING;
+        ++pos_;
+        break;
+      case 'H':
+        kind = TokenKind::HEXSTRING;
+        ++pos_;
+        break;
+      case 'O':
+        kind = TokenKind::OCTETSTRING;
+        ++pos_;
+        break;
+      default:
+        break;
+    }
   }
-  ScanAlnum();
   return kind;
 }
 
