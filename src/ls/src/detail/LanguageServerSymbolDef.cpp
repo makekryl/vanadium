@@ -62,6 +62,27 @@ std::optional<SymbolSearchResult> FindSymbol(const core::SourceFile* file, const
       }
       break;
     }
+    case core::ast::NodeKind::CaseClause: {
+      const auto* m = n->parent->As<core::ast::nodes::CaseClause>();
+      const auto* ss = m->parent->As<core::ast::nodes::SelectStmt>();
+      if (!ss->is_union) {
+        break;
+      }
+
+      const core::semantic::Scope* scope = core::semantic::utils::FindScope(file->module->scope, target_node);
+      const auto* usym = core::checker::ResolveExprType(file, scope, ss->tag);
+      if (!usym || !(usym->Flags() & core::semantic::SymbolFlags::kUnion)) {
+        return std::nullopt;
+      }
+
+      const auto property_name = file->Text(m->cond);
+
+      return SymbolSearchResult{
+          .node = n,
+          .scope = scope,
+          .symbol = usym->Members()->Lookup(property_name),
+      };
+    }
     default:
       break;
   }

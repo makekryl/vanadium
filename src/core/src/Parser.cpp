@@ -1709,7 +1709,16 @@ nodes::SelectStmt* Parser::ParseSelect() {
       Consume();
       s.is_union = true;
     }
-    s.tag = ParseParenExpr();
+
+    Expect(TokenKind::LPAREN);
+    s.tag = ParseExpr();
+    if (tok_ == TokenKind::RPAREN) [[likely]] {
+      ConsumeInvariant(TokenKind::RPAREN);
+    } else {
+      Expect(TokenKind::RPAREN);
+      Advance(kTokStmtStart);
+    }
+
     Expect(TokenKind::LBRACE);
     while (tok_ == TokenKind::CASE) {
       s.clauses.push_back(ParseCaseClause());
@@ -1724,7 +1733,14 @@ nodes::CaseClause* Parser::ParseCaseClause() {
     if (tok_ == TokenKind::ELSE) {
       Consume();
     } else {
-      c.cond = ParseParenExpr();
+      Expect(TokenKind::LPAREN);
+      c.cond = ParseExpr();
+      if (tok_ == TokenKind::RPAREN) [[likely]] {
+        ConsumeInvariant(TokenKind::RPAREN);
+      } else {
+        Expect(TokenKind::RPAREN);
+        Advance(kTokStmtStart);
+      }
     }
     c.body = ParseBlockStmt();
     MaybeExpectSemi();  // TODO REMOVE

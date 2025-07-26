@@ -1302,6 +1302,41 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
       return false;
     }
 
+    case ast::NodeKind::SelectStmt: {
+      const auto* m = n->As<ast::nodes::SelectStmt>();
+      if (!m->is_union) {
+        return true;
+      }
+
+      const auto* tagsym = CheckType(m->tag);
+      if (!tagsym) {
+        return true;
+      }
+      if (!(tagsym->Flags() & semantic::SymbolFlags::kUnion)) {
+        EmitError(TypeError{
+            .range = m->tag->nrange,
+            .message = "union type expected",
+        });
+        return true;
+      }
+
+      for (const auto* clause : m->clauses) {
+        if (clause->cond) {
+          const auto property = sf_.Text(clause->cond);
+          if (!tagsym->Members()->Has(property)) {
+            EmitError(TypeError{
+                .range = clause->cond->nrange,
+                .message = std::format("property '{}' does not exist on type '{}'", property,
+                                       utils::GetReadableTypeName(tagsym)),
+            });
+          }
+        }
+        Inspect(clause->body);
+      }
+
+      return false;
+    }
+
     case ast::NodeKind::EnumTypeDecl: {
       return false;
     }

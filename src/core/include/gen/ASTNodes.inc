@@ -710,7 +710,7 @@ struct CaseClause : Node {
 
   CaseClause() : Node(NodeKind::CaseClause) {}
 
-  ParenExpr* cond{nullptr};
+  Expr* cond{nullptr};
   BlockStmt* body;
 
   void Accept(const NodeInspector& inspector) const {
@@ -840,7 +840,7 @@ struct SelectStmt : Stmt {
   SelectStmt() : Stmt(NodeKind::SelectStmt) {}
 
   bool is_union{false};
-  ParenExpr* tag;
+  Expr* tag;
   std::vector<CaseClause*> clauses;
 
   void Accept(const NodeInspector& inspector) const {

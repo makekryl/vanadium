@@ -747,6 +747,21 @@ bool Binder::Inspect(const ast::Node* n) {
       return false;
     }
 
+    case ast::NodeKind::SelectStmt: {
+      const auto* m = n->As<ast::nodes::SelectStmt>();
+
+      Visit(m->tag);
+      for (const auto* clause : m->clauses) {
+        Visit(clause->body);
+        if (!m->is_union) [[likely]] {
+          // should be validated by typechecker
+          MaybeVisit(clause->cond);
+        }
+      }
+
+      return false;
+    }
+
     case ast::NodeKind::DynamicExpr: {
       const auto* m = n->As<ast::nodes::DynamicExpr>();
 

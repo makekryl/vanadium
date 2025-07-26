@@ -114,10 +114,10 @@ IfStmt:
   alternate: Stmt*?
 SelectStmt:
   is_union: bool
-  tag: ParenExpr*
+  tag: Expr*
   clauses: CaseClause*[]
 CaseClause:
-  cond: ParenExpr*?
+  cond: Expr*?
   body: BlockStmt*
 CommClause:
   is_else: bool
