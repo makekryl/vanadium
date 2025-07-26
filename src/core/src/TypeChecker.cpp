@@ -602,7 +602,8 @@ const semantic::Symbol* ResolveExprType(const SourceFile* file, const semantic::
     return nullptr;
   }
 
-  if ((decl_sym->Flags() & (semantic::SymbolFlags::kType | semantic::SymbolFlags::kImportedModule)) ||
+  if ((decl_sym->Flags() &
+       (semantic::SymbolFlags::kType | semantic::SymbolFlags::kImportedModule | semantic::SymbolFlags::kEnumMember)) ||
       (expr->nkind != ast::NodeKind::CallExpr && (decl_sym->Flags() & semantic::SymbolFlags::kFunction))) {
     return decl_sym;
   }
