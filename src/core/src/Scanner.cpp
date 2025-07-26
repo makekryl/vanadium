@@ -2,15 +2,15 @@
 
 #include <cctype>
 #include <string_view>
-#include <unordered_map>
 
 #include "ASTNodes.h"
 #include "ASTTypes.h"
+#include "StaticMap.h"
 
 namespace vanadium::core::ast {
 namespace parser {
 
-const std::unordered_map<std::string_view, TokenKind> kKeywordLookup{
+constexpr auto kKeywordLookup = lib::MakeStaticMap<std::string_view, TokenKind>({
     {"mod", TokenKind::MOD},
     {"rem", TokenKind::REM},
 
@@ -121,7 +121,7 @@ const std::unordered_map<std::string_view, TokenKind> kKeywordLookup{
     {"variant", TokenKind::VARIANT},
     {"while", TokenKind::WHILE},
     {"with", TokenKind::WITH},
-};
+});
 
 Scanner::Scanner(std::string_view src, pos_t start_pos) : src_(src), pos_(start_pos), lines_({0}) {}
 
@@ -148,9 +148,8 @@ Token Scanner::Scan() {
     ScanAlnum();
     if (pos_ - start_pos > 1) {
       // map to keyword if it is one
-      const auto it = kKeywordLookup.find(src_.substr(start_pos, pos_ - start_pos));
-      if (it != kKeywordLookup.end()) {
-        kind = it->second;
+      if (const auto it = kKeywordLookup.get(src_.substr(start_pos, pos_ - start_pos)); it) {
+        kind = *it;
       }
     }
   } else if (std::isdigit(ch)) {

@@ -14,16 +14,21 @@ class StaticSet final {
   }
 
   [[nodiscard]] bool contains(const E& element) const noexcept {
-    return std::ranges::lower_bound(storage_, element) != storage_.end();
+    const auto it = find(element);
+    return it != storage_.end() && *it == element;
   }
 
  private:
+  auto find(const E& element) const noexcept {
+    return std::ranges::lower_bound(storage_, element);
+  }
+
   std::array<E, N> storage_;
 };
 
-template <typename E, typename... Ts>
-constexpr StaticSet<E, sizeof...(Ts)> MakeStaticSet(Ts&&... t) {
-  return {std::forward<Ts>(t)...};
+template <typename E, std::size_t N>
+consteval auto MakeStaticSet(E (&&records)[N]) {
+  return StaticSet<E, N>(std::to_array(std::move(records)));
 }
 
 }  // namespace vanadium::lib

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <set>
 #include <string_view>
 #include <type_traits>
 
@@ -9,6 +8,7 @@
 #include "ASTTypes.h"
 #include "Arena.h"
 #include "Scanner.h"
+#include "StaticSet.h"
 
 namespace vanadium::core::ast {
 namespace parser {
@@ -154,7 +154,9 @@ class Parser {
   void MaybeExpectSemi();
   void ExpectSemi();
   void ExpectSemiAfter(Node*);
-  void Advance(const std::set<TokenKind>& to);
+
+  template <std::size_t N>
+  void Advance(const lib::StaticSet<TokenKind, N>& to);
 
   void Mark();
   void Commit();

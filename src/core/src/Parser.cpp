@@ -4,19 +4,18 @@
 #include <cstring>
 #include <format>
 #include <magic_enum/magic_enum.hpp>
-#include <set>
-#include <sstream>
 #include <utility>
 
 #include "AST.h"
 #include "ASTNodes.h"
 #include "Scanner.h"
+#include "StaticSet.h"
 
 namespace vanadium::core::ast {
 namespace parser {
 
 // clang-format off
-const std::set<TokenKind> kTokStmtStart = {
+constexpr auto kTokStmtStart = lib::MakeStaticSet<TokenKind>({
   TokenKind::ALT,
   TokenKind::ALTSTEP,
   TokenKind::BREAK,
@@ -58,8 +57,8 @@ const std::set<TokenKind> kTokStmtStart = {
   TokenKind::VAR,
   TokenKind::VARIANT,
   TokenKind::WHILE,
-};
-const std::set<TokenKind> kTokOperandStart = { // +IDENT? see ntt todo
+});
+constexpr auto kTokOperandStart = lib::MakeStaticSet<TokenKind>({ // +IDENT? see ntt todo
   TokenKind::ADDRESS,
   TokenKind::ALL,
   TokenKind::ANY,
@@ -87,8 +86,8 @@ const std::set<TokenKind> kTokOperandStart = { // +IDENT? see ntt todo
   TokenKind::TRUE,
   TokenKind::UNIVERSAL,
   TokenKind::UNMAP,
-};
-const std::set<TokenKind> kTokTopLevel = {
+});
+constexpr auto kTokTopLevel = lib::MakeStaticSet<TokenKind>({
   TokenKind::COMMA,
   TokenKind::SEMICOLON,
   TokenKind::MODULE,
@@ -131,12 +130,12 @@ const std::set<TokenKind> kTokTopLevel = {
   TokenKind::UNMAP,
   TokenKind::MTC,
   TokenKind::TESTCASE,
-};
+});
 // clang-format on
 
 constexpr int kLowestPrec = 0;
 namespace {
-int PrecedenceOf(TokenKind kind) {
+[[nodiscard]] int PrecedenceOf(TokenKind kind) {
   switch (kind) {
     case TokenKind::ASSIGN:
       return 1;
@@ -2508,7 +2507,8 @@ void Parser::ExpectSemiAfter(Node* n) {
   }
 }
 
-void Parser::Advance(const std::set<TokenKind>& to) {
+template <std::size_t N>
+void Parser::Advance(const lib::StaticSet<TokenKind, N>& to) {
   for (; tok_ != TokenKind::kEOF; Consume()) {
     if (!to.contains(tok_)) {
       continue;
