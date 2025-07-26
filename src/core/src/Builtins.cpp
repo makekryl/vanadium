@@ -1,6 +1,7 @@
 #include "Builtins.h"
 
 #include "ASTNodes.h"
+#include "TypeChecker.h"
 
 #ifndef NDEBUG
 #include <print>
@@ -42,6 +43,8 @@ const semantic::Symbol* ResolveBuiltinType(std::string_view name) {
       {"universal charstring", &kUniversalCharstring},
       {"verdicttype", &kVerdictType},
       {"timer", &kTimer},
+
+      {"__stype", &checker::symbols::kSelfType},
   });
   if (const auto sym_opt = kBuiltinsTable.get(name); sym_opt) {
     return *sym_opt;

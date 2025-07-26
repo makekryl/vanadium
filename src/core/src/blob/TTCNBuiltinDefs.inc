@@ -2,6 +2,22 @@ R"(
 module TTCNBuiltins {
 
 /*
+The valueof operation allows to return the value specified within a template.
+The returned value can be assigned to a variable, may be used in expressions, as an actual value parameter, etc.
+
+Example:
+```ttcn3
+type record ExampleType { integer field }
+template ExampleType templateA := { field := 1 }
+template ExampleType templateB := { field := omit }
+
+var ExampleType val = valueof(templateA); // OK
+var ExampleType val = valueof(templateB); // runtime error: omit is not a value
+```
+*/
+function valueof(in template anytype instance) return __stype
+
+/*
 The __int2char__ function converts an __integer__ value in the range of 0 to 127 (8-bit encoding) into a single-character-length
  __charstring__ value. The __integer__ value describes the 8-bit encoding of the character
 */

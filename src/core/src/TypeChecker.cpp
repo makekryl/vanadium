@@ -22,6 +22,8 @@ const semantic::Symbol kTypeError{"<error-type>", nullptr, semantic::SymbolFlags
 
 const semantic::Symbol kVoidType{"<void>", nullptr, semantic::SymbolFlags::kBuiltinType};
 
+const semantic::Symbol kSelfType{"<self>", nullptr, semantic::SymbolFlags::kBuiltinType};
+
 const semantic::Symbol kVoidTypekWildcardType{
     "<*>", nullptr,
     semantic::SymbolFlags::Value(semantic::SymbolFlags::kBuiltinType | semantic::SymbolFlags::kTemplateSpec)};
@@ -613,7 +615,15 @@ const semantic::Symbol* ResolveExprType(const SourceFile* file, const semantic::
   const auto* decl_scope = decl_file->module->scope;
 
   if (expr->nkind == ast::NodeKind::CallExpr) {
-    return ResolveCallableReturnType(decl_file, decl_scope, decl);
+    const auto* ret_sym = ResolveCallableReturnType(decl_file, decl_scope, decl);
+    if (ret_sym == &symbols::kSelfType) {
+      const auto* ce = expr->As<ast::nodes::CallExpr>();
+      if (ce->args->list.empty()) {
+        return nullptr;
+      }
+      return ResolveExprType(file, scope, ce->args->list.front());
+    }
+    return ret_sym;
   }
 
   return ResolveDeclarationType(decl_file, decl_scope, decl);
@@ -850,6 +860,13 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
         Introspect(m);
         break;
       }
+
+      //
+      if (resulting_type == &symbols::kSelfType && !m->args->list.empty()) {
+        // do not call CheckType for it to avoid double error emitting
+        resulting_type = ResolveExprType(&sf_, scope_, m->args->list.front());
+      }
+      //
 
       PerformArgumentsTypeCheck<ast::nodes::FormalPar>(m->args->list, m->args->nrange, callee_file, callee_sym,
                                                        params->list, [](const ast::nodes::FormalPar* param) {
@@ -1309,10 +1326,7 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
       }
 
       const auto* tagsym = CheckType(m->tag);
-      if (!tagsym) {
-        return true;
-      }
-      if (!(tagsym->Flags() & semantic::SymbolFlags::kUnion)) {
+      if (!tagsym || !(tagsym->Flags() & semantic::SymbolFlags::kUnion)) {
         EmitError(TypeError{
             .range = m->tag->nrange,
             .message = "union type expected",
