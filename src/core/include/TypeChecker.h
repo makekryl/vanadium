@@ -27,8 +27,14 @@ const semantic::Symbol* ResolveDeclarationType(const SourceFile*, const semantic
 const semantic::Symbol* ResolveCallableReturnType(const SourceFile*, const semantic::Scope*, const ast::nodes::Decl*);
 const semantic::Symbol* ResolveExprType(const SourceFile*, const semantic::Scope*, const ast::nodes::Expr*);
 const semantic::Symbol* ResolvePotentiallyAliasedType(const semantic::Symbol*);
+
+namespace ext {
+const semantic::Symbol* ResolveAssignmentTarget(const SourceFile*, const semantic::Scope*,
+                                                const ast::nodes::AssignmentExpr*);
 const semantic::Symbol* DeduceCompositeLiteralType(const SourceFile*, const semantic::Scope*,
                                                    const ast::nodes::CompositeLiteral*);
+const semantic::Symbol* DeduceExpectedType(const SourceFile*, const semantic::Scope*, const ast::Node*);
+}  // namespace ext
 
 namespace utils {
 [[nodiscard]] const ast::nodes::FormalPars* ResolveCallableParams(const SourceFile*, const semantic::Scope*,

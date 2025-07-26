@@ -171,7 +171,7 @@ rpc::ExpectedResult<lsp::SignatureHelpResult> methods::textDocument::signatureHe
 
       const core::semantic::Scope* scope = core::semantic::utils::FindScope(file->module->scope, cl);
 
-      const auto* type = core::checker::DeduceCompositeLiteralType(file, scope, cl);
+      const auto* type = core::checker::ext::DeduceCompositeLiteralType(file, scope, cl);
       if (!type) {
         break;
       }

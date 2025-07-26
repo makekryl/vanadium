@@ -1,5 +1,7 @@
 #include "detail/LanguageServerSymbolDef.h"
 
+#include <print>
+
 #include "AST.h"
 #include "ASTNodes.h"
 #include "ASTTypes.h"
@@ -11,38 +13,6 @@
 #include "utils/SemanticUtils.h"
 
 namespace vanadium::ls::detail {
-
-namespace {
-const core::semantic::Symbol* ResolvePropertyAssignmentTarget(const core::SourceFile* file,
-                                                              const core::ast::nodes::AssignmentExpr* ae) {
-  const auto property_name = file->Text(ae->property);
-  const auto* scope = core::semantic::utils::FindScope(file->module->scope, ae);
-
-  switch (ae->parent->nkind) {
-    case core::ast::NodeKind::ParenExpr: {
-      const auto* m = ae->parent->As<core::ast::nodes::ParenExpr>();
-
-      const auto* ce = m->parent->As<core::ast::nodes::CallExpr>();
-      const auto* callee_sym = core::checker::ResolveExprSymbol(file, scope, ce->fun);
-      if (!callee_sym || !(callee_sym->Flags() & core::semantic::SymbolFlags::kFunction)) {
-        return nullptr;
-      }
-
-      return callee_sym->OriginatedScope()->ResolveDirect(property_name);
-    }
-    case core::ast::NodeKind::CompositeLiteral: {
-      const auto* m = ae->parent->As<core::ast::nodes::CompositeLiteral>();
-      const auto* sym = core::checker::DeduceCompositeLiteralType(file, scope, m);
-      if (!sym) {
-        return nullptr;
-      }
-      return sym->Members()->Lookup(property_name);
-    }
-    default:
-      return nullptr;
-  }
-}
-}  // namespace
 
 const core::ast::Node* FindNode(const core::SourceFile* file, lsp::Position pos) {
   return core::ast::utils::GetNodeAt(file->ast, file->ast.lines.GetPosition(conv::FromLSPPosition(pos)));
@@ -66,13 +36,14 @@ std::optional<SymbolSearchResult> FindSymbol(const core::SourceFile* file, const
       const auto* ae = n->parent->As<core::ast::nodes::AssignmentExpr>();
       if (n == ae->property && (ae->parent->nkind == core::ast::NodeKind::CompositeLiteral ||
                                 ae->parent->nkind == core::ast::NodeKind::ParenExpr)) {
-        const auto* sym = ResolvePropertyAssignmentTarget(file, ae);
+        const core::semantic::Scope* scope = core::semantic::utils::FindScope(file->module->scope, target_node);
+        const auto* sym = core::checker::ext::ResolveAssignmentTarget(file, scope, ae);
         if (!sym) {
           return std::nullopt;
         }
         return SymbolSearchResult{
             .node = n,
-            .scope = nullptr,  // todo
+            .scope = nullptr,
             .symbol = sym,
         };
       }
@@ -96,6 +67,15 @@ std::optional<SymbolSearchResult> FindSymbol(const core::SourceFile* file, const
   }
 
   const core::semantic::Scope* scope = core::semantic::utils::FindScope(file->module->scope, target_node);
+  const auto* expected_type = core::checker::ext::DeduceExpectedType(file, scope, target_node);
+  if (expected_type && (expected_type->Flags() & core::semantic::SymbolFlags::kEnum)) {
+    return SymbolSearchResult{
+        .node = n,
+        .scope = nullptr,
+        .symbol = expected_type->Members()->Lookup(file->Text(n)),
+    };
+  }
+
   const auto* sym = core::checker::ResolveExprSymbol(file, scope, target_node->As<core::ast::nodes::Expr>());
   if (!sym) {
     return std::nullopt;

@@ -36,7 +36,7 @@ namespace {
     }
     case core::ast::NodeKind::CompositeLiteral: {
       const auto* m = n->As<core::ast::nodes::CompositeLiteral>();
-      const auto* sym = core::checker::DeduceCompositeLiteralType(file, scope, m);
+      const auto* sym = core::checker::ext::DeduceCompositeLiteralType(file, scope, m);
       if (!sym || (sym->Flags() & core::semantic::SymbolFlags::kBuiltin)) {
         return nullptr;
       }

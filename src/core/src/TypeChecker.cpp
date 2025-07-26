@@ -302,6 +302,38 @@ const semantic::Symbol* ResolvePotentiallyAliasedType(const semantic::Symbol* sy
   return sym;
 }
 
+namespace ext {
+const semantic::Symbol* ResolveAssignmentTarget(const SourceFile* file, const semantic::Scope* scope,
+                                                const ast::nodes::AssignmentExpr* n) {
+  const auto* property = n->property;
+  const auto property_name = file->Text(property);
+
+  switch (n->parent->nkind) {
+    case core::ast::NodeKind::ParenExpr: {
+      const auto* m = n->parent->As<core::ast::nodes::ParenExpr>();
+
+      const auto* ce = m->parent->As<core::ast::nodes::CallExpr>();
+      const auto* callee_sym = core::checker::ResolveExprSymbol(file, scope, ce->fun);
+      if (!callee_sym ||
+          !(callee_sym->Flags() & (core::semantic::SymbolFlags::kFunction | semantic::SymbolFlags::kTemplate))) {
+        return nullptr;
+      }
+
+      return callee_sym->OriginatedScope()->ResolveDirect(property_name);
+    }
+    case core::ast::NodeKind::CompositeLiteral: {
+      const auto* m = n->parent->As<core::ast::nodes::CompositeLiteral>();
+      const auto* sym = core::checker::ext::DeduceCompositeLiteralType(file, scope, m);
+      if (!sym) {
+        return nullptr;
+      }
+      return sym->Members()->Lookup(property_name);
+    }
+    default: {
+      return core::checker::ResolveExprSymbol(file, scope, property);
+    }
+  }
+}
 const semantic::Symbol* DeduceCompositeLiteralType(const SourceFile* file, const semantic::Scope* scope,
                                                    const ast::nodes::CompositeLiteral* n) {
   switch (n->parent->nkind) {
@@ -410,6 +442,61 @@ const semantic::Symbol* DeduceCompositeLiteralType(const SourceFile* file, const
   }
 }
 
+const semantic::Symbol* DeduceExpectedType(const SourceFile* file, const semantic::Scope* scope, const ast::Node* n) {
+  const auto* parent = n->parent;
+  switch (parent->nkind) {
+    case ast::NodeKind::Declarator: {
+      const auto* d = parent->As<ast::nodes::Declarator>();
+      const auto* vd = d->parent->As<ast::nodes::ValueDecl>();
+      return ResolveExprType(file, scope, vd->type);
+    }
+    case ast::NodeKind::FormalPar: {
+      const auto* fp = parent->As<ast::nodes::FormalPar>();
+      if (n != std::addressof(*fp->name)) {
+        break;
+      }
+      return ResolveExprType(file, scope, fp->type);
+    }
+    case ast::NodeKind::AssignmentExpr: {
+      const auto* ae = parent->As<ast::nodes::AssignmentExpr>();
+
+      const auto* decl_sym = ResolveAssignmentTarget(file, scope, ae);
+      if (!decl_sym) {
+        break;
+      }
+
+      const auto* decl = decl_sym->Declaration()->As<ast::nodes::Decl>();
+      const auto* decl_file = ast::utils::SourceFileOf(decl);
+      const auto* decl_scope = decl_file->module->scope;
+
+      return ResolveDeclarationType(decl_file, decl_scope, decl);
+    }
+    case ast::NodeKind::ParenExpr: {
+      const auto* pe = parent->As<ast::nodes::ParenExpr>();
+
+      const auto* params = utils::ResolveCallableParams(file, file->module->scope, pe);
+      if (!params) {
+        break;
+      }
+
+      const auto idx = std::ranges::find(pe->list, n) - pe->list.begin();
+      if (idx >= std::ssize(params->list)) {
+        return nullptr;
+      }
+
+      const auto* params_file = ast::utils::SourceFileOf(params);
+      const auto* params_scope = params_file->module->scope;
+
+      return ResolveExprType(params_file, params_scope, params->list[idx]->type);
+    }
+    default:
+      break;
+  }
+  return nullptr;
+}
+
+}  // namespace ext
+
 // Expression -> Declaration
 const semantic::Symbol* ResolveExprSymbol(const SourceFile* file, const semantic::Scope* scope,
                                           const ast::nodes::Expr* expr) {
@@ -448,15 +535,15 @@ const semantic::Symbol* ResolveDeclarationType(const SourceFile* file, const sem
     case ast::NodeKind::Declarator: {
       const auto* m = decl->As<ast::nodes::Declarator>();
       const auto* vd = m->parent->As<ast::nodes::ValueDecl>();
-      return scope->Resolve(file->Text(vd->type));
+      return ResolveExprType(file, scope, vd->type);
     }
     case ast::NodeKind::FormalPar: {
       const auto* m = decl->As<ast::nodes::FormalPar>();
-      return scope->Resolve(file->Text(m->type));
+      return ResolveExprType(file, scope, m->type);
     }
     case ast::NodeKind::Field: {
       const auto* m = decl->As<ast::nodes::Field>();
-      return scope->Resolve(file->Text(m->type));
+      return ResolveExprType(file, scope, m->type->As<ast::nodes::Expr>());  // TODO: it is not Expr though
     }
     case ast::NodeKind::ClassTypeDecl: {
       // we could come here only via Resolve("this")->Declaration()
