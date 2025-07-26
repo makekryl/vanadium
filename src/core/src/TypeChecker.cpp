@@ -1301,6 +1301,10 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
       return false;
     }
 
+    case ast::NodeKind::EnumTypeDecl: {
+      return false;
+    }
+
     default:
       break;
   }
