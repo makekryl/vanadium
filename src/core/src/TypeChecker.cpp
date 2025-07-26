@@ -1031,7 +1031,12 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
     }
 
     case ast::NodeKind::Ident: {
-      resulting_type = ResolveExprType(&sf_, scope_, n->As<ast::nodes::Ident>());
+      const auto* m = n->As<ast::nodes::Ident>();
+      if (desired_type && (desired_type->Flags() & semantic::SymbolFlags::kEnum)) {
+        resulting_type = ResolveExprSymbol(&sf_, scope_, m);
+        break;
+      }
+      resulting_type = ResolveExprType(&sf_, scope_, m);
       break;
     }
 
