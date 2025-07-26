@@ -747,6 +747,21 @@ bool Binder::Inspect(const ast::Node* n) {
       return false;
     }
 
+    case ast::NodeKind::DynamicExpr: {
+      const auto* m = n->As<ast::nodes::DynamicExpr>();
+
+      Scoped(m, [&] {
+        AddSymbol({
+            "value",
+            m->parent->As<ast::nodes::TemplateDecl>()->type,
+            SymbolFlags::kVariable,
+        });
+        Visit(m->body);
+      });
+
+      return false;
+    }
+
     case ast::NodeKind::Ident: {
       const auto* m = n->As<ast::nodes::Ident>();
 
