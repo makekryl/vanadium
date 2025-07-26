@@ -20,7 +20,7 @@ namespace checker {
 namespace symbols {
 extern const semantic::Symbol kTypeError;
 extern const semantic::Symbol kVoidType;
-extern const semantic::Symbol kSelfType;
+extern const semantic::Symbol kInferType;
 }  // namespace symbols
 
 const semantic::Symbol* ResolveExprSymbol(const SourceFile*, const semantic::Scope*, const ast::nodes::Expr*);

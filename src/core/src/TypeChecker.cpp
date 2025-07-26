@@ -22,7 +22,7 @@ const semantic::Symbol kTypeError{"<error-type>", nullptr, semantic::SymbolFlags
 
 const semantic::Symbol kVoidType{"<void>", nullptr, semantic::SymbolFlags::kBuiltinType};
 
-const semantic::Symbol kSelfType{"<self>", nullptr, semantic::SymbolFlags::kBuiltinType};
+const semantic::Symbol kInferType{"<self>", nullptr, semantic::SymbolFlags::kBuiltinType};
 
 const semantic::Symbol kVoidTypekWildcardType{
     "<*>", nullptr,
@@ -628,7 +628,7 @@ const semantic::Symbol* ResolveExprType(const SourceFile* file, const semantic::
 
   if (expr->nkind == ast::NodeKind::CallExpr) {
     const auto* ret_sym = ResolveCallableReturnType(decl_file, decl_scope, decl);
-    if (ret_sym == &symbols::kSelfType) {
+    if (ret_sym == &symbols::kInferType) {
       const auto* ce = expr->As<ast::nodes::CallExpr>();
       if (ce->args->list.empty()) {
         return nullptr;
@@ -874,7 +874,7 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
       }
 
       //
-      if (resulting_type == &symbols::kSelfType && !m->args->list.empty()) {
+      if (resulting_type == &symbols::kInferType && !m->args->list.empty()) {
         // do not call CheckType for it to avoid double error emitting
         resulting_type = ResolveExprType(&sf_, scope_, m->args->list.front());
       }
