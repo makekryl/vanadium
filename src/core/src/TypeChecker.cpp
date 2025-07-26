@@ -343,12 +343,13 @@ const semantic::Symbol* ResolveAssignmentTarget(const SourceFile* file, const se
   }
 }
 const semantic::Symbol* DeduceCompositeLiteralType(const SourceFile* file, const semantic::Scope* scope,
-                                                   const ast::nodes::CompositeLiteral* n) {
+                                                   const ast::nodes::CompositeLiteral* n,
+                                                   const semantic::Symbol* parent_hint) {
   switch (n->parent->nkind) {
     case ast::NodeKind::CompositeLiteral: {
       const auto* cl = n->parent->As<ast::nodes::CompositeLiteral>();
 
-      const auto* sym = DeduceCompositeLiteralType(file, scope, cl);
+      const auto* sym = parent_hint ? parent_hint : DeduceCompositeLiteralType(file, scope, cl);
       if (!sym) {
         return nullptr;
       }
@@ -391,7 +392,7 @@ const semantic::Symbol* DeduceCompositeLiteralType(const SourceFile* file, const
       switch (ae->parent->nkind) {
         case ast::NodeKind::CompositeLiteral: {
           const auto* cl = ae->parent->As<ast::nodes::CompositeLiteral>();
-          const auto* cl_sym = DeduceCompositeLiteralType(file, scope, cl);
+          const auto* cl_sym = parent_hint ? parent_hint : DeduceCompositeLiteralType(file, scope, cl);
           if (!cl_sym) {
             return nullptr;
           }

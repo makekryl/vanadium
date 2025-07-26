@@ -33,7 +33,8 @@ namespace ext {
 const semantic::Symbol* ResolveAssignmentTarget(const SourceFile*, const semantic::Scope*,
                                                 const ast::nodes::AssignmentExpr*);
 const semantic::Symbol* DeduceCompositeLiteralType(const SourceFile*, const semantic::Scope*,
-                                                   const ast::nodes::CompositeLiteral*);
+                                                   const ast::nodes::CompositeLiteral*,
+                                                   const semantic::Symbol* parent_hint = nullptr);
 const semantic::Symbol* DeduceExpectedType(const SourceFile*, const semantic::Scope*, const ast::Node*);
 }  // namespace ext
 

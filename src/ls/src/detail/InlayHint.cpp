@@ -1,7 +1,7 @@
 #include "detail/InlayHint.h"
 
 #include <concepts>
-#include <print>
+#include <stack>
 #include <string_view>
 #include <type_traits>
 #include <utility>
@@ -11,10 +11,11 @@
 #include "ASTTypes.h"
 #include "LSProtocol.h"
 #include "Program.h"
+#include "ScopedNodeVisitor.h"
 #include "Semantic.h"
+#include "TypeChecker.h"
 #include "detail/LanguageServerConv.h"
 #include "detail/LanguageServerSymbolDef.h"
-#include "magic_enum/magic_enum.hpp"
 #include "utils/ASTUtils.h"
 #include "utils/SemanticUtils.h"
 
@@ -27,9 +28,24 @@ struct InlayHintPayload {
 };
 
 namespace {
+template <typename DeduceCompositeLiteralTypeFn = decltype(&core::checker::ext::DeduceCompositeLiteralType)>
+  requires std::is_invocable_r_v<const core::semantic::Symbol*, DeduceCompositeLiteralTypeFn, const core::SourceFile*,
+                                 const core::semantic::Scope*, const core::ast::nodes::CompositeLiteral*>
+struct InlayHintTargetLocatorOptions {
+  DeduceCompositeLiteralTypeFn deduceCompositeLiteralType;
+};
+constexpr auto kNonCachingInlayHintTargetLocatorOptions = InlayHintTargetLocatorOptions{
+    .deduceCompositeLiteralType =
+        [](const core::SourceFile* _file, const core::semantic::Scope* _scope,
+           const core::ast::nodes::CompositeLiteral* _cl) {
+          return core::checker::ext::DeduceCompositeLiteralType(_file, _scope, _cl);
+        },
+};
+
+template <typename Options>
 [[nodiscard]] const core::ast::Node* LocateInlayHintTarget(const core::SourceFile* file,
-                                                           const core::semantic::Scope* scope,
-                                                           const core::ast::Node* n) {
+                                                           const core::semantic::Scope* scope, const core::ast::Node* n,
+                                                           Options options) {
   switch (n->nkind) {
     case core::ast::NodeKind::CallExpr: {
       const auto* m = n->As<core::ast::nodes::CallExpr>();
@@ -48,7 +64,7 @@ namespace {
     }
     case core::ast::NodeKind::CompositeLiteral: {
       const auto* m = n->As<core::ast::nodes::CompositeLiteral>();
-      const auto* sym = core::checker::ext::DeduceCompositeLiteralType(file, scope, m);
+      const auto* sym = options.deduceCompositeLiteralType(file, scope, m);
       if (!sym || (sym->Flags() & core::semantic::SymbolFlags::kBuiltin)) {
         return nullptr;
       }
@@ -63,10 +79,11 @@ namespace {
       return nullptr;
   }
 }
-}  // namespace
 
+template <typename InlayHintTargetLocatorOptions>
 void ComputeInlayHint(const core::SourceFile* file, const core::semantic::Scope* scope, const core::ast::Node* n,
-                      lib::Arena& arena, std::vector<lsp::InlayHint>& out) {
+                      lib::Arena& arena, std::vector<lsp::InlayHint>& out,
+                      InlayHintTargetLocatorOptions inlayHintTargetLocatorOptions) {
   const auto add_parameter_inlay_hint = [&](const core::ast::pos_t pos, std::string_view name) {
     out.emplace_back(lsp::InlayHint{
         .position = conv::ToLSPPosition(file->ast.lines.Translate(pos)),
@@ -84,7 +101,7 @@ void ComputeInlayHint(const core::SourceFile* file, const core::semantic::Scope*
     });
   };
 
-  const auto* tgt = LocateInlayHintTarget(file, scope, n);
+  const core::ast::Node* tgt = LocateInlayHintTarget(file, scope, n, inlayHintTargetLocatorOptions);
   if (!tgt) {
     return;
   }
@@ -152,6 +169,56 @@ void ComputeInlayHint(const core::SourceFile* file, const core::semantic::Scope*
       break;
   }
 }
+}  // namespace
+
+[[nodiscard]] std::vector<lsp::InlayHint> CollectInlayHints(const core::SourceFile* file,
+                                                            const core::ast::Range& requested_range,
+                                                            lib::Arena& arena) {
+  std::vector<lsp::InlayHint> hints;
+
+  const core::semantic::Scope* scope{nullptr};
+
+  std::stack<const core::semantic::Symbol*> cl_type_cache;
+  cl_type_cache.emplace(nullptr);
+  //
+  const auto memoizing_visitor = [&](this auto&& self, const core::ast::Node* n) {
+    ComputeInlayHint(file, scope, n, arena, hints,
+                     InlayHintTargetLocatorOptions{
+                         .deduceCompositeLiteralType =
+                             [&](const core::SourceFile* _file, const core::semantic::Scope* _scope,
+                                 const core::ast::nodes::CompositeLiteral* _cl) {
+                               const auto* res = core::checker::ext::DeduceCompositeLiteralType(_file, _scope, _cl,
+                                                                                                cl_type_cache.top());
+                               cl_type_cache.emplace(res);
+                               return res;
+                             },
+                     });
+    n->Accept(self);
+    if (n->nkind == core::ast::NodeKind::CompositeLiteral) {
+      cl_type_cache.pop();
+    }
+    return false;
+  };
+
+  core::semantic::InspectScope(
+      file->module->scope,
+      [&](const core::semantic::Scope* scope_under_inspection) {
+        scope = scope_under_inspection;
+      },
+      [&](const core::ast::Node* n) -> bool {
+        if (requested_range.Contains(n->nrange)) {
+          if (n->nkind == core::ast::NodeKind::CompositeLiteral) {
+            memoizing_visitor(n);
+            return false;
+          }
+          ComputeInlayHint(file, scope, n, arena, hints, kNonCachingInlayHintTargetLocatorOptions);
+          return true;
+        }
+        return n->nrange.Contains(requested_range);
+      });
+
+  return hints;
+}
 
 std::optional<lsp::InlayHint> ResolveInlayHint(const tooling::Solution& solution, lib::Arena& arena,
                                                const lsp::InlayHint& original_hint) {
@@ -174,7 +241,7 @@ std::optional<lsp::InlayHint> ResolveInlayHint(const tooling::Solution& solution
   }
 
   const auto* tgt = LocateInlayHintTarget(file, core::semantic::utils::FindScope(file->module->scope, container_node),
-                                          container_node);
+                                          container_node, kNonCachingInlayHintTargetLocatorOptions);
   if (!tgt) {
     return std::nullopt;
   }
