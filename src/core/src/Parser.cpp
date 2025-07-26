@@ -2115,10 +2115,7 @@ nodes::CallExpr* Parser::ParseCallExpr(nodes::Expr* x) {
         ConsumeInvariant(TokenKind::RPAREN);
       } else {
         Expect(TokenKind::RPAREN);
-        while (tok_ != TokenKind::RPAREN) {
-          Consume();
-        }
-        ConsumeInvariant(TokenKind::RPAREN);
+        Advance(kTokStmtStart);
       }
     });
   });
@@ -2487,7 +2484,7 @@ void Parser::ExpectSemi() {
   if (kPedanticSemi) {
     if (!seen_closing_brace_ && tok_ == TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
       EmitErrorExpected(";");
-      // Advance(TOK_STMT_START); // TODO: is this really needed?
+      Advance(kTokStmtStart);
     }
   }
 }
@@ -2502,7 +2499,7 @@ void Parser::ExpectSemiAfter(Node* n) {
   if (kPedanticSemi) {
     if (!seen_closing_brace_ && tok_ == TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
       EmitErrorExpected(";");
-      // Advance(TOK_STMT_START); // TODO: is this really needed?
+      Advance(kTokStmtStart);
     }
   }
 }
