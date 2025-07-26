@@ -290,22 +290,24 @@ const semantic::Symbol* ResolveIndexExprType(const SourceFile* sf, const semanti
 }
 
 }  // namespace detail
-}  // namespace
 
-const semantic::Symbol* ResolvePotentiallyAliasedType(const semantic::Symbol* sym) {
-  const auto* decl = sym->Declaration();
-
-  if (decl && decl->nkind == ast::NodeKind::SubTypeDecl) [[unlikely]] {
-    decl = decl->As<ast::nodes::SubTypeDecl>()->field->type;
-
-    while (decl && decl->nkind == ast::NodeKind::RefSpec) {
-      const auto* file = ast::utils::SourceFileOf(decl);
-      sym = file->module->scope->Resolve(file->Text(decl->As<ast::nodes::RefSpec>()->x));
-      decl = sym->Declaration();
-    }
+const semantic::Symbol* ResolveAliasedType(const semantic::Symbol* sym) {
+  const ast::Node* decl = sym->Declaration()->As<ast::nodes::SubTypeDecl>()->field->type;
+  while (decl && decl->nkind == ast::NodeKind::RefSpec) {
+    const auto* file = ast::utils::SourceFileOf(decl);
+    sym = ResolveExprType(file, file->module->scope, decl->As<ast::nodes::RefSpec>()->x);
+    decl = sym->Declaration();
   }
 
   return sym;
+}
+}  // namespace
+
+const semantic::Symbol* ResolvePotentiallyAliasedType(const semantic::Symbol* sym) {
+  if (!(sym->Flags() & semantic::SymbolFlags::kSubType)) [[likely]] {
+    return sym;
+  }
+  return ResolveAliasedType(sym);
 }
 
 namespace ext {
@@ -351,6 +353,19 @@ const semantic::Symbol* DeduceCompositeLiteralType(const SourceFile* file, const
         return nullptr;
       }
 
+      if (sym->Flags() & semantic::SymbolFlags::kSubType) {
+        sym = ResolveAliasedType(sym);
+        const ast::Node* decl = sym->Declaration()->As<ast::nodes::SubTypeDecl>()->field->type;
+        if (decl && decl->nkind == ast::NodeKind::ListSpec) {
+          const auto* decl_file = ast::utils::SourceFileOf(decl);
+          sym = ResolveExprType(
+              decl_file, decl_file->module->scope,
+              decl->As<ast::nodes::ListSpec>()->elemtype->As<ast::nodes::Expr>());  // TODO: typespec expr
+          return sym;
+        }
+        return nullptr;
+      }
+
       const auto* decl = sym->Declaration();
       if (decl->nkind != core::ast::NodeKind::StructTypeDecl) {
         return nullptr;
@@ -379,6 +394,18 @@ const semantic::Symbol* DeduceCompositeLiteralType(const SourceFile* file, const
           const auto* cl_sym = DeduceCompositeLiteralType(file, scope, cl);
           if (!cl_sym) {
             return nullptr;
+          }
+
+          if (cl_sym->Flags() & semantic::SymbolFlags::kSubType) {
+            cl_sym = ResolveAliasedType(cl_sym);
+            const ast::Node* decl = cl_sym->Declaration()->As<ast::nodes::SubTypeDecl>()->field->type;
+            if (decl && decl->nkind == ast::NodeKind::ListSpec && ae->property->nkind == ast::NodeKind::IndexExpr) {
+              const auto* decl_file = ast::utils::SourceFileOf(decl);
+              cl_sym = ResolveExprType(
+                  decl_file, decl_file->module->scope,
+                  decl->As<ast::nodes::ListSpec>()->elemtype->As<ast::nodes::Expr>());  // TODO: typespec expr
+            }
+            return cl_sym;
           }
 
           const auto* property_sym = cl_sym->Members()->Lookup(property_name);
@@ -783,9 +810,11 @@ void BasicTypeChecker::PerformArgumentsTypeCheck(std::span<const ast::nodes::Exp
         seen_named_argument = true;
 
         if (ae->property->nkind != ast::NodeKind::Ident) [[unlikely]] {
+          // most likely it is IndexExpr, e.g. { [0] := value }
           EmitError(TypeError{
               .range = ae->nrange,
-              .message = "check if this even a valid syntax, it should not be a valid syntax [ f(g() := 1) ]",
+              .message = std::format("type '{}' is not subscriptable",
+                                     utils::GetReadableTypeName(params_file, subject_type_sym)),
           });
           continue;
         }
@@ -938,7 +967,7 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
           if (x_sym && !(x_sym->Flags() & semantic::SymbolFlags::kBuiltinStringType)) {
             EmitError({
                 .range = m->x->nrange,
-                .message = "string type expected",
+                .message = std::format("string type expected, got '{}'", x_sym->GetName()),
             });
           } else {
             match_both(x_sym);
@@ -951,10 +980,17 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
         case ast::TokenKind::DEC:
         case ast::TokenKind::MUL:
         case ast::TokenKind::DIV:
+          if (x_sym && x_sym != &builtins::kInteger && x_sym != &builtins::kFloat) [[unlikely]] {
+            EmitError(TypeError{
+                .range = m->x->nrange,
+                .message = std::format("integer or float expected, got '{}'", x_sym->GetName()),
+            });
+            break;
+          }
+          match_both(x_sym);
+          break;
         case ast::TokenKind::SHL:
         case ast::TokenKind::SHR:
-          match_both(&builtins::kInteger);
-          break;
         case ast::TokenKind::ROL:
         case ast::TokenKind::ROR:
           //
@@ -963,8 +999,9 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
           if (x_sym && !(x_sym->Flags() & semantic::SymbolFlags::kBuiltinStringType)) {
             EmitError({
                 .range = m->x->nrange,
-                .message = "string type expected",
+                .message = std::format("string type expected, got '{}'", x_sym->GetName()),
             });
+            break;
           }
           MatchTypes(m->y->nrange, y_sym, &builtins::kInteger);
           break;
