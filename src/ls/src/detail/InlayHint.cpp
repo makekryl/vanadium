@@ -11,6 +11,7 @@
 #include "ASTTypes.h"
 #include "LSProtocol.h"
 #include "Program.h"
+#include "Semantic.h"
 #include "detail/LanguageServerConv.h"
 #include "detail/LanguageServerSymbolDef.h"
 #include "magic_enum/magic_enum.hpp"
@@ -32,7 +33,18 @@ namespace {
   switch (n->nkind) {
     case core::ast::NodeKind::CallExpr: {
       const auto* m = n->As<core::ast::nodes::CallExpr>();
-      return core::checker::utils::ResolveCallableParams(file, scope, m->args);  // -> FormalPars
+
+      // ResolveCallableParams is not used because we need to filter out builtin functions
+      // return core::checker::utils::ResolveCallableParams(file, scope, m->args);  // -> FormalPars
+
+      const auto* fun_sym = core::checker::ResolveExprType(file, scope, m->fun);
+      if (!fun_sym || (fun_sym->Flags() & core::semantic::SymbolFlags::kBuiltinDef) ||
+          !(fun_sym->Flags() & (core::semantic::SymbolFlags::kFunction | core::semantic::SymbolFlags::kTemplate))) {
+        return nullptr;
+      }
+
+      return core::ast::utils::GetCallableDeclParams(
+          fun_sym->Declaration()->As<core::ast::nodes::Decl>());  // -> FormalPars
     }
     case core::ast::NodeKind::CompositeLiteral: {
       const auto* m = n->As<core::ast::nodes::CompositeLiteral>();
