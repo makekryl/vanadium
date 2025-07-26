@@ -30,7 +30,7 @@ const semantic::Symbol kTimer{"timer", nullptr, semantic::SymbolFlags::kBuiltinT
 
 namespace {
 const semantic::Symbol* ResolveBuiltinType(std::string_view name) {
-  static constexpr lib::StaticMap<std::string_view, const semantic::Symbol*, 12> kBuiltinsTable{{{
+  static constexpr auto kBuiltinsTable = lib::MakeStaticMap<std::string_view, const semantic::Symbol*>({
       {"anytype", &kAnytype},
       {"boolean", &kBoolean},
       {"integer", &kInteger},
@@ -42,7 +42,7 @@ const semantic::Symbol* ResolveBuiltinType(std::string_view name) {
       {"universal charstring", &kUniversalCharstring},
       {"verdicttype", &kVerdictType},
       {"timer", &kTimer},
-  }}};
+  });
   if (const auto sym_opt = kBuiltinsTable.get(name); sym_opt) {
     return *sym_opt;
   }

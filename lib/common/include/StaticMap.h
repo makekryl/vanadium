@@ -35,4 +35,9 @@ class StaticMap final {
   std::array<row_t, N> storage_;
 };
 
+template <typename K, typename V, std::size_t N>
+consteval auto MakeStaticMap(std::pair<K, V> (&&rows)[N]) {
+  return StaticMap<K, V, N>(std::to_array(std::move(rows)));
+}
+
 }  // namespace vanadium::lib

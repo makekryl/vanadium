@@ -21,4 +21,9 @@ class StaticSet final {
   std::array<E, N> storage_;
 };
 
+template <typename E, typename... Ts>
+constexpr StaticSet<E, sizeof...(Ts)> MakeStaticSet(Ts&&... t) {
+  return {std::forward<Ts>(t)...};
+}
+
 }  // namespace vanadium::lib
