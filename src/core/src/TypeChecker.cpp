@@ -252,6 +252,10 @@ class IndexExprResolver {
       return nullptr;
     }
 
+    if (x_sym->Flags() & semantic::SymbolFlags::kBuiltinString) {
+      return x_sym;
+    }
+
     if (!(x_sym->Flags() & semantic::SymbolFlags::kSubType)) {
       options_.on_non_subscriptable_type(ie->x, x_sym);
       return nullptr;
@@ -915,9 +919,17 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
       };
 
       switch (m->op.kind) {
-        case ast::TokenKind::CONCAT:
-          match_both(&builtins::kCharstring);
+        case ast::TokenKind::CONCAT: {
+          if (x_sym && !(x_sym->Flags() & semantic::SymbolFlags::kBuiltinStringType)) {
+            EmitError({
+                .range = m->x->nrange,
+                .message = "string type expected",
+            });
+          } else {
+            match_both(x_sym);
+          }
           break;
+        }
         case ast::TokenKind::INC:
         case ast::TokenKind::ADD:
         case ast::TokenKind::SUB:
@@ -925,10 +937,21 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
         case ast::TokenKind::MUL:
         case ast::TokenKind::DIV:
         case ast::TokenKind::SHL:
-        case ast::TokenKind::ROL:
         case ast::TokenKind::SHR:
-        case ast::TokenKind::ROR:
           match_both(&builtins::kInteger);
+          break;
+        case ast::TokenKind::ROL:
+        case ast::TokenKind::ROR:
+          //
+          resulting_type = x_sym;
+          //
+          if (x_sym && !(x_sym->Flags() & semantic::SymbolFlags::kBuiltinStringType)) {
+            EmitError({
+                .range = m->x->nrange,
+                .message = "string type expected",
+            });
+          }
+          MatchTypes(m->y->nrange, y_sym, &builtins::kInteger);
           break;
         case ast::TokenKind::EQ:
         case ast::TokenKind::NE:
@@ -944,7 +967,7 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
             break;
           }
           //
-          resulting_type = x_sym;
+          resulting_type = &builtins::kBoolean;
           MatchTypes(m->y->nrange, y_sym, x_sym);
           //
           break;

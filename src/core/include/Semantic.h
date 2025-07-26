@@ -70,9 +70,11 @@ enum Value : std::uint32_t {
 
   kBuiltin = 1 << 17,
   kBuiltinType = kType | kBuiltin,
-  kBuiltinDef = 1 << 18,
+  kBuiltinString = 1 << 18,
+  kBuiltinStringType = kType | kBuiltin | kBuiltinString,
+  kBuiltinDef = 1 << 19,
 
-  kTemplateSpec = 1 << 19,
+  kTemplateSpec = 1 << 20,
 };
 }
 
