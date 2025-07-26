@@ -443,6 +443,14 @@ const semantic::Symbol* DeduceCompositeLiteralType(const SourceFile* file, const
       const auto* decl = n->parent->As<ast::nodes::TemplateDecl>();
       return ResolveExprType(file, scope, decl->type);
     }
+    case ast::NodeKind::ReturnStmt: {
+      const auto* rs = n->parent->As<ast::nodes::ReturnSpec>();
+      const auto* decl = ast::utils::GetPredecessor<ast::nodes::FuncDecl>(rs);
+      if (!decl || !decl->ret) {
+        return nullptr;
+      }
+      return ResolveExprType(file, scope, decl->ret->type);
+    }
     default:
       return nullptr;
   }
@@ -1297,18 +1305,12 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
     case ast::NodeKind::ReturnStmt: {
       const auto* m = n->As<ast::nodes::ReturnStmt>();
 
-      const ast::Node* fnode;
-      for (fnode = m->parent; fnode != nullptr; fnode = fnode->parent) {
-        if (fnode->nkind == ast::NodeKind::FuncDecl) {
-          break;
-        }
-      }
+      const auto* fdecl = ast::utils::GetPredecessor<ast::nodes::FuncDecl>(m);
 
-      if (fnode == nullptr) {
+      if (fdecl == nullptr) {
         // TODO: maybe do something with it - we somehow have return outside of a function! (really?)
         break;
       }
-      const auto* fdecl = fnode->As<ast::nodes::FuncDecl>();
 
       if (!fdecl->ret) {
         if (m->result) {
