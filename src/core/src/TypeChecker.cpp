@@ -461,18 +461,25 @@ const semantic::Symbol* DeduceExpectedType(const SourceFile* file, const semanti
   switch (parent->nkind) {
     case ast::NodeKind::Declarator: {
       const auto* d = parent->As<ast::nodes::Declarator>();
+      if (n != d->value) {
+        break;
+      }
+
       const auto* vd = d->parent->As<ast::nodes::ValueDecl>();
       return ResolveExprType(file, scope, vd->type);
     }
     case ast::NodeKind::FormalPar: {
       const auto* fp = parent->As<ast::nodes::FormalPar>();
-      if (n != std::addressof(*fp->name)) {
+      if (n != fp->value) {
         break;
       }
       return ResolveExprType(file, scope, fp->type);
     }
     case ast::NodeKind::AssignmentExpr: {
       const auto* ae = parent->As<ast::nodes::AssignmentExpr>();
+      if (n != ae->value) {
+        break;
+      }
 
       const auto* decl_sym = ResolveAssignmentTarget(file, scope, ae);
       if (!decl_sym) {
