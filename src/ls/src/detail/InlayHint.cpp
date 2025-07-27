@@ -1,5 +1,6 @@
 #include "detail/InlayHint.h"
 
+#include <algorithm>
 #include <concepts>
 #include <stack>
 #include <string_view>
@@ -200,13 +201,16 @@ void ComputeInlayHint(const core::SourceFile* file, const core::semantic::Scope*
     return false;
   };
 
+  const auto overlaps = [](const core::ast::Range& a, const core::ast::Range& b) {
+    return std::max(a.begin, b.begin) <= std::min(a.end, b.end);
+  };
   core::semantic::InspectScope(
       file->module->scope,
       [&](const core::semantic::Scope* scope_under_inspection) {
         scope = scope_under_inspection;
       },
       [&](const core::ast::Node* n) -> bool {
-        if (requested_range.Contains(n->nrange)) {
+        if (overlaps(requested_range, n->nrange)) {
           if (n->nkind == core::ast::NodeKind::CompositeLiteral) {
             memoizing_visitor(n);
             return false;

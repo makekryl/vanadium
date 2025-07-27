@@ -73,6 +73,10 @@ class LineMapping {
     return StartOf(loc.line) + loc.column;
   }
 
+  [[nodiscard]] std::size_t Count() const {
+    return line_starts_.size();
+  }
+
  private:
   std::vector<pos_t> line_starts_;
 };
