@@ -256,6 +256,16 @@ class IndexExprResolver {
       return x_sym;
     }
 
+    if (x_sym->Flags() & semantic::SymbolFlags::kTemplate) {
+      // yes, it does not use options_.resolve_type - avoids double error emit
+      const auto* td = x_sym->Declaration()->As<ast::nodes::TemplateDecl>();
+      const auto* tf = ast::utils::SourceFileOf(td);
+      x_sym = ResolveExprType(tf, tf->module->scope, td->type);
+      if (!x_sym) {
+        return nullptr;
+      }
+    }
+
     if (!(x_sym->Flags() & semantic::SymbolFlags::kSubType)) {
       options_.on_non_subscriptable_type(ie->x, x_sym);
       return nullptr;
@@ -929,12 +939,6 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
       const auto* m = n->As<ast::nodes::UnaryExpr>();
 
       const auto* x_sym = CheckType(m->x);
-      const auto match = [&](const semantic::Symbol* expected_sym) {
-        //
-        resulting_type = expected_sym;
-        //
-        MatchTypes(m->x->nrange, x_sym, expected_sym);
-      };
 
       switch (m->op.kind) {
         case core::ast::TokenKind::INC:
@@ -943,7 +947,16 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
         case core::ast::TokenKind::DEC:
         case core::ast::TokenKind::MUL:
         case core::ast::TokenKind::DIV:
-          match(&builtins::kInteger);
+          if (x_sym && x_sym != &builtins::kInteger && x_sym != &builtins::kFloat) [[unlikely]] {
+            EmitError(TypeError{
+                .range = m->x->nrange,
+                .message = std::format("integer or float expected, got '{}'", x_sym->GetName()),
+            });
+            break;
+          }
+          //
+          resulting_type = x_sym;
+          //
           break;
         default:
           break;
@@ -962,6 +975,12 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
         MatchTypes(m->x->nrange, x_sym, expected_sym);
         MatchTypes(m->y->nrange, y_sym, expected_sym);
       };
+
+      if (x_sym) [[likely]] {
+        // TODO: 1) maybe just abort early if !x_sym
+        //       2) resolve alias only if really needed, it's done by MatchTypes otherwise
+        x_sym = ResolvePotentiallyAliasedType(x_sym);
+      }
 
       switch (m->op.kind) {
         case ast::TokenKind::CONCAT: {
