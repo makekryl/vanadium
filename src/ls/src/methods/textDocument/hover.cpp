@@ -188,7 +188,7 @@ Fields:
       const auto* m = decl->As<core::ast::nodes::EnumTypeDecl>();
       content += std::format(
           R"(
-### enumerated `{}`
+### enum `{}`
 ---
 
 Values:
