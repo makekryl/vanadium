@@ -1,12 +1,12 @@
-#include "detail/LanguageServerDiagnostic.h"
+#include "detail/Diagnostic.h"
 
 #include <format>
 #include <vector>
 
 #include "LSProtocol.h"
 #include "LanguageServerContext.h"
+#include "LanguageServerConv.h"
 #include "Program.h"
-#include "detail/LanguageServerConv.h"
 #include "magic_enum/magic_enum.hpp"
 
 namespace vanadium::ls::detail {

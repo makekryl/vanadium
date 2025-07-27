@@ -1,10 +1,11 @@
+#include "detail/Completion.h"
+
 #include "LSProtocol.h"
 #include "LSProtocolEx.h"
 #include "LanguageServerContext.h"
 #include "LanguageServerMethods.h"
 #include "Program.h"
-#include "detail/LanguageServerCompletion.h"
-#include "detail/LanguageServerSymbolDef.h"
+#include "detail/Definition.h"
 
 namespace vanadium::ls {
 template <>

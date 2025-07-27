@@ -1,7 +1,8 @@
+#include "detail/Diagnostic.h"
+
 #include "LSProtocol.h"
 #include "LanguageServerContext.h"
 #include "LanguageServerMethods.h"
-#include "detail/LanguageServerDiagnostic.h"
 
 namespace vanadium::ls {
 template <>

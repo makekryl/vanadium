@@ -6,10 +6,10 @@
 #include "LSProtocol.h"
 #include "LSProtocolEx.h"
 #include "LanguageServerContext.h"
+#include "LanguageServerConv.h"
 #include "LanguageServerMethods.h"
 #include "Semantic.h"
 #include "TypeChecker.h"
-#include "detail/LanguageServerConv.h"
 
 namespace vanadium::ls {
 

@@ -1,12 +1,12 @@
-#include "detail/LanguageServerSymbolDef.h"
+#include "detail/Definition.h"
 
 #include "AST.h"
 #include "ASTNodes.h"
 #include "ASTTypes.h"
 #include "LSProtocol.h"
+#include "LanguageServerConv.h"
 #include "Semantic.h"
 #include "TypeChecker.h"
-#include "detail/LanguageServerConv.h"
 #include "utils/ASTUtils.h"
 #include "utils/SemanticUtils.h"
 

@@ -1,4 +1,4 @@
-#include "detail/LanguageServerCompletion.h"
+#include "detail/Completion.h"
 
 #include <algorithm>
 #include <glaze/core/read.hpp>
@@ -11,12 +11,12 @@
 #include "ASTTypes.h"
 #include "Arena.h"
 #include "LSProtocol.h"
+#include "LanguageServerConv.h"
 #include "Metaprogramming.h"
 #include "Program.h"
 #include "Semantic.h"
 #include "TypeChecker.h"
-#include "detail/LanguageServerConv.h"
-#include "detail/LanguageServerCoreUtils.h"
+#include "detail/Helpers.h"
 #include "utils/ASTUtils.h"
 
 namespace vanadium::ls::detail {

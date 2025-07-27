@@ -6,11 +6,11 @@
 #include "ASTTypes.h"
 #include "LSProtocol.h"
 #include "LanguageServerContext.h"
+#include "LanguageServerConv.h"
 #include "LanguageServerMethods.h"
 #include "Semantic.h"
 #include "TypeChecker.h"
-#include "detail/LanguageServerConv.h"
-#include "detail/LanguageServerSymbolDef.h"
+#include "detail/Definition.h"
 #include "utils/ASTUtils.h"
 #include "utils/SemanticUtils.h"
 
