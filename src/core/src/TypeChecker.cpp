@@ -1357,7 +1357,7 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
 
       const auto* fdecl = ast::utils::GetPredecessor<ast::nodes::FuncDecl>(m);
 
-      if (fdecl == nullptr) {
+      if (!fdecl) {
         // TODO: maybe do something with it - we somehow have return outside of a function! (really?)
         break;
       }
@@ -1369,6 +1369,13 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
               .message = "void function should not return a value",
           });
         }
+        break;
+      }
+      if (!m->result) {
+        EmitError(TypeError{
+            .range = m->nrange,
+            .message = "return value expected",
+        });
         break;
       }
 

@@ -108,7 +108,11 @@ std::optional<SymbolSearchResult> FindSymbol(const core::SourceFile* file, const
 }
 
 std::optional<SymbolSearchResult> FindSymbol(const core::SourceFile* file, lsp::Position pos) {
-  return FindSymbol(file, FindNode(file, pos));
+  const auto* n = FindNode(file, pos);
+  if (!n) [[unlikely]] {
+    return std::nullopt;
+  }
+  return FindSymbol(file, n);
 }
 
 const core::ast::Node* GetReadableDefinition(const core::ast::Node* n) {
