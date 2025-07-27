@@ -9,8 +9,6 @@
 #include <glaze/ext/jsonrpc.hpp>
 #include <glaze/glaze.hpp>
 #include <glaze/util/expected.hpp>
-#include <print>
-#include <variant>
 
 #include "LSChannel.h"
 #include "LSMessageToken.h"
@@ -223,39 +221,20 @@ class Connection {
   }
 
   std::optional<PooledMessageToken> MaybeRouteOutboundRequestResponse(PooledMessageToken&& token) {
-    struct DataStub {};
-    struct OutboundRequestResultStub {
-      rpc_id_t id;
-      DataStub result;
-    };
-    struct OutboundRequestErrorStub {
-      rpc_id_t id;
-      DataStub error;
-    };
-    struct InboundRequest {
-      rpc_id_t id;
-      std::string_view method;
-    };
-
-    std::variant<OutboundRequestResultStub, OutboundRequestErrorStub, InboundRequest> v;
-    if (auto err = glz::read<glz::opts{.error_on_unknown_keys = false, .partial_read = true}>(v, token->buf)) {
-      std::abort();  // TODO
-      return std::nullopt;
-    }
-
-    if (std::holds_alternative<InboundRequest>(v)) {
+    const auto result = glz::get_as_json<rpc_id_t, "/result">(token->buf);
+    if (!result.has_value()) {
       return token;
     }
 
-    rpc_id_t id;
-    std::visit(
-        [&id](const auto& arg) {
-          id = arg.id;
-        },
-        v);
+    const auto id = glz::get_as_json<rpc_id_t, "/id">(token->buf);
+    if (!id.has_value()) {
+      // invalid response, todo: check
+      std::abort();
+      return std::nullopt;
+    }
 
     for (auto& pending : pending_outbound_requests_) {
-      if (!pending || pending->awaited_id != id) {
+      if (!pending || pending->awaited_id != *id) {
         continue;
       }
       pending->response = std::move(token);
@@ -272,7 +251,8 @@ class Connection {
   }
 
   struct WaitToken {
-    std::uint32_t awaited_id;
+    // TODO: according to the jsonrpc spec, id can also be a string
+    rpc_id_t awaited_id;
     std::optional<PooledMessageToken> response{std::nullopt};
     std::atomic<bool> satisfied;
   };
