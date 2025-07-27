@@ -1738,7 +1738,7 @@ nodes::CaseClause* Parser::ParseCaseClause() {
       Consume();
     } else {
       Expect(TokenKind::LPAREN);
-      c.cond = ParseExpr();
+      c.cond = ParseExprList();
       if (tok_ == TokenKind::RPAREN) [[likely]] {
         ConsumeInvariant(TokenKind::RPAREN);
       } else {

@@ -710,12 +710,12 @@ struct CaseClause : Node {
 
   CaseClause() : Node(NodeKind::CaseClause) {}
 
-  Expr* cond{nullptr};
+  std::vector<Expr*> cond;
   BlockStmt* body;
 
   void Accept(const NodeInspector& inspector) const {
-    if (cond != nullptr) {
-      Inspect(cond, inspector);
+    for (const auto* n : cond) {
+      Inspect(n, inspector);
     }
     Inspect(body, inspector);
   }

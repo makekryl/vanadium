@@ -1410,11 +1410,11 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
       }
 
       for (const auto* clause : m->clauses) {
-        if (clause->cond) {
-          const auto property = sf_.Text(clause->cond);
+        for (const auto* cond : clause->cond) {
+          const auto property = sf_.Text(cond);
           if (!tagsym->Members()->Has(property)) {
             EmitError(TypeError{
-                .range = clause->cond->nrange,
+                .range = cond->nrange,
                 .message = std::format("property '{}' does not exist on type '{}'", property,
                                        utils::GetReadableTypeName(tagsym)),
             });

@@ -755,7 +755,7 @@ bool Binder::Inspect(const ast::Node* n) {
         Visit(clause->body);
         if (!m->is_union) [[likely]] {
           // should be validated by typechecker
-          MaybeVisit(clause->cond);
+          Visit(clause->cond);
         }
       }
 

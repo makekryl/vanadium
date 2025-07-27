@@ -1,7 +1,5 @@
 #include "detail/LanguageServerSymbolDef.h"
 
-#include <print>
-
 #include "AST.h"
 #include "ASTNodes.h"
 #include "ASTTypes.h"
@@ -75,7 +73,7 @@ std::optional<SymbolSearchResult> FindSymbol(const core::SourceFile* file, const
         return std::nullopt;
       }
 
-      const auto property_name = file->Text(m->cond);
+      const auto property_name = file->Text(n);
 
       return SymbolSearchResult{
           .node = n,

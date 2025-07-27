@@ -117,7 +117,7 @@ SelectStmt:
   tag: Expr*
   clauses: CaseClause*[]
 CaseClause:
-  cond: Expr*?
+  cond: Expr*[]
   body: BlockStmt*
 CommClause:
   is_else: bool
