@@ -20,13 +20,21 @@
 #include "utils/ASTUtils.h"
 #include "utils/SemanticUtils.h"
 
-namespace vanadium::ls::detail {
-
 struct InlayHintPayload {
   std::string path;
-  core::ast::pos_t apos;
-  std::underlying_type_t<core::ast::NodeKind> nk;
+  vanadium::core::ast::pos_t anchor_pos;
+  std::underlying_type_t<vanadium::core::ast::NodeKind> node_kind;
 };
+template <>
+struct glz::meta<InlayHintPayload> {
+  static constexpr std::string_view rename_key(std::string_view key) {
+    if (key == "anchor_pos") return "apos";
+    if (key == "node_kind") return "nk";
+    return key;
+  }
+};
+
+namespace vanadium::ls::detail {
 
 namespace {
 template <typename DeduceCompositeLiteralTypeFn = decltype(&core::checker::ext::DeduceCompositeLiteralType)>
@@ -239,8 +247,8 @@ std::optional<lsp::InlayHint> ResolveInlayHint(const tooling::Solution& solution
     return std::nullopt;
   }
 
-  const core::ast::Node* container_node = core::ast::utils::GetNodeAt(file->ast, payload->apos);
-  while (container_node->nkind != static_cast<core::ast::NodeKind>(payload->nk)) {
+  const core::ast::Node* container_node = core::ast::utils::GetNodeAt(file->ast, payload->anchor_pos);
+  while (container_node->nkind != static_cast<core::ast::NodeKind>(payload->node_kind)) {
     container_node = container_node->parent;
   }
 
