@@ -72,8 +72,8 @@ class AstNode:
 AstNodesDict = dict[str, AstNode]
 
 
-def parse_nodes(stream: TextIO) -> AstNodesDict:
-  data = yaml.load(stream, Loader=yaml.Loader)
+def parse_nodes(src: str) -> AstNodesDict:
+  data = yaml.load(src, Loader=yaml.Loader)
 
   def parse_field(node: str, name: str, typedesc: str) -> AstNodeField:
     match = re.search(r"^(\b[A-Za-z].*?\b)(\*)?(\[\])?(\?)?$", typedesc)
@@ -301,13 +301,12 @@ def main():
   dest = Path(args.output)
 
   print(f"Generating AST code from {args.input}...")
-  with open(file=args.input, mode="r") as f:
-    nodes = parse_nodes(f)
+  nodes = parse_nodes(Path(args.input).read_text())
 
   TARGETS: list[tuple[str, Callable[[AstNodesDict], str]]] = [
     ("ASTNodes.inc", generate_nodes_descriptors),
     ("ASTInspector.inc", generate_macro_inspector),
-    ("Dumper.inc", generate_dumper_code),
+    ("ASTDumper.inc", generate_dumper_code),
   ]
   for filepath, transform in TARGETS:
     (dest / filepath).write_text(transform(nodes))

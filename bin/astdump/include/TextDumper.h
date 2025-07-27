@@ -8,8 +8,8 @@
 #include <string_view>
 
 #include "AST.h"
+#include "ASTDumper.h"
 #include "ASTNodes.h"
-#include "Dumper.h"
 
 class TextASTDumper {
  private:

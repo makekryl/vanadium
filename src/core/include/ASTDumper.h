@@ -76,7 +76,7 @@ class Dumper {
         DumpGroup("ErrorNode", [&] {});
         break;
       }
-#include "gen/Dumper.inc"
+#include "gen/ASTDumper.inc"
       default:
         assert(false && "Unhandled node");
         break;
