@@ -17,6 +17,18 @@ var ExampleType val = valueof(templateB); // runtime error: omit is not a value
 */
 function valueof(in template anytype instance) return __infer_arg_t
 
+function log(in anytype s,
+  in anytype s1 := none,
+  in anytype s2 := none,
+  in anytype s3 := none,
+  in anytype s4 := none,
+  in anytype s5 := none,
+  in anytype s6 := none,
+  in anytype s7 := none,
+  in anytype s8 := none,
+  in anytype s9 := none,
+)
+
 /*
 The __int2char__ function converts an __integer__ value in the range of 0 to 127 (8-bit encoding) into a single-character-length
  __charstring__ value. The __integer__ value describes the 8-bit encoding of the character
