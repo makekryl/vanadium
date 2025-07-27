@@ -1803,7 +1803,7 @@ nodes::Expr* Parser::ParseBinaryExpr(int prec) {
       x = NewNode<nodes::AssignmentExpr>([&, px = x](auto& be) {
         be.property = px;
         ConsumeInvariant(TokenKind::ASSIGN);
-        be.value = ParseBinaryExpr(prec + 1);
+        be.value = ParseBinaryExpr(tprec + 1);
       });
       ExtendByIncorporatedNode(x, x->As<nodes::AssignmentExpr>()->property);
       continue;
@@ -1812,7 +1812,7 @@ nodes::Expr* Parser::ParseBinaryExpr(int prec) {
     x = NewNode<nodes::BinaryExpr>([&, px = x](auto& be) {
       be.x = px;
       be.op = Consume();
-      be.y = ParseBinaryExpr(prec + 1);
+      be.y = ParseBinaryExpr(tprec + 1);
     });
     ExtendByIncorporatedNode(x, x->As<nodes::BinaryExpr>()->x);
   }
