@@ -15,8 +15,7 @@
 #include "LanguageServerMethods.h"
 #include "Metaprogramming.h"
 
-namespace vanadium {
-namespace ls {
+namespace vanadium::ls {
 
 constexpr std::size_t kServerBacklog = 2;
 
@@ -113,5 +112,4 @@ void Serve(lserver::Transport& transport, std::size_t concurrency, std::size_t j
   connection.Listen();
 }
 
-}  // namespace ls
-}  // namespace vanadium
+}  // namespace vanadium::ls
