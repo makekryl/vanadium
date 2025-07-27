@@ -74,7 +74,8 @@ class Binder {
   void Bind() {
     HoistNamesOf<ast::RootNode, &Binder::hoisted_names_>(sf_.ast.root);
 
-    scope_ = nullptr;
+    Scope trash_scope(nullptr);  // to avoid scope_ != nullptr checks
+    scope_ = &trash_scope;
     sf_.ast.root->Accept(inspector_);
 
     for (auto& [name, sym] : enum_values_syms_) {
@@ -108,9 +109,10 @@ class Binder {
     }
   }
 
+  template <bool SetParent = true>
   Scope* Scoped(const ast::Node* container, std::invocable auto f) {
     auto* parent = scope_;
-    auto* child = sf_.arena.Alloc<Scope>(container, parent);
+    auto* child = sf_.arena.Alloc<Scope>(container, SetParent ? parent : nullptr);
     scope_ = child;
 
     //
@@ -295,8 +297,7 @@ bool Binder::Inspect(const ast::Node* n) {
 
       const auto* m = n->As<ast::nodes::Module>();
 
-      scope_ = nullptr;
-      Scoped(m, [&] {
+      Scoped<false>(m, [&] {
         Visit(m->defs);
         if (m->name) {
           const auto name = Lit(std::addressof(*m->name));
