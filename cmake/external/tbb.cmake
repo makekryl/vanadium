@@ -6,6 +6,10 @@ FetchContent_Declare(
 )
 
 set(TBB_TEST OFF)
+if(CMAKE_BUILD_TYPE STREQUAL "Release") # TODO
+  add_compile_options(-Wno-error=stringop-overflow)
+  set(BUILD_SHARED_LIBS OFF)
+endif()
 
 FetchContent_MakeAvailable(tbb)
 

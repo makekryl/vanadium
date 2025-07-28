@@ -25,7 +25,8 @@ export class Client {
   }
 
   async initialize(context: vscode.ExtensionContext): Promise<void> {
-    const exe = '/workspaces/vanadium/build/Debug/bin/lsp/vanadiumd'; // TODO
+    // const exe = '/workspaces/vanadium/build/Debug/bin/lsp/vanadiumd'; // TODO
+    const exe = `${context.extensionPath}/bin/vanadiumd`;
     this.start(context, exe);
   }
 

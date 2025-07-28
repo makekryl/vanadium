@@ -254,6 +254,10 @@ bool Binder::Hoist(const ast::Node* n) {
       HoistName<ast::nodes::ClassTypeDecl, TargetSetPtr>(n);
       return false;
     }
+    case ast::NodeKind::PortTypeDecl: {
+      HoistName<ast::nodes::PortTypeDecl, TargetSetPtr>(n);
+      return false;
+    }
 
     case ast::NodeKind::EnumTypeDecl: {
       const auto* m = n->As<ast::nodes::EnumTypeDecl>();
@@ -408,6 +412,23 @@ bool Binder::Inspect(const ast::Node* n) {
             m,
             flags,
             &members,
+        });
+        // TODO
+      }
+
+      return false;
+    }
+
+    case ast::NodeKind::PortTypeDecl: {
+      const auto* m = n->As<ast::nodes::PortTypeDecl>();
+
+      Visit(m->attrs);
+
+      if (m->name) {
+        AddSymbol({
+            Lit(std::addressof(*m->name)),
+            m,
+            SymbolFlags::kPort,
         });
         // TODO
       }

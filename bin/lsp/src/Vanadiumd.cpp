@@ -1,6 +1,7 @@
 #include <chrono>
 #include <csignal>
 #include <iostream>
+#include <print>
 #include <stacktrace>
 #include <thread>
 
@@ -17,6 +18,8 @@ void WaitDebugger() {
 }  // namespace
 
 int main() {
+  std::println(stderr, "\nWaiting for debugger to attach...\n");
+
   // WaitDebugger();
   // std::this_thread::sleep_for(std::chrono::seconds(12));
 

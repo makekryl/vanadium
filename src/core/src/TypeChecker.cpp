@@ -1001,7 +1001,8 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
         case ast::TokenKind::DEC:
         case ast::TokenKind::MUL:
         case ast::TokenKind::DIV:
-          if (x_sym && x_sym != &builtins::kInteger && x_sym != &builtins::kFloat) [[unlikely]] {
+          if (x_sym && x_sym != &builtins::kInteger && x_sym != &builtins::kFloat &&
+              !(x_sym->Flags() & semantic::SymbolFlags::kEnumMember)) [[unlikely]] {
             EmitError(TypeError{
                 .range = m->x->nrange,
                 .message = std::format("integer or float expected, got '{}'", x_sym->GetName()),
@@ -1243,6 +1244,15 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
       const auto* m = n->As<ast::nodes::Ident>();
       if (desired_type && (desired_type->Flags() & semantic::SymbolFlags::kEnum)) {
         resulting_type = ResolveExprSymbol(&sf_, scope_, m);
+
+        if (resulting_type &&
+            (resulting_type->Flags() & (semantic::SymbolFlags::kVariable | semantic::SymbolFlags::kArgument))) {
+          const auto* type_sym = ResolveExprType(&sf_, scope_, m);
+          if (type_sym && (type_sym->Flags() & semantic::SymbolFlags::kEnum)) {
+            resulting_type = type_sym;
+          }
+        }
+
         break;
       }
       resulting_type = ResolveExprType(&sf_, scope_, m);

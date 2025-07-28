@@ -75,6 +75,8 @@ enum Value : std::uint32_t {
   kBuiltinDef = 1 << 19,
 
   kTemplateSpec = 1 << 20,
+
+  kPort = 1 << 21,
 };
 }
 

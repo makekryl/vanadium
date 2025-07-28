@@ -86,16 +86,20 @@ std::optional<SymbolSearchResult> FindSymbol(const core::SourceFile* file, const
   }
 
   const core::semantic::Scope* scope = core::semantic::utils::FindScope(file->module->scope, target_node);
-  const auto* expected_type = core::checker::ext::DeduceExpectedType(file, scope, target_node);
-  if (expected_type && (expected_type->Flags() & core::semantic::SymbolFlags::kEnum)) {
-    return SymbolSearchResult{
-        .node = n,
-        .scope = nullptr,
-        .symbol = expected_type->Members()->Lookup(file->Text(n)),
-    };
-  }
 
   const auto* sym = core::checker::ResolveExprSymbol(file, scope, target_node->As<core::ast::nodes::Expr>());
+
+  const auto* expected_type = core::checker::ext::DeduceExpectedType(file, scope, target_node);
+  if (expected_type && (expected_type->Flags() & core::semantic::SymbolFlags::kEnum)) {
+    if (const auto* member_sym = expected_type->Members()->Lookup(file->Text(n)); member_sym) {
+      return SymbolSearchResult{
+          .node = n,
+          .scope = nullptr,
+          .symbol = member_sym,
+      };
+    }
+  }
+
   if (!sym) {
     return std::nullopt;
   }
