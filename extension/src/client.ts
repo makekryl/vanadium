@@ -11,8 +11,6 @@ export class Client {
   private traceOutputChannel: vscode.OutputChannel;
   private clientOptions: LanguageClientOptions;
   private client?: LanguageClient;
-  private exe: string | undefined;
-  private onStartedCallbacks: Set<() => void> = new Set();
 
   constructor(outputChannel: vscode.OutputChannel, traceOutputChannel: vscode.OutputChannel) {
     this.outputChannel = outputChannel;
@@ -24,24 +22,15 @@ export class Client {
     };
   }
 
-  async initialize(context: vscode.ExtensionContext): Promise<void> {
-    // const exe = '/workspaces/vanadium/build/Debug/bin/lsp/vanadiumd'; // TODO
-    const exe = `${context.extensionPath}/bin/vanadiumd`;
-    this.start(context, exe);
-  }
-
-  async start(_context: vscode.ExtensionContext, exe: string): Promise<void> {
-    this.exe = exe;
-    this.outputChannel.appendLine(`Resolved to ${this.exe}`);
-
+  async start(ctx: vscode.ExtensionContext): Promise<void> {
     const serverOptions: ServerOptions = {
       run: {
-        command: this.exe,
+        command: `${ctx.extensionPath}/bin/vanadiumd`,
         args: [],
         transport: TransportKind.stdio,
       },
       debug: {
-        command: this.exe,
+        command: '/workspaces/vanadium/build/Debug/bin/lsp/vanadiumd', // TODO
         args: [],
         transport: TransportKind.stdio,
       },
@@ -59,23 +48,7 @@ export class Client {
     await this.client.start();
   }
 
-  getCurrentExe(): string | undefined {
-    return this.exe;
-  }
-
-  onStarted(callback: () => void): vscode.Disposable {
-    if (this.exe) {
-      callback();
-      return new vscode.Disposable(() => {});
-    }
-
-    this.onStartedCallbacks.add(callback);
-    return new vscode.Disposable(() => {
-      this.onStartedCallbacks.delete(callback);
-    });
-  }
-
-  async restart(_context: vscode.ExtensionContext): Promise<void> {
+  async restart(_ctx: vscode.ExtensionContext): Promise<void> {
     if (!this.client) {
       return Promise.reject(new Error('Language client is not initialized'));
     }

@@ -3,11 +3,7 @@ project(vanadium)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
-# set(VANADIUM_USE_ASAN ON)
-
-if(CMAKE_BUILD_TYPE STREQUAL "Release") # TODO
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++ -static")
-endif()
+set(VANADIUM_USE_ASAN ON)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 

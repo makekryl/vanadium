@@ -21,7 +21,7 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(status);
   status.show();
 
-  await client.initialize(context);
+  await client.start(context);
 }
 
 export async function deactivate(): Promise<void> {}
