@@ -16,7 +16,7 @@ rpc::ExpectedResult<lsp::CompletionResult> methods::textDocument::completion::op
 
   const auto* n = detail::FindNode(file, params.position);
 
-  constexpr std::size_t kMaxCompletionItems = 80;
+  constexpr std::size_t kMaxCompletionItems = 120;
 
   std::vector<lsp::CompletionItem> items;
   detail::CollectCompletions(file, n, ctx->TemporaryArena(), items, kMaxCompletionItems);

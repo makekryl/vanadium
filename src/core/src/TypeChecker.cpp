@@ -723,6 +723,7 @@ class BasicTypeChecker {
 
   struct ArgumentsTypeCheckOptions {
     bool is_union{false};
+    bool allow_missing_fields{false};
   };
 
   template <ast::IsNode TParamDescriptorNode, ArgumentsTypeCheckOptions Options>
@@ -792,7 +793,7 @@ void BasicTypeChecker::PerformArgumentsTypeCheck(std::span<const ast::nodes::Exp
   const auto minimal_args_cnt = static_cast<std::size_t>(std::ranges::count_if(params, is_param_required));
   const auto maximal_args_cnt = params.size();
 
-  if constexpr (!Options.is_union) {
+  if constexpr (!Options.is_union && !Options.allow_missing_fields) {
     if (args_count < minimal_args_cnt || args_count > maximal_args_cnt) {
       EmitError(TypeError{
               .range = (args_count < minimal_args_cnt) ?
@@ -1135,10 +1136,18 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
                                                                            return false;
                                                                          });
       } else {
-        PerformArgumentsTypeCheck<ast::nodes::Field>(m->list, m->nrange, record_file, record_sym, record_decl->fields,
-                                                     [](const ast::nodes::Field* field) {
-                                                       return !field->optional;
-                                                     });
+        // TODO: cleanup, calls below differ only in compile-time opts (.allow_missing_fields = true)
+        if (m->parent->nkind == ast::NodeKind::TemplateDecl && m->parent->As<ast::nodes::TemplateDecl>()->base) {
+          PerformArgumentsTypeCheck<ast::nodes::Field, {.allow_missing_fields = true}>(
+              m->list, m->nrange, record_file, record_sym, record_decl->fields, [](const ast::nodes::Field* field) {
+                return !field->optional;
+              });
+        } else {
+          PerformArgumentsTypeCheck<ast::nodes::Field>(m->list, m->nrange, record_file, record_sym, record_decl->fields,
+                                                       [](const ast::nodes::Field* field) {
+                                                         return !field->optional;
+                                                       });
+        }
       }
 
       break;
