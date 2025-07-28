@@ -306,6 +306,9 @@ const semantic::Symbol* ResolveAliasedType(const semantic::Symbol* sym) {
   while (decl && decl->nkind == ast::NodeKind::RefSpec) {
     const auto* file = ast::utils::SourceFileOf(decl);
     sym = ResolveExprType(file, file->module->scope, decl->As<ast::nodes::RefSpec>()->x);
+    if (!sym) [[unlikely]] {
+      break;
+    }
     decl = sym->Declaration();
   }
 

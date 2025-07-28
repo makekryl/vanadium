@@ -56,27 +56,30 @@ enum Value : std::uint32_t {
   kClass = 1 << 10,
   kClassType = kType | kClass,
 
-  kEnum = 1 << 11,
+  kConstructor = 1 << 11,
+  kConstructorFunction = kFunction | kConstructor,
+
+  kEnum = 1 << 12,
   kEnumType = kType | kEnum,
 
-  kSubType = 1 << 12,
+  kSubType = 1 << 13,
   kSubTypeType = kType | kSubType,
 
-  kThis = 1 << 13,
-  kField = 1 << 14,
-  kEnumMember = 1 << 15,
+  kThis = 1 << 14,
+  kField = 1 << 15,
+  kEnumMember = 1 << 16,
 
-  kArray = 1 << 16,
+  kArray = 1 << 17,
 
-  kBuiltin = 1 << 17,
+  kBuiltin = 1 << 18,
   kBuiltinType = kType | kBuiltin,
-  kBuiltinString = 1 << 18,
+  kBuiltinString = 1 << 19,
   kBuiltinStringType = kType | kBuiltin | kBuiltinString,
-  kBuiltinDef = 1 << 19,
+  kBuiltinDef = 1 << 20,
 
-  kTemplateSpec = 1 << 20,
+  kTemplateSpec = 1 << 21,
 
-  kPort = 1 << 21,
+  kPort = 1 << 22,
 };
 }
 

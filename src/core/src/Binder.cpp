@@ -281,6 +281,11 @@ bool Binder::Hoist(const ast::Node* n) {
       return false;
     }
 
+    case ast::NodeKind::ConstructorDecl: {
+      (this->*TargetSetPtr).insert("create");
+      return false;
+    }
+
     default:
       break;
   }
@@ -663,6 +668,24 @@ bool Binder::Inspect(const ast::Node* n) {
             SymbolFlags::kThis,
         });
 
+        if (!hoisted_inner_names_.contains("create")) {
+          auto* pseudoctor = sf_.arena.Alloc<ast::nodes::ConstructorDecl>();
+          pseudoctor->parent = const_cast<ast::nodes::ClassTypeDecl*>(m);
+          pseudoctor->nrange = m->nrange;
+          pseudoctor->body = [&] {
+            auto* pseudobody = sf_.arena.Alloc<ast::nodes::BlockStmt>();
+            pseudobody->parent = pseudoctor;
+            pseudobody->nrange = {};
+            return pseudobody;
+          }();
+          AddSymbol({
+              "create",
+              pseudoctor,
+              SymbolFlags::kConstructorFunction,
+              scope_,
+          });
+        }
+
         const auto process = [&] {
           Visit(m->defs);
         };
@@ -731,7 +754,7 @@ bool Binder::Inspect(const ast::Node* n) {
       AddSymbol({
           "create",
           m,
-          SymbolFlags::kFunction,
+          SymbolFlags::kConstructorFunction,
           originated_scope,
       });
 
