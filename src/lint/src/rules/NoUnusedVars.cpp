@@ -50,6 +50,15 @@ void CheckScope(const std::pair<NoUnusedVars*, Context&> rule_ctx, const core::s
         }
         return false;
       }
+      case core::ast::NodeKind::AssignmentExpr: {
+        const auto* ae = n->As<core::ast::nodes::AssignmentExpr>();
+        if (ae->parent->nkind == core::ast::NodeKind::CompositeLiteral ||
+            ae->parent->nkind == core::ast::NodeKind::ParenExpr) {
+          core::ast::Inspect(ae->value, self);
+          return false;
+        }
+        return true;
+      }
       case core::ast::NodeKind::Ident: {
         used_vars.emplace(ctx.GetFile().Text(n));
         return false;
@@ -58,7 +67,6 @@ void CheckScope(const std::pair<NoUnusedVars*, Context&> rule_ctx, const core::s
         return true;
       }
     }
-    return true;
   };
 
   const auto* container = scope->Container();

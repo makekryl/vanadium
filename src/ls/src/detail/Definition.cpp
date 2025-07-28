@@ -77,7 +77,7 @@ std::optional<SymbolSearchResult> FindSymbol(const core::SourceFile* file, const
 
       return SymbolSearchResult{
           .node = n,
-          .scope = scope,
+          .scope = nullptr,
           .symbol = usym->Members()->Lookup(property_name),
       };
     }

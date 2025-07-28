@@ -49,57 +49,6 @@ const ConcreteNode* BisectNodePos(const std::vector<ConcreteNode*>& list, pos_t 
 const Node* GetNodeAt(const AST& ast, pos_t pos) {
   const Node* candidate;
   ast.root->Accept([&](this auto&& self, const Node* n) {
-    switch (n->nkind) {
-      case NodeKind::Module: {
-        const auto* m = n->As<nodes::Module>();
-        if (m->name) {
-          Inspect(std::addressof(*m->name), self);
-        }
-        if (m->language) [[unlikely]] {
-          Inspect(m->language, self);
-        }
-        if (m->with) [[unlikely]] {
-          Inspect(m->with, self);
-        }
-
-        const auto* b = BisectNodePos(m->defs, pos);
-        if (b) {
-          Inspect(b, self);
-        }
-        return false;
-      }
-
-      case NodeKind::BlockStmt: {
-        const auto* m = n->As<nodes::BlockStmt>();
-        const auto* b = BisectNodePos(m->stmts, pos);
-        if (b) {
-          Inspect(b, self);
-        }
-        return false;
-      }
-
-      case NodeKind::CompositeLiteral: {
-        const auto* m = n->As<nodes::CompositeLiteral>();
-        const auto* b = BisectNodePos(m->list, pos);
-        if (b) {
-          Inspect(b, self);
-        }
-        return false;
-      }
-
-      case NodeKind::ParenExpr: {
-        const auto* m = n->As<nodes::ParenExpr>();
-        const auto* b = BisectNodePos(m->list, pos);
-        if (b) {
-          Inspect(b, self);
-        }
-        return false;
-      }
-
-      default:
-        break;
-    }
-
     bool pass;
     if (n->nkind == NodeKind::SelectorExpr) {
       const auto* head = TraverseSelectorExpressionStart(n->As<nodes::SelectorExpr>());
@@ -110,6 +59,58 @@ const Node* GetNodeAt(const AST& ast, pos_t pos) {
 
     if (pass) {
       candidate = n;
+
+      switch (n->nkind) {
+        case NodeKind::Module: {
+          const auto* m = n->As<nodes::Module>();
+          if (m->name) {
+            Inspect(std::addressof(*m->name), self);
+          }
+          if (m->language) [[unlikely]] {
+            Inspect(m->language, self);
+          }
+          if (m->with) [[unlikely]] {
+            Inspect(m->with, self);
+          }
+
+          const auto* b = BisectNodePos(m->defs, pos);
+          if (b) {
+            Inspect(b, self);
+          }
+          return false;
+        }
+
+        case NodeKind::BlockStmt: {
+          const auto* m = n->As<nodes::BlockStmt>();
+          const auto* b = BisectNodePos(m->stmts, pos);
+          if (b) {
+            Inspect(b, self);
+          }
+          return false;
+        }
+
+        case NodeKind::CompositeLiteral: {
+          const auto* m = n->As<nodes::CompositeLiteral>();
+          const auto* b = BisectNodePos(m->list, pos);
+          if (b) {
+            Inspect(b, self);
+          }
+          return false;
+        }
+
+        case NodeKind::ParenExpr: {
+          const auto* m = n->As<nodes::ParenExpr>();
+          const auto* b = BisectNodePos(m->list, pos);
+          if (b) {
+            Inspect(b, self);
+          }
+          return false;
+        }
+
+        default:
+          break;
+      }
+
       return true;
     }
     return false;
