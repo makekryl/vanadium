@@ -13,6 +13,7 @@
 #include "LanguageServerMethods.h"
 #include "Semantic.h"
 #include "detail/Definition.h"
+#include "magic_enum/magic_enum.hpp"
 #include "utils/ASTUtils.h"
 
 namespace vanadium::ls {
@@ -384,7 +385,7 @@ Transitively imports modules:
                                provider_file->ast.Text(valdecl));
         break;
       }
-      content += "TODO";
+      content += std::format("TODO: provide hover details for '{}'", magic_enum::enum_name(decl->nkind));
       break;
   }
 
