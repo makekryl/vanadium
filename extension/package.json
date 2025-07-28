@@ -69,6 +69,9 @@
     "test": "vscode-test",
     "grammar:build": "js-yaml syntaxes/src/ttcn3.tmLanguage.yml > syntaxes/ttcn3.tmLanguage.json"
   },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
     "@types/node": "20.x",
@@ -80,8 +83,7 @@
     "eslint": "^9.25.1",
     "js-yaml": "^4.1.0",
     "prettier": "^3.5.3",
-    "typescript": "^5.8.3",
-    "vscode-languageclient": "^9.0.1"
+    "typescript": "^5.8.3"
   },
   "packageManager": "npm@10.9.2"
 }
