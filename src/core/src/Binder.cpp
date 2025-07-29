@@ -672,6 +672,41 @@ bool Binder::Inspect(const ast::Node* n) {
           auto* pseudoctor = sf_.arena.Alloc<ast::nodes::ConstructorDecl>();
           pseudoctor->parent = const_cast<ast::nodes::ClassTypeDecl*>(m);
           pseudoctor->nrange = m->nrange;
+          pseudoctor->params = [&] {
+            auto* pseudoparams = sf_.arena.Alloc<ast::nodes::FormalPars>();
+            pseudoparams->parent = pseudoctor;
+            pseudoparams->nrange = {};
+            //
+            m->Accept([&](const ast::Node* cn) {
+              if (cn->nkind == ast::NodeKind::Definition) {
+                return true;
+              }
+              if (cn->nkind == ast::NodeKind::ValueDecl) {
+                const auto* cvd = cn->As<ast::nodes::ValueDecl>();
+                for (const auto* cd : cvd->decls) {
+                  pseudoparams->list.emplace_back([&] {
+                    auto* pseudopar = sf_.arena.Alloc<ast::nodes::FormalPar>();
+                    pseudopar->parent = pseudoctor;
+                    pseudopar->nrange = cd->nrange;
+
+                    pseudopar->arraydef = cd->arraydef;
+                    pseudopar->modif = cvd->modif;
+                    pseudopar->restriction = cvd->template_restriction;
+                    pseudopar->type = cvd->type;
+
+                    pseudopar->name.emplace();
+                    pseudopar->name->parent = cd->name->parent;
+                    pseudopar->name->nrange = cd->name->nrange;
+
+                    return pseudopar;
+                  }());
+                }
+              }
+              return false;
+            });
+            //
+            return pseudoparams;
+          }();
           pseudoctor->body = [&] {
             auto* pseudobody = sf_.arena.Alloc<ast::nodes::BlockStmt>();
             pseudobody->parent = pseudoctor;
@@ -838,7 +873,7 @@ bool Binder::Inspect(const ast::Node* n) {
 }
 
 void Bind(SourceFile& sf) {
-  semantic::Binder(sf).Bind();
+  Binder(sf).Bind();
 }
 
 }  // namespace semantic
