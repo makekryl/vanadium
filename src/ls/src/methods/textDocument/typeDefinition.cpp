@@ -19,7 +19,12 @@ namespace vanadium::ls {
 template <>
 rpc::ExpectedResult<lsp::TypeDefinitionResult> methods::textDocument::typeDefinition::operator()(
     LsContext& ctx, const lsp::TypeDefinitionParams& params) {
-  const auto& [project, path] = ctx->ResolveFile(params.textDocument.uri);
+  // TODO: shorten the handler, use ctx->WithFile
+  const auto& resolution = ctx->ResolveFile(params.textDocument.uri);
+  if (!resolution) {
+    return nullptr;
+  }
+  const auto& [project, path] = *resolution;
   const auto* file = project.program.GetFile(path);
 
   const auto result = detail::FindSymbol(file, params.position);

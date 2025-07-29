@@ -10,7 +10,11 @@
 namespace vanadium::ls {
 template <>
 void methods::textDocument::didChange::operator()(LsContext& ctx, const lsp::DidChangeTextDocumentParams& params) {
-  const auto& [project, path] = ctx->ResolveFile(params.textDocument.uri);
+  const auto& resolution = ctx->ResolveFile(params.textDocument.uri);
+  if (!resolution) {
+    return;
+  }
+  const auto& [project, path] = *resolution;
 
   ctx->file_versions[path] = params.textDocument.version;
 

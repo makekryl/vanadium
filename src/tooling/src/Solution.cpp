@@ -2,6 +2,7 @@
 
 #include <expected>
 #include <filesystem>
+#include <print>
 
 #include "Project.h"
 
@@ -32,14 +33,17 @@ void InitSubproject(ProjectEntry& subproject, std::string path, std::unique_ptr<
     }
   };
 
+  std::println(stderr, "Indexing project '{}'", subproject.path);
   subproject.program.Update([&](const auto& modify) {
-    subproject.dir->VisitFiles([&](const std::string& path) {
-      if (!path.ends_with(".ttcn")) {
+    subproject.dir->VisitFiles([&](const std::string& filepath) {
+      std::println(stderr, " * '{}'", filepath);
+      if (!filepath.ends_with(".ttcn")) {
         return;
       }
-      modify.update(std::format("{}/{}", subproject.path, path), read_file);
+      modify.update(std::format("{}/{}", subproject.path, filepath), read_file);
     });
   });
+  std::println(stderr, " {} files added for project '{}'", subproject.program.Files().size(), subproject.path);
 }
 }  // namespace
 

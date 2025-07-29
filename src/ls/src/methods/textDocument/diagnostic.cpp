@@ -3,23 +3,20 @@
 #include "LSProtocol.h"
 #include "LanguageServerContext.h"
 #include "LanguageServerMethods.h"
+#include "Program.h"
 
 namespace vanadium::ls {
 template <>
 rpc::ExpectedResult<lsp::DocumentDiagnosticReport> methods::textDocument::diagnostic::operator()(
     LsContext& ctx, const lsp::DocumentDiagnosticParams& params) {
-  const auto& [project, path] = ctx->ResolveFile(params.textDocument.uri);
-  const auto* file = project.program.GetFile(path);
-  // for (auto& path : ctx->program.Files() | std::views::keys) {
-  //   std::println(stderr, "- '{}'", path);
-  // }
-  if (!file) {
-    std::abort();
-  }
-
-  return lsp::RelatedFullDocumentDiagnosticReport{
-      .kind = "full",
-      .items = detail::CollectDiagnostics(ctx, project.program, *file),
-  };
+  auto res = ctx->WithFile<lsp::DocumentDiagnosticReport>(
+      params.textDocument.uri,
+      [&](const core::Program& program, const core::SourceFile& file) -> lsp::DocumentDiagnosticReport {
+        return lsp::RelatedFullDocumentDiagnosticReport{
+            .kind = "full",
+            .items = detail::CollectDiagnostics(ctx, program, file),
+        };
+      });
+  return res.value_or(lsp::RelatedFullDocumentDiagnosticReport{.kind = "full"});
 }
 }  // namespace vanadium::ls

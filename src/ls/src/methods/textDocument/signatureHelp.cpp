@@ -74,7 +74,12 @@ std::optional<std::size_t> GetCurrentArgumentIndex(const ContainerNode* containe
 template <>
 rpc::ExpectedResult<lsp::SignatureHelpResult> methods::textDocument::signatureHelp::operator()(
     LsContext& ctx, const lsp::SignatureHelpParams& params) {
-  const auto& [project, path] = ctx->ResolveFile(params.textDocument.uri);
+  // TODO: shorten the handler, use ctx->WithFile
+  const auto& resolution = ctx->ResolveFile(params.textDocument.uri);
+  if (!resolution) {
+    return nullptr;
+  }
+  const auto& [project, path] = *resolution;
   const auto* file = project.program.GetFile(path);
 
   if (!file->module) {

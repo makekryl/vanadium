@@ -17,7 +17,12 @@ namespace vanadium::ls {
 template <>
 rpc::ExpectedResult<lsp::CodeActionResult> methods::textDocument::codeAction::operator()(
     LsContext& ctx, const lsp::CodeActionParams& params) {
-  const auto& [project, path] = ctx->ResolveFile(params.textDocument.uri);
+  // TODO: shorten the handler, use ctx->WithFile
+  const auto& resolution = ctx->ResolveFile(params.textDocument.uri);
+  if (!resolution) {
+    return nullptr;
+  }
+  const auto& [project, path] = *resolution;
   const auto* file = project.program.GetFile(path);
 
   std::vector<lsp::CodeAction> actions;

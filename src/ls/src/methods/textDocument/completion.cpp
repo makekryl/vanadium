@@ -11,15 +11,17 @@ namespace vanadium::ls {
 template <>
 rpc::ExpectedResult<lsp::CompletionResult> methods::textDocument::completion::operator()(
     LsContext& ctx, const lsp::CompletionParams& params) {
-  const auto& [project, path] = ctx->ResolveFile(params.textDocument.uri);
-  const auto* file = project.program.GetFile(path);
+  auto res = ctx->WithFile<lsp::CompletionResult>(
+      params.textDocument.uri, [&](const core::Program&, const core::SourceFile& file) -> lsp::CompletionResult {
+        const auto* n = detail::FindNode(&file, params.position);
 
-  const auto* n = detail::FindNode(file, params.position);
+        constexpr std::size_t kMaxCompletionItems = 120;
 
-  constexpr std::size_t kMaxCompletionItems = 120;
+        std::vector<lsp::CompletionItem> items;
+        detail::CollectCompletions(&file, n, ctx->TemporaryArena(), items, kMaxCompletionItems);
 
-  std::vector<lsp::CompletionItem> items;
-  detail::CollectCompletions(file, n, ctx->TemporaryArena(), items, kMaxCompletionItems);
-  return items;
+        return items;
+      });
+  return res.value_or(nullptr);
 }
 }  // namespace vanadium::ls

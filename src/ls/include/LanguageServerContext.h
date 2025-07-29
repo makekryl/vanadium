@@ -5,11 +5,13 @@
 #include <tbb/task_arena.h>
 
 #include <filesystem>
+#include <type_traits>
 #include <unordered_map>
 
 #include "Arena.h"
 #include "LSConnection.h"
 #include "Linter.h"
+#include "Program.h"
 #include "Solution.h"
 
 // TODO:
@@ -35,12 +37,26 @@ struct LsState {
     return *TemporaryArena().Alloc<T>(std::forward<Args>(args)...);
   }
 
-  // TODO: those three functions are a temporary solution
-  [[nodiscard]] std::pair<tooling::ProjectEntry&, std::string> ResolveFile(std::string_view file_uri) {
+  template <typename Result, typename F>
+    requires(std::is_invocable_r_v<Result, F, core::Program&, core::SourceFile&>)
+  std::optional<Result> WithFile(std::string_view file_uri, F f) {
+    if (auto resolution = ResolveFile(file_uri)) {
+      auto& [project, path] = *resolution;
+      return f(project.program, *project.program.GetFile(path));
+    }
+    return std::nullopt;
+  }
+
+  // TODO: these three functions are a temporary solution
+  [[nodiscard]] std::optional<std::pair<tooling::ProjectEntry&, std::string>> ResolveFile(std::string_view file_uri) {
     constexpr std::size_t kSchemaLength = std::string_view{"file://"}.size();
     const std::string_view path = file_uri.substr(kSchemaLength, file_uri.size() - kSchemaLength);
 
-    return {*solution->ProjectOf(path), std::filesystem::relative(path, solution->RootDirectory()).string()};
+    auto* project = solution->ProjectOf(path);
+    if (!project) {
+      return std::nullopt;
+    }
+    return {{*project, std::filesystem::relative(path, solution->RootDirectory()).string()}};
   }
   [[nodiscard]] std::string FileUriToPath(std::string_view file_uri) const {
     constexpr std::size_t kSchemaLength = std::string_view{"file://"}.size();

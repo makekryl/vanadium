@@ -69,7 +69,12 @@ std::string BuildMarkdownParameterList(const core::ast::AST& ast, std::span<cons
 template <>
 rpc::ExpectedResult<lsp::HoverResult> methods::textDocument::hover::operator()(LsContext& ctx,
                                                                                const lsp::HoverParams& params) {
-  const auto& [project, path] = ctx->ResolveFile(params.textDocument.uri);
+  // TODO: shorten the handler, use ctx->WithFile
+  const auto& resolution = ctx->ResolveFile(params.textDocument.uri);
+  if (!resolution) {
+    return nullptr;
+  }
+  const auto& [project, path] = *resolution;
   const auto* file = project.program.GetFile(path);
 
   const auto result = detail::FindSymbol(file, params.position);

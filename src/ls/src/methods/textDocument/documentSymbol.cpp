@@ -1,5 +1,6 @@
 #include <memory>
 #include <optional>
+#include <print>
 #include <ranges>
 #include <stack>
 #include <vector>
@@ -19,7 +20,7 @@ namespace vanadium::ls {
 
 namespace {
 void DumpParams(const core::SourceFile* file, const core::ast::nodes::FormalPars* params, std::string& buf) {
-  if (params->list.empty()) {
+  if (!params || params->list.empty()) {
     return;
   }
 
@@ -53,8 +54,18 @@ void DumpParams(const core::SourceFile* file, const core::ast::nodes::FormalPars
 template <>
 rpc::ExpectedResult<lsp::DocumentSybmolResult> methods::textDocument::documentSymbol::operator()(
     LsContext& ctx, const lsp::DocumentSymbolParams& params) {
-  const auto& [project, path] = ctx->ResolveFile(params.textDocument.uri);
+  // TODO: shorten the handler, use ctx->WithFile
+  const auto& resolution = ctx->ResolveFile(params.textDocument.uri);
+  if (!resolution) {
+    return nullptr;
+  }
+  const auto& [project, path] = *resolution;
+
   const auto* file = project.program.GetFile(path);
+  if (!file) {
+    return nullptr;
+  }
+  std::println(stderr, "documentSymbol({}) {}", path, file->module ? "+" : "-");
 
   const auto lit = [&](const std::optional<core::ast::nodes::Ident>& ident) -> std::string_view {
     if (!ident) {

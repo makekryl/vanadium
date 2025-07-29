@@ -18,7 +18,12 @@ namespace vanadium::ls {
 template <>
 rpc::ExpectedResult<lsp::RenameResult> methods::textDocument::rename::operator()(LsContext& ctx,
                                                                                  const lsp::RenameParams& params) {
-  const auto& [project, path] = ctx->ResolveFile(params.textDocument.uri);
+  // TODO: shorten the handler, use ctx->WithFile
+  const auto& resolution = ctx->ResolveFile(params.textDocument.uri);
+  if (!resolution) {
+    return nullptr;
+  }
+  const auto& [project, path] = *resolution;
   const auto* file = project.program.GetFile(path);
 
   const auto* n = core::ast::utils::GetNodeAt(file->ast, file->ast.lines.GetPosition(core::ast::Location{

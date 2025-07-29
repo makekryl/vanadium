@@ -16,14 +16,15 @@ namespace vanadium::ls {
 template <>
 rpc::ExpectedResult<lsp::InlayHintResult> methods::textDocument::inlayHint::operator()(
     LsContext& ctx, const lsp::InlayHintParams& params) {
-  const auto& [project, path] = ctx->ResolveFile(params.textDocument.uri);
-  const auto* file = project.program.GetFile(path);
+  auto res = ctx->WithFile<lsp::InlayHintResult>(
+      params.textDocument.uri, [&](const core::Program&, const core::SourceFile& file) -> lsp::InlayHintResult {
+        if (!file.module) {
+          return nullptr;
+        }
 
-  if (!file->module) {
-    return nullptr;
-  }
-
-  const auto requested_range = conv::FromLSPRange(params.range, file->ast);
-  return detail::CollectInlayHints(file, requested_range, ctx->TemporaryArena());
+        const auto requested_range = conv::FromLSPRange(params.range, file.ast);
+        return detail::CollectInlayHints(&file, requested_range, ctx->TemporaryArena());
+      });
+  return res.value_or(nullptr);
 }
 }  // namespace vanadium::ls

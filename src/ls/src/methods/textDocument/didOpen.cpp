@@ -1,5 +1,6 @@
 #include <glaze/ext/jsonrpc.hpp>
 #include <glaze/json/write.hpp>
+#include <print>
 
 #include "LSProtocol.h"
 #include "LanguageServerContext.h"
@@ -9,7 +10,13 @@
 namespace vanadium::ls {
 template <>
 void methods::textDocument::didOpen::operator()(LsContext& ctx, const lsp::DidOpenTextDocumentParams& params) {
-  const auto& [project, path] = ctx->ResolveFile(params.textDocument.uri);
+  const auto& resolution = ctx->ResolveFile(params.textDocument.uri);
+  if (!resolution) {
+    std::println(stderr, "'{}' does not belong to any project", params.textDocument.uri);
+    return;
+  }
+
+  const auto& [project, path] = *resolution;
 
   const auto [it, inserted] = ctx->file_versions.try_emplace(path, params.textDocument.version);
   if (!inserted && it->second == params.textDocument.version) {
