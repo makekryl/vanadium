@@ -13,12 +13,13 @@ Solution::Solution(std::filesystem::path root_directory, Project&& root_project)
 
 namespace {
 void InitSubproject(ProjectEntry& subproject, std::string path, std::unique_ptr<tooling::IDirectory>&& dir,
-                    std::string name, std::vector<std::string> references) {
+                    std::string name, std::vector<std::string> references, bool managed) {
   // TODO: think about merging path&dir by relativizing dir->Path()
   subproject.name = std::move(name);
   subproject.path = std::move(path);
   subproject.dir = std::move(dir);
   subproject.references = std::move(references);
+  subproject.managed = managed;
 
   const auto read_file = [&](std::string_view path, std::string& srcbuf) -> void {
     const auto contents = subproject.dir->ReadFile(path, [&](std::size_t size) {
@@ -33,17 +34,14 @@ void InitSubproject(ProjectEntry& subproject, std::string path, std::unique_ptr<
     }
   };
 
-  std::println(stderr, "Indexing project '{}'", subproject.path);
   subproject.program.Update([&](const auto& modify) {
     subproject.dir->VisitFiles([&](const std::string& filepath) {
-      std::println(stderr, " * '{}'", filepath);
       if (!filepath.ends_with(".ttcn")) {
         return;
       }
       modify.update(std::format("{}/{}", subproject.path, filepath), read_file);
     });
   });
-  std::println(stderr, " {} files added for project '{}'", subproject.program.Files().size(), subproject.path);
 }
 }  // namespace
 
@@ -67,14 +65,14 @@ std::expected<Solution, Error> Solution::Load(const std::filesystem::path& direc
     for (const auto& [ext_name, ext_desc] : *root_desc.external) {
       auto& subproject = solution.projects_[ext_name];
       InitSubproject(subproject, ext_desc.path, solution.root_project_.Directory().Subdirectory(ext_desc.path),
-                     ext_name, ext_desc.references.value_or(std::vector<std::string>{}));
+                     ext_name, ext_desc.references.value_or(std::vector<std::string>{}), false);
     }
   }
 
   const auto add_subproject = [&](std::string_view path, const tooling::ProjectManifest& desc) {
     auto& subproject = solution.projects_[desc.project.name];
     InitSubproject(subproject, std::string{path}, solution.root_project_.Directory().Subdirectory(path),
-                   desc.project.name, desc.project.references.value_or(std::vector<std::string>{}));
+                   desc.project.name, desc.project.references.value_or(std::vector<std::string>{}), true);
   };
   if (root_desc.project.subprojects) {
     for (const auto& path : *root_desc.project.subprojects) {

@@ -24,16 +24,9 @@ export class Client {
 
   async start(ctx: vscode.ExtensionContext): Promise<void> {
     const serverOptions: ServerOptions = {
-      run: {
-        command: `${ctx.extensionPath}/bin/vanadiumd`,
-        args: [],
-        transport: TransportKind.stdio,
-      },
-      debug: {
-        command: '/workspaces/vanadium/build/Debug/bin/lsp/vanadiumd', // TODO
-        args: [],
-        transport: TransportKind.stdio,
-      },
+      command: `${ctx.extensionPath}/bin/vanadiumd`,
+      args: [],
+      transport: TransportKind.stdio,
     };
 
     this.client = new LanguageClient(

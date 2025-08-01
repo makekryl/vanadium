@@ -1,7 +1,7 @@
 #include <fmt/color.h>
 #include <oneapi/tbb/task_arena.h>
 
-#include <CLI/CLI.hpp>
+#include <argparse/argparse.hpp>
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
@@ -30,28 +30,27 @@ vanadium::lint::Linter CreateLinter() {
 }  // namespace
 
 int main(int argc, char* argv[]) {
-  CLI::App app{"TTCN-3 Code Static Analyzer"};
+  argparse::ArgumentParser ap("vanadium-tidy");
+  ap.add_description("TTCN-3 source code static analyzer");
   //
-  std::filesystem::path manifest;
-  app.add_option("project", manifest, "Vanadium project directory")  //
-      ->required()
-      ->transform(CLI::Validator{[](std::string& input) -> std::string {
-                                   const std::filesystem::path path = std::filesystem::path(input) / ".vanadiumrc.yml";
-                                   if (!std::filesystem::exists(path)) {
-                                     return "project manifest does not exist";
-                                   }
-                                   input = path.string();
-                                   return std::string{};
-                                 },
-                                 "Vanadium project", "Vanadium project"});
-  //
-  bool use_fix{false};
-  app.add_flag("--fix", use_fix, "autofix if possible");
-  //
-  std::size_t jobs{std::thread::hardware_concurrency()};
-  app.add_option("-j,--jobs", jobs, "number of jobs");
-  //
-  CLI11_PARSE(app, argc, argv);
+  ap.add_argument("--fix").flag().help("apply autofixes where possible");
+  ap.add_argument("-j", "--parallel", "")
+      .default_value(std::thread::hardware_concurrency())
+      .scan<'u', std::uint32_t>()
+      .help("maximum number of worker threads");
+
+  /////////////////////////////////////////////
+  try {
+    ap.parse_args(argc, argv);
+  } catch (const std::exception& err) {
+    std::cerr << err.what() << std::endl;
+    std::cerr << ap;
+    return 1;
+  }
+  /////////////////////////////////////////////
+
+  const auto jobs = ap.get<std::uint32_t>("--parallel");
+  const bool use_autofix = ap["--fix"] == true;  // == true, yes
 
   tbb::task_arena task_arena(jobs);
 
@@ -93,7 +92,7 @@ int main(int argc, char* argv[]) {
     fmt::print(fmt::emphasis::underline | fmt::emphasis::bold, "{}\n", (project->GetPath() / sf.path).string());
 
     auto problems = linter.Lint(program, sf);
-    if (use_fix) {
+    if (use_autofix) {
       const auto initial_problems_count = problems.size();
       const auto&& [fixed_source, refined_problems] = linter.Fix(program, sf, std::move(problems));
       if (fixed_source) {

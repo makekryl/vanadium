@@ -22,6 +22,8 @@ struct ProjectEntry {
   core::Program program;
 
   std::vector<std::string> references;
+
+  bool managed;
 };
 
 class Solution {

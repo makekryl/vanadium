@@ -1,11 +1,30 @@
+import errno
+import os
+from pathlib import Path
 from typing import Literal
 
 from invoke import Context, task
 
 
 @task
+def symlink_vanadiumd(c: Context, config: Literal["Debug", "Release"] = "Debug"):
+  dst = Path("./extension/bin/vanadiumd")
+
+  def _create_symlink():
+    return os.symlink(Path(f"./build/{config}/bin/lsp/vanadiumd").absolute(), dst)
+
+  try:
+    _create_symlink()
+  except OSError as err:
+    if err.errno != errno.EEXIST:
+      raise err
+    dst.unlink()
+    _create_symlink()
+
+
+@task
 def test(c: Context, config: Literal["Debug", "Release"] = "Debug"):
-  c.run(f"ctest --output-on-failure --test-dir build/{config}", pty=True)
+  c.run(f'ctest --output-on-failure --test-dir "./build/{config}"', pty=True)
 
 
 @task
