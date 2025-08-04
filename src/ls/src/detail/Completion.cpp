@@ -241,7 +241,7 @@ std::optional<lsp::CompletionItem> ResolveCompletionItem(const tooling::Solution
   }
   const auto payload = glz::read_json<CompletionItemPayload>(*original_completion.data);
 
-  const auto* project = solution.ProjectOf((solution.RootDirectory() / payload->path).string());
+  const auto* project = solution.ProjectOf((std::filesystem::path(solution.Path().base_path) / payload->path).string());
   const auto* file = project->program.GetFile(payload->path);
 
   lsp::CompletionItem rendition{original_completion};

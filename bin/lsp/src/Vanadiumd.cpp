@@ -3,25 +3,14 @@
 #include <csignal>
 #include <iostream>
 #include <print>
-#include <stacktrace>
 #include <string_view>
 #include <thread>
 
+#include "Bootstrap.h"
 #include "LSTransport.h"
 #include "LanguageServer.h"
 
-#ifndef NDEBUG
 namespace {
-void HandleSignal(int signum) {
-  std::cerr << "RECEIVED SIGNAL " << signum << std::endl;
-  std::cerr << "STACKTRACE:" << std::endl;
-  std::cerr << std::stacktrace::current();
-  std::cerr.flush();
-  std::exit(signum);  // TODO: call original sighandler
-}
-}  // namespace
-#endif
-
 int main(int argc, char* argv[]) {
   argparse::ArgumentParser ap("vanadiumd");
   ap.add_description("TTCN-3 language server");
@@ -47,11 +36,6 @@ int main(int argc, char* argv[]) {
     std::this_thread::sleep_for(std::chrono::seconds(kSecondsToWait));
   }
 
-#ifndef NDEBUG
-  std::signal(SIGABRT, HandleSignal);
-  std::signal(SIGSEGV, HandleSignal);
-#endif
-
   vanadium::lserver::StdioTransport::Setup();
   vanadium::lserver::StdioTransport transport;
 
@@ -59,3 +43,6 @@ int main(int argc, char* argv[]) {
 
   return 0;
 }
+
+vanadium::bin::EntryPoint ls_ep(main);
+}  // namespace

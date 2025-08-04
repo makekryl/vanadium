@@ -5,19 +5,19 @@
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
-#include <filesystem>
 #include <iostream>
 #include <string>
-#include <string_view>
 #include <thread>
 
-#include "Arena.h"
+#include "Bootstrap.h"
 #include "BuiltinRules.h"
 #include "Context.h"
-#include "FunctionRef.h"
+#include "Filesystem.h"
 #include "Linter.h"
 #include "Program.h"
-#include "Project.h"
+#include "Solution.h"
+#include "fmt/core.h"
+#include "impl/SystemFS.h"
 
 namespace {
 vanadium::lint::Linter CreateLinter() {
@@ -27,17 +27,19 @@ vanadium::lint::Linter CreateLinter() {
   linter.RegisterRule<vanadium::lint::rules::NoUnusedImports>();
   return linter;
 }
-}  // namespace
 
 int main(int argc, char* argv[]) {
+  std::uint32_t jobs{std::thread::hardware_concurrency()};
+  bool use_autofix{false};
+  std::string solution_path;
+
   argparse::ArgumentParser ap("vanadium-tidy");
   ap.add_description("TTCN-3 source code static analyzer");
   //
-  ap.add_argument("--fix").flag().help("apply autofixes where possible");
-  ap.add_argument("-j", "--parallel", "")
-      .default_value(std::thread::hardware_concurrency())
-      .scan<'u', std::uint32_t>()
-      .help("maximum number of worker threads");
+  ap.add_argument("--fix").store_into(use_autofix).help("apply autofixes where possible");
+  ap.add_argument("-j", "--parallel", "").store_into(jobs).help("maximum number of worker threads");
+  //
+  ap.add_argument("path").store_into(solution_path).help("solution directory path");
 
   /////////////////////////////////////////////
   try {
@@ -49,72 +51,69 @@ int main(int argc, char* argv[]) {
   }
   /////////////////////////////////////////////
 
-  const auto jobs = ap.get<std::uint32_t>("--parallel");
-  const bool use_autofix = ap["--fix"] == true;  // == true, yes
-
   tbb::task_arena task_arena(jobs);
 
   const auto t_load_begin = std::chrono::steady_clock::now();
-
-  auto project = vanadium::tooling::Project::Load(manifest);
-  vanadium::core::Program program;
-
-  const auto read_file = [&](std::string_view path, vanadium::lib::Arena& arena) -> std::string_view {
-    const auto contents = project->GetFS().ReadFile(path, [&](std::size_t size) {
-      return arena.AllocStringBuffer(size).data();
-    });
-    if (!contents) {
-      // TODO
-      std::abort();
-    }
-    return *contents;
-  };
-  task_arena.execute([&] {
-    program.Commit([&](const auto& modify) {
-      project->VisitFiles([&](const std::string& path) {
-        modify.update(path, read_file);
-      });
-    });
+  auto solution_opt = task_arena.execute([&] {
+    return vanadium::tooling::Solution::Load(
+        vanadium::tooling::fs::Root<vanadium::tooling::fs::SystemFS>(solution_path));
   });
-
+  if (!solution_opt) {
+    fmt::println("{} {}", fmt::format(fmt::fg(fmt::color::red) | fmt::emphasis::bold, "error:"),
+                 solution_opt.error().String());
+    return 2;
+  }
+  auto& solution = *solution_opt;
+  const auto& dir = solution.Path();
   const auto t_load_end = std::chrono::steady_clock::now();
+
+  //
 
   const auto t_lint_begin = std::chrono::steady_clock::now();
 
   std::size_t total_problems = 0;
   std::size_t fixed_problems = 0;
   auto linter = CreateLinter();
-  for (const auto& [virtual_path, sf] : program.Files()) {
-    if (!sf.ast.errors.empty()) {
-      std::cout << "errs in " << sf.path << std::endl;
-      return 1;
+  for (const auto& project : solution.Projects()) {
+    if (!project.managed) {
+      continue;
     }
-    fmt::print(fmt::emphasis::underline | fmt::emphasis::bold, "{}\n", (project->GetPath() / sf.path).string());
 
-    auto problems = linter.Lint(program, sf);
-    if (use_autofix) {
-      const auto initial_problems_count = problems.size();
-      const auto&& [fixed_source, refined_problems] = linter.Fix(program, sf, std::move(problems));
-      if (fixed_source) {
-        if (!project->GetFS().WriteFile(sf.path, *fixed_source)) {
-          // TODO
-          std::puts("FILE WRITE FAILED\n");
-          std::abort();
-        }
-        fixed_problems += (refined_problems.size() >= initial_problems_count)
-                              ? 0
-                              : (initial_problems_count - refined_problems.size());
+    const auto& program = project.program;
+    for (const auto& [virtual_path, sf] : program.Files()) {
+      fmt::print(fmt::emphasis::underline | fmt::emphasis::bold, "{}\n", project.Path().Join(sf.path));
+      if (!sf.ast.errors.empty()) {
+        fmt::println("\tFile has syntax errors");
+        return 2;
       }
-      problems = std::move(refined_problems);
+
+      auto problems = linter.Lint(program, sf);
+      if (use_autofix) {
+        const auto initial_problems_count = problems.size();
+        const auto&& [fixed_source, refined_problems] = linter.Fix(program, sf, std::move(problems));
+        if (fixed_source) {
+          if (const auto& err = dir.WriteFile(sf.path, *fixed_source); err) {
+            fmt::println(
+                "{} {}",
+                fmt::format(fmt::fg(fmt::color::red) | fmt::emphasis::bold, "failed to write to file {}:", sf.path),
+                err->String());
+            return 2;
+          }
+          fixed_problems += (refined_problems.size() >= initial_problems_count)
+                                ? 0
+                                : (initial_problems_count - refined_problems.size());
+        }
+        problems = std::move(refined_problems);
+      }
+      for (const auto& problem : problems) {
+        const auto&& loc = sf.ast.lines.Translate(problem.range.begin);
+        fmt::print(" {}   {}   {}  {}\n",
+                   fmt::format(fmt::fg(fmt::color::black), "{:5}:{:<3}", loc.line + 1, loc.column + 1),
+                   fmt::format(fmt::fg(fmt::color::tomato), "error"), fmt::format("{:<60}", problem.description),
+                   fmt::format(fmt::fg(fmt::color::black), problem.reporter));
+      }
+      total_problems += problems.size();
     }
-    for (const auto& problem : problems) {
-      const auto&& loc = sf.ast.lines.Translate(problem.range.begin);
-      fmt::print(" {}   {}   {}  {}\n",
-                 fmt::format(fmt::fg(fmt::color::black), "{:5}:{:<3}", loc.line + 1, loc.column + 1),
-                 fmt::format(fmt::fg(fmt::color::tomato), "error"), fmt::format("{:<60}", problem.description),
-                 fmt::format(fmt::fg(fmt::color::black), problem.reporter));
-    }
-    total_problems += problems.size();
   }
 
   if (fixed_problems > 0) {
@@ -134,3 +133,6 @@ int main(int argc, char* argv[]) {
 
   return has_problems ? 1 : 0;
 }
+
+vanadium::bin::EntryPoint tidy_ep(main);
+}  // namespace

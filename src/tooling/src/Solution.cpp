@@ -1,102 +1,116 @@
 #include "Solution.h"
 
 #include <expected>
-#include <filesystem>
 #include <print>
 
+#include "Filesystem.h"
+#include "Program.h"
 #include "Project.h"
 
 namespace vanadium::tooling {
 
-Solution::Solution(std::filesystem::path root_directory, Project&& root_project)
-    : root_directory_(std::move(root_directory)), root_project_(std::move(root_project)) {}
+Solution::Solution(Project&& root_project) : root_project_(std::move(root_project)) {}
 
 namespace {
-void InitSubproject(ProjectEntry& subproject, std::string path, std::unique_ptr<tooling::IDirectory>&& dir,
-                    std::string name, std::vector<std::string> references, bool managed) {
-  // TODO: think about merging path&dir by relativizing dir->Path()
-  subproject.name = std::move(name);
-  subproject.path = std::move(path);
-  subproject.dir = std::move(dir);
-  subproject.references = std::move(references);
-  subproject.managed = managed;
+void InitSubproject(SolutionProject& subproject) {
+  const auto& dir = subproject.project.Path();
 
-  const auto read_file = [&](std::string_view path, std::string& srcbuf) -> void {
-    const auto contents = subproject.dir->ReadFile(path, [&](std::size_t size) {
+  const auto read_file = [&](const std::string& path, std::string& srcbuf) -> void {
+    const auto res = dir.ReadFile(path, [&](std::size_t size) {
       srcbuf.resize(size);
       return srcbuf.data();
     });
-    if (!contents) {
-      // TODO, +requires IDirectory::ReadFile signature modification
-      std::fprintf(stderr, "Failed to read file '%s' on init, I'm dying :( :)\n", path.data());
+    if (!res) {
+      // TODO
+      std::println(stderr, "Failed to read file '{}' during project '{}' initialization: {}", path, subproject.Name(),
+                   res.error().String());
       std::fflush(stderr);
       std::abort();
     }
   };
 
-  subproject.program.Update([&](const auto& modify) {
-    subproject.dir->VisitFiles([&](const std::string& filepath) {
+  subproject.program.Update([&](const core::Program::ProgramModifier& modify) {
+    dir.VisitFiles([&](const std::string& filepath) {
       if (!filepath.ends_with(".ttcn")) {
         return;
       }
-      modify.update(std::format("{}/{}", subproject.path, filepath), read_file);
+      modify.update(filepath, read_file);
     });
   });
 }
 }  // namespace
 
-std::expected<Solution, Error> Solution::Load(const std::filesystem::path& directory) {
-  // TODO: handle errors (missing directory, manifest, etc)
-  const auto manifest_path = directory / tooling::Project::kManifestFilename;
-  if (!std::filesystem::exists(manifest_path)) {
-    return std::unexpected<Error>{"Directory does not contain Vanadium manifest"};
-  }
-
-  auto root_load_result = tooling::Project::Load(manifest_path);
+std::expected<Solution, Error> Solution::Load(const fs::Path& path) {
+  auto root_load_result = tooling::Project::Load(path);
   if (!root_load_result.has_value()) {
     return std::unexpected{Error{"Failed to load root project", std::move(root_load_result.error())}};
   }
 
-  Solution solution(directory, std::move(*root_load_result));
+  Solution solution(std::move(*root_load_result));
 
-  const auto& root_desc = solution.root_project_.Read();
+  const auto& root_desc = solution.root_project_.Manifest();
 
   if (root_desc.external) {
     for (const auto& [ext_name, ext_desc] : *root_desc.external) {
-      auto& subproject = solution.projects_[ext_name];
-      InitSubproject(subproject, ext_desc.path, solution.root_project_.Directory().Subdirectory(ext_desc.path),
-                     ext_name, ext_desc.references.value_or(std::vector<std::string>{}), false);
+      auto [it, inserted] =
+          solution.projects_.try_emplace(ext_name, Project(path.Resolve(ext_desc.path), "",
+                                                           ProjectManifest{
+                                                               .project =
+                                                                   {
+                                                                       .name = ext_name,
+                                                                       .references = ext_desc.references,
+                                                                   },
+                                                           }));
+
+      if (!inserted) {
+        return std::unexpected{Error{std::format("Duplicate project: '{}'", ext_name)}};
+      }
+
+      auto& sol_project = it->second;
+
+      sol_project.managed = false;
+      InitSubproject(sol_project);
     }
   }
 
-  const auto add_subproject = [&](std::string_view path, const tooling::ProjectManifest& desc) {
-    auto& subproject = solution.projects_[desc.project.name];
-    InitSubproject(subproject, std::string{path}, solution.root_project_.Directory().Subdirectory(path),
-                   desc.project.name, desc.project.references.value_or(std::vector<std::string>{}), true);
-  };
   if (root_desc.project.subprojects) {
-    for (const auto& path : *root_desc.project.subprojects) {
-      auto result = tooling::Project::Load(std::filesystem::path(solution.root_project_.Directory().Path()) / path /
-                                           tooling::Project::kManifestFilename);
-      assert(result.has_value());
-      add_subproject(path, result->Read());
+    for (const auto& subpath : *root_desc.project.subprojects) {
+      auto result = tooling::Project::Load(path.Resolve(subpath));
+      if (!result) {
+        return std::unexpected{
+            Error{std::format("Failed to load project at '{}'", subpath), std::move(result.error())}};
+      }
+
+      const auto name = result->Name();  // *result will be moved
+      auto [it, inserted] = solution.projects_.try_emplace(name, std::move(*result));
+
+      if (!inserted) {
+        return std::unexpected{Error{std::format("Duplicate project: '{}'", name)}};
+      }
+
+      auto& sol_project = it->second;
+      sol_project.managed = true;
+
+      InitSubproject(sol_project);
     }
   } else {
-    add_subproject("", root_desc);
+    auto [it, _] = solution.projects_.try_emplace("<root>", Project(solution.root_project_));
+    auto& sol_project = it->second;
+    sol_project.managed = true;
+    InitSubproject(sol_project);
   }
 
   for (auto& [name, subproj] : solution.projects_) {
-    for (const auto& ref : subproj.references) {
-      core::Program* program{nullptr};
-      if (auto it = solution.projects_.find(ref); it != solution.projects_.end()) {
-        program = &it->second.program;
-      } else {
-        // TODO
-        std::fprintf(stderr, "reference '%s' of '%s' could not be satisfied\n", ref.c_str(), name.c_str());
-        std::fflush(stderr);
-        std::abort();
+    const auto& refs = subproj.project.Manifest().project.references;
+    if (!refs) {
+      continue;
+    }
+    for (const auto& ref : *refs) {
+      auto it = solution.projects_.find(ref);
+      if (it == solution.projects_.end()) {
+        return std::unexpected{Error{std::format("Reference '{}' of project '{}' cannot be satisfied", ref, name)}};
       }
-      subproj.program.AddReference(program);
+      subproj.program.AddReference(&it->second.program);
     }
   }
 
@@ -107,10 +121,10 @@ std::expected<Solution, Error> Solution::Load(const std::filesystem::path& direc
   return solution;
 }
 
-const ProjectEntry* Solution::ProjectOf(std::string_view path) const {
-  const ProjectEntry* project{nullptr};
+const SolutionProject* Solution::ProjectOf(std::string_view path) const {
+  const SolutionProject* project{nullptr};
   for (const auto& candidate : projects_ | std::views::values) {
-    if (path.starts_with(candidate.dir->Path())) {
+    if (path.starts_with(candidate.project.Path().base_path)) {
       project = &candidate;
 
       // TODO: maybe support overlapping directories

@@ -117,18 +117,13 @@ struct SourceFile {
 
 class Program {
  public:
-  using FileReadFn = lib::FunctionRef<void(std::string_view, std::string&)>;
+  using FileReadFn = lib::FunctionRef<void(const std::string&, std::string&)>;
 
   Program() = default;
 
  private:
   void UpdateFile(const std::string& path, const FileReadFn& read);
   void DropFile(const std::string& path);
-
-  struct ProgramModifier {
-    lib::Consumer<const std::string&, const FileReadFn&> update;
-    lib::Consumer<const std::string&> drop;
-  };
 
  public:
   const std::unordered_map<std::string, SourceFile>& Files() const {
@@ -143,6 +138,11 @@ class Program {
              return *sf.module;
            });
   }
+
+  struct ProgramModifier {
+    lib::Consumer<const std::string&, const FileReadFn&> update;
+    lib::Consumer<const std::string&> drop;
+  };
 
   void Update(const lib::Consumer<const ProgramModifier&>& modify);
   void Commit(const lib::Consumer<const ProgramModifier&>& modify);

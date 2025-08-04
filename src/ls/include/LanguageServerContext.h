@@ -48,7 +48,8 @@ struct LsState {
   }
 
   // TODO: these three functions are a temporary solution
-  [[nodiscard]] std::optional<std::pair<tooling::ProjectEntry&, std::string>> ResolveFile(std::string_view file_uri) {
+  [[nodiscard]] std::optional<std::pair<tooling::SolutionProject&, std::string>> ResolveFile(
+      std::string_view file_uri) {
     constexpr std::size_t kSchemaLength = std::string_view{"file://"}.size();
     const std::string_view path = file_uri.substr(kSchemaLength, file_uri.size() - kSchemaLength);
 
@@ -56,16 +57,16 @@ struct LsState {
     if (!project) {
       return std::nullopt;
     }
-    return {{*project, std::filesystem::relative(path, solution->RootDirectory()).string()}};
+    return {{*project, std::filesystem::relative(path, solution->Path().base_path).string()}};
   }
   [[nodiscard]] std::string FileUriToPath(std::string_view file_uri) const {
     constexpr std::size_t kSchemaLength = std::string_view{"file://"}.size();
 
     const std::string_view path = file_uri.substr(kSchemaLength, file_uri.size() - kSchemaLength);
-    return std::filesystem::relative(path, solution->RootDirectory()).string();
+    return std::filesystem::relative(path, solution->Path().base_path).string();
   }
   [[nodiscard]] std::string PathToFileUri(std::string_view path) const {
-    return std::format("file://{}", (solution->RootDirectory() / path).string());
+    return std::format("file://{}", (std::filesystem::path(solution->Path().base_path) / path).string());
   }
 
  private:

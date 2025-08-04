@@ -1,8 +1,7 @@
 add_library(vanadium_tooling STATIC
   src/Project.cpp
   src/Solution.cpp
-  src/VirtualFS.cpp
-  src/utils/FileReader.cpp
+  src/impl/SystemFS.cpp
 )
 
 target_include_directories(vanadium_tooling PUBLIC

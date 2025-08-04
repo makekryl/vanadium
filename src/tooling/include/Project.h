@@ -1,8 +1,6 @@
 #pragma once
 
 #include <expected>
-#include <filesystem>
-#include <memory>
 #include <optional>
 #include <rfl/toml/read.hpp>
 #include <string>
@@ -10,7 +8,7 @@
 #include <unordered_map>
 
 #include "Error.h"
-#include "VirtualFS.h"
+#include "Filesystem.h"
 
 namespace vanadium {
 namespace tooling {
@@ -40,40 +38,36 @@ class Project {
  public:
   static constexpr std::string_view kManifestFilename = ".vanadiumrc.toml";
 
-  [[nodiscard]] std::optional<std::filesystem::path> WalkRoot() const;
+  [[nodiscard]] const fs::Path& Path() const noexcept {
+    return path_;
+  }
 
-  [[nodiscard]] const IDirectory& Directory() const noexcept;
+  [[nodiscard]] const std::string& Name() const noexcept {
+    return manifest_.project.name;
+  }
 
-  [[nodiscard]] const ProjectManifest& Read() const noexcept;
+  [[nodiscard]] const ProjectManifest& Manifest() const noexcept {
+    return manifest_;
+  }
 
   template <typename T>
-  [[nodiscard]] std::expected<T, Error> ReadSpec() const;
+  [[nodiscard]] std::expected<T, Error> ReadSpec() const {
+    rfl::Result<T> result = rfl::toml::read<T>(manifest_contents_);
+    if (result.has_value()) {
+      return result.value();
+    }
+    return Error{result.error().what()};
+  }
 
-  static std::expected<Project, Error> Load(const std::filesystem::path& config_path);
-  Project(std::shared_ptr<IDirectory>, std::string&& contents, ProjectManifest&&);
+  static std::expected<Project, Error> Load(const fs::Path& path);
+  Project(fs::Path path, std::string&& contents, ProjectManifest&&);
 
  private:
-  std::shared_ptr<IDirectory> dir_;
-  std::string contents_;
-  ProjectManifest descriptor_;
+  fs::Path path_;
+
+  std::string manifest_contents_;
+  ProjectManifest manifest_;
 };
-
-inline const IDirectory& Project::Directory() const noexcept {
-  return *dir_;
-}
-
-inline const ProjectManifest& Project::Read() const noexcept {
-  return descriptor_;
-}
-
-template <typename T>
-inline std::expected<T, Error> Project::ReadSpec() const {
-  rfl::Result<T> result = rfl::toml::read<T>(contents_);
-  if (result.has_value()) {
-    return result.value();
-  }
-  return Error{result.error().what()};
-}
 
 }  // namespace tooling
 }  // namespace vanadium

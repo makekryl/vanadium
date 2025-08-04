@@ -1,57 +1,59 @@
 #pragma once
 
 #include <expected>
-#include <filesystem>
 #include <ranges>
-#include <vector>
 
 #include "Error.h"
+#include "Filesystem.h"
 #include "Program.h"
 #include "Project.h"
-#include "VirtualFS.h"
 
 namespace vanadium {
 namespace tooling {
 
-struct ProjectEntry {
-  std::string name;
-
-  std::string path;
-  std::unique_ptr<IDirectory> dir;
-
+struct SolutionProject {
+  Project project;
+  bool managed{true};
   core::Program program;
 
-  std::vector<std::string> references;
+  SolutionProject(Project&& project_) : project(std::move(project_)) {}
 
-  bool managed;
+  [[nodiscard]] const fs::Path& Path() const noexcept {
+    return project.Path();
+  }
+  [[nodiscard]] const std::string& Name() const noexcept {
+    return project.Name();
+  }
 };
 
 class Solution {
  public:
-  const std::filesystem::path& RootDirectory() const {
-    return root_directory_;
+  const Project& RootProject() const noexcept {
+    return root_project_;
+  }
+  [[nodiscard]] const fs::Path& Path() const noexcept {
+    return root_project_.Path();
   }
 
-  [[nodiscard]] const ProjectEntry* ProjectOf(std::string_view path) const;
-  [[nodiscard]] ProjectEntry* ProjectOf(std::string_view path) {
-    return const_cast<ProjectEntry*>(static_cast<const Solution*>(this)->ProjectOf(path));
+  [[nodiscard]] const SolutionProject* ProjectOf(std::string_view path) const;
+  [[nodiscard]] SolutionProject* ProjectOf(std::string_view path) {
+    return const_cast<SolutionProject*>(static_cast<const Solution*>(this)->ProjectOf(path));
   }
 
-  auto Entries() const {
+  auto Projects() const {
     return projects_ | std::views::values;
   }
-  auto Entries() {
+  auto Projects() {
     return projects_ | std::views::values;
   }
 
-  static std::expected<Solution, Error> Load(const std::filesystem::path& directory);
+  static std::expected<Solution, Error> Load(const fs::Path&);
 
  private:
-  Solution(std::filesystem::path root_directory, Project&& project);
+  Solution(Project&& root_project);
 
-  std::filesystem::path root_directory_;
   Project root_project_;
-  std::unordered_map<std::string, ProjectEntry> projects_;
+  std::unordered_map<std::string, SolutionProject> projects_;
 };
 
 }  // namespace tooling

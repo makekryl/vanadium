@@ -239,7 +239,7 @@ std::optional<lsp::InlayHint> ResolveInlayHint(const tooling::Solution& solution
   }
   const auto payload = glz::read_json<InlayHintPayload>(*original_hint.data);
 
-  const auto* project = solution.ProjectOf((solution.RootDirectory() / payload->path).string());
+  const auto* project = solution.ProjectOf((std::filesystem::path(solution.Path().base_path) / payload->path).string());
   const auto* file = project->program.GetFile(payload->path);
 
   const auto* n = detail::FindNode(file, original_hint.position);
@@ -309,8 +309,8 @@ std::optional<lsp::InlayHint> ResolveInlayHint(const tooling::Solution& solution
             .location =
                 lsp::Location{
                     // TODO: unify with context, but I don't like bringing LsContext here
-                    .uri = *arena.Alloc<std::string>(
-                        std::format("file://{}", (solution.RootDirectory() / param_file->path).string())),
+                    .uri = *arena.Alloc<std::string>(std::format(
+                        "file://{}", (std::filesystem::path(solution.Path().base_path) / param_file->path).string())),
                     .range = conv::ToLSPRange(param->name->nrange, param_file->ast),
                 },
         }}};
@@ -347,8 +347,8 @@ std::optional<lsp::InlayHint> ResolveInlayHint(const tooling::Solution& solution
             .location =
                 lsp::Location{
                     // TODO: unify with context, but I don't like bringing LsContext here
-                    .uri = *arena.Alloc<std::string>(
-                        std::format("file://{}", (solution.RootDirectory() / field_file->path).string())),
+                    .uri = *arena.Alloc<std::string>(std::format(
+                        "file://{}", (std::filesystem::path(solution.Path().base_path) / field_file->path).string())),
                     .range = conv::ToLSPRange(field->name->nrange, field_file->ast),
                 },
         }}};

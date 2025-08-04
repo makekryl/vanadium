@@ -1,9 +1,12 @@
 #include <filesystem>
+#include <print>
 
+#include "Filesystem.h"
 #include "LSProtocol.h"
 #include "LanguageServerContext.h"
 #include "LanguageServerMethods.h"
 #include "Solution.h"
+#include "impl/SystemFS.h"
 
 namespace vanadium::ls {
 
@@ -17,13 +20,14 @@ rpc::ExpectedResult<lsp::InitializeResult> methods::initialize::operator()(LsCon
     const auto prefix_size = std::string_view{"file://"}.size();
     const std::filesystem::path root_directory{folders[0].uri.substr(prefix_size, folders[0].uri.size() - prefix_size)};
 
-    auto manifest_path = root_directory / tooling::Project::kManifestFilename;
+    const auto manifest_path = root_directory / tooling::Project::kManifestFilename;
     if (std::filesystem::exists(manifest_path)) {
-      auto result = tooling::Solution::Load(root_directory);
+      auto result = tooling::Solution::Load(tooling::fs::Root<tooling::fs::SystemFS>(root_directory.string()));
       if (result.has_value()) {
         ctx->solution = std::move(*result);
       } else {
-        std::fprintf(stderr, "Failed to load solution: %s", result.error().What().c_str());
+        // TODO
+        std::println(stderr, "Failed to load solution: {}", result.error().String());
         std::fflush(stderr);
         std::abort();
       }
