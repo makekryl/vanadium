@@ -43,6 +43,6 @@ int main(int argc, char* argv[]) {
 
   return 0;
 }
-
-vanadium::bin::EntryPoint ls_ep(main);
 }  // namespace
+
+DEFINE_VANADIUM_ENTRYPOINT(main);

@@ -133,6 +133,6 @@ int main(int argc, char* argv[]) {
 
   return has_problems ? 1 : 0;
 }
-
-vanadium::bin::EntryPoint tidy_ep(main);
 }  // namespace
+
+DEFINE_VANADIUM_ENTRYPOINT(main);

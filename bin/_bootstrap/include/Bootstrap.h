@@ -7,7 +7,7 @@ class EntryPoint {
  public:
   using Fn = int (*)(int argc, char* argv[]);
 
-  EntryPoint(Fn invoke) : invoke_(invoke), next_(std::exchange(chain_, this)) {}
+  EntryPoint(Fn invoke) : invoke_(invoke), next_(std::exchange(list_, this)) {}
 
   int invoke(int argc, char* argv[]) {
     return invoke_(argc, argv);
@@ -18,6 +18,11 @@ class EntryPoint {
   EntryPoint* next_;
 
  public:
-  static EntryPoint* chain_;
+  static EntryPoint* list_;
 };
 }  // namespace vanadium::bin
+
+#define DEFINE_VANADIUM_ENTRYPOINT(fn)  \
+  namespace {                           \
+  vanadium::bin::EntryPoint vnep__(fn); \
+  }

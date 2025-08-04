@@ -5,7 +5,7 @@
 #include <stacktrace>
 
 namespace vanadium::bin {
-EntryPoint* EntryPoint::chain_{nullptr};
+EntryPoint* EntryPoint::list_{nullptr};
 }
 
 #ifndef NDEBUG
@@ -27,5 +27,5 @@ int main(int argc, char* argv[]) {
 #endif
 
   // TODO: support multiple entry points
-  return vanadium::bin::EntryPoint::chain_->invoke(argc, argv);
+  return vanadium::bin::EntryPoint::list_->invoke(argc, argv);
 }
