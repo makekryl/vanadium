@@ -355,9 +355,8 @@ Transitively imports modules:
 )";
         for (const auto& [import, descriptor] : module->imports) {
           if (descriptor.transit) {
-            continue;
+            content += std::format("- `{}`\n", import);
           }
-          content += std::format("- `{}`\n", import);
         }
         content += "\n---\n";
       }
