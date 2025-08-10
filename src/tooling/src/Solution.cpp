@@ -12,11 +12,11 @@ namespace vanadium::tooling {
 Solution::Solution(Project&& root_project) : root_project_(std::move(root_project)) {}
 
 namespace {
-void InitSubproject(SolutionProject& subproject) {
-  const auto& dir = subproject.project.Path();
+void InitSubproject(const Solution& solution, SolutionProject& subproject) {
+  const auto& dir = subproject.project.Directory();
 
   const auto read_file = [&](const std::string& path, std::string& srcbuf) -> void {
-    const auto res = dir.ReadFile(path, [&](std::size_t size) {
+    const auto res = solution.Directory().ReadFile(path, [&](std::size_t size) {
       srcbuf.resize(size);
       return srcbuf.data();
     });
@@ -34,7 +34,7 @@ void InitSubproject(SolutionProject& subproject) {
       if (!filepath.ends_with(".ttcn")) {
         return;
       }
-      modify.update(filepath, read_file);
+      modify.update(dir.fs->Relative(dir.Join(filepath), solution.Directory().base_path), read_file);
     });
   });
 }
@@ -69,7 +69,7 @@ std::expected<Solution, Error> Solution::Load(const fs::Path& path) {
       auto& sol_project = it->second;
 
       sol_project.managed = false;
-      InitSubproject(sol_project);
+      InitSubproject(solution, sol_project);
     }
   }
 
@@ -91,13 +91,13 @@ std::expected<Solution, Error> Solution::Load(const fs::Path& path) {
       auto& sol_project = it->second;
       sol_project.managed = true;
 
-      InitSubproject(sol_project);
+      InitSubproject(solution, sol_project);
     }
   } else {
     auto [it, _] = solution.projects_.try_emplace("<root>", Project(solution.root_project_));
     auto& sol_project = it->second;
     sol_project.managed = true;
-    InitSubproject(sol_project);
+    InitSubproject(solution, sol_project);
   }
 
   for (auto& [name, subproj] : solution.projects_) {
@@ -122,16 +122,13 @@ std::expected<Solution, Error> Solution::Load(const fs::Path& path) {
 }
 
 const SolutionProject* Solution::ProjectOf(std::string_view path) const {
-  const SolutionProject* project{nullptr};
   for (const auto& candidate : projects_ | std::views::values) {
-    if (path.starts_with(candidate.project.Path().base_path)) {
-      project = &candidate;
-
-      // TODO: maybe support overlapping directories
-      break;
+    if (path.starts_with(candidate.project.Directory().base_path)) {
+      // TODO: support overlapping directories
+      return &candidate;
     }
   }
-  return project;
+  return nullptr;
 }
 
 }  // namespace vanadium::tooling

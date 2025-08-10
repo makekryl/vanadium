@@ -1,14 +1,12 @@
 #include "detail/Definition.h"
 
-#include <glaze/ext/jsonrpc.hpp>
-#include <glaze/json/write.hpp>
-
 #include "ASTNodes.h"
 #include "ASTTypes.h"
 #include "LSProtocol.h"
 #include "LanguageServerContext.h"
 #include "LanguageServerConv.h"
 #include "LanguageServerMethods.h"
+#include "LanguageServerSession.h"
 #include "Semantic.h"
 #include "utils/ASTUtils.h"
 
@@ -18,8 +16,7 @@ template <>
 rpc::ExpectedResult<lsp::DefinitionResult> methods::textDocument::definition::operator()(
     LsContext& ctx, const lsp::DefinitionParams& params) {
   auto res = ctx->WithFile<lsp::DefinitionResult>(
-      params.textDocument.uri,
-      [&](const core::Program& program, const core::SourceFile& file) -> lsp::DefinitionResult {
+      params, [&](const auto&, const core::SourceFile& file, LsSessionRef) -> lsp::DefinitionResult {
         const auto result = detail::FindSymbol(&file, params.position);
         if (!result) {
           return nullptr;
@@ -31,7 +28,7 @@ rpc::ExpectedResult<lsp::DefinitionResult> methods::textDocument::definition::op
           return nullptr;
         }
         if (sym->Flags() & core::semantic::SymbolFlags::kImportedModule) {
-          const auto* module = program.GetModule(sym->GetName());
+          const auto* module = file.program->GetModule(sym->GetName());
           if (!module) {
             return nullptr;
           }

@@ -1,20 +1,16 @@
 #pragma once
 
-#include "ASTTypes.h"
-#include "Arena.h"
 #include "LSProtocol.h"
+#include "LanguageServerSession.h"
 #include "Program.h"
-#include "Semantic.h"
-#include "Solution.h"
 
 namespace vanadium::ls {
 namespace detail {
 
-[[nodiscard]] std::vector<lsp::InlayHint> CollectInlayHints(const core::SourceFile*, const core::ast::Range&,
-                                                            lib::Arena&);
+[[nodiscard]] std::vector<lsp::InlayHint> CollectInlayHints(const lsp::InlayHintParams&, const core::SourceFile&,
+                                                            LsSessionRef);
 
-[[nodiscard]] std::optional<lsp::InlayHint> ResolveInlayHint(const tooling::Solution&, lib::Arena&,
-                                                             const lsp::InlayHint& original_hint);
+[[nodiscard]] std::optional<lsp::InlayHint> ResolveInlayHint(const lsp::InlayHint& original_hint, LsSessionRef);
 
 }  // namespace detail
 }  // namespace vanadium::ls

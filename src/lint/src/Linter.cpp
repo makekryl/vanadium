@@ -16,22 +16,25 @@ void Linter::BindRule(Rule& rule) {
 }
 
 void Linter::Lint(const core::Program& program,
-                  const lib::FunctionRef<void(const core::SourceFile&, ProblemSet)>& report) {
+                  const lib::FunctionRef<void(const core::SourceFile&, ProblemSet)>& report) const {
   for (const auto& [filename, sf] : program.Files()) {
-    report(sf, Lint(program, sf));
+    report(sf, Lint(sf));
   }
 }
 
-ProblemSet Linter::Lint(const core::Program& program, const core::SourceFile& sf) {
+ProblemSet Linter::Lint(const core::SourceFile& sf) const {
   if (!sf.module.has_value()) {
     return {};
   }
 
-  Context ctx(program, sf);
+  Context ctx(sf);
 
   sf.ast.root->Accept([&](const vanadium::core::ast::Node* n) {
-    for (auto* rule : matching_[n->nkind]) {
-      rule->Check(ctx, n);
+    const auto it = matching_.find(n->nkind);
+    if (it != matching_.end()) {
+      for (auto* rule : it->second) {
+        rule->Check(ctx, n);
+      }
     }
     return true;
   });
@@ -42,8 +45,7 @@ ProblemSet Linter::Lint(const core::Program& program, const core::SourceFile& sf
   return std::move(ctx.GetProblems());
 }
 
-std::pair<std::optional<std::string>, ProblemSet> Linter::Fix(const core::Program& /*program*/,
-                                                              const core::SourceFile& sf, ProblemSet&& problems) {
+std::pair<std::optional<std::string>, ProblemSet> Linter::Fix(const core::SourceFile& sf, ProblemSet&& problems) const {
   if (problems.empty()) {
     return {std::nullopt, std::move(problems)};
   }

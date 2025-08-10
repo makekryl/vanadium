@@ -25,7 +25,7 @@ export class Client {
   async start(ctx: vscode.ExtensionContext): Promise<void> {
     const serverOptions: ServerOptions = {
       command: `${ctx.extensionPath}/bin/vanadiumd`,
-      args: [],
+      // args: ['--wait-dbg'],
       transport: TransportKind.stdio,
     };
 

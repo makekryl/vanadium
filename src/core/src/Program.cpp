@@ -212,7 +212,10 @@ void Program::Crossbind() {
     auto& module = *sf.module;
     module.unresolved.clear();
 
-    const auto on_incomplete = [&](ModuleDescriptor* via) {
+    const auto on_missing_module = [&](ModuleDescriptor* via, std::string_view /* missing_module */) {
+      if (!via) {
+        return;
+      }
       // it may become useful after, we should keep an eye on it
       module.transitive_dependency_providers.insert(via);
     };
@@ -253,7 +256,7 @@ void Program::Crossbind() {
         };
 
         semantic::VisitImports<{.accept_private_imports = true}>(
-            this, module, on_incomplete, [&](auto* imported_module, auto* via) {
+            this, module, on_missing_module, [&](auto* imported_module, auto* via) {
               const auto* sym = imported_module->scope->ResolveDirect(ext_group.augmentation_provider);
               if (!sym) {
                 // continue search
@@ -270,7 +273,7 @@ void Program::Crossbind() {
 
       if (!ext_group.IsResolved()) {
         semantic::VisitImports<{.accept_private_imports = true}>(
-            this, module, on_incomplete, [&](auto* imported_module, auto* via) {
+            this, module, on_missing_module, [&](auto* imported_module, auto* via) {
               if (ext_group.IsResolved()) {
                 return false;
               }

@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <print>
 #include <ranges>
 #include <string_view>
 #include <type_traits>
@@ -12,12 +11,8 @@
 #include "LanguageServerContext.h"
 #include "LanguageServerConv.h"
 #include "LanguageServerMethods.h"
-#include "ScopedNodeVisitor.h"
 #include "Semantic.h"
 #include "TypeChecker.h"
-#include "detail/Definition.h"
-#include "detail/InlayHint.h"
-#include "magic_enum/magic_enum.hpp"
 #include "utils/ASTUtils.h"
 #include "utils/SemanticUtils.h"
 
@@ -75,7 +70,7 @@ template <>
 rpc::ExpectedResult<lsp::SignatureHelpResult> methods::textDocument::signatureHelp::operator()(
     LsContext& ctx, const lsp::SignatureHelpParams& params) {
   // TODO: shorten the handler, use ctx->WithFile
-  const auto& resolution = ctx->ResolveFile(params.textDocument.uri);
+  const auto& resolution = ctx->ResolveFileUri(params.textDocument.uri);
   if (!resolution) {
     return nullptr;
   }

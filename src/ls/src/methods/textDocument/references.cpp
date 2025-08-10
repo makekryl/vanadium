@@ -9,6 +9,8 @@
 #include "LanguageServerContext.h"
 #include "LanguageServerConv.h"
 #include "LanguageServerMethods.h"
+#include "LanguageServerSession.h"
+#include "Program.h"
 #include "Semantic.h"
 
 // TODO:
@@ -20,7 +22,7 @@ template <>
 rpc::ExpectedResult<lsp::ReferencesResult> methods::textDocument::references::operator()(
     LsContext& ctx, const lsp::ReferenceParams& params) {
   auto res = ctx->WithFile<lsp::ReferencesResult>(
-      params.textDocument.uri, [&](const core::Program&, const core::SourceFile& file) -> lsp::ReferencesResult {
+      params, [&](const auto&, const core::SourceFile& file, LsSessionRef) -> lsp::ReferencesResult {
         std::vector<lsp::Location> refs;
         detail::VisitLocalReferences(&file, params.position, params.context.includeDeclaration,
                                      [&](const core::ast::nodes::Ident* ident) {

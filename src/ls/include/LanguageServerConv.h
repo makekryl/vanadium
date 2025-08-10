@@ -5,7 +5,6 @@
 #include "LSProtocol.h"
 
 namespace vanadium::ls {
-
 namespace conv {
 
 [[nodiscard]] inline lsp::Position ToLSPPosition(const core::ast::Location& loc) {
@@ -39,5 +38,4 @@ namespace conv {
 }
 
 }  // namespace conv
-
 }  // namespace vanadium::ls

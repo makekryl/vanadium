@@ -5,45 +5,41 @@
 #include "LanguageServerContext.h"
 #include "LanguageServerConv.h"
 #include "LanguageServerMethods.h"
+#include "LanguageServerSession.h"
+#include "Program.h"
 #include "detail/Diagnostic.h"
 
 namespace vanadium::ls {
 template <>
 void methods::textDocument::didChange::operator()(LsContext& ctx, const lsp::DidChangeTextDocumentParams& params) {
-  const auto& resolution = ctx->ResolveFile(params.textDocument.uri);
-  if (!resolution) {
-    return;
-  }
-  const auto& [project, path] = *resolution;
+  ctx->WithFile<void>(params, [&](const auto&, const core::SourceFile& file, LsSessionRef d) {
+    ctx->file_versions[file.path] = params.textDocument.version;
 
-  ctx->file_versions[path] = params.textDocument.version;
+    const auto read_file = [&](std::string_view, std::string& srcbuf) -> void {
+      if (params.contentChanges.size() == 1 &&
+          std::holds_alternative<lsp::TextDocumentContentChangeWholeDocument>(params.contentChanges.front())) {
+        const auto& revision = std::get<lsp::TextDocumentContentChangeWholeDocument>(params.contentChanges.front());
+        srcbuf = std::move(revision.text);
+        return;
+      }
 
-  const auto read_file = [&](std::string_view, std::string& srcbuf) -> void {
-    if (params.contentChanges.size() == 1 &&
-        std::holds_alternative<lsp::TextDocumentContentChangeWholeDocument>(params.contentChanges.front())) {
-      const auto& revision = std::get<lsp::TextDocumentContentChangeWholeDocument>(params.contentChanges.front());
-      srcbuf = std::move(revision.text);
-      return;
-    }
+      for (const auto& v : params.contentChanges) {
+        assert(std::holds_alternative<lsp::TextDocumentContentChangePartial>(v));
 
-    const auto* sf = project.program.GetFile(path);
+        const auto& change = std::get<lsp::TextDocumentContentChangePartial>(params.contentChanges.front());
 
-    for (const auto& v : params.contentChanges) {
-      assert(std::holds_alternative<lsp::TextDocumentContentChangePartial>(v));
+        const auto range = conv::FromLSPRange(change.range, file.ast);
+        srcbuf.replace(range.begin, range.Length(), change.text);
+      }
+    };
+    file.program->Commit([&](auto& modify) {
+      modify.update(file.path, read_file);
+    });
 
-      const auto& change = std::get<lsp::TextDocumentContentChangePartial>(params.contentChanges.front());
-
-      const auto range = conv::FromLSPRange(change.range, sf->ast);
-      srcbuf.replace(range.begin, range.Length(), change.text);
-    }
-  };
-  project.program.Commit([&](auto& modify) {
-    modify.update(path, read_file);
-  });
-
-  ctx.Notify<"textDocument/publishDiagnostics">(lsp::PublishDiagnosticsParams{
-      .uri = params.textDocument.uri,
-      .diagnostics = detail::CollectDiagnostics(ctx, project.program, *project.program.GetFile(path)),
+    ctx.Notify<"textDocument/publishDiagnostics">(lsp::PublishDiagnosticsParams{
+        .uri = params.textDocument.uri,
+        .diagnostics = detail::CollectDiagnostics(file, d),
+    });
   });
 }
 }  // namespace vanadium::ls

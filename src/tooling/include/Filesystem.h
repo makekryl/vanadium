@@ -19,6 +19,7 @@ class Filesystem {
   virtual ~Filesystem() = default;
 
   [[nodiscard]] virtual std::string Join(std::string_view base_path, std::string_view path) const = 0;
+  [[nodiscard]] virtual std::string Relative(std::string_view path, std::string_view base_path) const = 0;
 
   [[nodiscard]] virtual bool Exists(const std::string& path) const = 0;
   [[nodiscard]] virtual bool IsDirectory(const std::string& path) const = 0;

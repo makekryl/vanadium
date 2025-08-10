@@ -44,7 +44,7 @@ using ProblemSet = std::set<Problem>;
 
 class Context {
  public:
-  Context(const core::Program& program, const core::SourceFile& sf) : program_(&program), sf_(&sf) {}
+  Context(const core::SourceFile& sf) : sf_(&sf) {}
 
   void Report(const Rule* reporter, const core::ast::Range& range, std::string&& message,
               std::optional<Autofix>&& autofix = std::nullopt) {
@@ -60,7 +60,7 @@ class Context {
   }
 
   [[nodiscard]] const core::Program& GetProgram() const {
-    return *program_;
+    return *sf_->program;
   }
 
   [[nodiscard]] const core::SourceFile& GetFile() const {
@@ -69,7 +69,6 @@ class Context {
 
  private:
   ProblemSet problems_;
-  const core::Program* program_;
   const core::SourceFile* sf_;
 };
 

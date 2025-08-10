@@ -19,7 +19,7 @@ template <>
 rpc::ExpectedResult<lsp::RenameResult> methods::textDocument::rename::operator()(LsContext& ctx,
                                                                                  const lsp::RenameParams& params) {
   // TODO: shorten the handler, use ctx->WithFile
-  const auto& resolution = ctx->ResolveFile(params.textDocument.uri);
+  const auto& resolution = ctx->ResolveFileUri(params.textDocument.uri);
   if (!resolution) {
     return nullptr;
   }

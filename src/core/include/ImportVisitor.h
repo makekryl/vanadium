@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Metaprogramming.h"
 #include "Program.h"
 
 namespace vanadium::core::semantic {
@@ -12,14 +13,11 @@ struct ImportVisitorOptions {
  * @param f(imported_module, via)
  */
 template <ImportVisitorOptions Options>
-bool VisitImports(Program* program, const ModuleDescriptor& module, auto on_incomplete,
+bool VisitImports(Program* program, const ModuleDescriptor& module,
+                  mp::Consumer<ModuleDescriptor*, std::string_view> auto on_missing,
                   std::predicate<ModuleDescriptor*, ModuleDescriptor*> auto f, ModuleDescriptor* via = nullptr) {
-  bool incomplete = false;
-  const auto report_incomplete = [&] {
-    if (via != nullptr && !incomplete) {
-      on_incomplete(via);
-      incomplete = true;
-    }
+  const auto report_missing = [&](std::string_view missing_module) {
+    on_missing(via, missing_module);
   };
 
   for (const auto& [import, descriptor] : module.imports) {
@@ -29,7 +27,7 @@ bool VisitImports(Program* program, const ModuleDescriptor& module, auto on_inco
 
     auto* imported_module = program->GetModule(import);
     if (!imported_module) {
-      report_incomplete();
+      report_missing(import);
       continue;
     }
 
@@ -44,11 +42,11 @@ bool VisitImports(Program* program, const ModuleDescriptor& module, auto on_inco
     }
     auto* imported_module = program->GetModule(import);
     if (!imported_module) {
-      report_incomplete();
+      report_missing(import);
       continue;
     }
 
-    if (!VisitImports<{.accept_private_imports = false}>(program, *imported_module, on_incomplete, f,
+    if (!VisitImports<{.accept_private_imports = false}>(program, *imported_module, on_missing, f,
                                                          via ? via : imported_module)) {
       return false;
     }

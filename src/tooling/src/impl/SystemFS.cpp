@@ -28,6 +28,10 @@ std::string SystemFS::Join(std::string_view base_path, std::string_view path) co
   return std::format("{}{}{}", base_path, std::filesystem::path::preferred_separator, path);
 }
 
+[[nodiscard]] std::string SystemFS::Relative(std::string_view path, std::string_view base_path) const {
+  return std::filesystem::relative(path, base_path).string();
+}
+
 bool SystemFS::Exists(const std::string &path) const {
   return std::filesystem::exists(path);
 }

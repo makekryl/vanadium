@@ -12,18 +12,32 @@
 #include "ASTTypes.h"
 #include "LSProtocol.h"
 #include "LanguageServerConv.h"
+#include "LanguageServerHelpers.h"
 #include "Program.h"
 #include "ScopedNodeVisitor.h"
 #include "Semantic.h"
+#include "Solution.h"
 #include "TypeChecker.h"
 #include "detail/Definition.h"
 #include "utils/ASTUtils.h"
 #include "utils/SemanticUtils.h"
 
+// TODO: maybe track file version
 struct InlayHintPayload {
   std::string path;
   vanadium::core::ast::pos_t anchor_pos;
-  std::underlying_type_t<vanadium::core::ast::NodeKind> node_kind;
+  vanadium::core::ast::NodeKind node_kind;
+
+  static glz::json_t AsJson(InlayHintPayload&& payload) {
+    // TODO: find a way to have strongly-typed 'data' on both ends (maybe modify lspgen to produce templates,
+    // exposing internal payload structure to the higher levels does not sounds good though - and it will be
+    // required to do in such case)
+    return {
+        {"path", std::move(payload.path)},
+        {"apos", payload.anchor_pos},
+        {"nk", std::to_underlying(payload.node_kind)},
+    };
+  }
 };
 template <>
 struct glz::meta<InlayHintPayload> {
@@ -52,7 +66,7 @@ constexpr auto kNonCachingInlayHintTargetLocatorOptions = InlayHintTargetLocator
 };
 
 template <typename Options>
-[[nodiscard]] const core::ast::Node* LocateInlayHintTarget(const core::SourceFile* file,
+[[nodiscard]] const core::ast::Node* LocateInlayHintTarget(const core::SourceFile& file,
                                                            const core::semantic::Scope* scope, const core::ast::Node* n,
                                                            Options options) {
   switch (n->nkind) {
@@ -62,7 +76,7 @@ template <typename Options>
       // ResolveCallableParams is not used because we need to filter out builtin functions
       // return core::checker::utils::ResolveCallableParams(file, scope, m->args);  // -> FormalPars
 
-      const auto* fun_sym = core::checker::ResolveExprType(file, scope, m->fun);
+      const auto* fun_sym = core::checker::ResolveExprType(&file, scope, m->fun);
       if (!fun_sym || (fun_sym->Flags() & core::semantic::SymbolFlags::kBuiltinDef) ||
           !(fun_sym->Flags() & (core::semantic::SymbolFlags::kFunction | core::semantic::SymbolFlags::kTemplate))) {
         return nullptr;
@@ -73,7 +87,7 @@ template <typename Options>
     }
     case core::ast::NodeKind::CompositeLiteral: {
       const auto* m = n->As<core::ast::nodes::CompositeLiteral>();
-      const auto* sym = options.deduceCompositeLiteralType(file, scope, m);
+      const auto* sym = options.deduceCompositeLiteralType(&file, scope, m);
       if (!sym || (sym->Flags() & core::semantic::SymbolFlags::kBuiltin)) {
         return nullptr;
       }
@@ -90,23 +104,19 @@ template <typename Options>
 }
 
 template <typename InlayHintTargetLocatorOptions>
-void ComputeInlayHint(const core::SourceFile* file, const core::semantic::Scope* scope, const core::ast::Node* n,
+void ComputeInlayHint(const core::SourceFile& file, const core::semantic::Scope* scope, const core::ast::Node* n,
                       lib::Arena& arena, std::vector<lsp::InlayHint>& out,
                       InlayHintTargetLocatorOptions inlayHintTargetLocatorOptions) {
   const auto add_parameter_inlay_hint = [&](const core::ast::pos_t pos, std::string_view name) {
     out.emplace_back(lsp::InlayHint{
-        .position = conv::ToLSPPosition(file->ast.lines.Translate(pos)),
+        .position = conv::ToLSPPosition(file.ast.lines.Translate(pos)),
         .label = *arena.Alloc<std::string>(std::format("{} := ", name)),
         .kind = lsp::InlayHintKind::kParameter,
-        // TODO: find a way to have strongly-typed 'data' on both ends (maybe modify lspgen to produce templates,
-        // exposing internal payload structure to the higher levels does not sounds good though - and it will be
-        // required to do in such case)
-        .data =
-            glz::json_t{
-                {"path", file->path},
-                {"apos", n->nrange.begin},
-                {"nk", std::to_underlying(n->nkind)},
-            },
+        .data = InlayHintPayload::AsJson({
+            .path = file.path,
+            .anchor_pos = n->nrange.begin,
+            .node_kind = n->nkind,
+        }),
     });
   };
 
@@ -136,7 +146,7 @@ void ComputeInlayHint(const core::SourceFile* file, const core::semantic::Scope*
         }
 
         const auto param_name = params_file->Text(*param_name_opt);
-        if (param_name == file->Text(arg)) {
+        if (param_name == file.Text(arg)) {
           continue;
         }
 
@@ -165,7 +175,7 @@ void ComputeInlayHint(const core::SourceFile* file, const core::semantic::Scope*
         }
 
         const auto param_name = stdecl_file->Text(*param_name_opt);
-        if (param_name == file->Text(arg)) {
+        if (param_name == file.Text(arg)) {
           continue;
         }
 
@@ -180,9 +190,13 @@ void ComputeInlayHint(const core::SourceFile* file, const core::semantic::Scope*
 }
 }  // namespace
 
-[[nodiscard]] std::vector<lsp::InlayHint> CollectInlayHints(const core::SourceFile* file,
-                                                            const core::ast::Range& requested_range,
-                                                            lib::Arena& arena) {
+std::vector<lsp::InlayHint> CollectInlayHints(const lsp::InlayHintParams& params, const core::SourceFile& file,
+                                              LsSessionRef d) {
+  if (!file.module) {
+    return {};
+  }
+
+  const auto requested_range = conv::FromLSPRange(params.range, file.ast);
   std::vector<lsp::InlayHint> hints;
 
   const core::semantic::Scope* scope{nullptr};
@@ -191,7 +205,7 @@ void ComputeInlayHint(const core::SourceFile* file, const core::semantic::Scope*
   cl_type_cache.emplace(nullptr);
   //
   const auto memoizing_visitor = [&](this auto&& self, const core::ast::Node* n) {
-    ComputeInlayHint(file, scope, n, arena, hints,
+    ComputeInlayHint(file, scope, n, d.arena, hints,
                      InlayHintTargetLocatorOptions{
                          .deduceCompositeLiteralType =
                              [&](const core::SourceFile* _file, const core::semantic::Scope* _scope,
@@ -213,7 +227,7 @@ void ComputeInlayHint(const core::SourceFile* file, const core::semantic::Scope*
     return std::max(a.begin, b.begin) <= std::min(a.end, b.end);
   };
   core::semantic::InspectScope(
-      file->module->scope,
+      file.module->scope,
       [&](const core::semantic::Scope* scope_under_inspection) {
         scope = scope_under_inspection;
       },
@@ -223,7 +237,7 @@ void ComputeInlayHint(const core::SourceFile* file, const core::semantic::Scope*
             memoizing_visitor(n);
             return false;
           }
-          ComputeInlayHint(file, scope, n, arena, hints, kNonCachingInlayHintTargetLocatorOptions);
+          ComputeInlayHint(file, scope, n, d.arena, hints, kNonCachingInlayHintTargetLocatorOptions);
           return true;
         }
         return n->nrange.Contains(requested_range);
@@ -232,15 +246,20 @@ void ComputeInlayHint(const core::SourceFile* file, const core::semantic::Scope*
   return hints;
 }
 
-std::optional<lsp::InlayHint> ResolveInlayHint(const tooling::Solution& solution, lib::Arena& arena,
-                                               const lsp::InlayHint& original_hint) {
+std::optional<lsp::InlayHint> ResolveInlayHint(const lsp::InlayHint& original_hint, LsSessionRef d) {
   if (!original_hint.data) {
     return std::nullopt;
   }
   const auto payload = glz::read_json<InlayHintPayload>(*original_hint.data);
 
-  const auto* project = solution.ProjectOf((std::filesystem::path(solution.Path().base_path) / payload->path).string());
+  const auto* project = d.solution.ProjectOf(d.solution.Directory().Join(payload->path));
+  if (!project) [[unlikely]] {
+    return std::nullopt;
+  }
   const auto* file = project->program.GetFile(payload->path);
+  if (!file) [[unlikely]] {
+    return std::nullopt;
+  }
 
   const auto* n = detail::FindNode(file, original_hint.position);
   if (!n) [[unlikely]] {
@@ -250,15 +269,18 @@ std::optional<lsp::InlayHint> ResolveInlayHint(const tooling::Solution& solution
   const core::ast::Node* container_node = core::ast::utils::GetNodeAt(file->ast, payload->anchor_pos);
   while (container_node->nkind != static_cast<core::ast::NodeKind>(payload->node_kind)) {
     container_node = container_node->parent;
+    if (!container_node) [[unlikely]] {
+      return std::nullopt;
+    }
   }
 
-  const auto* tgt = LocateInlayHintTarget(file, core::semantic::utils::FindScope(file->module->scope, container_node),
+  const auto* tgt = LocateInlayHintTarget(*file, core::semantic::utils::FindScope(file->module->scope, container_node),
                                           container_node, kNonCachingInlayHintTargetLocatorOptions);
   if (!tgt) {
     return std::nullopt;
   }
 
-  const auto render = [&](std::invocable<lsp::InlayHint&> auto accept) -> lsp::InlayHint {
+  const auto render = [&](const core::SourceFile* tgt_file, const core::ast::Range& range) -> lsp::InlayHint {
     lsp::InlayHint rendition{original_hint};
 
     if (std::holds_alternative<std::string_view>(original_hint.label)) {
@@ -272,7 +294,14 @@ std::optional<lsp::InlayHint> ResolveInlayHint(const tooling::Solution& solution
       }}};
     }
 
-    accept(rendition);
+    rendition.label = std::vector<lsp::InlayHintLabelPart>{{{
+        .value = std::get<std::string_view>(rendition.label),
+        .location =
+            lsp::Location{
+                .uri = *d.arena.Alloc<std::string>(helpers::PathToFileUri(d.solution, tgt_file->path)),
+                .range = conv::ToLSPRange(range, tgt_file->ast),
+            },
+    }}};
 
     return rendition;
   };
@@ -303,18 +332,7 @@ std::optional<lsp::InlayHint> ResolveInlayHint(const tooling::Solution& solution
       }
       const auto* param_file = core::ast::utils::SourceFileOf(param);
 
-      return render([&](lsp::InlayHint& rendition) {
-        rendition.label = std::vector<lsp::InlayHintLabelPart>{{{
-            .value = std::get<std::string_view>(rendition.label),
-            .location =
-                lsp::Location{
-                    // TODO: unify with context, but I don't like bringing LsContext here
-                    .uri = *arena.Alloc<std::string>(std::format(
-                        "file://{}", (std::filesystem::path(solution.Path().base_path) / param_file->path).string())),
-                    .range = conv::ToLSPRange(param->name->nrange, param_file->ast),
-                },
-        }}};
-      });
+      return render(param_file, param->name->nrange);
     }
     case core::ast::NodeKind::CompositeLiteral: {
       const auto* m = container_node->As<core::ast::nodes::CompositeLiteral>();
@@ -341,18 +359,7 @@ std::optional<lsp::InlayHint> ResolveInlayHint(const tooling::Solution& solution
       }
       const auto* field_file = core::ast::utils::SourceFileOf(stdecl);
 
-      return render([&](lsp::InlayHint& rendition) {
-        rendition.label = std::vector<lsp::InlayHintLabelPart>{{{
-            .value = std::get<std::string_view>(rendition.label),
-            .location =
-                lsp::Location{
-                    // TODO: unify with context, but I don't like bringing LsContext here
-                    .uri = *arena.Alloc<std::string>(std::format(
-                        "file://{}", (std::filesystem::path(solution.Path().base_path) / field_file->path).string())),
-                    .range = conv::ToLSPRange(field->name->nrange, field_file->ast),
-                },
-        }}};
-      });
+      return render(field_file, field->name->nrange);
     }
     default:
       break;

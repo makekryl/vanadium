@@ -3,42 +3,42 @@
 #include <format>
 #include <vector>
 
+#include "Context.h"
 #include "LSProtocol.h"
-#include "LanguageServerContext.h"
 #include "LanguageServerConv.h"
+#include "LanguageServerSession.h"
+#include "Linter.h"
 #include "Program.h"
 #include "magic_enum/magic_enum.hpp"
 
 namespace vanadium::ls::detail {
 
 namespace {
-void CollectModuleDiagnostics(LsContext& ctx, const core::Program& program, const core::SourceFile& file,
-                              std::vector<lsp::Diagnostic>& diags) {
+void CollectModuleDiagnostics(const core::SourceFile& file, std::vector<lsp::Diagnostic>& diags, LsSessionRef& d) {
   assert(file.module.has_value());
+
+  const auto& program = *file.program;
   const auto& module = *file.module;
 
   for (const auto& [import_name, import] : module.imports) {
     if (program.GetModule(import_name)) {
       continue;
     }
-    const auto& message = ctx->Temp<std::string>(std::format("module '{}' not found", import_name));
     diags.emplace_back(lsp::Diagnostic{
         .range = conv::ToLSPRange(import.declaration->parent->nrange, file.ast),
         .severity = lsp::DiagnosticSeverity::kError,
         .source = "vanadium",
-        .message = message,
+        .message = *d.arena.Alloc<std::string>(std::format("module '{}' not found", import_name)),
     });
   }
 
   for (const auto& ident : module.unresolved) {
     // TODO: check fmt lib custom allocators or precalcuate size and fill string buffer manually, preferable via helper
-    const auto& message = ctx->Temp<std::string>(std::format("use of unknown symbol '{}'", ident->On(file.ast.src)));
-
     diags.emplace_back(lsp::Diagnostic{
         .range = conv::ToLSPRange(ident->nrange, file.ast),
         .severity = lsp::DiagnosticSeverity::kError,
         .source = "vanadium",
-        .message = message,
+        .message = *d.arena.Alloc<std::string>(std::format("use of unknown symbol '{}'", ident->On(file.ast.src))),
         .data = {{
             {"unresolved", 1},
         }},
@@ -46,7 +46,7 @@ void CollectModuleDiagnostics(LsContext& ctx, const core::Program& program, cons
     // item.data. // TODO
   }
 
-  const auto& problems = ctx->Temp<lint::ProblemSet>(ctx->linter.Lint(program, file));
+  const auto& problems = *d.arena.Alloc<lint::ProblemSet>(d.linter.Lint(file));
   for (const auto& problem : problems) {
     diags.emplace_back(lsp::Diagnostic{
         .range = conv::ToLSPRange(problem.range, file.ast),
@@ -71,8 +71,7 @@ void CollectModuleDiagnostics(LsContext& ctx, const core::Program& program, cons
 }
 }  // namespace
 
-std::vector<lsp::Diagnostic> CollectDiagnostics(LsContext& ctx, const core::Program& program,
-                                                const core::SourceFile& file) {
+std::vector<lsp::Diagnostic> CollectDiagnostics(const core::SourceFile& file, LsSessionRef d) {
   std::vector<lsp::Diagnostic> diags;  // TODO: preallocate memory
   diags.reserve(256);                  // this is not real
 
@@ -107,7 +106,7 @@ std::vector<lsp::Diagnostic> CollectDiagnostics(LsContext& ctx, const core::Prog
   }
 
   if (file.module.has_value()) {
-    CollectModuleDiagnostics(ctx, program, file, diags);
+    CollectModuleDiagnostics(file, diags, d);
   }
 
   return diags;

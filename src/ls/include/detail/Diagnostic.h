@@ -1,21 +1,15 @@
 #pragma once
 
-#include <cstdint>
 #include <vector>
 
 #include "LSProtocol.h"
-#include "LanguageServerContext.h"
+#include "LanguageServerSession.h"
 #include "Program.h"
 
 namespace vanadium::ls {
 namespace detail {
 
-enum DiagnosticKind : std::uint8_t {
-  kUnresolvedName,
-};
-
-std::vector<lsp::Diagnostic> CollectDiagnostics(LsContext& ctx, const core::Program& program,
-                                                const core::SourceFile& file);
+std::vector<lsp::Diagnostic> CollectDiagnostics(const core::SourceFile& file, LsSessionRef d);
 
 }  // namespace detail
 }  // namespace vanadium::ls

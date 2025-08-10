@@ -5,8 +5,6 @@
 #include <glaze/json/write.hpp>
 #include <glaze/util/expected.hpp>
 #include <glaze/util/string_literal.hpp>
-#include <mutex>
-#include <print>
 
 #include "BuiltinRules.h"
 #include "LSConnection.h"
@@ -55,10 +53,7 @@ void Serve(lserver::Transport& transport, std::size_t concurrency, std::size_t j
   VanadiumRpcServer<ServerMethods> rpc_server;
 
   const auto handle_message = [&rpc_server](LsContext& ctx, lserver::PooledMessageToken&& token) {
-    static std::mutex m;
-    std::lock_guard l(m);  // TODO: PoC, this efficiently prevents concurrency - add RWmutexes to Program
-
-    std::println(stderr, "---> {}", *glz::get_as_json<std::string_view, "/method">(token->buf));
+    VLS_INFO("  |---> {}", *glz::get_as_json<std::string_view, "/method">(token->buf));
     const auto begin_ts = std::chrono::steady_clock::now();
 
     auto res_token = ctx.AcquireToken();
@@ -83,8 +78,7 @@ void Serve(lserver::Transport& transport, std::size_t concurrency, std::size_t j
     ctx->TemporaryArena().Reset();
 
     const auto end_ts = std::chrono::steady_clock::now();
-    std::println(stderr, "  <--- {} ms",
-                 std::chrono::duration_cast<std::chrono::milliseconds>(end_ts - begin_ts).count());
+    VLS_INFO("   <--- ({} ms)", std::chrono::duration_cast<std::chrono::milliseconds>(end_ts - begin_ts).count());
   };
 
   VanadiumLsConnection connection(handle_message, transport, concurrency, kServerBacklog);

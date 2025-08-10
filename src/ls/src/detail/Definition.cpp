@@ -121,22 +121,18 @@ std::optional<SymbolSearchResult> FindSymbol(const core::SourceFile* file, lsp::
 
 const core::ast::Node* GetReadableDefinition(const core::ast::Node* n) {
   switch (n->nkind) {
-    case core::ast::NodeKind::FuncDecl:
-      return std::addressof(*(n->As<core::ast::nodes::FuncDecl>()->name));
-    case core::ast::NodeKind::TemplateDecl:
-      return std::addressof(*(n->As<core::ast::nodes::TemplateDecl>()->name));
-    case core::ast::NodeKind::ComponentTypeDecl:
-      return std::addressof(*(n->As<core::ast::nodes::ComponentTypeDecl>()->name));
-    case core::ast::NodeKind::StructTypeDecl:
-      return std::addressof(*(n->As<core::ast::nodes::StructTypeDecl>()->name));
-    case core::ast::NodeKind::SubTypeDecl:
-      return std::addressof(*(n->As<core::ast::nodes::SubTypeDecl>()->field->name));
-    case core::ast::NodeKind::Field:
-      return std::addressof(*(n->As<core::ast::nodes::Field>()->name));
-    case core::ast::NodeKind::Declarator:
-      return std::addressof(*(n->As<core::ast::nodes::Declarator>()->name));
-    case core::ast::NodeKind::CallExpr:
-      return std::addressof(*(n->As<core::ast::nodes::CallExpr>()->fun));
+#define READABLE_DEFINITION_CASE(Type, prop) \
+  case core::ast::NodeKind::Type:            \
+    return std::addressof(*(n->As<core::ast::nodes::Type>()->prop));
+    READABLE_DEFINITION_CASE(FuncDecl, name)
+    READABLE_DEFINITION_CASE(TemplateDecl, name)
+    READABLE_DEFINITION_CASE(ComponentTypeDecl, name)
+    READABLE_DEFINITION_CASE(StructTypeDecl, name)
+    READABLE_DEFINITION_CASE(SubTypeDecl, field->name)
+    READABLE_DEFINITION_CASE(Field, name)
+    READABLE_DEFINITION_CASE(Declarator, name)
+    READABLE_DEFINITION_CASE(CallExpr, fun)
+#undef READABLE_DEFINITION_CASE
     default:
       return n;
   }

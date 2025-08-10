@@ -1,24 +1,31 @@
 #pragma once
 
-#include <oneapi/tbb/enumerable_thread_specific.h>
 #include <tbb/enumerable_thread_specific.h>
 #include <tbb/task_arena.h>
 
 #include <filesystem>
 #include <type_traits>
 #include <unordered_map>
+#include <utility>
 
 #include "Arena.h"
 #include "LSConnection.h"
+#include "LanguageServerHelpers.h"
+#include "LanguageServerLogger.h"
+#include "LanguageServerSession.h"
 #include "Linter.h"
+#include "Metaprogramming.h"
 #include "Program.h"
 #include "Solution.h"
 
-// TODO:
-// Limitations:
-//  - subprojects paths cannot be overlapping
+// TODO: support overlapping projects paths
 
 namespace vanadium::ls {
+
+template <typename Params>
+concept IsDocumentBoundParams = requires(Params params) {
+  { params.textDocument.uri } -> std::convertible_to<std::string_view>;
+};
 
 struct LsState {
   tbb::task_arena task_arena;
@@ -37,36 +44,50 @@ struct LsState {
     return *TemporaryArena().Alloc<T>(std::forward<Args>(args)...);
   }
 
-  template <typename Result, typename F>
-    requires(std::is_invocable_r_v<Result, F, core::Program&, core::SourceFile&>)
-  std::optional<Result> WithFile(std::string_view file_uri, F f) {
-    if (auto resolution = ResolveFile(file_uri)) {
-      auto& [project, path] = *resolution;
-      return f(project.program, *project.program.GetFile(path));
-    }
+  template <typename F>
+    requires(std::is_invocable_v<F, LsSessionRef &&>)
+  auto LockData(F f) {
+    // TODO: lock data, RWmutex with writer preference
+    return f({
+        .solution = *solution,
+        .linter = linter,
+        .arena = temporary_arena_.local(),
+    });
+  }
+
+  template <typename Result, IsDocumentBoundParams Params>
+    requires(!std::is_same_v<Result, void>)
+  std::optional<Result> WithFile(const Params& params,
+                                 mp::Invocable<Result, const Params&, const core::SourceFile&, LsSessionRef> auto f) {
+    return LockData([&](LsSessionRef&& d) -> std::optional<Result> {
+      if (auto resolution = ResolveFileUri(params.textDocument.uri)) {
+        auto& [project, path] = *resolution;
+        const auto* file = project.program.GetFile(path);
+        if (file) {
+          return f(params, *file, std::move(d));
+        }
+      }
+      return std::nullopt;
+    });
     return std::nullopt;
   }
-
-  // TODO: these three functions are a temporary solution
-  [[nodiscard]] std::optional<std::pair<tooling::SolutionProject&, std::string>> ResolveFile(
-      std::string_view file_uri) {
-    constexpr std::size_t kSchemaLength = std::string_view{"file://"}.size();
-    const std::string_view path = file_uri.substr(kSchemaLength, file_uri.size() - kSchemaLength);
-
-    auto* project = solution->ProjectOf(path);
-    if (!project) {
-      return std::nullopt;
-    }
-    return {{*project, std::filesystem::relative(path, solution->Path().base_path).string()}};
+  template <typename Result, IsDocumentBoundParams Params>
+    requires(std::is_same_v<Result, void>)
+  void WithFile(const Params& params,
+                mp::Invocable<Result, const Params&, const core::SourceFile&, LsSessionRef> auto f) {
+    struct Stub {};
+    WithFile<Stub>(params, [&](const Params& params, const core::SourceFile& file, LsSessionRef&& d) {
+      f(params, file, std::forward<LsSessionRef>(d));
+      return Stub{};
+    });
   }
-  [[nodiscard]] std::string FileUriToPath(std::string_view file_uri) const {
-    constexpr std::size_t kSchemaLength = std::string_view{"file://"}.size();
 
-    const std::string_view path = file_uri.substr(kSchemaLength, file_uri.size() - kSchemaLength);
-    return std::filesystem::relative(path, solution->Path().base_path).string();
+  [[nodiscard]] std::optional<std::pair<tooling::SolutionProject&, std::string>> ResolveFileUri(
+      std::string_view file_uri) {
+    return helpers::ResolveFileUri(*solution, file_uri);
   }
   [[nodiscard]] std::string PathToFileUri(std::string_view path) const {
-    return std::format("file://{}", (std::filesystem::path(solution->Path().base_path) / path).string());
+    return helpers::PathToFileUri(*solution, path);
   }
 
  private:

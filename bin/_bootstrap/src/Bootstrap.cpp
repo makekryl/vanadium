@@ -2,6 +2,8 @@
 
 #include <csignal>
 #include <iostream>
+#include <print>
+#include <sstream>
 #include <stacktrace>
 
 namespace vanadium::bin {
@@ -11,11 +13,17 @@ EntryPoint* EntryPoint::list_{nullptr};
 #ifndef NDEBUG
 namespace {
 void HandleSignal(int signum) {
-  std::cerr << "--- Signal (" << signum << ") has been received ---" << std::endl;
-  std::cerr << "--- STACKTRACE ---" << std::endl;
-  std::cerr << std::stacktrace::current();
-  std::cerr.flush();
-  std::exit(signum);  // TODO: call original sighandler
+  std::stringstream ss;
+  ss << "--- Signal (" << signum << ") has been received ---" << std::endl;
+  ss << "--- STACKTRACE ---" << std::endl;
+  ss << std::stacktrace::current();
+
+  const auto str = ss.str();
+  std::println(stderr, "\n{}\n", str);
+  std::fflush(stderr);
+
+  std::signal(signum, SIG_DFL);
+  std::raise(signum);
 }
 }  // namespace
 #endif

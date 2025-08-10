@@ -15,6 +15,7 @@ class SystemFS final : public Filesystem {
   SystemFS() = default;
 
   [[nodiscard]] std::string Join(std::string_view base_path, std::string_view path) const final;
+  [[nodiscard]] std::string Relative(std::string_view path, std::string_view base_path) const final;
 
   [[nodiscard]] bool Exists(const std::string& path) const final;
   [[nodiscard]] bool IsDirectory(const std::string& path) const final;

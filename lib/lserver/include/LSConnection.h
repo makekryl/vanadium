@@ -85,7 +85,7 @@ class Connection {
       : handler_(handler),
         channel_(transport, concurrency * 2),
         backlog_(backlog),
-        task_arena_(concurrency),
+        task_arena_(kServiceWorkerThreads + concurrency),
         pending_outbound_requests_(concurrency, nullptr),
         ctx_(this) {}
 
@@ -97,19 +97,21 @@ class Connection {
   void Listen() {
     is_running_ = true;
 
-    wg_.run([&] {
-      while (is_running_.load()) {
-        channel_.Read();
-      }
-    });
-    wg_.run([&] {
-      while (is_running_.load()) {
-        channel_.Write();
-      }
-    });
     task_arena_.execute([&] {
-      for (int i = 0; i < task_arena_.max_concurrency(); ++i) {
-        wg_.run([&] {
+      wg_.run([&] {
+        while (is_running_.load()) {
+          channel_.Read();
+        }
+      });
+      wg_.run([&] {
+        while (is_running_.load()) {
+          channel_.Write();
+        }
+      });
+
+      const auto concurrency = GetConcurrency();
+      for (std::size_t i = 0; i < concurrency; ++i) {
+        wg_.run([&, j = i] {
           while (is_running_.load()) {
             PooledMessageToken token;
             inbound_requests_queue_.pop(token);
@@ -140,7 +142,7 @@ class Connection {
   }
 
   [[nodiscard]] std::size_t GetConcurrency() const noexcept {
-    return task_arena_.max_concurrency();
+    return task_arena_.max_concurrency() - kServiceWorkerThreads;
   }
   [[nodiscard]] std::size_t GetBacklog() const noexcept {
     return backlog_;
@@ -264,6 +266,7 @@ class Connection {
   std::size_t backlog_;
   tbb::task_arena task_arena_;
   tbb::task_group wg_;
+  static constexpr decltype(task_arena_.max_concurrency()) kServiceWorkerThreads = 3;  // Read+Write+Poll
 
   std::atomic<bool> is_running_;
 

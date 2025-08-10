@@ -8,6 +8,7 @@
 #include "LSProtocolEx.h"
 #include "LanguageServerContext.h"
 #include "LanguageServerConv.h"
+#include "LanguageServerLogger.h"
 #include "LanguageServerMethods.h"
 #include "Semantic.h"
 #include "utils/ASTUtils.h"
@@ -18,7 +19,7 @@ template <>
 rpc::ExpectedResult<lsp::CodeActionResult> methods::textDocument::codeAction::operator()(
     LsContext& ctx, const lsp::CodeActionParams& params) {
   // TODO: shorten the handler, use ctx->WithFile
-  const auto& resolution = ctx->ResolveFile(params.textDocument.uri);
+  const auto& resolution = ctx->ResolveFileUri(params.textDocument.uri);
   if (!resolution) {
     return nullptr;
   }
@@ -29,12 +30,12 @@ rpc::ExpectedResult<lsp::CodeActionResult> methods::textDocument::codeAction::op
 
   for (const auto& diag : params.context.diagnostics) {
     if (!diag.data) {
-      std::println(stderr, " no data");
+      // VLS_DEBUG(" no data");
       continue;
     }
     const auto& data = *diag.data;
-    std::println(stderr, " unresolved = {}, autofix = {}, dump={}", data.contains("unresolved"),
-                 data.contains("autofix"), data.dump().value());
+    VLS_DEBUG(" unresolved = {}, autofix = {}, dump={}", data.contains("unresolved"), data.contains("autofix"),
+              data.dump().value());
     if (data.contains("unresolved")) {
       const auto* n = core::ast::utils::GetNodeAt(file->ast, file->ast.lines.GetPosition(core::ast::Location{
                                                                  .line = diag.range.start.line,

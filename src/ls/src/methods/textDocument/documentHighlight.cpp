@@ -8,6 +8,7 @@
 #include "LanguageServerContext.h"
 #include "LanguageServerConv.h"
 #include "LanguageServerMethods.h"
+#include "LanguageServerSession.h"
 #include "Semantic.h"
 #include "detail/References.h"
 
@@ -16,8 +17,7 @@ template <>
 rpc::ExpectedResult<lsp::DocumentHighlightResults> methods::textDocument::documentHighlight::operator()(
     LsContext& ctx, const lsp::DocumentHighlightParams& params) {
   auto res = ctx->WithFile<lsp::DocumentHighlightResults>(
-      params.textDocument.uri,
-      [&](const core::Program&, const core::SourceFile& file) -> lsp::DocumentHighlightResults {
+      params, [&](const auto&, const core::SourceFile& file, LsSessionRef) -> lsp::DocumentHighlightResults {
         std::vector<lsp::DocumentHighlight> hls;
 
         detail::VisitLocalReferences(&file, params.position, true, [&](const core::ast::nodes::Ident* ident) {

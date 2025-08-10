@@ -18,8 +18,8 @@ struct SolutionProject {
 
   SolutionProject(Project&& project_) : project(std::move(project_)) {}
 
-  [[nodiscard]] const fs::Path& Path() const noexcept {
-    return project.Path();
+  [[nodiscard]] const fs::Path& Directory() const noexcept {
+    return project.Directory();
   }
   [[nodiscard]] const std::string& Name() const noexcept {
     return project.Name();
@@ -31,8 +31,8 @@ class Solution {
   const Project& RootProject() const noexcept {
     return root_project_;
   }
-  [[nodiscard]] const fs::Path& Path() const noexcept {
-    return root_project_.Path();
+  [[nodiscard]] const fs::Path& Directory() const noexcept {
+    return root_project_.Directory();
   }
 
   [[nodiscard]] const SolutionProject* ProjectOf(std::string_view path) const;

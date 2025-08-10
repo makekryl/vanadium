@@ -38,7 +38,7 @@ class Project {
  public:
   static constexpr std::string_view kManifestFilename = ".vanadiumrc.toml";
 
-  [[nodiscard]] const fs::Path& Path() const noexcept {
+  [[nodiscard]] const fs::Path& Directory() const noexcept {
     return path_;
   }
 

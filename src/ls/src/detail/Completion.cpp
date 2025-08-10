@@ -12,10 +12,13 @@
 #include "Arena.h"
 #include "LSProtocol.h"
 #include "LanguageServerConv.h"
+#include "LanguageServerLogger.h"
 #include "Metaprogramming.h"
 #include "Program.h"
 #include "Semantic.h"
+#include "Solution.h"
 #include "TypeChecker.h"
+#include "detail/Definition.h"
 #include "detail/Helpers.h"
 #include "magic_enum/magic_enum.hpp"
 #include "utils/ASTUtils.h"
@@ -55,21 +58,30 @@ namespace {
 }
 }  // namespace
 
-void CollectCompletions(const core::SourceFile* file, const core::ast::Node* n, lib::Arena& arena,
-                        std::vector<lsp::CompletionItem>& items, std::size_t limit) {
-  std::println(stderr, "n={}, parent={}, grandparent={}", magic_enum::enum_name(n->nkind),
-               magic_enum::enum_name(n->parent->nkind), magic_enum::enum_name(n->parent->parent->nkind));
+std::vector<lsp::CompletionItem> CollectCompletions(const lsp::CompletionParams& params, const core::SourceFile& file,
+                                                    LsSessionRef d) {
+  if (!file.module) {
+    return {};
+  }
 
-  const core::semantic::Scope* scope = core::semantic::utils::FindScope(file->module->scope, n);
+  constexpr std::size_t kMaxCompletionItems = 120;
+  std::vector<lsp::CompletionItem> items;
 
-  const auto mask = file->Text(n);
-  std::println(stderr, "mask: '{}'", mask);
+  const auto* n = detail::FindNode(&file, params.position);
+
+  VLS_DEBUG("n={}, parent={}, grandparent={}", magic_enum::enum_name(n->nkind), magic_enum::enum_name(n->parent->nkind),
+            magic_enum::enum_name(n->parent->parent->nkind));
+
+  const core::semantic::Scope* scope = core::semantic::utils::FindScope(file.module->scope, n);
+
+  const auto mask = file.Text(n);
+  VLS_DEBUG("mask: '{}'", mask);
 
   if (n->nkind == core::ast::NodeKind::SelectorExpr) {
     n = n->As<core::ast::nodes::SelectorExpr>()->x;
-    const auto* sym = core::checker::ResolveExprType(file, scope, n->As<core::ast::nodes::Expr>());
+    const auto* sym = core::checker::ResolveExprType(&file, scope, n->As<core::ast::nodes::Expr>());
     if (!sym) {
-      return;
+      return items;  // todo: extract filler to separate func
     }
     if (sym->Flags() & core::semantic::SymbolFlags::kStructural) {
       for (const auto& [name, msym] : sym->Members()->Enumerate()) {
@@ -90,7 +102,7 @@ void CollectCompletions(const core::SourceFile* file, const core::ast::Node* n, 
         });
       }
     }
-    return;
+    return items;  // todo: extract filler to separate func
   }
 
   const auto complete_props = [&](const core::semantic::Symbol* sym) {
@@ -103,7 +115,7 @@ void CollectCompletions(const core::SourceFile* file, const core::ast::Node* n, 
           .label = name,
           .kind = lsp::CompletionItemKind::kProperty,
           .sortText = "0",
-          .insertText = *arena.Alloc<std::string>(std::format("{} := ", name)),
+          .insertText = *d.arena.Alloc<std::string>(std::format("{} := ", name)),
       });
     }
   };
@@ -111,11 +123,11 @@ void CollectCompletions(const core::SourceFile* file, const core::ast::Node* n, 
   const auto* parent = n->parent;
   switch (parent->nkind) {
     case core::ast::NodeKind::Definition: {
-      return;
+      return items;  // todo: extract filler to separate func
     }
     case core::ast::NodeKind::ImportDecl: {
-      file->program->VisitAccessibleModules([&](const core::ModuleDescriptor& mod) {
-        if (mod.name.contains(mask) && !file->module->imports.contains(mod.name)) {
+      file.program->VisitAccessibleModules([&](const core::ModuleDescriptor& mod) {
+        if (mod.name.contains(mask) && !file.module->imports.contains(mod.name)) {
           items.emplace_back(lsp::CompletionItem{
               .label = mod.name,
               .kind = lsp::CompletionItemKind::kModule,
@@ -128,13 +140,13 @@ void CollectCompletions(const core::SourceFile* file, const core::ast::Node* n, 
       break;
     }
     case core::ast::NodeKind::CompositeLiteral:
-      complete_props(core::checker::ext::DeduceCompositeLiteralType(file, scope,
+      complete_props(core::checker::ext::DeduceCompositeLiteralType(&file, scope,
                                                                     parent->As<core::ast::nodes::CompositeLiteral>()));
       break;
     case core::ast::NodeKind::ParenExpr: {
       const auto* pe = parent->As<core::ast::nodes::ParenExpr>();
       const auto* ce = pe->parent->As<core::ast::nodes::CallExpr>();
-      const auto* sym = core::checker::ResolveExprType(file, scope, ce->fun);
+      const auto* sym = core::checker::ResolveExprType(&file, scope, ce->fun);
       if (sym && (sym->Flags() & (core::semantic::SymbolFlags::kFunction | core::semantic::SymbolFlags::kTemplate))) {
         const auto* params = core::ast::utils::GetCallableDeclParams(sym->Declaration()->As<core::ast::nodes::Decl>());
         const auto* params_file = core::ast::utils::SourceFileOf(params);
@@ -145,7 +157,7 @@ void CollectCompletions(const core::SourceFile* file, const core::ast::Node* n, 
               .label = name,
               .kind = lsp::CompletionItemKind::kProperty,
               .sortText = "1",
-              .insertText = *arena.Alloc<std::string>(std::format("{} := ", name)),
+              .insertText = *d.arena.Alloc<std::string>(std::format("{} := ", name)),
           });
         }
       }
@@ -157,8 +169,8 @@ void CollectCompletions(const core::SourceFile* file, const core::ast::Node* n, 
         if ((n == ae->property) && (ae->parent->nkind == core::ast::NodeKind::CompositeLiteral/* ||
                                     ae->parent->nkind == core::ast::NodeKind::ParenExpr*/)) {
           complete_props(core::checker::ext::DeduceCompositeLiteralType(
-              file, scope, ae->parent->As<core::ast::nodes::CompositeLiteral>()));
-          return;
+              &file, scope, ae->parent->As<core::ast::nodes::CompositeLiteral>()));
+          return items;  // todo: extract filler to separate func
         }
       }
 
@@ -169,7 +181,7 @@ void CollectCompletions(const core::SourceFile* file, const core::ast::Node* n, 
       break;
   }
 
-  const core::semantic::Symbol* expected_type_opt = core::checker::ext::DeduceExpectedType(file, scope, n);
+  const core::semantic::Symbol* expected_type_opt = core::checker::ext::DeduceExpectedType(&file, scope, n);
   if (expected_type_opt && (expected_type_opt->Flags() & core::semantic::SymbolFlags::kEnum)) {
     for (const auto& [name, msym] : expected_type_opt->Members()->Enumerate()) {
       items.emplace_back(lsp::CompletionItem{
@@ -180,7 +192,7 @@ void CollectCompletions(const core::SourceFile* file, const core::ast::Node* n, 
       });
     }
     // nothing more needed
-    return;
+    return items;  // todo: extract filler to separate func
   }
 
   for (const auto* cs = scope; cs != nullptr; cs = cs->ParentScope()) {
@@ -193,7 +205,7 @@ void CollectCompletions(const core::SourceFile* file, const core::ast::Node* n, 
     }
   }
 
-  file->program->VisitAccessibleModules([&](const core::ModuleDescriptor& module) {
+  file.program->VisitAccessibleModules([&](const core::ModuleDescriptor& module) {
     for (const auto& sym : module.scope->symbols.Enumerate() | std::views::values) {
       if (sym.Flags() & core::semantic::SymbolFlags::kImportedModule) {
         continue;
@@ -220,28 +232,31 @@ void CollectCompletions(const core::SourceFile* file, const core::ast::Node* n, 
           // TODO: find a way to have strongly-typed 'data' on both ends (maybe modify lspgen to produce templates,
           // exposing internal payload structure to the higher levels does not sounds good though - and it will be
           // required to do in such case)
-          .data = glz::json_t{{"path", file->path},
+          .data = glz::json_t{{"path", file.path},
                               {"details",
                                {
                                    {"module", module.name},
                                }}},
       });
-      if (items.size() >= limit) {
+      if (items.size() >= kMaxCompletionItems) {
         return false;
       }
     }
     return true;
   });
-}  // namespace vanadium::ls::detail
 
-std::optional<lsp::CompletionItem> ResolveCompletionItem(const tooling::Solution& solution, lib::Arena& arena,
-                                                         const lsp::CompletionItem& original_completion) {
+  return items;  // todo: extract filler to separate func
+}
+
+std::optional<lsp::CompletionItem> ResolveCompletionItem(const lsp::CompletionItem& original_completion,
+                                                         LsSessionRef d) {
   if (!original_completion.data) {
     return std::nullopt;
   }
   const auto payload = glz::read_json<CompletionItemPayload>(*original_completion.data);
 
-  const auto* project = solution.ProjectOf((std::filesystem::path(solution.Path().base_path) / payload->path).string());
+  const auto* project =
+      d.solution.ProjectOf((std::filesystem::path(d.solution.Directory().base_path) / payload->path).string());
   const auto* file = project->program.GetFile(payload->path);
 
   lsp::CompletionItem rendition{original_completion};
@@ -268,7 +283,7 @@ std::optional<lsp::CompletionItem> ResolveCompletionItem(const tooling::Solution
                             .start = conv::ToLSPPosition(loc),
                             .end = conv::ToLSPPosition(loc),
                         },
-                    .newText = *arena.Alloc<std::string>(std::format("\nimport from {} all;\n", def.module)),
+                    .newText = *d.arena.Alloc<std::string>(std::format("\nimport from {} all;\n", def.module)),
                 },
             }};
           },

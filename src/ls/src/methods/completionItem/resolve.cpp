@@ -7,9 +7,8 @@ namespace vanadium::ls {
 template <>
 rpc::ExpectedResult<lsp::CompletionItem> methods::completionItem::resolve::operator()(LsContext& ctx,
                                                                                       const lsp::CompletionItem& item) {
-  if (const auto result = detail::ResolveCompletionItem(*ctx->solution, ctx->TemporaryArena(), item); result) {
-    return *result;
-  }
-  return item;
+  return ctx->LockData([&](LsSessionRef d) {
+    return detail::ResolveCompletionItem(item, std::move(d)).value_or(item);
+  });
 }
 }  // namespace vanadium::ls

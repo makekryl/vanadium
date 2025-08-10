@@ -1,6 +1,5 @@
 #include <memory>
 #include <optional>
-#include <print>
 #include <ranges>
 #include <stack>
 #include <vector>
@@ -12,6 +11,7 @@
 #include "LanguageServerContext.h"
 #include "LanguageServerConv.h"
 #include "LanguageServerMethods.h"
+#include "LanguageServerSession.h"
 #include "Program.h"
 #include "Semantic.h"
 #include "TypeChecker.h"
@@ -19,7 +19,7 @@
 namespace vanadium::ls {
 
 namespace {
-void DumpParams(const core::SourceFile* file, const core::ast::nodes::FormalPars* params, std::string& buf) {
+void DumpParams(const core::SourceFile& file, const core::ast::nodes::FormalPars* params, std::string& buf) {
   if (!params || params->list.empty()) {
     return;
   }
@@ -29,15 +29,15 @@ void DumpParams(const core::SourceFile* file, const core::ast::nodes::FormalPars
   const auto last_idx = std::ssize(params->list) - 1;
   for (const auto [idx, param] : params->list | std::views::enumerate) {
     if (param->restriction) {
-      buf += file->Text(param->restriction);
+      buf += file.Text(param->restriction);
       buf += " ";
     }
 
-    buf += file->Text(param->type);
+    buf += file.Text(param->type);
 
     if (param->name) {
       buf += " ";
-      buf += file->Text(*param->name);
+      buf += file.Text(*param->name);
     }
 
     // TODO: arraydef
@@ -49,32 +49,16 @@ void DumpParams(const core::SourceFile* file, const core::ast::nodes::FormalPars
 
   buf += ")";
 }
-}  // namespace
 
-template <>
-rpc::ExpectedResult<lsp::DocumentSybmolResult> methods::textDocument::documentSymbol::operator()(
-    LsContext& ctx, const lsp::DocumentSymbolParams& params) {
-  // TODO: shorten the handler, use ctx->WithFile
-  const auto& resolution = ctx->ResolveFile(params.textDocument.uri);
-  if (!resolution) {
-    return nullptr;
-  }
-  const auto& [project, path] = *resolution;
-
-  const auto* file = project.program.GetFile(path);
-  if (!file) {
-    return nullptr;
-  }
-  std::println(stderr, "documentSymbol({}) {}", path, file->module ? "+" : "-");
-
+lsp::DocumentSybmolResult GatherResult(const lsp::DocumentSymbolParams&, const core::SourceFile& file, LsSessionRef d) {
   const auto lit = [&](const std::optional<core::ast::nodes::Ident>& ident) -> std::string_view {
     if (!ident) {
       return "<empty>";
     }
-    return file->Text(*ident);
+    return file.Text(*ident);
   };
   const auto nlit = [&](const core::ast::Node* n) -> std::string_view {
-    return file->Text(n);
+    return file.Text(n);
   };
 
   std::vector<lsp::DocumentSymbol> result;
@@ -97,7 +81,7 @@ rpc::ExpectedResult<lsp::DocumentSybmolResult> methods::textDocument::documentSy
   };
 
   bool inside_class{false};
-  file->ast.root->Accept([&](this auto& self, const core::ast::Node* n) {
+  file.ast.root->Accept([&](this auto& self, const core::ast::Node* n) {
     switch (n->nkind) {
       case core::ast::NodeKind::Module: {
         const auto* m = n->As<core::ast::nodes::Module>();
@@ -105,7 +89,7 @@ rpc::ExpectedResult<lsp::DocumentSybmolResult> methods::textDocument::documentSy
             lsp::DocumentSymbol{
                 .name = lit(m->name),
                 .kind = lsp::SymbolKind::kPackage,
-                .range = conv::ToLSPRange(m->nrange, file->ast),
+                .range = conv::ToLSPRange(m->nrange, file.ast),
             },
             [&] {
               m->Accept(self);
@@ -115,13 +99,13 @@ rpc::ExpectedResult<lsp::DocumentSybmolResult> methods::textDocument::documentSy
       case core::ast::NodeKind::FuncDecl: {
         const auto* m = n->As<core::ast::nodes::FuncDecl>();
 
-        auto& detail = ctx->Temp<std::string>();
+        auto& detail = *d.arena.Alloc<std::string>();
         if (m->params) {
           detail.reserve(32 * m->params->list.size());
         }
 
         if (m->kind.kind != core::ast::TokenKind::FUNCTION) {
-          detail += file->Text(m->kind.range);
+          detail += file.Text(m->kind.range);
         } else if (m->ret) {
           detail += nlit(m->ret);
           detail += " ";
@@ -135,7 +119,7 @@ rpc::ExpectedResult<lsp::DocumentSybmolResult> methods::textDocument::documentSy
                 .name = lit(m->name),
                 .detail = detail,
                 .kind = inside_class ? lsp::SymbolKind::kMethod : lsp::SymbolKind::kFunction,
-                .range = conv::ToLSPRange(m->nrange, file->ast),
+                .range = conv::ToLSPRange(m->nrange, file.ast),
             },
             [&] {
               if (m->runs_on) {
@@ -143,7 +127,7 @@ rpc::ExpectedResult<lsp::DocumentSybmolResult> methods::textDocument::documentSy
                     .name = "runs on",
                     .detail = nlit(m->runs_on->comp),
                     .kind = lsp::SymbolKind::kProperty,
-                    .range = conv::ToLSPRange(m->runs_on->nrange, file->ast),
+                    .range = conv::ToLSPRange(m->runs_on->nrange, file.ast),
                 });
               }
               if (m->system) {
@@ -151,7 +135,7 @@ rpc::ExpectedResult<lsp::DocumentSybmolResult> methods::textDocument::documentSy
                     .name = "system",
                     .detail = nlit(m->system->comp),
                     .kind = lsp::SymbolKind::kProperty,
-                    .range = conv::ToLSPRange(m->system->nrange, file->ast),
+                    .range = conv::ToLSPRange(m->system->nrange, file.ast),
                 });
               }
             });
@@ -161,7 +145,7 @@ rpc::ExpectedResult<lsp::DocumentSybmolResult> methods::textDocument::documentSy
       case core::ast::NodeKind::TemplateDecl: {
         const auto* m = n->As<core::ast::nodes::TemplateDecl>();
 
-        auto& detail = ctx->Temp<std::string>();
+        auto& detail = *d.arena.Alloc<std::string>();
         if (m->params) {
           detail.reserve(32 * m->params->list.size());
         }
@@ -177,15 +161,15 @@ rpc::ExpectedResult<lsp::DocumentSybmolResult> methods::textDocument::documentSy
                 .name = lit(m->name),
                 .detail = detail,
                 .kind = lsp::SymbolKind::kInterface,
-                .range = conv::ToLSPRange(m->nrange, file->ast),
+                .range = conv::ToLSPRange(m->nrange, file.ast),
             },
             [&] {
               if (m->modif) {
                 push(lsp::DocumentSymbol{
                     .name = "modifier",
-                    .detail = file->Text(m->modif),
+                    .detail = file.Text(m->modif),
                     .kind = lsp::SymbolKind::kProperty,
-                    .range = conv::ToLSPRange(m->modif->range, file->ast),
+                    .range = conv::ToLSPRange(m->modif->range, file.ast),
                 });
               }
             });
@@ -198,9 +182,9 @@ rpc::ExpectedResult<lsp::DocumentSybmolResult> methods::textDocument::documentSy
         subtree(
             lsp::DocumentSymbol{
                 .name = lit(m->name),
-                .detail = file->Text(m->kind.range),
+                .detail = file.Text(m->kind.range),
                 .kind = lsp::SymbolKind::kStruct,
-                .range = conv::ToLSPRange(m->nrange, file->ast),
+                .range = conv::ToLSPRange(m->nrange, file.ast),
             },
             [&] {
               for (const auto* f : m->fields) {
@@ -208,7 +192,7 @@ rpc::ExpectedResult<lsp::DocumentSybmolResult> methods::textDocument::documentSy
                     .name = lit(f->name),
                     .detail = nlit(f->type),
                     .kind = lsp::SymbolKind::kField,
-                    .range = conv::ToLSPRange(f->nrange, file->ast),
+                    .range = conv::ToLSPRange(f->nrange, file.ast),
                 });
               }
             });
@@ -222,14 +206,14 @@ rpc::ExpectedResult<lsp::DocumentSybmolResult> methods::textDocument::documentSy
             lsp::DocumentSymbol{
                 .name = lit(m->name),
                 .kind = lsp::SymbolKind::kEnum,
-                .range = conv::ToLSPRange(m->nrange, file->ast),
+                .range = conv::ToLSPRange(m->nrange, file.ast),
             },
             [&] {
               for (const auto* e : m->values) {
                 push(lsp::DocumentSymbol{
                     .name = nlit(e),
                     .kind = lsp::SymbolKind::kEnummember,
-                    .range = conv::ToLSPRange(e->nrange, file->ast),
+                    .range = conv::ToLSPRange(e->nrange, file.ast),
                 });
               }
             });
@@ -243,7 +227,7 @@ rpc::ExpectedResult<lsp::DocumentSybmolResult> methods::textDocument::documentSy
             .name = lit(m->field->name),
             .detail = "subtype",
             .kind = lsp::SymbolKind::kTypeparameter,
-            .range = conv::ToLSPRange(m->nrange, file->ast),
+            .range = conv::ToLSPRange(m->nrange, file.ast),
         });
 
         return false;
@@ -251,9 +235,9 @@ rpc::ExpectedResult<lsp::DocumentSybmolResult> methods::textDocument::documentSy
       case core::ast::NodeKind::ValueDecl: {
         const auto* m = n->As<core::ast::nodes::ValueDecl>();
 
-        auto& detail = ctx->Temp<std::string>();
+        auto& detail = *d.arena.Alloc<std::string>();
         if (m->kind) {
-          detail += file->Text(m->kind->range);
+          detail += file.Text(m->kind->range);
           detail += " ";
         }
         detail += nlit(m->type);
@@ -277,7 +261,7 @@ rpc::ExpectedResult<lsp::DocumentSybmolResult> methods::textDocument::documentSy
                     return lsp::SymbolKind::kVariable;
                 }
               }(),
-              .range = conv::ToLSPRange(decl->nrange, file->ast),
+              .range = conv::ToLSPRange(decl->nrange, file.ast),
           });
         }
 
@@ -289,7 +273,7 @@ rpc::ExpectedResult<lsp::DocumentSybmolResult> methods::textDocument::documentSy
             lsp::DocumentSymbol{
                 .name = lit(m->name),
                 .kind = lsp::SymbolKind::kClass,
-                .range = conv::ToLSPRange(m->nrange, file->ast),
+                .range = conv::ToLSPRange(m->nrange, file.ast),
             },
             [&] {
               for (const auto* ext : m->extends) {
@@ -297,7 +281,7 @@ rpc::ExpectedResult<lsp::DocumentSybmolResult> methods::textDocument::documentSy
                     .name = "extends",
                     .detail = nlit(ext),
                     .kind = lsp::SymbolKind::kProperty,
-                    .range = conv::ToLSPRange(ext->nrange, file->ast),
+                    .range = conv::ToLSPRange(ext->nrange, file.ast),
                 });
               }
               if (m->runs_on) {
@@ -305,7 +289,7 @@ rpc::ExpectedResult<lsp::DocumentSybmolResult> methods::textDocument::documentSy
                     .name = "runs on",
                     .detail = nlit(m->runs_on->comp),
                     .kind = lsp::SymbolKind::kProperty,
-                    .range = conv::ToLSPRange(m->runs_on->nrange, file->ast),
+                    .range = conv::ToLSPRange(m->runs_on->nrange, file.ast),
                 });
               }
               if (m->system) {
@@ -313,7 +297,7 @@ rpc::ExpectedResult<lsp::DocumentSybmolResult> methods::textDocument::documentSy
                     .name = "system",
                     .detail = nlit(m->system->comp),
                     .kind = lsp::SymbolKind::kProperty,
-                    .range = conv::ToLSPRange(m->system->nrange, file->ast),
+                    .range = conv::ToLSPRange(m->system->nrange, file.ast),
                 });
               }
               inside_class = true;
@@ -327,7 +311,7 @@ rpc::ExpectedResult<lsp::DocumentSybmolResult> methods::textDocument::documentSy
 
         std::string_view detail = "constructor";
         if (m->params) {
-          auto& detail_buf = ctx->Temp<std::string>();
+          auto& detail_buf = *d.arena.Alloc<std::string>();
           detail_buf.reserve(32 * m->params->list.size());
           detail_buf += "constructor ";
           DumpParams(file, m->params, detail_buf);
@@ -338,7 +322,7 @@ rpc::ExpectedResult<lsp::DocumentSybmolResult> methods::textDocument::documentSy
             .name = "create",
             .detail = detail,
             .kind = lsp::SymbolKind::kConstructor,
-            .range = conv::ToLSPRange(m->nrange, file->ast),
+            .range = conv::ToLSPRange(m->nrange, file.ast),
         });
 
         return false;
@@ -353,5 +337,12 @@ rpc::ExpectedResult<lsp::DocumentSybmolResult> methods::textDocument::documentSy
   });
 
   return result;
+}
+}  // namespace
+
+template <>
+rpc::ExpectedResult<lsp::DocumentSybmolResult> methods::textDocument::documentSymbol::operator()(
+    LsContext& ctx, const lsp::DocumentSymbolParams& params) {
+  return ctx->WithFile<lsp::DocumentSybmolResult>(params, GatherResult).value_or(nullptr);
 }
 }  // namespace vanadium::ls

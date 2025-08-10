@@ -70,7 +70,7 @@ template <>
 rpc::ExpectedResult<lsp::HoverResult> methods::textDocument::hover::operator()(LsContext& ctx,
                                                                                const lsp::HoverParams& params) {
   // TODO: shorten the handler, use ctx->WithFile
-  const auto& resolution = ctx->ResolveFile(params.textDocument.uri);
+  const auto& resolution = ctx->ResolveFileUri(params.textDocument.uri);
   if (!resolution) {
     return nullptr;
   }

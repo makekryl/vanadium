@@ -39,7 +39,7 @@ int main(int argc, char* argv[]) {
   vanadium::lserver::StdioTransport::Setup();
   vanadium::lserver::StdioTransport transport;
 
-  vanadium::ls::Serve(transport, 3, 4);
+  vanadium::ls::Serve(transport, 1, 4);
 
   return 0;
 }

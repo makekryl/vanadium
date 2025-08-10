@@ -64,7 +64,7 @@ int main(int argc, char* argv[]) {
     return 2;
   }
   auto& solution = *solution_opt;
-  const auto& dir = solution.Path();
+  const auto& dir = solution.Directory();
   const auto t_load_end = std::chrono::steady_clock::now();
 
   //
@@ -81,7 +81,7 @@ int main(int argc, char* argv[]) {
 
     const auto& program = project.program;
     for (const auto& [virtual_path, sf] : program.Files()) {
-      fmt::print(fmt::emphasis::underline | fmt::emphasis::bold, "{}\n", project.Path().Join(sf.path));
+      fmt::print(fmt::emphasis::underline | fmt::emphasis::bold, "{}\n", project.Directory().Join(sf.path));
       if (!sf.ast.errors.empty()) {
         fmt::println("\tFile has syntax errors");
         return 2;

@@ -2,7 +2,8 @@ file(GLOB_RECURSE DETAIL_SOURCE_FILES CONFIGURE_DEPENDS src/detail/*.cpp)
 file(GLOB_RECURSE METHODS_SOURCE_FILES CONFIGURE_DEPENDS src/methods/*.cpp)
 
 add_library(vanadium_ls STATIC
-  src/LangaugeServer.cpp
+  src/LanguageServer.cpp
+  src/LanguageServerHelpers.cpp
   ${DETAIL_SOURCE_FILES}
   ${METHODS_SOURCE_FILES}
 )

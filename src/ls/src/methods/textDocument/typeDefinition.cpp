@@ -20,7 +20,7 @@ template <>
 rpc::ExpectedResult<lsp::TypeDefinitionResult> methods::textDocument::typeDefinition::operator()(
     LsContext& ctx, const lsp::TypeDefinitionParams& params) {
   // TODO: shorten the handler, use ctx->WithFile
-  const auto& resolution = ctx->ResolveFile(params.textDocument.uri);
+  const auto& resolution = ctx->ResolveFileUri(params.textDocument.uri);
   if (!resolution) {
     return nullptr;
   }
