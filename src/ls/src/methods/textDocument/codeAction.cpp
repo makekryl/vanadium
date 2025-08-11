@@ -1,6 +1,5 @@
 #include <glaze/ext/jsonrpc.hpp>
 #include <glaze/json/write.hpp>
-#include <print>
 
 #include "ASTNodes.h"
 #include "ASTTypes.h"
@@ -10,51 +9,44 @@
 #include "LanguageServerConv.h"
 #include "LanguageServerLogger.h"
 #include "LanguageServerMethods.h"
+#include "LanguageServerSession.h"
+#include "Program.h"
 #include "Semantic.h"
 #include "utils/ASTUtils.h"
-#include "utils/SemanticUtils.h"
 
 namespace vanadium::ls {
-template <>
-rpc::ExpectedResult<lsp::CodeActionResult> methods::textDocument::codeAction::operator()(
-    LsContext& ctx, const lsp::CodeActionParams& params) {
-  // TODO: shorten the handler, use ctx->WithFile
-  const auto& resolution = ctx->ResolveFileUri(params.textDocument.uri);
-  if (!resolution) {
-    return nullptr;
-  }
-  const auto& [project, path] = *resolution;
-  const auto* file = project.program.GetFile(path);
-
+namespace {
+lsp::CodeActionResult ProvideCodeActions(const lsp::CodeActionParams& params, const core::SourceFile& file,
+                                         LsSessionRef d) {
   std::vector<lsp::CodeAction> actions;
 
   for (const auto& diag : params.context.diagnostics) {
     if (!diag.data) {
-      // VLS_DEBUG(" no data");
+      VLS_DEBUG(" no data");
       continue;
     }
     const auto& data = *diag.data;
-    VLS_DEBUG(" unresolved = {}, autofix = {}, dump={}", data.contains("unresolved"), data.contains("autofix"),
-              data.dump().value());
+    VLS_DEBUG("CA data='{}'", data.dump().value());
     if (data.contains("unresolved")) {
-      const auto* n = core::ast::utils::GetNodeAt(file->ast, file->ast.lines.GetPosition(core::ast::Location{
-                                                                 .line = diag.range.start.line,
-                                                                 .column = diag.range.start.character + 1,
-                                                             }));
-      const auto text = n->On(file->ast.src);
+      const auto* n = core::ast::utils::GetNodeAt(file.ast, file.ast.lines.GetPosition(core::ast::Location{
+                                                                .line = diag.range.start.line,
+                                                                .column = diag.range.start.character + 1,
+                                                            }));
+      const auto text = n->On(file.ast.src);
 
       // TODO: multiple modules can provide resolution - consider continuing search
-      project.program.VisitAccessibleModules([&](const core::ModuleDescriptor& module) {
+      file.program->VisitAccessibleModules([&](const core::ModuleDescriptor& module) {
         if (module.scope->ResolveDirect(text) == nullptr) {
           // continue search
           return true;
         }
 
-        const auto& replacement = ctx->Temp<std::string>(std::format("import from {} all;\n", module.name));
+        const auto& replacement = *d.arena.Alloc<std::string>(std::format("import from {} all;\n", module.name));
 
         actions.emplace_back(
             lsp::CodeAction{
-                .title = ctx->Temp<std::string>(std::format("Import module '{}' for symbol '{}'", module.name, text)),
+                .title =
+                    *d.arena.Alloc<std::string>(std::format("Import module '{}' for symbol '{}'", module.name, text)),
                 .kind = lsp::CodeActionKind::kQuickfix,
                 .isPreferred = true,
                 .edit =
@@ -101,8 +93,8 @@ rpc::ExpectedResult<lsp::CodeActionResult> methods::textDocument::codeAction::op
                                       .range =
                                           lsp::Range{
                                               .start = conv::ToLSPPosition(
-                                                  file->ast.lines.Translate(data["autofix"]["range"][0].as<int>())),
-                                              .end = conv::ToLSPPosition(file->ast.lines.Translate(
+                                                  file.ast.lines.Translate(data["autofix"]["range"][0].as<int>())),
+                                              .end = conv::ToLSPPosition(file.ast.lines.Translate(
                                                   data["autofix"]["range"][1].as<int>())),
                                           },
                                       .newText = "",
@@ -114,5 +106,12 @@ rpc::ExpectedResult<lsp::CodeActionResult> methods::textDocument::codeAction::op
   }
 
   return actions;
+}
+}  // namespace
+
+template <>
+rpc::ExpectedResult<lsp::CodeActionResult> methods::textDocument::codeAction::operator()(
+    LsContext& ctx, const lsp::CodeActionParams& params) {
+  return ctx->WithFile<lsp::CodeActionResult>(params, ProvideCodeActions).value_or(nullptr);
 }
 }  // namespace vanadium::ls

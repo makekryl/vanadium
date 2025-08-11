@@ -12,7 +12,7 @@
 namespace vanadium::ls {
 template <>
 void methods::textDocument::didChange::operator()(LsContext& ctx, const lsp::DidChangeTextDocumentParams& params) {
-  ctx->WithFile<void>(params, [&](const auto&, const core::SourceFile& file, LsSessionRef d) {
+  ctx->WithFile(params, [&](const auto&, const core::SourceFile& file, LsSessionRef d) {
     ctx->file_versions[file.path] = params.textDocument.version;
 
     const auto read_file = [&](std::string_view, std::string& srcbuf) -> void {

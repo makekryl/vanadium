@@ -71,10 +71,8 @@ struct LsState {
     });
     return std::nullopt;
   }
-  template <typename Result, IsDocumentBoundParams Params>
-    requires(std::is_same_v<Result, void>)
-  void WithFile(const Params& params,
-                mp::Invocable<Result, const Params&, const core::SourceFile&, LsSessionRef> auto f) {
+  template <IsDocumentBoundParams Params>
+  void WithFile(const Params& params, mp::Consumer<const Params&, const core::SourceFile&, LsSessionRef> auto f) {
     struct Stub {};
     WithFile<Stub>(params, [&](const Params& params, const core::SourceFile& file, LsSessionRef&& d) {
       f(params, file, std::forward<LsSessionRef>(d));

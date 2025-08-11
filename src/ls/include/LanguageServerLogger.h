@@ -10,12 +10,12 @@
     std::println(stderr, tag "/ " msg, ##__VA_ARGS__); \
   } while (0)
 
-#define VLS_INFO(msg, ...) VLS_LOG("I", msg, __VA_ARGS__)
-#define VLS_WARN(msg, ...) VLS_LOG("W", msg, __VA_ARGS__)
-#define VLS_ERROR(msg, ...) VLS_LOG("E", msg, __VA_ARGS__)
+#define VLS_INFO(...) VLS_LOG("I", __VA_ARGS__)
+#define VLS_WARN(...) VLS_LOG("W", __VA_ARGS__)
+#define VLS_ERROR(...) VLS_LOG("E", __VA_ARGS__)
 
 #ifndef NDEBUG
-#define VLS_DEBUG(msg, ...) VLS_LOG("D", msg, __VA_ARGS__)
+#define VLS_DEBUG(...) VLS_LOG("D", __VA_ARGS__)
 #else
 #define VLS_DEBUG(msg, ...)
 #endif

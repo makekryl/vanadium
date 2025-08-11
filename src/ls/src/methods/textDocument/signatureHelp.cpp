@@ -11,13 +11,14 @@
 #include "LanguageServerContext.h"
 #include "LanguageServerConv.h"
 #include "LanguageServerMethods.h"
+#include "LanguageServerSession.h"
+#include "Program.h"
 #include "Semantic.h"
 #include "TypeChecker.h"
 #include "utils/ASTUtils.h"
 #include "utils/SemanticUtils.h"
 
 namespace vanadium::ls {
-
 namespace {
 class SignatureInformationBuilder {
  public:
@@ -64,25 +65,15 @@ std::optional<std::size_t> GetCurrentArgumentIndex(const ContainerNode* containe
   }
   return 0;
 }
-}  // namespace
 
-template <>
-rpc::ExpectedResult<lsp::SignatureHelpResult> methods::textDocument::signatureHelp::operator()(
-    LsContext& ctx, const lsp::SignatureHelpParams& params) {
-  // TODO: shorten the handler, use ctx->WithFile
-  const auto& resolution = ctx->ResolveFileUri(params.textDocument.uri);
-  if (!resolution) {
-    return nullptr;
-  }
-  const auto& [project, path] = *resolution;
-  const auto* file = project.program.GetFile(path);
-
-  if (!file->module) {
+lsp::SignatureHelpResult ProvideSignatureHelp(const lsp::SignatureHelpParams& params, const core::SourceFile& file,
+                                              LsSessionRef d) {
+  if (!file.module) {
     return nullptr;
   }
 
-  const auto pos = file->ast.lines.GetPosition(conv::FromLSPPosition(params.position));
-  const auto* n = core::ast::utils::GetNodeAt(file->ast, pos);
+  const auto pos = file.ast.lines.GetPosition(conv::FromLSPPosition(params.position));
+  const auto* n = core::ast::utils::GetNodeAt(file.ast, pos);
 
   const auto* container = n;
   if (n->nkind == core::ast::NodeKind::ErrorNode) {
@@ -93,16 +84,16 @@ rpc::ExpectedResult<lsp::SignatureHelpResult> methods::textDocument::signatureHe
     case core::ast::NodeKind::ParenExpr: {
       const auto* pe = container->As<core::ast::nodes::ParenExpr>();
 
-      const core::semantic::Scope* scope = core::semantic::utils::FindScope(file->module->scope, pe);
+      const core::semantic::Scope* scope = core::semantic::utils::FindScope(file.module->scope, pe);
 
-      const auto* callable_params = core::checker::utils::ResolveCallableParams(file, scope, pe);
+      const auto* callable_params = core::checker::utils::ResolveCallableParams(&file, scope, pe);
       if (!callable_params) {
         return nullptr;
       }
       const core::ast::Node* callable_decl = callable_params->parent;
       const auto* callable_file = core::ast::utils::SourceFileOf(callable_decl);
 
-      auto& label = ctx->Temp<std::string>();
+      auto& label = *d.arena.Alloc<std::string>();
       label.reserve(32 * (callable_params->list.size() + 2));
 
       std::string_view return_type_name;
@@ -169,9 +160,9 @@ rpc::ExpectedResult<lsp::SignatureHelpResult> methods::textDocument::signatureHe
     case core::ast::NodeKind::CompositeLiteral: {
       const auto* cl = container->As<core::ast::nodes::CompositeLiteral>();
 
-      const core::semantic::Scope* scope = core::semantic::utils::FindScope(file->module->scope, cl);
+      const core::semantic::Scope* scope = core::semantic::utils::FindScope(file.module->scope, cl);
 
-      const auto* type = core::checker::ext::DeduceCompositeLiteralType(file, scope, cl);
+      const auto* type = core::checker::ext::DeduceCompositeLiteralType(&file, scope, cl);
       if (!type) {
         break;
       }
@@ -179,7 +170,7 @@ rpc::ExpectedResult<lsp::SignatureHelpResult> methods::textDocument::signatureHe
       const auto* stdecl = type->Declaration()->As<core::ast::nodes::StructTypeDecl>();
       const auto* stdecl_file = core::ast::utils::SourceFileOf(stdecl);
 
-      auto& label = ctx->Temp<std::string>();
+      auto& label = *d.arena.Alloc<std::string>();
       label.reserve(32 * (stdecl->fields.size() + 2));
 
       label += stdecl_file->Text(*stdecl->name);
@@ -220,5 +211,12 @@ rpc::ExpectedResult<lsp::SignatureHelpResult> methods::textDocument::signatureHe
   }
 
   return nullptr;
+}
+}  // namespace
+
+template <>
+rpc::ExpectedResult<lsp::SignatureHelpResult> methods::textDocument::signatureHelp::operator()(
+    LsContext& ctx, const lsp::SignatureHelpParams& params) {
+  return ctx->WithFile<lsp::SignatureHelpResult>(params, ProvideSignatureHelp).value_or(nullptr);
 }
 }  // namespace vanadium::ls
