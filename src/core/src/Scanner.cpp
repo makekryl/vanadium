@@ -77,6 +77,7 @@ constexpr auto kKeywordLookup = lib::MakeStaticMap<std::string_view, TokenKind>(
     {"modulepar", TokenKind::MODULEPAR},
     {"mtc", TokenKind::MTC},
     {"not_a_number", TokenKind::kNaN},
+    {"infinity", TokenKind::kINFINITY},
     {"noblock", TokenKind::NOBLOCK},
     {"none", TokenKind::NONE},
     {"null", TokenKind::kNULL},

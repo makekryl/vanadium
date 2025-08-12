@@ -2042,6 +2042,7 @@ nodes::Expr* Parser::ParseOperand() {
     case TokenKind::INCONC:
     case TokenKind::MUL:
     case TokenKind::kNaN:
+    case TokenKind::kINFINITY:
     case TokenKind::NONE:
     case TokenKind::PASS:
     case TokenKind::STRING:

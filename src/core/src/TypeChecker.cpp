@@ -101,16 +101,18 @@ std::optional<std::pair<std::size_t, std::size_t>> GetLengthExprBounds(const Sou
     return std::nullopt;
   }
 
+  // TODO: check against constants
   const auto* be = pe->list.front()->As<ast::nodes::BinaryExpr>();
   const auto lo_str = sf->Text(be->x);
   std::size_t min_args{};
-  if (std::from_chars(lo_str.data(), lo_str.data() + lo_str.size(), min_args).ec != std::errc{}) {
+  if (be->x->nkind != ast::NodeKind::ValueLiteral ||
+      std::from_chars(lo_str.data(), lo_str.data() + lo_str.size(), min_args).ec != std::errc{}) {
     return std::nullopt;
   }
 
   const auto hi_str = sf->Text(be->y);
   std::size_t max_args{};
-  if (hi_str == "infinity") {
+  if (be->y->nkind == ast::NodeKind::ValueLiteral && hi_str == "infinity") {
     max_args = static_cast<std::size_t>(-1);
   } else if (std::from_chars(hi_str.data(), hi_str.data() + hi_str.size(), max_args).ec != std::errc{}) {
     return std::nullopt;

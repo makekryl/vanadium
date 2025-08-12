@@ -145,6 +145,7 @@ enum class TokenKind : std::uint8_t {
   MODULEPAR,
   MTC,
   kNaN,
+  kINFINITY,
   NOBLOCK,
   NONE,
   kNULL,
