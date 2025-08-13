@@ -328,9 +328,6 @@ repository:
 
   expressions:
     patterns:
-      - name: variable.parameter.assignment.ttcn
-        match: (?!\.)([[:alpha:]][[:word:]]*)\s*(?=(\:\=))
-
       - name: variable.parameter.assignment.index.ttcn
         match: (?!\.)([[:alpha:]][[:word:]]*)\s*(?=(\[[\S]*\]\s*(:\=)))
 
