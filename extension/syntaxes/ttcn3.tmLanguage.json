@@ -6,15 +6,6 @@
   ],
   "patterns": [
     {
-      "include": "#expressions"
-    },
-    {
-      "include": "#declarations"
-    },
-    {
-      "include": "#types"
-    },
-    {
       "include": "#comments"
     },
     {
@@ -28,81 +19,18 @@
     },
     {
       "include": "#literals"
+    },
+    {
+      "include": "#expressions"
+    },
+    {
+      "include": "#declarations"
+    },
+    {
+      "include": "#types"
     }
   ],
   "repository": {
-    "expressions": {
-      "patterns": [
-        {
-          "name": "variable.parameter.assignment.ttcn",
-          "match": "(?!\\.)([[:alpha:]][[:word:]]*)\\s*(?=(\\:\\=))"
-        },
-        {
-          "name": "variable.parameter.assignment.index.ttcn",
-          "match": "(?!\\.)([[:alpha:]][[:word:]]*)\\s*(?=(\\[[\\S]*\\]\\s*(:\\=)))"
-        },
-        {
-          "name": "constant.numeric.method.index.ttcn",
-          "match": "(?<=[\\[])\\s*([[:alpha:]][[:word:]\\-\\+[:space:]]*)\\s*(?=[\\]])"
-        },
-        {
-          "name": "keyword.other.class.index.dot.ttcn",
-          "match": "(?<=[\\{\\(\\[\\][:space:]\\;]|^)([[:alpha:]][[:word:]]*)(?=\\[\\S+\\][\\.])"
-        },
-        {
-          "name": "entity.name.function.call.ttcn",
-          "match": "\\b([[:alpha:]_][[:word:]]*)(?=\\()"
-        }
-      ]
-    },
-    "declarations": {
-      "patterns": [
-        {
-          "name": "entity.name.type.module.ttcn",
-          "match": "(?<=\\b(?:from|module)\\b)\\s+([[:alpha:]][[:word:]]*)(?=[[:space:]\\{\\}\\;])"
-        },
-        {
-          "name": "entity.name.type.module.ttcn",
-          "match": "(?<=\\b(?:from|module)\\b)\\s+([[:alpha:]][[:word:]]*)(?=[[:space:]\\{\\}\\;])"
-        },
-        {
-          "name": "entity.name.function.declaration.ttcn",
-          "match": "(?<=\\b(?:function|testcase|altstep|configuration)\\b)\\s*([[:alpha:]_][[:word:]]*)\\s*\\("
-        },
-        {
-          "name": "entity.name.method.modified.ttcn",
-          "match": "(?<=@deterministic|@control)\\s+([[:alpha:]][[:word:]]*)(?=[[:space:]\\(\\)\\{\\}\\<\\>\\;])"
-        },
-        {
-          "name": "keyword.declaration.$1.ttcn3",
-          "match": "(?x)\n\\b( altstep\n  | configuration\n  | const\n  | control\n  | function\n  | modulepar\n  | signature\n  | template\n  | testcase\n  | timer\n  | type\n  | var\n)\\b"
-        }
-      ]
-    },
-    "types": {
-      "patterns": [
-        {
-          "name": "storage.type.class.ttcn3 keyword.declaration.class.ttcn3",
-          "match": "\\b(component|class)\\b"
-        },
-        {
-          "name": "storage.type.enum.ttcn3 keyword.declaration.enum.ttcn3",
-          "match": "\\benumerated\\b"
-        },
-        {
-          "name": "storage.type.struct.ttcn3 keyword.declaration.struct.ttcn3",
-          "match": "\\b(port|record\\s+of|record|set\\s+of|set|map)\\b"
-        },
-        {
-          "name": "storage.type.ttcn3 keyword.declaration.type.ttcn3",
-          "match": "\\b(message|procedure|timer|signature)\\b"
-        },
-        {
-          "name": "storage.type.union.ttcn3 keyword.declaration.union.ttcn3",
-          "match": "\\bunion\\b"
-        }
-      ]
-    },
     "keywords": {
       "patterns": [
         {
@@ -286,11 +214,6 @@
         {
           "name": "constant.character.escape.double-quote.ttcn3",
           "match": "\"\""
-        },
-        {
-          "name": "string.regexp.ttcn3",
-          "match": "\\\\[\\\\\"bdnrstw]",
-          "applyEndPatternLast": 1
         }
       ]
     },
@@ -327,6 +250,66 @@
               "include": "#documentation-tags"
             }
           ]
+        }
+      ]
+    },
+    "expressions": {
+      "patterns": [
+        {
+          "name": "variable.parameter.assignment.ttcn",
+          "match": "(?!\\.)([[:alpha:]][[:word:]]*)\\s*(?=(\\:\\=))"
+        },
+        {
+          "name": "variable.parameter.assignment.index.ttcn",
+          "match": "(?!\\.)([[:alpha:]][[:word:]]*)\\s*(?=(\\[[\\S]*\\]\\s*(:\\=)))"
+        },
+        {
+          "name": "entity.name.function.call.ttcn",
+          "match": "\\b([[:alpha:]_][[:word:]]*)(?=\\()"
+        }
+      ]
+    },
+    "declarations": {
+      "patterns": [
+        {
+          "name": "entity.name.type.module.ttcn",
+          "match": "(?<=\\b(?:from|module)\\b)\\s+([[:alpha:]][[:word:]]*)(?=[[:space:]\\{\\}\\;])"
+        },
+        {
+          "name": "entity.name.function.declaration.ttcn",
+          "match": "(?<=\\b(?:function|testcase|altstep|configuration)\\b)\\s*([[:alpha:]_][[:word:]]*)\\s*\\("
+        },
+        {
+          "name": "entity.name.method.modified.ttcn",
+          "match": "(?<=@deterministic|@control)\\s+([[:alpha:]][[:word:]]*)(?=[[:space:]\\(\\)\\{\\}\\<\\>\\;])"
+        },
+        {
+          "name": "keyword.declaration.$1.ttcn3",
+          "match": "(?x)\n\\b( altstep\n  | configuration\n  | const\n  | control\n  | function\n  | modulepar\n  | signature\n  | template\n  | testcase\n  | timer\n  | type\n  | var\n)\\b"
+        }
+      ]
+    },
+    "types": {
+      "patterns": [
+        {
+          "name": "storage.type.class.ttcn3 keyword.declaration.class.ttcn3",
+          "match": "\\b(component|class)\\b"
+        },
+        {
+          "name": "storage.type.enum.ttcn3 keyword.declaration.enum.ttcn3",
+          "match": "\\benumerated\\b"
+        },
+        {
+          "name": "storage.type.struct.ttcn3 keyword.declaration.struct.ttcn3",
+          "match": "\\b(port|record\\s+of|record|set\\s+of|set|map)\\b"
+        },
+        {
+          "name": "storage.type.ttcn3 keyword.declaration.type.ttcn3",
+          "match": "\\b(message|procedure|timer|signature)\\b"
+        },
+        {
+          "name": "storage.type.union.ttcn3 keyword.declaration.union.ttcn3",
+          "match": "\\bunion\\b"
         }
       ]
     }
