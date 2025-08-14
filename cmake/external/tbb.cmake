@@ -8,11 +8,14 @@ FetchContent_Declare(
 set(TBB_TEST OFF)
 #
 if(VANADIUM_STATIC_BUILD)
-  add_compile_options(-Wno-error=stringop-overflow)
   set(BUILD_SHARED_LIBS OFF)
 endif()
 
 FetchContent_MakeAvailable(tbb)
+
+target_compile_options(tbb PRIVATE
+  -Wno-error=stringop-overflow
+)
 
 if(VANADIUM_USE_ASAN)
   # https://github.com/uxlfoundation/oneTBB/issues/1726
