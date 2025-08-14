@@ -18,6 +18,7 @@ using CompletionResult = std::variant<std::vector<CompletionItem>, CompletionLis
 using InlayHintResult = std::variant<std::vector<InlayHint>, std::nullptr_t>;
 using DocumentSybmolResult = std::variant<std::vector<DocumentSymbol>, std::vector<SymbolInformation>, std::nullptr_t>;
 using SignatureHelpResult = std::variant<SignatureHelp, std::nullptr_t>;
+using SemanticTokensRangeResult = std::variant<SemanticTokens, std::nullptr_t>;
 }  // namespace lsp
 
 namespace glz {

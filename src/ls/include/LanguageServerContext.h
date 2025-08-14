@@ -64,6 +64,7 @@ struct LsState {
         auto& [project, path] = *resolution;
         const auto* file = project.program.GetFile(path);
         if (file) {
+          VLS_INFO("LOCK context to process '{}#{}'", project.Name(), file->path);
           return f(params, *file, std::move(d));
         }
       }

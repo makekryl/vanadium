@@ -1,3 +1,5 @@
+#include "LanguageServer.h"
+
 #include <chrono>
 #include <cstdlib>
 #include <glaze/core/reflect.hpp>
@@ -8,7 +10,6 @@
 
 #include "BuiltinRules.h"
 #include "LSConnection.h"
-#include "LanguageServer.h"
 #include "LanguageServerContext.h"
 #include "LanguageServerMethods.h"
 #include "Metaprogramming.h"
@@ -22,21 +23,22 @@ using ServerMethods = mp::Typelist<methods::initialize,   //
                                    methods::shutdown,     //
                                    methods::exit,         //
                                    //
-                                   methods::textDocument::didOpen,            //
-                                   methods::textDocument::didChange,          //
-                                   methods::textDocument::didClose,           //
-                                   methods::textDocument::diagnostic,         //
-                                   methods::textDocument::codeAction,         //
-                                   methods::textDocument::definition,         //
-                                   methods::textDocument::references,         //
-                                   methods::textDocument::typeDefinition,     //
-                                   methods::textDocument::hover,              //
-                                   methods::textDocument::documentHighlight,  //
-                                   methods::textDocument::rename,             //
-                                   methods::textDocument::completion,         //
-                                   methods::textDocument::inlayHint,          //
-                                   methods::textDocument::documentSymbol,     //
-                                   methods::textDocument::signatureHelp,      //
+                                   methods::textDocument::didOpen,                //
+                                   methods::textDocument::didChange,              //
+                                   methods::textDocument::didClose,               //
+                                   methods::textDocument::diagnostic,             //
+                                   methods::textDocument::codeAction,             //
+                                   methods::textDocument::definition,             //
+                                   methods::textDocument::references,             //
+                                   methods::textDocument::typeDefinition,         //
+                                   methods::textDocument::hover,                  //
+                                   methods::textDocument::documentHighlight,      //
+                                   methods::textDocument::rename,                 //
+                                   methods::textDocument::completion,             //
+                                   methods::textDocument::inlayHint,              //
+                                   methods::textDocument::documentSymbol,         //
+                                   methods::textDocument::signatureHelp,          //
+                                   methods::textDocument::semanticTokens::range,  //
                                    //
                                    methods::completionItem::resolve,  //
                                    //

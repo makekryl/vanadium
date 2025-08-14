@@ -55,6 +55,15 @@ rpc::ExpectedResult<lsp::InitializeResult> methods::initialize::operator()(LsCon
               .documentSymbolProvider = true,
               .codeActionProvider = true,
               .renameProvider = true,
+              .semanticTokensProvider =
+                  lsp::SemanticTokensOptions{
+                      .legend =
+                          {
+                              .tokenTypes = lsp::kBuiltinSemanticTokenTypes,
+                              .tokenModifiers = lsp::kBuiltinSemanticTokenModifiers,
+                          },
+                      .range = true,
+                  },
               .inlayHintProvider =
                   lsp::InlayHintOptions{
                       .resolveProvider = true,

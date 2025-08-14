@@ -23,15 +23,28 @@ def generate_enum(enum: model.Enum) -> TypeEntry:
       lines_to_multiline_comment(enum.documentation.splitlines(keepends=False))
     )
 
+  if enum.name == "SemanticTokenModifiers":  # TODO
+    underlying_type = "std::uint16_t"
+
   buf.write(f"enum class {enum.name} : {underlying_type} {{")
   with buf.indented():
-    for i, item in enumerate(enum.values):
-      if item.documentation:
-        if i != 0:
+    if enum.name == "SemanticTokenModifiers":  # TODO
+      buf.newline()
+      buf.write("kUnset = 0,")
+      for i, item in enumerate(enum.values):
+        if item.documentation:
           buf.newline()
-        buf.write_all(lines_to_comment(item.documentation.splitlines(keepends=False)))
-      val = f" = {item.value}" if is_int else ""
-      buf.write(f"{as_enum_v(item.name)}{val},")
+          buf.write_all(lines_to_comment(item.documentation.splitlines(keepends=False)))
+        val = f" = {item.value}" if is_int else ""
+        buf.write(f"{as_enum_v(item.name)}{val} = 1 << {i},")
+    else:
+      for i, item in enumerate(enum.values):
+        if item.documentation:
+          if i != 0:
+            buf.newline()
+          buf.write_all(lines_to_comment(item.documentation.splitlines(keepends=False)))
+        val = f" = {item.value}" if is_int else ""
+        buf.write(f"{as_enum_v(item.name)}{val},")
 
   buf.write("};")
   buf.newline()
@@ -51,6 +64,16 @@ def generate_enum(enum: model.Enum) -> TypeEntry:
           sbuf.write(f'"{item.value}", {as_enum_v(item.name)}{comma}')
       sbuf.write(");")
     sbuf.write("};")
+
+  if "SemanticToken" in enum.name:
+    if not sbuf:
+      sbuf = SourceCodeBuilder()
+    else:
+      sbuf.newline()
+    valuelist = ", ".join([f'"{item.value}"' for item in enum.values])
+    sbuf.write(
+      f"namespace lsp {{ inline const std::vector<std::string_view> kBuiltin{enum.name}{{{valuelist}}}; }}"
+    )
 
   return TypeEntry(buf, appendix=sbuf)
 
