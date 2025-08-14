@@ -87,10 +87,10 @@ int main(int argc, char* argv[]) {
         return 2;
       }
 
-      auto problems = linter.Lint(program, sf);
+      auto problems = linter.Lint(sf);
       if (use_autofix) {
         const auto initial_problems_count = problems.size();
-        const auto&& [fixed_source, refined_problems] = linter.Fix(program, sf, std::move(problems));
+        const auto&& [fixed_source, refined_problems] = linter.Fix(sf, std::move(problems));
         if (fixed_source) {
           if (const auto& err = dir.WriteFile(sf.path, *fixed_source); err) {
             fmt::println(
