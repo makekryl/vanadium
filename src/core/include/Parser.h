@@ -174,6 +174,8 @@ class Parser {
 
   template <IsNode ConcreteNode>
   ConcreteNode* NewErrorNode();
+  template <IsNode ConcreteNode>
+  ConcreteNode* NewErrorNode(const Token&);
 
   Node* last_node_{nullptr};
 
@@ -183,8 +185,6 @@ class Parser {
 
   ast::pos_t cursor_{};
   std::vector<ast::pos_t> markers_;
-  ast::pos_t sync_pos_{};
-  ast::pos_t sync_cnt_{};
 
   TokenKind tok_;
   std::vector<Token> queue_;

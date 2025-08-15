@@ -15,6 +15,7 @@ namespace vanadium::core::ast {
 namespace parser {
 
 // clang-format off
+// TODO: maybe replace those sets with bool[elements_count(TokenKind)] = { [aKind]= 1 }, idk if it would make difference
 constexpr auto kTokStmtStart = lib::MakeStaticSet<TokenKind>({
   TokenKind::ALT,
   TokenKind::ALTSTEP,
@@ -323,7 +324,7 @@ nodes::Definition* Parser::ParseDefinition() {
         break;
     }
 
-    // const auto& etok = Peek(1); // todo: errornode
+    const auto& etok = Peek(1);  // todo: errornode
     md.def = [&] -> Node* {
       switch (tok_) {
         case TokenKind::IMPORT:
@@ -362,12 +363,12 @@ nodes::Definition* Parser::ParseDefinition() {
             default:
               EmitErrorExpected("function");
               Advance(kTokStmtStart);
-              return nullptr;  // todo: errornode?
+              return NewErrorNode<nodes::Definition>(etok);
           }
         default:
           EmitErrorExpected("module definition");
           Advance(kTokStmtStart);
-          return nullptr;  // todo: errornode?
+          return NewErrorNode<nodes::Definition>(etok);
       }
     }();
   });
@@ -591,7 +592,7 @@ nodes::LanguageSpec* Parser::ParseLanguageSpec() {
 }
 
 nodes::Decl* Parser::ParseTypeDecl() {
-  // const auto& etok = Peek(1); // TODO: ErrorNode:start
+  const auto& etok = Peek(1);
   switch (Peek(2).kind) {
     case TokenKind::IDENT:
     case TokenKind::ADDRESS:
@@ -625,9 +626,11 @@ nodes::Decl* Parser::ParseTypeDecl() {
     case TokenKind::TESTCASE:
       return ParseBehaviourTypeDecl();
     default:
+      // std::cerr << std::stacktrace::current();
       EmitErrorExpected("type definition");
+      auto* errn = NewErrorNode<nodes::Decl>(etok);
       Advance(kTokStmtStart);
-      return nullptr;
+      return errn;
   }
 }
 
@@ -860,7 +863,7 @@ nodes::Field* Parser::ParseField() {
 }
 
 nodes::TypeSpec* Parser::ParseTypeSpec() {
-  // const auto& etok = Peek(1); // todo: errornode
+  const auto& etok = Peek(1);
   switch (tok_) {
     case TokenKind::ADDRESS:
     case TokenKind::CHARSTRING:
@@ -887,8 +890,8 @@ nodes::TypeSpec* Parser::ParseTypeSpec() {
     case TokenKind::TESTCASE:
       return ParseBehaviourSpec();
     default:
-      EmitErrorExpected("type definition");
-      return NewErrorNode<nodes::TypeSpec>();
+      EmitErrorExpected("type spec");
+      return NewErrorNode<nodes::TypeSpec>(etok);
   }
 }
 
@@ -2529,32 +2532,11 @@ void Parser::ExpectSemiAfter(Node* n) {
 
 template <std::size_t N>
 void Parser::Advance(const lib::StaticSet<TokenKind, N>& to) {
-  for (; tok_ != TokenKind::kEOF; Consume()) {
-    if (!to.contains(tok_)) {
-      continue;
-    }
-    // Return only if parser made some progress since last
-    // sync or if it has not reached 10 advance calls without
-    // progress. Otherwise consume at least one token to
-    // avoid an endless parser loop (it is possible that
-    // both parseOperand and parseStmt call advance and
-    // correctly do not advance, thus the need for the
-    // invocation limit p.syncCnt).
-    const auto pos = Pos(1);
-    if (pos == sync_pos_ && sync_cnt_ < 10) {
-      ++sync_cnt_;
-      return;
-    }
-    if (pos > sync_pos_) {
-      sync_pos_ = pos;
-      sync_cnt_ = 0;
-      return;
-    }
-    // Reaching here indicates a parser bug, likely an
-    // incorrect token list in this function, but it only
-    // leads to skipping of possibly correct code if a
-    // previous error is present, and thus is preferred
-    // over a non-terminating parse.
+  if (to.contains(tok_)) {
+    Consume();
+  }
+  while (tok_ != TokenKind::kEOF && !to.contains(tok_)) {
+    Consume();
   }
 }
 
@@ -2626,9 +2608,16 @@ ConcreteNode* Parser::NewErrorNode() {
   n->parent = last_node_;
   n->nrange = {
       .begin = last_consumed_pos_,
-      .end = last_consumed_pos_,
+      .end = Peek(1).range.end,
   };
   return n;
+}
+
+template <IsNode ConcreteNode>
+ConcreteNode* Parser::NewErrorNode(const Token& from) {
+  auto* errn = NewErrorNode<ConcreteNode>();
+  // errn->nrange.begin = from.range.begin;
+  return errn;
 }
 
 }  // namespace parser
