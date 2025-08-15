@@ -54,6 +54,10 @@ class LineMapping {
 
   [[nodiscard]] pos_t LineOf(pos_t pos) const {
     const auto it = std::ranges::upper_bound(line_starts_, pos);
+    if (it == line_starts_.end()) [[unlikely]] {
+      return line_starts_.size() - 1;
+    }
+
     pos_t line = std::distance(line_starts_.begin(), it);
     if ((line != 0) && (pos != *it)) [[likely]] {
       --line;
