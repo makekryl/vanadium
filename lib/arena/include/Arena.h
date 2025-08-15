@@ -9,7 +9,7 @@ namespace vanadium::lib {
 
 class Arena {
  public:
-  Arena();
+  Arena() = default;
 
   Arena(Arena&&) noexcept;
   Arena& operator=(Arena&&) noexcept;
@@ -82,12 +82,12 @@ class Arena {
  private:
   Block* AllocateNewBlock(std::size_t size);
 
-  Block* active_;
+  Block* active_{nullptr};
 
-  CleanupNode* cleanup_list_;
+  CleanupNode* cleanup_list_{nullptr};
 
-  std::size_t bytes_allocated_;
-  std::size_t bytes_used_;
+  std::size_t bytes_allocated_{0};
+  std::size_t bytes_used_{0};
 };
 
 };  // namespace vanadium::lib

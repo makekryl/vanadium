@@ -16,8 +16,6 @@ inline void arena_deallocate(void* p) {
 
 namespace vanadium::lib {
 
-Arena::Arena() : active_(nullptr), cleanup_list_(nullptr), bytes_allocated_(0), bytes_used_(0) {}
-
 Arena::Arena(Arena&& other) noexcept
     : active_(std::exchange(other.active_, nullptr)),
       cleanup_list_(std::exchange(other.cleanup_list_, nullptr)),
