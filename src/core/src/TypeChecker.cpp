@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstdlib>
+#include <format>
 #include <string_view>
 #include <type_traits>
 #include <utility>
@@ -22,7 +23,7 @@ const semantic::Symbol kTypeError{"<error-type>", nullptr, semantic::SymbolFlags
 
 const semantic::Symbol kVoidType{"<void>", nullptr, semantic::SymbolFlags::kBuiltinType};
 
-const semantic::Symbol kInferType{"<self>", nullptr, semantic::SymbolFlags::kBuiltinType};
+const semantic::Symbol kInferType{"<infer>", nullptr, semantic::SymbolFlags::kBuiltinType};
 
 const semantic::Symbol kVoidTypekWildcardType{
     "<*>", nullptr,
@@ -32,8 +33,27 @@ const semantic::Symbol kQuestionType{
     semantic::SymbolFlags::Value(semantic::SymbolFlags::kBuiltinType | semantic::SymbolFlags::kTemplateSpec)};
 }  // namespace symbols
 
-namespace utils {
+struct InstantiatedType {
+  const semantic::Symbol* sym{nullptr};
+  const ast::Node* instance{nullptr};
 
+  operator bool() const {
+    return sym != nullptr;
+  }
+  const semantic::Symbol* operator->() const {
+    return sym;
+  }
+
+  InstantiatedType& operator=(const semantic::Symbol* nsym) {
+    sym = nsym;
+    return *this;
+  }
+};
+namespace {
+InstantiatedType ResolveExprInstantiatedType(const SourceFile*, const semantic::Scope*, const ast::nodes::Expr*);
+}
+
+namespace utils {
 const ast::nodes::FormalPars* ResolveCallableParams(const SourceFile* file, const semantic::Scope* scope,
                                                     const ast::nodes::ParenExpr* pe) {
   if (pe->parent->nkind != ast::NodeKind::CallExpr) {
@@ -122,16 +142,19 @@ std::optional<std::pair<std::size_t, std::size_t>> GetLengthExprBounds(const Sou
 }
 
 template <typename F>
-concept IsTypeResolver = std::is_invocable_r_v<const semantic::Symbol*, F, const SourceFile*, const semantic::Scope*,
-                                               const ast::nodes::Expr*>;
+concept IsInstantiatedTypeResolver =
+    std::is_invocable_r_v<InstantiatedType, F, const SourceFile*, const semantic::Scope*, const ast::nodes::Expr*>;
 
-template <IsTypeResolver TypeResolver, typename OnNonStructuralType, typename OnUnknownProperty>
+template <IsInstantiatedTypeResolver InstantiatedTypeResolver, typename OnNonStructuralType, typename OnUnknownProperty,
+          typename OnNonStaticProperty>
   requires(std::is_invocable_v<OnNonStructuralType, const ast::Node*, const semantic::Symbol*> &&
-           std::is_invocable_v<OnUnknownProperty, const ast::nodes::SelectorExpr*, const semantic::Symbol*>)
+           std::is_invocable_v<OnUnknownProperty, const ast::nodes::SelectorExpr*, const semantic::Symbol*> &&
+           std::is_invocable_v<OnNonStaticProperty, const ast::nodes::SelectorExpr*, const semantic::Symbol*>)
 struct SelectorExprResolverOptions {
-  TypeResolver resolve_type;
+  InstantiatedTypeResolver resolve_type;
   OnNonStructuralType on_non_structural_type;
   OnUnknownProperty on_unknown_property;
+  OnNonStaticProperty on_non_static_property;
 };
 
 template <typename Options>
@@ -148,7 +171,8 @@ class SelectorExprResolver {
   }
 
  private:
-  const semantic::Symbol* ResolveSelectorExpr(const ast::nodes::SelectorExpr* se) const {
+  bool mode_static_;
+  const semantic::Symbol* ResolveSelectorExpr(const ast::nodes::SelectorExpr* se) {
     if (se->sel == nullptr) [[unlikely]] {
       return nullptr;
     }
@@ -157,7 +181,9 @@ class SelectorExprResolver {
     if (se->x->nkind == ast::NodeKind::SelectorExpr) {
       x_sym = ResolveSelectorExpr(se->x->As<ast::nodes::SelectorExpr>());
     } else {
-      x_sym = options_.resolve_type(sf_, scope_, se->x);
+      const auto type = options_.resolve_type(sf_, scope_, se->x);
+      x_sym = type.sym;
+      mode_static_ = !type.instance && x_sym && !bool(x_sym->Flags() & semantic::SymbolFlags::kImportedModule);
     }
 
     if (!x_sym) {
@@ -194,6 +220,11 @@ class SelectorExprResolver {
       return nullptr;
     }
 
+    if (mode_static_ && !(property_sym->Flags() & semantic::SymbolFlags::kVisibilityStatic)) [[unlikely]] {
+      options_.on_non_static_property(se, property_sym);
+      return nullptr;
+    }
+
     if (se == se_tgt_) {
       // we don't need to resolve type then
       return property_sym;
@@ -212,18 +243,19 @@ class SelectorExprResolver {
 const semantic::Symbol* ResolveSelectorExprSymbol(const SourceFile* sf, const semantic::Scope* scope,
                                                   const ast::nodes::SelectorExpr* se) {
   SelectorExprResolver resolver{SelectorExprResolverOptions{
-      .resolve_type = ResolveExprType,
+      .resolve_type = ResolveExprInstantiatedType,
       .on_non_structural_type = [](const auto*, auto) {},
       .on_unknown_property = [](const auto*, auto) {},
+      .on_non_static_property = [](const auto*, auto) {},
   }};
   return resolver.Resolve(sf, scope, se);
 }
 
-template <IsTypeResolver TypeResolver, typename OnNonSubscriptableType, typename IndexChecker>
+template <IsInstantiatedTypeResolver InstantiatedTypeResolver, typename OnNonSubscriptableType, typename IndexChecker>
   requires(std::is_invocable_v<OnNonSubscriptableType, const ast::Node*, const semantic::Symbol*> &&
            std::is_invocable_v<IndexChecker, const ast::nodes::Expr*>)
 struct IndexExprResolverOptions {
-  TypeResolver resolve_type;
+  InstantiatedTypeResolver resolve_type;
   OnNonSubscriptableType on_non_subscriptable_type;
   IndexChecker check_index;
 };
@@ -236,18 +268,39 @@ class IndexExprResolver {
   const semantic::Symbol* Resolve(const SourceFile* sf, const semantic::Scope* scope, const ast::nodes::IndexExpr* ie) {
     sf_ = sf;
     scope_ = scope;
-    return ResolveIndexExpr(ie);
+
+    const auto* res = ResolveIndexExpr(ie);
+    if (depth_ != 0) [[unlikely]] {
+      return nullptr;
+    }
+    return res;
   }
 
  private:
-  const semantic::Symbol* ResolveIndexExpr(const ast::nodes::IndexExpr* ie) const {
+  std::size_t depth_{0};
+  const semantic::Symbol* ResolveIndexExpr(const ast::nodes::IndexExpr* ie) {
     options_.check_index(ie->index);
 
     const semantic::Symbol* x_sym{nullptr};
     if (ie->x->nkind == ast::NodeKind::IndexExpr) {
       x_sym = ResolveIndexExpr(ie->x->As<ast::nodes::IndexExpr>());
+      if (depth_ > 0) [[unlikely]] {
+        --depth_;
+        return x_sym;
+      }
     } else {
-      x_sym = options_.resolve_type(sf_, scope_, ie->x);
+      const auto type = options_.resolve_type(sf_, scope_, ie->x);
+      x_sym = type.sym;
+      if (!type.instance) [[unlikely]] {
+        if (type.sym) {
+          options_.on_non_subscriptable_type(ie->x, x_sym);
+        }
+        return nullptr;
+      }
+      if (const auto* arraydef_vec = ast::utils::GetArrayDef(type.instance); arraydef_vec) {
+        depth_ = arraydef_vec->size() - 1;
+        return x_sym;
+      }
     }
 
     if (!x_sym) {
@@ -294,7 +347,7 @@ class IndexExprResolver {
 const semantic::Symbol* ResolveIndexExprType(const SourceFile* sf, const semantic::Scope* scope,
                                              const ast::nodes::IndexExpr* se) {
   IndexExprResolver resolver{IndexExprResolverOptions{
-      .resolve_type = ResolveExprType,
+      .resolve_type = ResolveExprInstantiatedType,
       .on_non_subscriptable_type = [](const auto*, auto) {},
       .check_index = [](const auto*) {},
   }};
@@ -658,14 +711,9 @@ const semantic::Symbol* ResolveCallableReturnType(const SourceFile* file, const 
   }
 }
 
-// Expression -> (Declaration) -> Effective Type
-const semantic::Symbol* ResolveExprType(const SourceFile* file, const semantic::Scope* scope,
-                                        const ast::nodes::Expr* expr) {
-  const auto* decl_sym = ResolveExprSymbol(file, scope, expr);
-  if (!decl_sym) {
-    return nullptr;
-  }
-
+namespace {
+const semantic::Symbol* ResolveExprTypeViaDecl(const SourceFile* file, const semantic::Scope* scope,
+                                               const semantic::Symbol* decl_sym, const ast::nodes::Expr* expr) {
   if ((decl_sym->Flags() &
        (semantic::SymbolFlags::kType | semantic::SymbolFlags::kImportedModule | semantic::SymbolFlags::kEnumMember)) ||
       (expr->nkind != ast::NodeKind::CallExpr && (decl_sym->Flags() & semantic::SymbolFlags::kFunction))) {
@@ -690,6 +738,51 @@ const semantic::Symbol* ResolveExprType(const SourceFile* file, const semantic::
 
   return ResolveDeclarationType(decl_file, decl_scope, decl);
 }
+}  // namespace
+
+// Expression -> (Declaration) -> Effective Type
+const semantic::Symbol* ResolveExprType(const SourceFile* file, const semantic::Scope* scope,
+                                        const ast::nodes::Expr* expr) {
+  const auto* decl_sym = ResolveExprSymbol(file, scope, expr);
+  if (!decl_sym) {
+    return nullptr;
+  }
+  return ResolveExprTypeViaDecl(file, scope, decl_sym, expr);
+}
+
+namespace {
+InstantiatedType ResolveExprInstantiatedType(const SourceFile* file, const semantic::Scope* scope,
+                                             const ast::nodes::Expr* expr) {
+  const auto* decl_sym = ResolveExprSymbol(file, scope, expr);
+  if (!decl_sym) {
+    return {};
+  }
+  const auto* type_sym = ResolveExprTypeViaDecl(file, scope, decl_sym, expr);
+  return {
+      .sym = type_sym,
+      .instance = [&] -> const ast::Node* {
+        switch (expr->nkind) {
+          case ast::NodeKind::IndexExpr:
+            return expr;
+          default:
+            break;
+        }
+
+        if (decl_sym == type_sym) {
+          return nullptr;
+        };
+
+        const auto* decl = decl_sym->Declaration();
+        switch (decl->nkind) {
+          case ast::NodeKind::Declarator:
+            return decl;
+          default:
+            return nullptr;
+        }
+      }(),
+  };
+}
+}  // namespace
 
 class BasicTypeChecker {
  public:
@@ -712,9 +805,9 @@ class BasicTypeChecker {
     sf_.type_errors.emplace_back(std::move(err));
   }
 
-  void MatchTypes(const ast::Range& range, const semantic::Symbol* actual, const semantic::Symbol* expected);
+  void MatchTypes(const ast::Range& range, const InstantiatedType& actual, const InstantiatedType& expected);
 
-  const semantic::Symbol* CheckType(const ast::Node* n, const semantic::Symbol* desired_type = nullptr);
+  InstantiatedType CheckType(const ast::Node* n, const semantic::Symbol* desired_type = nullptr);
   bool Inspect(const ast::Node*);
 
   void Introspect(const ast::Node* n) {
@@ -743,15 +836,16 @@ class BasicTypeChecker {
   const ast::NodeInspector inspector_;
 };
 
-void BasicTypeChecker::MatchTypes(const ast::Range& range, const semantic::Symbol* actual,
-                                  const semantic::Symbol* expected) {
-  if (!expected || expected == &builtins::kAnytype) {
+void BasicTypeChecker::MatchTypes(const ast::Range& range, const InstantiatedType& actual_,
+                                  const InstantiatedType& expected) {
+  if (!expected || expected.sym == &builtins::kAnytype) {
     return;
   }
 
+  InstantiatedType actual{actual_};  // TODO
   if (actual && actual->Flags() & semantic::SymbolFlags::kTemplate) {
     const auto* file = ast::utils::SourceFileOf(actual->Declaration());
-    actual = ResolveCallableReturnType(file, file->module->scope, actual->Declaration()->As<ast::nodes::Decl>());
+    actual.sym = ResolveCallableReturnType(file, file->module->scope, actual->Declaration()->As<ast::nodes::Decl>());
   }
   if (!actual) {
     // Seems like that is is too much as right side types that cannot be resolved
@@ -776,14 +870,14 @@ void BasicTypeChecker::MatchTypes(const ast::Range& range, const semantic::Symbo
   }
 
   // TODO: read language spec and maybe make something more precise
-  if (ResolvePotentiallyAliasedType(expected) == ResolvePotentiallyAliasedType(actual)) {
+  if (ResolvePotentiallyAliasedType(expected.sym) == ResolvePotentiallyAliasedType(actual.sym)) {
     return;
   }
 
   EmitError(TypeError{
       .range = range,
-      .message = std::format("expected value of type '{}', got '{}'", utils::GetReadableTypeName(expected),
-                             utils::GetReadableTypeName(actual)),
+      .message = std::format("expected value of type '{}', got '{}'", utils::GetReadableTypeName(expected.sym),
+                             utils::GetReadableTypeName(actual.sym)),
   });
 }
 
@@ -814,8 +908,8 @@ void BasicTypeChecker::PerformArgumentsTypeCheck(std::span<const ast::nodes::Exp
   const auto check_argument = [&](const TParamDescriptorNode* param, const ast::Node* n) {
     const auto* exp_sym =  // TODO: TypeSpec (field->type) is not Expr actually
         ResolveExprType(params_file, params_file->module->scope, param->type->template As<ast::nodes::Expr>());
-    const auto* actual_sym = CheckType(n, exp_sym);
-    MatchTypes(n->nrange, actual_sym, exp_sym);
+    const auto actual_instance = CheckType(n, exp_sym);
+    MatchTypes(n->nrange, actual_instance, {.sym = exp_sym});
   };
 
   bool seen_named_argument{false};
@@ -891,12 +985,12 @@ void BasicTypeChecker::PerformArgumentsTypeCheck(std::span<const ast::nodes::Exp
   }
 }
 
-const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const semantic::Symbol* desired_type) {
-  const semantic::Symbol* resulting_type{nullptr};
+InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const semantic::Symbol* desired_type) {
+  InstantiatedType resulting_type{};
   switch (n->nkind) {
     case ast::NodeKind::CallExpr: {
       const auto* m = n->As<ast::nodes::CallExpr>();
-      const auto* callee_sym = CheckType(m->fun);
+      const auto* callee_sym = CheckType(m->fun).sym;
       if (!callee_sym) {
         // error is raised by the semantic analyzer in such case
         Introspect(m);
@@ -916,7 +1010,7 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
       const auto* callee_file = ast::utils::SourceFileOf(callee_decl);
 
       //
-      resulting_type = ResolveCallableReturnType(callee_file, callee_file->module->scope, callee_decl);
+      resulting_type.sym = ResolveCallableReturnType(callee_file, callee_file->module->scope, callee_decl);
       //
 
       const ast::nodes::FormalPars* params = ast::utils::GetCallableDeclParams(callee_decl);
@@ -927,7 +1021,7 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
       }
 
       //
-      if (resulting_type == &symbols::kInferType && !m->args->list.empty()) {
+      if (resulting_type.sym == &symbols::kInferType && !m->args->list.empty()) {
         // do not call CheckType for it to avoid double error emitting
         resulting_type = ResolveExprType(&sf_, scope_, m->args->list.front());
       }
@@ -944,7 +1038,7 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
     case ast::NodeKind::UnaryExpr: {
       const auto* m = n->As<ast::nodes::UnaryExpr>();
 
-      const auto* x_sym = CheckType(m->x);
+      const auto x_type = CheckType(m->x);
 
       switch (m->op.kind) {
         case core::ast::TokenKind::INC:
@@ -953,15 +1047,15 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
         case core::ast::TokenKind::DEC:
         case core::ast::TokenKind::MUL:
         case core::ast::TokenKind::DIV:
-          if (x_sym && x_sym != &builtins::kInteger && x_sym != &builtins::kFloat) [[unlikely]] {
+          if (x_type && x_type.sym != &builtins::kInteger && x_type.sym != &builtins::kFloat) [[unlikely]] {
             EmitError(TypeError{
                 .range = m->x->nrange,
-                .message = std::format("integer or float expected, got '{}'", x_sym->GetName()),
+                .message = std::format("integer or float expected, got '{}'", x_type->GetName()),
             });
             break;
           }
           //
-          resulting_type = x_sym;
+          resulting_type = x_type;
           //
           break;
         default:
@@ -972,31 +1066,32 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
     case ast::NodeKind::BinaryExpr: {
       const auto* m = n->As<ast::nodes::BinaryExpr>();
 
-      const auto* x_sym = CheckType(m->x);
-      const auto* y_sym = CheckType(m->y);
+      auto x_type = CheckType(m->x);
+      const auto y_type = CheckType(m->y);
+
       const auto match_both = [&](const semantic::Symbol* expected_sym) {
         //
         resulting_type = expected_sym;
         //
-        MatchTypes(m->x->nrange, x_sym, expected_sym);
-        MatchTypes(m->y->nrange, y_sym, expected_sym);
+        MatchTypes(m->x->nrange, x_type, {.sym = expected_sym});
+        MatchTypes(m->y->nrange, y_type, {.sym = expected_sym});
       };
 
-      if (x_sym) [[likely]] {
+      if (x_type) [[likely]] {
         // TODO: 1) maybe just abort early if !x_sym
         //       2) resolve alias only if really needed, it's done by MatchTypes otherwise
-        x_sym = ResolvePotentiallyAliasedType(x_sym);
+        x_type = ResolvePotentiallyAliasedType(x_type.sym);
       }
 
       switch (m->op.kind) {
         case ast::TokenKind::CONCAT: {
-          if (x_sym && !(x_sym->Flags() & semantic::SymbolFlags::kBuiltinStringType)) {
+          if (x_type && !(x_type->Flags() & semantic::SymbolFlags::kBuiltinStringType)) {
             EmitError({
                 .range = m->x->nrange,
-                .message = std::format("string type expected, got '{}'", x_sym->GetName()),
+                .message = std::format("string type expected, got '{}'", x_type->GetName()),
             });
           } else {
-            match_both(x_sym);
+            match_both(x_type.sym);
           }
           break;
         }
@@ -1006,31 +1101,31 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
         case ast::TokenKind::DEC:
         case ast::TokenKind::MUL:
         case ast::TokenKind::DIV:
-          if (x_sym && x_sym != &builtins::kInteger && x_sym != &builtins::kFloat &&
-              !(x_sym->Flags() & semantic::SymbolFlags::kEnumMember)) [[unlikely]] {
+          if (x_type && x_type.sym != &builtins::kInteger && x_type.sym != &builtins::kFloat &&
+              !(x_type->Flags() & semantic::SymbolFlags::kEnumMember)) [[unlikely]] {
             EmitError(TypeError{
                 .range = m->x->nrange,
-                .message = std::format("integer or float expected, got '{}'", x_sym->GetName()),
+                .message = std::format("integer or float expected, got '{}'", x_type->GetName()),
             });
             break;
           }
-          match_both(x_sym);
+          match_both(x_type.sym);
           break;
         case ast::TokenKind::SHL:
         case ast::TokenKind::SHR:
         case ast::TokenKind::ROL:
         case ast::TokenKind::ROR:
           //
-          resulting_type = x_sym;
+          resulting_type = x_type;
           //
-          if (x_sym && !(x_sym->Flags() & semantic::SymbolFlags::kBuiltinStringType)) {
+          if (x_type && !(x_type->Flags() & semantic::SymbolFlags::kBuiltinStringType)) {
             EmitError({
                 .range = m->x->nrange,
-                .message = std::format("string type expected, got '{}'", x_sym->GetName()),
+                .message = std::format("string type expected, got '{}'", x_type->GetName()),
             });
             break;
           }
-          MatchTypes(m->y->nrange, y_sym, &builtins::kInteger);
+          MatchTypes(m->y->nrange, y_type, {.sym = &builtins::kInteger});
           break;
         case ast::TokenKind::EQ:
         case ast::TokenKind::NE:
@@ -1038,16 +1133,16 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
         case ast::TokenKind::LE:
         case ast::TokenKind::GT:
         case ast::TokenKind::GE:
-          if (x_sym && x_sym != &builtins::kInteger && x_sym != &builtins::kFloat) [[unlikely]] {
+          if (x_type && x_type.sym != &builtins::kInteger && x_type.sym != &builtins::kFloat) [[unlikely]] {
             EmitError(TypeError{
                 .range = m->x->nrange,
-                .message = std::format("integer or float expected, got '{}'", x_sym->GetName()),
+                .message = std::format("integer or float expected, got '{}'", x_type->GetName()),
             });
             break;
           }
           //
           resulting_type = &builtins::kBoolean;
-          MatchTypes(m->y->nrange, y_sym, x_sym);
+          MatchTypes(m->y->nrange, y_type, x_type);
           //
           break;
         case ast::TokenKind::AND:
@@ -1058,7 +1153,7 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
           break;
         case ast::TokenKind::DECODE:
           //
-          resulting_type = y_sym;
+          resulting_type = y_type;
           //
           break;
         default:
@@ -1118,8 +1213,8 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
             const auto* rs = ls->elemtype->As<ast::nodes::RefSpec>();
             const auto* inner_type_sym = subtype_file->module->scope->Resolve(subtype_file->Text(rs->x));
             for (const auto* arg : m->list) {
-              const auto* actual_sym = CheckType(arg, inner_type_sym);
-              MatchTypes(arg->nrange, actual_sym, inner_type_sym);
+              const auto actual_sym = CheckType(arg, inner_type_sym);
+              MatchTypes(arg->nrange, actual_sym, {.sym = inner_type_sym});
             }
           }
         }
@@ -1186,6 +1281,14 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
                                            utils::GetReadableTypeName(sym)),
                 });
               },
+          .on_non_static_property =
+              [&](const ast::nodes::SelectorExpr* se, const semantic::Symbol* sym) {
+                EmitError(TypeError{
+                    .range = se->sel->nrange,
+                    .message = std::format("property '{}' of type '{}' is not static", sf_.Text(se->sel),
+                                           utils::GetReadableTypeName(sym)),
+                });
+              },
       }};
 
       const auto* property_sym = resolver.Resolve(&sf_, scope_, se);
@@ -1232,7 +1335,7 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
               },
           .check_index =
               [&](const ast::nodes::Expr* index) {
-                MatchTypes(index->nrange, CheckType(index, nullptr), &builtins::kInteger);
+                MatchTypes(index->nrange, CheckType(index, nullptr), {.sym = &builtins::kInteger});
               },
       }};
 
@@ -1241,12 +1344,14 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
       if (!resulting_type) {
         resulting_type = &symbols::kTypeError;
       }
+      resulting_type.instance = ie;
       //
       break;
     }
 
     case ast::NodeKind::Ident: {
       const auto* m = n->As<ast::nodes::Ident>();
+
       if (desired_type && (desired_type->Flags() & semantic::SymbolFlags::kEnum)) {
         resulting_type = ResolveExprSymbol(&sf_, scope_, m);
 
@@ -1260,49 +1365,43 @@ const semantic::Symbol* BasicTypeChecker::CheckType(const ast::Node* n, const se
 
         break;
       }
-      resulting_type = ResolveExprType(&sf_, scope_, m);
+
+      resulting_type = ResolveExprInstantiatedType(&sf_, scope_, m);
       break;
     }
 
     case ast::NodeKind::ValueLiteral: {
       const auto* m = n->As<ast::nodes::ValueLiteral>();
-      switch (m->tok.kind) {
-        case ast::TokenKind::TRUE:
-        case ast::TokenKind::FALSE:
-          resulting_type = &builtins::kBoolean;
-          break;
-        case ast::TokenKind::INT:
-          resulting_type = &builtins::kInteger;
-          break;
-        case ast::TokenKind::FLOAT:
-          resulting_type = &builtins::kFloat;
-          break;
-        case ast::TokenKind::BITSTRING:
-          resulting_type = &builtins::kBitstring;
-          break;
-        case ast::TokenKind::HEXSTRING:
-          resulting_type = &builtins::kHexstring;
-          break;
-        case ast::TokenKind::OCTETSTRING:
-          resulting_type = &builtins::kOctetstring;
-          break;
-        case ast::TokenKind::STRING:
-          resulting_type = &builtins::kCharstring;
-          break;
-        case ast::TokenKind::PASS:
-        case ast::TokenKind::FAIL:
-        case ast::TokenKind::INCONC:
-          resulting_type = &builtins::kVerdictType;
-          break;
-        case ast::TokenKind::MUL:
-          resulting_type = &symbols::kVoidTypekWildcardType;
-          break;
-        case ast::TokenKind::ANY:
-          resulting_type = &symbols::kQuestionType;
-          break;
-        default:
-          break;
-      }
+      resulting_type.instance = m;
+      resulting_type = [](ast::TokenKind kind) -> const semantic::Symbol* {
+        switch (kind) {
+          case ast::TokenKind::TRUE:
+          case ast::TokenKind::FALSE:
+            return &builtins::kBoolean;
+          case ast::TokenKind::INT:
+            return &builtins::kInteger;
+          case ast::TokenKind::FLOAT:
+            return &builtins::kFloat;
+          case ast::TokenKind::BITSTRING:
+            return &builtins::kBitstring;
+          case ast::TokenKind::HEXSTRING:
+            return &builtins::kHexstring;
+          case ast::TokenKind::OCTETSTRING:
+            return &builtins::kOctetstring;
+          case ast::TokenKind::STRING:
+            return &builtins::kCharstring;
+          case ast::TokenKind::PASS:
+          case ast::TokenKind::FAIL:
+          case ast::TokenKind::INCONC:
+            return &builtins::kVerdictType;
+          case ast::TokenKind::MUL:
+            return &symbols::kVoidTypekWildcardType;
+          case ast::TokenKind::ANY:
+            return &symbols::kQuestionType;
+          default:
+            return nullptr;
+        }
+      }(m->tok.kind);
     }
 
     default:
@@ -1328,14 +1427,23 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
 
     case ast::NodeKind::ValueDecl: {
       const auto* m = n->As<ast::nodes::ValueDecl>();
-      const auto* expected_type = sf_.module->scope->Resolve(sf_.Text(m->type));
+
+      const auto* expected_type = ResolveExprSymbol(&sf_, scope_, m->type);
+      if (expected_type && !(expected_type->Flags() & semantic::SymbolFlags::kType)) {
+        EmitError({
+            .range = m->type->nrange,
+            .message = std::format("'{}' is not a type", sf_.Text(m->type)),
+        });
+        // we don't break to call CheckType on values
+      }
+
       for (const auto* decl : m->decls) {
         if (!decl->value) [[unlikely]] {
           continue;
         }
 
-        const auto* actual_type = CheckType(decl->value, expected_type);
-        MatchTypes(decl->nrange, actual_type, expected_type);
+        const auto actual_type = CheckType(decl->value, expected_type);
+        MatchTypes(decl->nrange, actual_type, {.sym = expected_type, .instance = m});
       }
       return false;
     };
@@ -1344,8 +1452,8 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
       const auto* m = n->As<ast::nodes::FormalPar>();
       if (const auto* default_value = m->value; default_value) {
         const auto* expected_type = sf_.module->scope->Resolve(sf_.Text(m->type));
-        const auto* actual_type = CheckType(default_value, expected_type);
-        MatchTypes(default_value->nrange, actual_type, expected_type);
+        const auto actual_type = CheckType(default_value, expected_type);
+        MatchTypes(default_value->nrange, actual_type, {.sym = expected_type, .instance = m});
       }
       return false;
     };
@@ -1389,8 +1497,8 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
       }
 
       const auto* expected_type = sf_.module->scope->Resolve(sf_.Text(m->type));
-      const auto* actual_type = CheckType(m->value, expected_type);
-      MatchTypes(m->value->nrange, actual_type, expected_type);
+      const auto actual_type = CheckType(m->value, expected_type);
+      MatchTypes(m->value->nrange, actual_type, {.sym = expected_type});
 
       return false;
     }
@@ -1423,8 +1531,8 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
       }
 
       const auto* expected_type = sf_.module->scope->Resolve(sf_.Text(fdecl->ret->type));
-      const auto* actual_type = CheckType(m->result, expected_type);
-      MatchTypes(m->result->nrange, actual_type, expected_type);
+      const auto actual_type = CheckType(m->result, expected_type);
+      MatchTypes(m->result->nrange, actual_type, {.sym = expected_type, .instance = fdecl->ret});
 
       return false;
     }
@@ -1437,8 +1545,8 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
         return false;
       }
 
-      const auto* expected_type = CheckType(m->property);
-      const auto* actual_type = CheckType(m->value, expected_type);
+      const auto expected_type = CheckType(m->property);
+      const auto actual_type = CheckType(m->value, expected_type.sym);
       MatchTypes(m->value->nrange, actual_type, expected_type);
 
       return false;
@@ -1450,8 +1558,8 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
         return true;
       }
 
-      const auto* tagsym = CheckType(m->tag);
-      if (!tagsym || !(tagsym->Flags() & semantic::SymbolFlags::kUnion)) {
+      const auto tag_type = CheckType(m->tag);
+      if (!tag_type || !(tag_type->Flags() & semantic::SymbolFlags::kUnion)) {
         EmitError(TypeError{
             .range = m->tag->nrange,
             .message = "union type expected",
@@ -1462,11 +1570,11 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
       for (const auto* clause : m->clauses) {
         for (const auto* cond : clause->cond) {
           const auto property = sf_.Text(cond);
-          if (!tagsym->Members()->Has(property)) {
+          if (!tag_type->Members()->Has(property)) {
             EmitError(TypeError{
                 .range = cond->nrange,
                 .message = std::format("property '{}' does not exist on type '{}'", property,
-                                       utils::GetReadableTypeName(tagsym)),
+                                       utils::GetReadableTypeName(tag_type.sym)),
             });
           }
         }

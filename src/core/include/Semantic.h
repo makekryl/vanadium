@@ -80,6 +80,8 @@ enum Value : std::uint32_t {
   kTemplateSpec = 1 << 21,
 
   kPort = 1 << 22,
+
+  kVisibilityStatic = 1 << 23,
 };
 }
 

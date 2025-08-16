@@ -43,6 +43,34 @@ inline const nodes::FormalPars* GetCallableDeclParams(const nodes::Decl* decl) {
   }
 }
 
+inline const nodes::RestrictionSpec* GetTemplateRestriction(const Node* n) {
+  switch (n->nkind) {
+    case NodeKind::ValueDecl:
+      return n->As<nodes::ValueDecl>()->template_restriction;
+    case NodeKind::TemplateDecl:
+      return n->As<nodes::TemplateDecl>()->restriction;
+    case NodeKind::FormalPar:
+      return n->As<nodes::FormalPar>()->restriction;
+    case NodeKind::ReturnSpec:
+      return n->As<nodes::ReturnSpec>()->restriction;
+    default:
+      return nullptr;
+  }
+}
+
+inline const std::vector<nodes::ParenExpr*>* GetArrayDef(const Node* n) {
+  switch (n->nkind) {
+    case NodeKind::Field:
+      return &n->As<nodes::Field>()->arraydef;
+    case NodeKind::Declarator:
+      return &n->As<nodes::Declarator>()->arraydef;
+    case NodeKind::FormalPar:
+      return &n->As<nodes::FormalPar>()->arraydef;
+    default:
+      return nullptr;
+  }
+}
+
 inline const Node* TraverseSelectorExpressionStart(const nodes::SelectorExpr* se) {
   while (se->x->nkind == NodeKind::SelectorExpr) {
     se = se->x->As<nodes::SelectorExpr>();
