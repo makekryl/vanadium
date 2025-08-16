@@ -167,17 +167,20 @@ lsp::SignatureHelpResult ProvideSignatureHelp(const lsp::SignatureHelpParams& pa
         break;
       }
 
-      const auto* stdecl = type->Declaration()->As<core::ast::nodes::StructTypeDecl>();
+      const auto* stdecl = type->Declaration();
+      const auto& stfields = *core::ast::utils::GetStructFields(stdecl);
       const auto* stdecl_file = core::ast::utils::SourceFileOf(stdecl);
 
       auto& label = *d.arena.Alloc<std::string>();
-      label.reserve(32 * (stdecl->fields.size() + 2));
+      label.reserve(32 * (stfields.size() + 2));
 
-      label += stdecl_file->Text(*stdecl->name);
+      if (stdecl->nkind == core::ast::NodeKind::StructTypeDecl) {
+        label += stdecl_file->Text(*stdecl->As<core::ast::nodes::StructTypeDecl>()->name);
+      }
       label += "{";
       //
       SignatureInformationBuilder builder{label};
-      for (const auto* field : stdecl->fields) {
+      for (const auto* field : stfields) {
         builder.Push([&](std::string& buf) {
           buf += stdecl_file->Text(field);
         });

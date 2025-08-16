@@ -815,14 +815,18 @@ nodes::Expr* Parser::ParseEnumValue() {
 }
 
 nodes::BehaviourTypeDecl* Parser::ParseBehaviourTypeDecl() {
-  return NewNode<nodes::BehaviourTypeDecl>([&](auto& btd) {
-    Consume();  // TypeTok
-    Consume();  // KindTok
+  auto* r = NewNode<nodes::BehaviourTypeDecl>([&](auto& btd) {
+    Consume();             // TypeTok
+    btd.kind = Consume();  // KindTok
     ParseName(btd.name);
     if (tok_ == TokenKind::LT) {
       btd.pars = ParseTypeFormalPars();
     }
-    btd.params = ParseFormalPars();
+    if (tok_ == TokenKind::LPAREN) [[likely]] {
+      btd.params = ParseFormalPars();
+    } else {
+      EmitErrorExpected("parameters parens");
+    }
     if (tok_ == TokenKind::RUNS) {
       btd.runs_on = ParseRunsOn();
     }
@@ -834,6 +838,18 @@ nodes::BehaviourTypeDecl* Parser::ParseBehaviourTypeDecl() {
     }
     btd.with = ParseWith();
   });
+
+  if (tok_ == TokenKind::LBRACE) [[unlikely]] {
+    // maybe it was a FuncDecl... TODO: consider better ways
+    auto* b = ParseBlockStmt();
+    EmitError(b->nrange, "unexpected block statement");
+
+    auto* errn = NewErrorNode<nodes::BehaviourTypeDecl>();
+    errn->nrange.begin = r->nrange.begin;
+    errn->nrange.end = b->nrange.end;
+  }
+
+  return r;
 }
 
 nodes::Field* Parser::ParseField() {
@@ -949,7 +965,11 @@ nodes::ListSpec* Parser::ParseListSpec() {
 nodes::BehaviourSpec* Parser::ParseBehaviourSpec() {
   return NewNode<nodes::BehaviourSpec>([&](auto& bs) {
     Consume();  // KindTok
-    bs.params = ParseFormalPars();
+    if (tok_ == TokenKind::LPAREN) [[likely]] {
+      bs.params = ParseFormalPars();
+    } else {
+      EmitErrorExpected("parameters parens");
+    }
     if (tok_ == TokenKind::RUNS) {
       bs.runs_on = ParseRunsOn();
     }

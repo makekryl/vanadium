@@ -77,12 +77,6 @@ class Binder {
     Scope trash_scope(nullptr);  // to avoid scope_ != nullptr checks
     scope_ = &trash_scope;
     sf_.ast.root->Accept(inspector_);
-
-    for (auto& [name, sym] : enum_values_syms_) {
-      if (!sf_.module->scope->symbols.Has(name)) {
-        sf_.module->scope->symbols.Add(std::move(sym));
-      }
-    }
   }
 
  private:
@@ -207,14 +201,16 @@ class Binder {
     }
   };
 
+  std::optional<Symbol> BindTypeSpec(std::string_view name, SymbolFlags::Value flags, const ast::nodes::TypeSpec*);
+  SymbolTable& BindFields(const std::vector<ast::nodes::Field*>&);
+  SymbolTable& BindEnumMembers(const std::vector<ast::nodes::Expr*>&);
+
   std::unordered_multimap<std::string_view, ImportDescriptor> imports_;
   std::unordered_set<std::string_view> required_imports_;
   ExternalsTracker externals_;
 
   std::unordered_set<std::string_view> hoisted_names_;
   std::unordered_set<std::string_view> hoisted_inner_names_;
-
-  std::unordered_map<std::string_view, Symbol> enum_values_syms_;
 
   Scope* scope_;
 
@@ -256,20 +252,6 @@ bool Binder::Hoist(const ast::Node* n) {
     }
     case ast::NodeKind::PortTypeDecl: {
       HoistName<ast::nodes::PortTypeDecl, TargetSetPtr>(n);
-      return false;
-    }
-
-    case ast::NodeKind::EnumTypeDecl: {
-      const auto* m = n->As<ast::nodes::EnumTypeDecl>();
-      HoistName<ast::nodes::EnumTypeDecl, TargetSetPtr>(m);
-
-      for (const auto* item : m->values) {
-        const ast::nodes::Ident* valname = ast::utils::GetEnumValueNamePart(item);
-        if (valname != nullptr) [[likely]] {
-          (this->*TargetSetPtr).insert(Lit(valname));
-        }
-      }
-
       return false;
     }
 
@@ -393,18 +375,7 @@ bool Binder::Inspect(const ast::Node* n) {
     case ast::NodeKind::StructTypeDecl: {
       const auto* m = n->As<ast::nodes::StructTypeDecl>();
 
-      auto& members = NewSymbolTable();
-      for (const auto* field : m->fields) {
-        if (!field->name) {
-          continue;
-        }
-        Visit(field->type);
-        AddSymbol(members, {
-                               Lit(std::addressof(*field->name)),
-                               field,
-                               SymbolFlags::kField,
-                           });
-      }
+      auto& members = BindFields(m->fields);
 
       SymbolFlags::Value flags = SymbolFlags::kStructuralType;
       if (m->kind.kind == ast::TokenKind::UNION) {
@@ -433,7 +404,7 @@ bool Binder::Inspect(const ast::Node* n) {
         AddSymbol({
             Lit(std::addressof(*m->name)),
             m,
-            SymbolFlags::kPort,
+            SymbolFlags::kPortType,
         });
         // TODO
       }
@@ -602,7 +573,6 @@ bool Binder::Inspect(const ast::Node* n) {
     case ast::NodeKind::SubTypeDecl: {
       const auto* m = n->As<ast::nodes::SubTypeDecl>();
 
-      // todo: why is it stored as a Field?!
       const auto* field = m->field;
       Visit(field->type);
       Visit(field->arraydef);
@@ -623,20 +593,7 @@ bool Binder::Inspect(const ast::Node* n) {
     case ast::NodeKind::EnumTypeDecl: {
       const auto* m = n->As<ast::nodes::EnumTypeDecl>();
 
-      auto& members = NewSymbolTable();
-      for (const auto* item : m->values) {
-        const ast::nodes::Ident* valname = ast::utils::GetEnumValueNamePart(item);
-        if (valname != nullptr) [[likely]] {
-          const auto item_name = Lit(valname);
-          semantic::Symbol sym{
-              item_name,
-              valname,
-              SymbolFlags::kEnumMember,
-          };
-          enum_values_syms_.emplace(item_name, sym);
-          AddSymbol(members, std::move(sym));
-        }
-      }
+      auto& members = BindEnumMembers(m->values);
 
       if (m->name) {
         AddSymbol({
@@ -870,6 +827,78 @@ bool Binder::Inspect(const ast::Node* n) {
   }
 
   return true;
+}
+
+std::optional<Symbol> Binder::BindTypeSpec(std::string_view name, SymbolFlags::Value flags,
+                                           const ast::nodes::TypeSpec* spec) {
+  switch (spec->nkind) {
+    case ast::NodeKind::StructSpec:
+      return Symbol{name, spec, SymbolFlags::Value(flags | SymbolFlags::kStructuralType),
+                    &BindFields(spec->As<ast::nodes::StructSpec>()->fields)};
+    case ast::NodeKind::EnumSpec:
+      Visit(spec);
+      return Symbol{name, spec, SymbolFlags::Value(flags | SymbolFlags::kEnumType),
+                    &BindEnumMembers(spec->As<ast::nodes::EnumSpec>()->values)};
+    case ast::NodeKind::ListSpec:
+      Visit(spec);
+      return Symbol{name, spec, SymbolFlags::Value(flags | SymbolFlags::kListType)};
+    default:
+      return std::nullopt;
+  }
+}
+
+SymbolTable& Binder::BindFields(const std::vector<ast::nodes::Field*>& fields) {
+  auto& members = NewSymbolTable();
+  for (const auto* field : fields) {
+    if (!field->name) {
+      continue;
+    }
+
+    const auto name = Lit(std::addressof(*field->name));
+    AddSymbol(members, {
+                           name,
+                           field,
+                           SymbolFlags::kField,
+                       });
+
+    if (field->type->nkind == ast::NodeKind::RefSpec) {
+      Visit(field->type);
+      continue;
+    }
+    std::span<char> shadow_name = sf_.arena.AllocStringBuffer(1 + name.length());
+    shadow_name.front() = kShadowStaticMemberPrefix;
+    std::ranges::copy(name, shadow_name.begin() + 1);
+    if (auto sub = BindTypeSpec(std::string_view{shadow_name}, SymbolFlags::kAnonymous, field->type); sub) {
+      // we don't want to use AddSymbol as its additional checks had already been applied to parent
+      members.Add(std::move(*sub));
+    }
+  }
+  return members;
+}
+
+SymbolTable& Binder::BindEnumMembers(const std::vector<ast::nodes::Expr*>& values) {
+  auto& members = NewSymbolTable();
+  for (const auto* item : values) {
+    const ast::nodes::Ident* valname = ast::utils::GetEnumValueNamePart(item);
+    if (valname != nullptr) [[likely]] {
+      const auto item_name = Lit(valname);
+      semantic::Symbol sym{
+          item_name,
+          valname,
+          SymbolFlags::kEnumMember,
+      };
+      AddSymbol(members, std::move(sym));
+    }
+  }
+  return members;
+}
+
+std::string_view ShadowMemberKey(std::string_view opaque_name) {
+  static thread_local std::string buf;
+  buf.resize(1 + opaque_name.size());
+  buf.front() = semantic::kShadowStaticMemberPrefix;
+  std::ranges::copy(opaque_name, buf.begin() + 1);
+  return buf;
 }
 
 void Bind(SourceFile& sf) {

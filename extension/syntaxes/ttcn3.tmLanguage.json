@@ -269,7 +269,7 @@
       "patterns": [
         {
           "name": "entity.name.type.module.ttcn",
-          "match": "(?<=\\b(?:from|module)\\b)\\s+([[:alpha:]][[:word:]]*)(?=[[:space:]\\{\\}\\;])"
+          "match": "(?<=\\b(?:from|module)\\b\\s+)([[:alpha:]][[:word:]]*)(?=[[:space:]\\{\\}\\;])"
         },
         {
           "name": "entity.name.function.declaration.ttcn",

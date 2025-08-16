@@ -71,6 +71,17 @@ inline const std::vector<nodes::ParenExpr*>* GetArrayDef(const Node* n) {
   }
 }
 
+inline const std::vector<nodes::Field*>* GetStructFields(const Node* n) {
+  switch (n->nkind) {
+    case ast::NodeKind::StructTypeDecl:
+      return &n->As<ast::nodes::StructTypeDecl>()->fields;
+    case ast::NodeKind::StructSpec:
+      return &n->As<ast::nodes::StructSpec>()->fields;
+    default:
+      return nullptr;
+  }
+}
+
 inline const Node* TraverseSelectorExpressionStart(const nodes::SelectorExpr* se) {
   while (se->x->nkind == NodeKind::SelectorExpr) {
     se = se->x->As<nodes::SelectorExpr>();

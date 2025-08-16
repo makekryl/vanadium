@@ -189,9 +189,9 @@ SubTypeDecl:
   with: WithSpec*?
 StructTypeDecl:
   kind: Token
+  fields: Field*[]  # keep this order for branchless GetStructFields
   name: Ident
   pars: FormalPars*?
-  fields: Field*[]
   with: WithSpec*?
 ClassTypeDecl:
   kind: Token

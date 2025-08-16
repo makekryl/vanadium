@@ -51,7 +51,7 @@ struct InstantiatedType {
 };
 namespace {
 InstantiatedType ResolveExprInstantiatedType(const SourceFile*, const semantic::Scope*, const ast::nodes::Expr*);
-}
+}  // namespace
 
 namespace utils {
 const ast::nodes::FormalPars* ResolveCallableParams(const SourceFile* file, const semantic::Scope* scope,
@@ -93,6 +93,9 @@ std::string_view GetReadableTypeName(const SourceFile* sf, const semantic::Symbo
           .begin = m->kind.range.begin,
           .end = m->name->nrange.end,
       });
+    }
+    case ast::NodeKind::ConstructorDecl: {
+      return "class constructor";
     }
     default:
       return sf->Text(sym->Declaration());
@@ -146,15 +149,19 @@ concept IsInstantiatedTypeResolver =
     std::is_invocable_r_v<InstantiatedType, F, const SourceFile*, const semantic::Scope*, const ast::nodes::Expr*>;
 
 template <IsInstantiatedTypeResolver InstantiatedTypeResolver, typename OnNonStructuralType, typename OnUnknownProperty,
-          typename OnNonStaticProperty>
-  requires(std::is_invocable_v<OnNonStructuralType, const ast::Node*, const semantic::Symbol*> &&
-           std::is_invocable_v<OnUnknownProperty, const ast::nodes::SelectorExpr*, const semantic::Symbol*> &&
-           std::is_invocable_v<OnNonStaticProperty, const ast::nodes::SelectorExpr*, const semantic::Symbol*>)
+          typename OnInvalidNonStaticPropertyAccess, typename OnInvalidStaticPropertyAccess>
+  requires(
+      std::is_invocable_v<OnNonStructuralType, const ast::Node*, const semantic::Symbol*> &&
+      std::is_invocable_v<OnUnknownProperty, const ast::nodes::SelectorExpr*, const semantic::Symbol*> &&
+      std::is_invocable_v<OnInvalidNonStaticPropertyAccess, const ast::nodes::SelectorExpr*, const semantic::Symbol*> &&
+      std::is_invocable_v<OnInvalidStaticPropertyAccess, const ast::nodes::SelectorExpr*, const semantic::Symbol*>)
 struct SelectorExprResolverOptions {
   InstantiatedTypeResolver resolve_type;
   OnNonStructuralType on_non_structural_type;
   OnUnknownProperty on_unknown_property;
-  OnNonStaticProperty on_non_static_property;
+
+  OnInvalidNonStaticPropertyAccess on_non_static_property_invalid_access;
+  OnInvalidStaticPropertyAccess on_static_property_invalid_access;
 };
 
 template <typename Options>
@@ -190,6 +197,16 @@ class SelectorExprResolver {
       return nullptr;
     }
 
+    if (x_sym->Flags() & semantic::SymbolFlags::kTemplate) {
+      mode_static_ = false;
+      const auto* tdecl = x_sym->Declaration();
+      const auto* tfile = ast::utils::SourceFileOf(tdecl);
+      x_sym = ResolveCallableReturnType(tfile, tfile->module->scope, tdecl->As<ast::nodes::Decl>());
+      if (!x_sym) {
+        return nullptr;
+      }
+    }
+
     if (!(x_sym->Flags() & (semantic::SymbolFlags::kStructural | semantic::SymbolFlags::kClass |
                             semantic::SymbolFlags::kImportedModule))) {
       options_.on_non_structural_type(se->sel, x_sym);
@@ -221,7 +238,13 @@ class SelectorExprResolver {
     }
 
     if (mode_static_ && !(property_sym->Flags() & semantic::SymbolFlags::kVisibilityStatic)) [[unlikely]] {
-      options_.on_non_static_property(se, property_sym);
+      if (x_sym->Flags() & semantic::SymbolFlags::kStructural) [[likely]] {
+        return x_sym->Members()->LookupShadow(property_name);
+      }
+      options_.on_non_static_property_invalid_access(se, x_sym);
+      return nullptr;
+    } else if (!mode_static_ && (property_sym->Flags() & semantic::SymbolFlags::kVisibilityStatic)) [[unlikely]] {
+      options_.on_static_property_invalid_access(se, x_sym);
       return nullptr;
     }
 
@@ -230,9 +253,14 @@ class SelectorExprResolver {
       return property_sym;
     }
 
+    const auto* property_decl = property_sym->Declaration();
+    if (property_decl->nkind == ast::NodeKind::Field &&
+        property_decl->As<ast::nodes::Field>()->type->nkind != ast::NodeKind::RefSpec) {
+      return x_sym->Members()->LookupShadow(property_name);
+    }
+
     const auto* property_file = ast::utils::SourceFileOf(property_sym->Declaration());
-    return ResolveDeclarationType(property_file, property_file->module->scope,
-                                  property_sym->Declaration()->As<ast::nodes::Decl>());
+    return ResolveDeclarationType(property_file, property_file->module->scope, property_decl->As<ast::nodes::Decl>());
   }
 
   const SourceFile* sf_;
@@ -246,7 +274,8 @@ const semantic::Symbol* ResolveSelectorExprSymbol(const SourceFile* sf, const se
       .resolve_type = ResolveExprInstantiatedType,
       .on_non_structural_type = [](const auto*, auto) {},
       .on_unknown_property = [](const auto*, auto) {},
-      .on_non_static_property = [](const auto*, auto) {},
+      .on_non_static_property_invalid_access = [](const auto*, auto) {},
+      .on_static_property_invalid_access = [](const auto*, auto) {},
   }};
   return resolver.Resolve(sf, scope, se);
 }
@@ -297,7 +326,8 @@ class IndexExprResolver {
         }
         return nullptr;
       }
-      if (const auto* arraydef_vec = ast::utils::GetArrayDef(type.instance); arraydef_vec) {
+      if (const auto* arraydef_vec = ast::utils::GetArrayDef(type.instance); arraydef_vec && !arraydef_vec->empty())
+          [[unlikely]] {
         depth_ = arraydef_vec->size() - 1;
         return x_sym;
       }
@@ -321,7 +351,7 @@ class IndexExprResolver {
       }
     }
 
-    if (!(x_sym->Flags() & semantic::SymbolFlags::kSubType)) {
+    if (!(x_sym->Flags() & semantic::SymbolFlags::kSubtype)) {
       options_.on_non_subscriptable_type(ie->x, x_sym);
       return nullptr;
     }
@@ -372,7 +402,7 @@ const semantic::Symbol* ResolveAliasedType(const semantic::Symbol* sym) {
 }  // namespace
 
 const semantic::Symbol* ResolvePotentiallyAliasedType(const semantic::Symbol* sym) {
-  if (!(sym->Flags() & semantic::SymbolFlags::kSubType)) [[likely]] {
+  if (!(sym->Flags() & semantic::SymbolFlags::kSubtype)) [[likely]] {
     return sym;
   }
   return ResolveAliasedType(sym);
@@ -422,7 +452,7 @@ const semantic::Symbol* DeduceCompositeLiteralType(const SourceFile* file, const
         return nullptr;
       }
 
-      if (sym->Flags() & semantic::SymbolFlags::kSubType) {
+      if (sym->Flags() & semantic::SymbolFlags::kSubtype) {
         sym = ResolveAliasedType(sym);
         const ast::Node* decl = sym->Declaration()->As<ast::nodes::SubTypeDecl>()->field->type;
         if (decl && decl->nkind == ast::NodeKind::ListSpec) {
@@ -436,22 +466,25 @@ const semantic::Symbol* DeduceCompositeLiteralType(const SourceFile* file, const
       }
 
       const auto* decl = sym->Declaration();
-      if (decl->nkind != core::ast::NodeKind::StructTypeDecl) {
+      if (decl->nkind != core::ast::NodeKind::StructTypeDecl && decl->nkind != ast::NodeKind::StructSpec) {
         return nullptr;
       }
 
-      const auto* stdecl = decl->As<core::ast::nodes::StructTypeDecl>();
+      const auto& fields = *ast::utils::GetStructFields(decl);
 
       const auto param_index = std::ranges::find(cl->list, n) - cl->list.begin();
-      if (param_index >= std::ssize(stdecl->fields)) {
+      if (param_index >= std::ssize(fields)) {
         return nullptr;
       }
 
-      const auto* param = stdecl->fields[param_index];
-      const auto* stdecl_file = core::ast::utils::SourceFileOf(stdecl);
+      const auto* field = fields[param_index];
+      const auto* decl_file = core::ast::utils::SourceFileOf(decl);
 
-      return ResolveExprType(stdecl_file, stdecl_file->module->scope,
-                             param->type->As<ast::nodes::Expr>());  // TODO: TypeSpec (field->type) is not Expr actually
+      if (field->type->nkind != ast::NodeKind::RefSpec && field->name) {
+        return sym->Members()->LookupShadow(decl_file->Text(*field->name));
+      }
+
+      return ResolveExprType(decl_file, decl_file->module->scope, field->type->As<ast::nodes::Expr>());
     }
     case ast::NodeKind::AssignmentExpr: {
       const auto* ae = n->parent->As<ast::nodes::AssignmentExpr>();
@@ -465,7 +498,7 @@ const semantic::Symbol* DeduceCompositeLiteralType(const SourceFile* file, const
             return nullptr;
           }
 
-          if (cl_sym->Flags() & semantic::SymbolFlags::kSubType) {
+          if (cl_sym->Flags() & semantic::SymbolFlags::kSubtype) {
             cl_sym = ResolveAliasedType(cl_sym);
             const ast::Node* decl = cl_sym->Declaration()->As<ast::nodes::SubTypeDecl>()->field->type;
             if (decl && decl->nkind == ast::NodeKind::ListSpec && ae->property->nkind == ast::NodeKind::IndexExpr) {
@@ -635,9 +668,35 @@ const semantic::Symbol* ResolveExprSymbol(const SourceFile* file, const semantic
       const auto* m = expr->As<ast::nodes::IndexExpr>();
       return detail::ResolveIndexExprType(file, scope, m);
     }
+    case ast::NodeKind::StructTypeDecl: {
+      const auto* m = expr->As<ast::nodes::StructTypeDecl>();
+      if (!m->name) [[unlikely]] {
+        return nullptr;
+      }
+      return scope->ResolveDirect(file->Text(*m->name));
+    }
     case ast::NodeKind::RefSpec: {
       const auto* m = expr->As<ast::nodes::RefSpec>();
       return ResolveExprSymbol(file, scope, m->x);
+    }
+    case ast::NodeKind::StructSpec:
+    case ast::NodeKind::EnumSpec:
+    case ast::NodeKind::ListSpec: {
+      const auto* m = expr->As<ast::nodes::StructSpec>();
+      const auto* parent = m->parent;
+      if (parent->nkind != core::ast::NodeKind::Field) [[unlikely]] {
+        return nullptr;
+      }
+      const auto* owner = parent->As<core::ast::nodes::Field>();
+      if (!owner->name) {
+        return nullptr;
+      }
+      const core::semantic::Symbol* containing_sym =
+          ResolveExprSymbol(file, scope, owner->parent->As<ast::nodes::Expr>());
+      if (!containing_sym || !(containing_sym->Flags() & core::semantic::SymbolFlags::kStructural)) {
+        return nullptr;
+      }
+      return containing_sym->Members()->LookupShadow(file->Text(*owner->name));
     }
     default: {
       return nullptr;
@@ -774,8 +833,11 @@ InstantiatedType ResolveExprInstantiatedType(const SourceFile* file, const seman
 
         const auto* decl = decl_sym->Declaration();
         switch (decl->nkind) {
+          case ast::NodeKind::FormalPar:
           case ast::NodeKind::Declarator:
             return decl;
+          case ast::NodeKind::ClassTypeDecl:  // this.
+            return expr;
           default:
             return nullptr;
         }
@@ -924,8 +986,8 @@ void BasicTypeChecker::PerformArgumentsTypeCheck(std::span<const ast::nodes::Exp
           // most likely it is IndexExpr, e.g. { [0] := value }
           EmitError(TypeError{
               .range = ae->nrange,
-              .message = std::format("type '{}' is not subscriptable",
-                                     utils::GetReadableTypeName(params_file, subject_type_sym)),
+              .message =
+                  std::format("type '{}' is not array-like", utils::GetReadableTypeName(params_file, subject_type_sym)),
           });
           continue;
         }
@@ -993,7 +1055,7 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const semantic:
       const auto* callee_sym = CheckType(m->fun).sym;
       if (!callee_sym) {
         // error is raised by the semantic analyzer in such case
-        Introspect(m);
+        Inspect(m->args);
         break;
       }
 
@@ -1002,7 +1064,7 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const semantic:
             .range = m->fun->nrange,
             .message = std::format("'{}' is not callable", sf_.Text(m->fun)),
         });
-        Introspect(m);
+        Inspect(m->args);
         break;
       }
 
@@ -1016,7 +1078,7 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const semantic:
       const ast::nodes::FormalPars* params = ast::utils::GetCallableDeclParams(callee_decl);
       if (!params) [[unlikely]] {
         // this is guaranteed to be possible due to parser leniency
-        Introspect(m);
+        Inspect(m->args);
         break;
       }
 
@@ -1084,6 +1146,11 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const semantic:
       }
 
       switch (m->op.kind) {
+        case ast::TokenKind::EQ:
+        case ast::TokenKind::NE: {
+          match_both(x_type.sym);
+          break;
+        }
         case ast::TokenKind::CONCAT: {
           if (x_type && !(x_type->Flags() & semantic::SymbolFlags::kBuiltinStringType)) {
             EmitError({
@@ -1127,8 +1194,6 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const semantic:
           }
           MatchTypes(m->y->nrange, y_type, {.sym = &builtins::kInteger});
           break;
-        case ast::TokenKind::EQ:
-        case ast::TokenKind::NE:
         case ast::TokenKind::LT:
         case ast::TokenKind::LE:
         case ast::TokenKind::GT:
@@ -1169,7 +1234,7 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const semantic:
         break;
       }
 
-      if (!(desired_type->Flags() & (semantic::SymbolFlags::kStructural | semantic::SymbolFlags::kSubType))) {
+      if (!(desired_type->Flags() & (semantic::SymbolFlags::kStructural | semantic::SymbolFlags::kSubtype))) {
         //
         resulting_type = &symbols::kTypeError;
         //
@@ -1180,20 +1245,10 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const semantic:
       resulting_type = desired_type;
       //
 
-      if (desired_type->Flags() & semantic::SymbolFlags::kSubType) {
-        const auto* subtype_sym = desired_type;
-        const auto* subtype_decl = subtype_sym->Declaration()->As<ast::nodes::SubTypeDecl>();
-        if (!subtype_decl) {
-          Introspect(m);
-          break;
-        }
-        const auto* subtype_file = ast::utils::SourceFileOf(subtype_decl);
-
-        const auto* f = subtype_decl->field;
-        if (f->type->nkind == ast::NodeKind::ListSpec) {
-          const auto* ls = f->type->As<ast::nodes::ListSpec>();
+      {
+        const auto match_listspec = [&](const ast::nodes::ListSpec* ls, const SourceFile* ls_file) {
           if (ls->length) {
-            if (const auto& bounds_opt = detail::GetLengthExprBounds(subtype_file, ls->length); bounds_opt) {
+            if (const auto& bounds_opt = detail::GetLengthExprBounds(ls_file, ls->length); bounds_opt) {
               const auto& [min_args, max_args] = *bounds_opt;
               const auto args_count = m->list.size();
               if (args_count < min_args || args_count > max_args) {
@@ -1211,40 +1266,60 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const semantic:
 
           if (ls->elemtype->nkind == ast::NodeKind::RefSpec) {
             const auto* rs = ls->elemtype->As<ast::nodes::RefSpec>();
-            const auto* inner_type_sym = subtype_file->module->scope->Resolve(subtype_file->Text(rs->x));
+            const auto* inner_type_sym = ls_file->module->scope->Resolve(ls_file->Text(rs->x));
             for (const auto* arg : m->list) {
               const auto actual_sym = CheckType(arg, inner_type_sym);
               MatchTypes(arg->nrange, actual_sym, {.sym = inner_type_sym});
             }
           }
-        }
+        };
+        if (desired_type->Flags() & semantic::SymbolFlags::kSubtype) {
+          const auto* subtype_sym = desired_type;
+          const auto* subtype_decl = subtype_sym->Declaration()->As<ast::nodes::SubTypeDecl>();
+          if (!subtype_decl) {
+            Introspect(m);
+            break;
+          }
+          const auto* subtype_file = ast::utils::SourceFileOf(subtype_decl);
 
-        break;
+          const auto* f = subtype_decl->field;
+          if (f->type->nkind == ast::NodeKind::ListSpec) {
+            match_listspec(f->type->As<ast::nodes::ListSpec>(), subtype_file);
+          }
+
+          break;
+        }
+        if (desired_type->Flags() & semantic::SymbolFlags::kList) {
+          match_listspec(desired_type->Declaration()->As<ast::nodes::ListSpec>(),
+                         ast::utils::SourceFileOf(desired_type->Declaration()));
+          break;
+        }
       }
 
       const auto* record_sym = desired_type;
-      const auto* record_decl = record_sym->Declaration()->As<ast::nodes::StructTypeDecl>();
+      const auto* record_decl = record_sym->Declaration();
       if (!record_decl) {
         Introspect(m);
         break;
       }
+      const auto& fields = *ast::utils::GetStructFields(record_decl);
 
       const auto* record_file = ast::utils::SourceFileOf(record_decl);
 
       if (record_sym->Flags() & semantic::SymbolFlags::kUnion) {
         PerformArgumentsTypeCheck<ast::nodes::Field, {.is_union = true}>(m->list, m->nrange, record_file, record_sym,
-                                                                         record_decl->fields, [](const auto*) {
+                                                                         fields, [](const auto*) {
                                                                            return false;
                                                                          });
       } else {
         // TODO: cleanup, calls below differ only in compile-time opts (.allow_missing_fields = true)
         if (m->parent->nkind == ast::NodeKind::TemplateDecl && m->parent->As<ast::nodes::TemplateDecl>()->base) {
           PerformArgumentsTypeCheck<ast::nodes::Field, {.allow_missing_fields = true}>(
-              m->list, m->nrange, record_file, record_sym, record_decl->fields, [](const ast::nodes::Field* field) {
+              m->list, m->nrange, record_file, record_sym, fields, [](const ast::nodes::Field* field) {
                 return !field->optional;
               });
         } else {
-          PerformArgumentsTypeCheck<ast::nodes::Field>(m->list, m->nrange, record_file, record_sym, record_decl->fields,
+          PerformArgumentsTypeCheck<ast::nodes::Field>(m->list, m->nrange, record_file, record_sym, fields,
                                                        [](const ast::nodes::Field* field) {
                                                          return !field->optional;
                                                        });
@@ -1281,11 +1356,19 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const semantic:
                                            utils::GetReadableTypeName(sym)),
                 });
               },
-          .on_non_static_property =
+          .on_non_static_property_invalid_access =
               [&](const ast::nodes::SelectorExpr* se, const semantic::Symbol* sym) {
                 EmitError(TypeError{
                     .range = se->sel->nrange,
                     .message = std::format("property '{}' of type '{}' is not static", sf_.Text(se->sel),
+                                           utils::GetReadableTypeName(sym)),
+                });
+              },
+          .on_static_property_invalid_access =
+              [&](const ast::nodes::SelectorExpr* se, const semantic::Symbol* sym) {
+                EmitError(TypeError{
+                    .range = se->sel->nrange,
+                    .message = std::format("property '{}' of type '{}' is not instance-bound", sf_.Text(se->sel),
                                            utils::GetReadableTypeName(sym)),
                 });
               },
@@ -1295,7 +1378,8 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const semantic:
       if (!property_sym) {
         break;
       }
-      if (property_sym->Flags() & (semantic::SymbolFlags::kFunction | semantic::SymbolFlags::kBuiltin)) {
+      if (property_sym->Flags() &
+          (semantic::SymbolFlags::kFunction | semantic::SymbolFlags::kBuiltin | semantic::SymbolFlags::kAnonymous)) {
         //
         resulting_type = property_sym;
         //
@@ -1428,8 +1512,8 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
     case ast::NodeKind::ValueDecl: {
       const auto* m = n->As<ast::nodes::ValueDecl>();
 
-      const auto* expected_type = ResolveExprSymbol(&sf_, scope_, m->type);
-      if (expected_type && !(expected_type->Flags() & semantic::SymbolFlags::kType)) {
+      const auto* expected_type = CheckType(m->type).sym;
+      if (!expected_type || !(expected_type->Flags() & semantic::SymbolFlags::kType)) {
         EmitError({
             .range = m->type->nrange,
             .message = std::format("'{}' is not a type", sf_.Text(m->type)),

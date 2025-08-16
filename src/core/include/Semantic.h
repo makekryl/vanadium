@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <cstdint>
+#include <ranges>
 #include <unordered_map>
 #include <vector>
 
@@ -44,46 +45,55 @@ enum Value : std::uint32_t {
 
   kType = 1 << 6,
 
-  kStructural = 1 << 7,
+  kVisibilityStatic = 1 << 7,
+
+  kStructural = 1 << 8,
   kStructuralType = kType | kStructural,
 
-  kComponent = 1 << 8,
+  kComponent = 1 << 9,
   kComponentStructuralType = kType | kStructural | kComponent,
 
-  kUnion = 1 << 9,
+  kUnion = 1 << 10,
   kUnionStructuralType = kType | kStructural | kUnion,
 
-  kClass = 1 << 10,
+  kClass = 1 << 11,
   kClassType = kType | kClass,
 
-  kConstructor = 1 << 11,
-  kConstructorFunction = kFunction | kConstructor,
+  kConstructor = 1 << 12,
+  kConstructorFunction = kFunction | kConstructor | kVisibilityStatic,
 
-  kEnum = 1 << 12,
+  kEnum = 1 << 13,
   kEnumType = kType | kEnum,
 
-  kSubType = 1 << 13,
-  kSubTypeType = kType | kSubType,
+  kSubtype = 1 << 14,
+  kSubTypeType = kType | kSubtype,
 
-  kThis = 1 << 14,
-  kField = 1 << 15,
-  kEnumMember = 1 << 16,
+  kList = 1 << 15,
+  kListType = kType | kList,
 
-  kArray = 1 << 17,
+  kThis = 1 << 16,
+  kField = 1 << 17,
+  kEnumMember = 1 << 18,
 
-  kBuiltin = 1 << 18,
+  kArray = 1 << 19,
+
+  kBuiltin = 1 << 20,
   kBuiltinType = kType | kBuiltin,
-  kBuiltinString = 1 << 19,
+  kBuiltinString = 1 << 21,
   kBuiltinStringType = kType | kBuiltin | kBuiltinString,
-  kBuiltinDef = 1 << 20,
+  kBuiltinDef = 1 << 22,
 
-  kTemplateSpec = 1 << 21,
+  kTemplateSpec = 1 << 23,
 
-  kPort = 1 << 22,
+  kPort = 1 << 24,
+  kPortType = kType | kPort,
 
-  kVisibilityStatic = 1 << 23,
+  kAnonymous = 1 << 25,
 };
 }
+
+inline constexpr char kShadowStaticMemberPrefix = '$';
+[[nodiscard]] std::string_view ShadowMemberKey(std::string_view opaque_name);
 
 class Symbol {
  public:
@@ -134,8 +144,10 @@ class SymbolTable {
     return names_.contains(name);
   }
 
-  [[nodiscard]] std::unordered_map<std::string_view, Symbol> Enumerate() const {
-    return names_;
+  [[nodiscard]] auto Enumerate() const {
+    return names_ | std::ranges::views::filter([](const auto& kv) {
+             return !(kv.second.Flags() & SymbolFlags::kAnonymous);
+           });
   }
 
   const Symbol* Lookup(std::string_view name) const {
@@ -144,6 +156,10 @@ class SymbolTable {
       return nullptr;
     }
     return std::addressof(it->second);
+  }
+
+  const Symbol* LookupShadow(std::string_view name) const {
+    return Lookup(ShadowMemberKey(name));
   }
 
  private:

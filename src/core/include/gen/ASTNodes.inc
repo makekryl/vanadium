@@ -1433,20 +1433,20 @@ struct StructTypeDecl : Decl {
   StructTypeDecl() : Decl(NodeKind::StructTypeDecl) {}
 
   Token kind;
+  std::vector<Field*> fields;
   std::optional<Ident> name;
   FormalPars* pars{nullptr};
-  std::vector<Field*> fields;
   WithSpec* with{nullptr};
 
   void Accept(const NodeInspector& inspector) const {
+    for (const auto* n : fields) {
+      Inspect(n, inspector);
+    }
     if (name.has_value()) {
       Inspect(std::addressof(*name), inspector);
     }
     if (pars != nullptr) {
       Inspect(pars, inspector);
-    }
-    for (const auto* n : fields) {
-      Inspect(n, inspector);
     }
     if (with != nullptr) {
       Inspect(with, inspector);

@@ -13,12 +13,14 @@
 #include "LSProtocol.h"
 #include "LanguageServerConv.h"
 #include "LanguageServerHelpers.h"
+#include "LanguageServerLogger.h"
 #include "Program.h"
 #include "ScopedNodeVisitor.h"
 #include "Semantic.h"
 #include "Solution.h"
 #include "TypeChecker.h"
 #include "detail/Definition.h"
+#include "magic_enum/magic_enum.hpp"
 #include "utils/ASTUtils.h"
 #include "utils/SemanticUtils.h"
 
@@ -92,11 +94,10 @@ template <typename Options>
         return nullptr;
       }
 
-      const auto* decl = sym->Declaration();
-      if (decl->nkind != core::ast::NodeKind::StructTypeDecl) {
+      if (!(sym->Flags() & core::semantic::SymbolFlags::kStructural)) {
         return nullptr;
       }
-      return decl;  // -> StructTypeDecl
+      return sym->Declaration();
     }
     default:
       return nullptr;
@@ -107,6 +108,11 @@ template <typename InlayHintTargetLocatorOptions>
 void ComputeInlayHint(const core::SourceFile& file, const core::semantic::Scope* scope, const core::ast::Node* n,
                       lib::Arena& arena, std::vector<lsp::InlayHint>& out,
                       InlayHintTargetLocatorOptions inlayHintTargetLocatorOptions) {
+  const core::ast::Node* tgt = LocateInlayHintTarget(file, scope, n, inlayHintTargetLocatorOptions);
+  if (!tgt) {
+    return;
+  }
+
   const auto add_parameter_inlay_hint = [&](const core::ast::pos_t pos, std::string_view name) {
     out.emplace_back(lsp::InlayHint{
         .position = conv::ToLSPPosition(file.ast.lines.Translate(pos)),
@@ -119,11 +125,6 @@ void ComputeInlayHint(const core::SourceFile& file, const core::semantic::Scope*
         }),
     });
   };
-
-  const core::ast::Node* tgt = LocateInlayHintTarget(file, scope, n, inlayHintTargetLocatorOptions);
-  if (!tgt) {
-    return;
-  }
 
   switch (n->nkind) {
     case core::ast::NodeKind::CallExpr: {
@@ -158,18 +159,23 @@ void ComputeInlayHint(const core::SourceFile& file, const core::semantic::Scope*
     case core::ast::NodeKind::CompositeLiteral: {
       const auto* m = n->As<core::ast::nodes::CompositeLiteral>();
 
-      const auto* stdecl = tgt->As<core::ast::nodes::StructTypeDecl>();
-      const auto* stdecl_file = core::ast::utils::SourceFileOf(stdecl);
+      const auto* stfields_ptr = core::ast::utils::GetStructFields(tgt);
+      if (!stfields_ptr) [[unlikely]] {
+        break;
+      }
+      const auto& stfields = *stfields_ptr;
+
+      const auto* stdecl_file = core::ast::utils::SourceFileOf(tgt);
 
       for (const auto& [idx, arg] : m->list | std::views::enumerate) {
-        if (idx >= std::ssize(stdecl->fields)) {
+        if (idx >= std::ssize(stfields)) {
           break;
         }
         if (arg->nkind == core::ast::NodeKind::AssignmentExpr) {
           break;
         }
 
-        const auto& param_name_opt = stdecl->fields[idx]->name;
+        const auto& param_name_opt = stfields[idx]->name;
         if (!param_name_opt) [[unlikely]] {
           break;
         }
@@ -337,7 +343,11 @@ std::optional<lsp::InlayHint> ResolveInlayHint(const lsp::InlayHint& original_hi
     case core::ast::NodeKind::CompositeLiteral: {
       const auto* m = container_node->As<core::ast::nodes::CompositeLiteral>();
 
-      const auto* stdecl = tgt->As<core::ast::nodes::StructTypeDecl>();
+      const auto* stfields_ptr = core::ast::utils::GetStructFields(tgt);
+      if (!stfields_ptr) [[unlikely]] {
+        break;
+      }
+      const auto& stfields = *stfields_ptr;
 
       while (n->parent != m) {
         n = n->parent;
@@ -349,15 +359,15 @@ std::optional<lsp::InlayHint> ResolveInlayHint(const lsp::InlayHint& original_hi
       }
 
       const auto idx = it - m->list.begin();
-      if (idx >= std::ssize(stdecl->fields)) {  //
+      if (idx >= std::ssize(stfields)) {  //
         return std::nullopt;
       }
 
-      const auto* field = stdecl->fields[idx];
+      const auto* field = stfields[idx];
       if (!field->name) {
         return std::nullopt;
       }
-      const auto* field_file = core::ast::utils::SourceFileOf(stdecl);
+      const auto* field_file = core::ast::utils::SourceFileOf(tgt);
 
       return render(field_file, field->name->nrange);
     }

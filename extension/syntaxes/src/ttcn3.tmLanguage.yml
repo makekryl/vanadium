@@ -337,7 +337,7 @@ repository:
   declarations:
     patterns:
       - name: entity.name.type.module.ttcn
-        match: (?<=\b(?:from|module)\b)\s+([[:alpha:]][[:word:]]*)(?=[[:space:]\{\}\;])
+        match: (?<=\b(?:from|module)\b\s+)([[:alpha:]][[:word:]]*)(?=[[:space:]\{\}\;])
 
       - name: entity.name.function.declaration.ttcn
         match: (?<=\b(?:function|testcase|altstep|configuration)\b)\s*([[:alpha:]_][[:word:]]*)\s*\(
