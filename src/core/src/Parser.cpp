@@ -897,7 +897,7 @@ nodes::TypeSpec* Parser::ParseTypeSpec() {
 
 nodes::StructSpec* Parser::ParseStructSpec() {
   return NewNode<nodes::StructSpec>([&](auto& ss) {
-    Consume();  // KindTok
+    ss.kind = Consume();  // KindTok
     Expect(TokenKind::LBRACE);
     while (tok_ != TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
       ss.fields.push_back(ParseField());
