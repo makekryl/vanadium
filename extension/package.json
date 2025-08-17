@@ -1,9 +1,11 @@
 {
   "name": "vanadiumd",
-  "displayName": "vanadiumd",
+  "displayName": "vanadiumd - TTCN-3 language server",
   "description": "TTCN-3 Language Support",
+  "icon": "icon.png",
   "author": "Mikhail Krylov",
-  "version": "0.0.1",
+  "publisher": "Mikhail Krylov",
+  "version": "0.0.5",
   "private": true,
   "engines": {
     "vscode": "^1.100.0"
