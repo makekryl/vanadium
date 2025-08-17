@@ -58,14 +58,15 @@ namespace {
 }
 }  // namespace
 
-std::vector<lsp::CompletionItem> CollectCompletions(const lsp::CompletionParams& params, const core::SourceFile& file,
-                                                    LsSessionRef d) {
+lsp::CompletionList CollectCompletions(const lsp::CompletionParams& params, const core::SourceFile& file,
+                                       LsSessionRef d) {
   if (!file.module) {
     return {};
   }
 
   constexpr std::size_t kMaxCompletionItems = 120;
-  std::vector<lsp::CompletionItem> items;
+  lsp::CompletionList completion_list{.isIncomplete = true};
+  auto& items = completion_list.items;
 
   const auto* n = detail::FindNode(&file, params.position);
 
@@ -81,7 +82,7 @@ std::vector<lsp::CompletionItem> CollectCompletions(const lsp::CompletionParams&
     n = n->As<core::ast::nodes::SelectorExpr>()->x;
     const auto* sym = core::checker::ResolveExprType(&file, scope, n->As<core::ast::nodes::Expr>());
     if (!sym) {
-      return items;  // todo: extract filler to separate func
+      return completion_list;  // todo: extract filler to separate func
     }
     if (sym->Flags() & core::semantic::SymbolFlags::kStructural) {
       for (const auto& [name, msym] : sym->Members()->Enumerate()) {
@@ -101,8 +102,22 @@ std::vector<lsp::CompletionItem> CollectCompletions(const lsp::CompletionParams&
             .sortText = "0",
         });
       }
+    } else if (sym->Flags() & core::semantic::SymbolFlags::kSubtype) {
+      if (sym->Declaration()->As<core::ast::nodes::SubTypeDecl>()->field->type->nkind ==
+          core::ast::NodeKind::ListSpec) {
+        // // todo
+        // items.emplace_back(lsp::CompletionItem{
+        //     .label = "lengthof",
+        //     .kind = lsp::CompletionItemKind::kSnippet,
+        //     .textEdit =
+        //         lsp::TextEdit{
+        //             .range = conv::ToLSPRange(n->nrange, file.ast),
+        //             .newText = *d.arena.Alloc<std::string>(std::format("lengthof({})", file.Text(n))),
+        //         },
+        // });
+      }
     }
-    return items;  // todo: extract filler to separate func
+    return completion_list;  // todo: extract filler to separate func
   }
 
   const auto complete_props = [&](const core::semantic::Symbol* sym) {
@@ -123,7 +138,7 @@ std::vector<lsp::CompletionItem> CollectCompletions(const lsp::CompletionParams&
   const auto* parent = n->parent;
   switch (parent->nkind) {
     case core::ast::NodeKind::Definition: {
-      return items;  // todo: extract filler to separate func
+      return completion_list;  // todo: extract filler to separate func
     }
     case core::ast::NodeKind::ImportDecl: {
       file.program->VisitAccessibleModules([&](const core::ModuleDescriptor& mod) {
@@ -170,7 +185,7 @@ std::vector<lsp::CompletionItem> CollectCompletions(const lsp::CompletionParams&
                                     ae->parent->nkind == core::ast::NodeKind::ParenExpr*/)) {
           complete_props(core::checker::ext::DeduceCompositeLiteralType(
               &file, scope, ae->parent->As<core::ast::nodes::CompositeLiteral>()));
-          return items;  // todo: extract filler to separate func
+          return completion_list;  // todo: extract filler to separate func
         }
       }
 
@@ -192,7 +207,7 @@ std::vector<lsp::CompletionItem> CollectCompletions(const lsp::CompletionParams&
       });
     }
     // nothing more needed
-    return items;  // todo: extract filler to separate func
+    return completion_list;  // todo: extract filler to separate func
   }
 
   for (const auto* cs = scope; cs != nullptr; cs = cs->ParentScope()) {
@@ -245,7 +260,7 @@ std::vector<lsp::CompletionItem> CollectCompletions(const lsp::CompletionParams&
     return true;
   });
 
-  return items;  // todo: extract filler to separate func
+  return completion_list;  // todo: extract filler to separate func
 }
 
 std::optional<lsp::CompletionItem> ResolveCompletionItem(const lsp::CompletionItem& original_completion,
