@@ -77,7 +77,17 @@ lsp::SemanticTokens CollectSemanticTokens(const lsp::SemanticTokensRangeParams& 
                 return true;
               }
             }
-            if (const auto* sym = scope->Resolve(file.Text(ident)); sym) {
+            if (ident->parent->nkind == core::ast::NodeKind::EnumTypeDecl ||
+                (ident->parent->nkind == core::ast::NodeKind::CallExpr &&
+                 ident->parent->parent->nkind == core::ast::NodeKind::EnumTypeDecl)) {
+              write_token(SemanticTokenW{
+                  .ident = ident,
+                  .type = lsp::SemanticTokenTypes::kEnummember,
+                  .modifiers = lsp::SemanticTokenModifiers::kUnset,
+              });
+              return true;
+            }
+            if (const auto* sym = core::checker::ResolveExprSymbol(&file, scope, ident); sym) {
               SemanticTokenW w{.ident = ident};
               using Fu = std::pair<lsp::SemanticTokenTypes, lsp::SemanticTokenModifiers>;
               std::tie(w.type, w.modifiers) = [&] -> Fu {

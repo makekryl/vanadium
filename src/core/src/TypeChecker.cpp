@@ -94,6 +94,13 @@ std::string_view GetReadableTypeName(const SourceFile* sf, const semantic::Symbo
           .end = m->name->nrange.end,
       });
     }
+    case ast::NodeKind::EnumTypeDecl: {
+      const auto* m = decl->As<ast::nodes::EnumTypeDecl>();
+      return sf->Text(ast::Range{
+          .begin = m->nrange.begin,
+          .end = m->name->nrange.end,
+      });
+    }
     case ast::NodeKind::ConstructorDecl: {
       return "class constructor";
     }
@@ -647,6 +654,9 @@ const semantic::Symbol* DeduceExpectedType(const SourceFile* file, const semanti
       const auto* cl = parent->As<ast::nodes::CompositeLiteral>();
 
       const auto* sym = DeduceCompositeLiteralType(file, scope, cl);
+      if (!sym) {
+        return nullptr;
+      }
       if (!(sym->Flags() & semantic::SymbolFlags::kStructural)) {
         // e.g. ListSpec
         return sym;
@@ -683,7 +693,16 @@ const semantic::Symbol* ResolveExprSymbol(const SourceFile* file, const semantic
   switch (expr->nkind) {
     case ast::NodeKind::Ident: {
       const auto* m = expr->As<ast::nodes::Ident>();
-      return scope->Resolve(file->Text(m));
+      const auto label = file->Text(m);
+
+      const auto* sym = scope->Resolve(label);
+      if (!sym) {
+        const auto* expected_type = core::checker::ext::DeduceExpectedType(file, scope, expr);
+        if (expected_type && (expected_type->Flags() & semantic::SymbolFlags::kEnum)) {
+          sym = expected_type->Members()->Lookup(label);
+        }
+      }
+      return sym;
     }
     case ast::NodeKind::CallExpr: {
       const auto* m = expr->As<ast::nodes::CallExpr>();
@@ -960,13 +979,7 @@ void BasicTypeChecker::MatchTypes(const ast::Range& range, const InstantiatedTyp
     return;
   }
 
-  if (expected->Flags() & semantic::SymbolFlags::kEnum) {
-    if (expected != actual && !expected->Members()->Has(actual->GetName())) {
-      EmitError(TypeError{
-          .range = range,
-          .message = std::format("value '{}' does not belong to enum '{}'", actual->GetName(), expected->GetName()),
-      });
-    }
+  if (expected->Flags() & semantic::SymbolFlags::kEnum && (actual->Flags() & semantic::SymbolFlags::kEnumMember)) {
     return;
   }
 
