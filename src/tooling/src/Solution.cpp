@@ -14,6 +14,11 @@ Solution::Solution(Project&& root_project) : root_project_(std::move(root_projec
 namespace {
 void InitSubproject(const Solution& solution, SolutionProject& subproject) {
   const auto& dir = subproject.project.Directory();
+  if (!dir.Exists()) {
+    // TODO
+    std::println(stderr, "Project directory does not exist: '{}'", dir.base_path);
+    return;
+  }
 
   const auto read_file = [&](const std::string& path, std::string& srcbuf) -> void {
     const auto res = solution.Directory().ReadFile(path, [&](std::size_t size) {
@@ -32,6 +37,10 @@ void InitSubproject(const Solution& solution, SolutionProject& subproject) {
   subproject.program.Update([&](const core::Program::ProgramModifier& modify) {
     dir.VisitFiles([&](const std::string& filepath) {
       if (!filepath.ends_with(".ttcn")) {
+        return;
+      }
+      if (filepath.contains("stubs")) {
+        // TODO: home hack
         return;
       }
       modify.update(dir.fs->Relative(dir.Join(filepath), solution.Directory().base_path), read_file);
