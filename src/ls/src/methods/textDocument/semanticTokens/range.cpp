@@ -141,6 +141,9 @@ lsp::SemanticTokens CollectSemanticTokens(const lsp::SemanticTokensRangeParams& 
                 if (sym->Flags() & core::semantic::SymbolFlags::kPort) {
                   return {lsp::SemanticTokenTypes::kClass, lsp::SemanticTokenModifiers::kUnset};
                 }
+                if (sym->Flags() & core::semantic::SymbolFlags::kType) {
+                  return {lsp::SemanticTokenTypes::kType, lsp::SemanticTokenModifiers::kUnset};
+                }
 
                 // regexp lol todo
                 return {lsp::SemanticTokenTypes::kRegexp, lsp::SemanticTokenModifiers::kUnset};
