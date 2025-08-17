@@ -1043,6 +1043,7 @@ void BasicTypeChecker::PerformArgumentsTypeCheck(std::span<const ast::nodes::Exp
   };
 
   bool seen_named_argument{false};
+  std::int64_t last_named_argument_idx{0};
   for (std::size_t i = 0; i < args_count; ++i) {
     const auto* argnode = args[i];
     switch (argnode->nkind) {
@@ -1069,6 +1070,16 @@ void BasicTypeChecker::PerformArgumentsTypeCheck(std::span<const ast::nodes::Exp
           }
         }();
         if (property_sym) {
+          // looking string up it table seems to be faster than iterating, searching ptr should be a good tradeoff
+          const auto idx = std::ranges::find(params, property_sym->Declaration()) - params.begin();
+          if (last_named_argument_idx > idx) {
+            EmitError(TypeError{
+                .range = ae->nrange,
+                .message = std::format("argument '{}' is out of order, it should precede '{}'", property_name,
+                                       params_file->Text(*params[last_named_argument_idx]->name)),
+            });
+          }
+          last_named_argument_idx = idx;
           check_argument(property_sym->Declaration()->As<TParamDescriptorNode>(), ae->value);
         } else {
           EmitError(TypeError{
