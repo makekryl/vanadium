@@ -1403,18 +1403,10 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const semantic:
                                                                            return false;
                                                                          });
       } else {
-        // TODO: cleanup, calls below differ only in compile-time opts (.allow_missing_fields = true)
-        if (m->parent->nkind == ast::NodeKind::TemplateDecl && m->parent->As<ast::nodes::TemplateDecl>()->base) {
-          PerformArgumentsTypeCheck<ast::nodes::Field, {.allow_missing_fields = true}>(
-              m->list, m->nrange, record_file, record_sym, fields, [](const ast::nodes::Field* field) {
-                return !field->optional;
-              });
-        } else {
-          PerformArgumentsTypeCheck<ast::nodes::Field>(m->list, m->nrange, record_file, record_sym, fields,
-                                                       [](const ast::nodes::Field* field) {
-                                                         return !field->optional;
-                                                       });
-        }
+        PerformArgumentsTypeCheck<ast::nodes::Field, {.allow_missing_fields = true}>(
+            m->list, m->nrange, record_file, record_sym, fields, [](const ast::nodes::Field* field) {
+              return !field->optional;
+            });
       }
 
       break;
