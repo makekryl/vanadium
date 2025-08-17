@@ -44,6 +44,8 @@ const semantic::Symbol* ResolveBuiltinType(std::string_view name) {
       {"verdicttype", &kVerdictType},
       {"timer", &kTimer},
 
+      {"object", &kAnytype},  // TODO
+
       {"__infer_arg_t", &checker::symbols::kInferType},
   });
   if (const auto sym_opt = kBuiltinsTable.get(name); sym_opt) {
