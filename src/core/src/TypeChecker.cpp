@@ -979,6 +979,18 @@ void BasicTypeChecker::MatchTypes(const ast::Range& range, const InstantiatedTyp
     return;
   }
 
+  const auto template_spec_providen = bool(actual->Flags() & semantic::SymbolFlags::kTemplateSpec);
+  if ((!expected.instance || ast::utils::GetTemplateRestriction(expected.instance) == nullptr) &&
+      (template_spec_providen || (actual.instance && ast::utils::GetTemplateRestriction(actual.instance) != nullptr))) {
+    EmitError(TypeError{
+        .range = range,
+        .message = std::format("expected value, got template"),
+    });
+  }
+  if (template_spec_providen) {
+    return;
+  }
+
   if (expected->Flags() & semantic::SymbolFlags::kEnum && (actual->Flags() & semantic::SymbolFlags::kEnumMember)) {
     return;
   }
