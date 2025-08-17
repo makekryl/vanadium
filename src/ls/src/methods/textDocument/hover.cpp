@@ -18,6 +18,8 @@
 #include "magic_enum/magic_enum.hpp"
 #include "utils/ASTUtils.h"
 
+// TODO: rewriting this crap is in LSP maintenance top-10 priority
+
 namespace vanadium::ls {
 
 namespace {
@@ -454,6 +456,48 @@ Transitively imports modules:
                            provider_file->module->name, helpers::PathToFileUri(d.solution, provider_file->path),
                            source_loc.line + 1, source_loc.character);
   }
+
+  if (decl) {
+    const auto* tgt_decl = decl;
+    if (tgt_decl->nkind == core::ast::NodeKind::Declarator) {
+      tgt_decl = tgt_decl->parent;
+    }
+    if (const auto comment = core::ast::utils::ExtractAttachedComment(provider_file->ast, tgt_decl); comment) {
+      auto comment_sv = provider_file->Text(*comment);
+      // shame.... todo...
+      bool inline_comment{false};
+      if (comment_sv.starts_with("/* ") || comment_sv.starts_with("/*\n")) {
+        comment_sv.remove_prefix(3);
+      } else if (comment_sv.starts_with("/** ") || comment_sv.starts_with("/**\n")) {
+        comment_sv.remove_prefix(4);
+      } else if (comment_sv.starts_with("//")) {
+        inline_comment = true;
+        comment_sv.remove_prefix(2);
+      }
+      if (comment_sv.ends_with("\n*/\n")) {
+        comment_sv.remove_suffix(4);
+      } else if (comment_sv.ends_with("\n*/")) {
+        comment_sv.remove_suffix(3);
+      } else if (comment_sv.ends_with("*/")) {
+        comment_sv.remove_suffix(2);
+      }
+
+      auto mut_s = std::string(comment_sv);
+      if (inline_comment) {
+        constexpr std::string_view kFrom = "\n//";
+        constexpr std::string_view kTo = " \n\n";  // left pad to avoid shifting
+        auto&& pos = mut_s.find(kFrom, std::string::size_type{});
+        while (pos != std::string::npos) {
+          mut_s.replace(pos, kFrom.length(), kTo);
+          pos = mut_s.find(kFrom, pos + kTo.length());
+        }
+      }
+
+      // TODO: get rid of string alloc
+      content = mut_s + "\n\n---\n\n" + content;
+    }
+  }
+
   return lsp::Hover{
       .contents =
           lsp::MarkupContent{

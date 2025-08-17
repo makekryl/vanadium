@@ -98,5 +98,7 @@ inline SourceFile* SourceFileOf(const Node* n) {
 
 const Node* GetNodeAt(const AST& ast, pos_t pos);
 
+std::optional<Range> ExtractAttachedComment(const AST&, const Node*);
+
 }  // namespace utils
 }  // namespace vanadium::core::ast

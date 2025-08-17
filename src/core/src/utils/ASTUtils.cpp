@@ -2,6 +2,7 @@
 
 #include "ASTNodes.h"
 #include "ASTTypes.h"
+#include "Scanner.h"
 
 namespace vanadium::core::ast {
 namespace utils {
@@ -116,6 +117,29 @@ const Node* GetNodeAt(const AST& ast, pos_t pos) {
     return false;
   });
   return candidate;
+}
+
+std::optional<Range> ExtractAttachedComment(const AST& ast, const Node* n) {
+  const auto anchor{n->nrange.begin};
+
+  core::ast::Token preceding{};
+  parser::Scanner scanner(ast.src);
+  while (true) {
+    const core::ast::Token tok = scanner.Scan();
+    if (tok.range.end > anchor) {
+      // EOF check can be avoided ig
+      break;
+    }
+    if (preceding.kind == TokenKind::COMMENT && tok.kind == TokenKind::COMMENT) {
+      continue;
+    }
+    preceding = tok;
+  }
+
+  if (preceding.kind != TokenKind::COMMENT) {
+    return std::nullopt;
+  }
+  return Range{.begin = preceding.range.begin, .end = n->nrange.begin};
 }
 
 }  // namespace utils
