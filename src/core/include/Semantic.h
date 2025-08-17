@@ -177,7 +177,7 @@ class Scope {
     return ResolveOwn(name);
   }
 
-  const Symbol* ResolveOwn(std::string_view name) const {
+  const Symbol* ResolveHorizontally(std::string_view name) const {
     if (const auto* sym = symbols.Lookup(name); sym != nullptr) {
       return sym;
     }
@@ -186,6 +186,14 @@ class Scope {
       if (const auto* sym = aug->Lookup(name); sym) {
         return sym;
       }
+    }
+
+    return nullptr;
+  }
+
+  const Symbol* ResolveOwn(std::string_view name) const {
+    if (const auto* sym = ResolveHorizontally(name); sym) {
+      return sym;
     }
 
     for (const Scope* scope = parent_; scope != nullptr; scope = scope->parent_) {
@@ -198,17 +206,7 @@ class Scope {
   }
 
   const Symbol* ResolveDirect(std::string_view name) const {
-    if (const auto* sym = symbols.Lookup(name); sym != nullptr) {
-      return sym;
-    }
-
-    for (const Scope* scope = parent_; scope != nullptr; scope = scope->parent_) {
-      if (const auto* sym = scope->ResolveOwn(name); sym != nullptr) {
-        return sym;
-      }
-    }
-
-    return nullptr;
+    return symbols.Lookup(name);
   }
 
   const ast::Node* Container() const {

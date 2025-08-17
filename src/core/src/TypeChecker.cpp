@@ -219,7 +219,7 @@ class SelectorExprResolver {
         return x_sym->Members()->Lookup(property_name);
       }
       if (x_sym->Flags() & semantic::SymbolFlags::kClass) [[likely]] {
-        return x_sym->OriginatedScope()->ResolveOwn(property_name);
+        return x_sym->OriginatedScope()->ResolveHorizontally(property_name);
       }
       if (x_sym->Flags() & semantic::SymbolFlags::kImportedModule) {
         const auto* tgt_module = sf_->program->GetModule(x_sym->GetName());
@@ -639,6 +639,32 @@ const semantic::Symbol* DeduceExpectedType(const SourceFile* file, const semanti
 
       return ResolveExprType(params_file, params_scope, params->list[idx]->type);
     }
+    case ast::NodeKind::CompositeLiteral: {
+      const auto* cl = parent->As<ast::nodes::CompositeLiteral>();
+
+      const auto* sym = DeduceCompositeLiteralType(file, scope, cl);
+      if (!(sym->Flags() & semantic::SymbolFlags::kStructural)) {
+        // e.g. ListSpec
+        return sym;
+      }
+      const auto* decl = sym->Declaration();
+
+      const auto* fields_ptr = ast::utils::GetStructFields(decl);
+      if (!fields_ptr) {
+        break;
+      }
+      const auto& fields = *fields_ptr;
+
+      const auto idx = std::ranges::find(cl->list, n) - cl->list.begin();
+      if (idx >= std::ssize(fields)) {
+        return nullptr;
+      }
+
+      const auto* fields_file = ast::utils::SourceFileOf(decl);
+      const auto* fields_scope = fields_file->module->scope;
+
+      return ResolveExprType(fields_file, fields_scope, fields[idx]->type->As<ast::nodes::Expr>());
+    }
     default:
       break;
   }
@@ -878,6 +904,15 @@ class BasicTypeChecker {
   void Visit(const ast::Node* n) {
     if (Inspect(n)) {
       Introspect(n);
+    }
+  }
+
+  void EnsureIsAType(const semantic::Symbol* sym, const ast::Node* n) {
+    if (sym && sym != &symbols::kTypeError && !(sym->Flags() & semantic::SymbolFlags::kType)) {
+      EmitError({
+          .range = n->nrange,
+          .message = std::format("'{}' is not a type", sf_.Text(n)),
+      });
     }
   }
 
@@ -1198,7 +1233,8 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const semantic:
         case ast::TokenKind::LE:
         case ast::TokenKind::GT:
         case ast::TokenKind::GE:
-          if (x_type && x_type.sym != &builtins::kInteger && x_type.sym != &builtins::kFloat) [[unlikely]] {
+          if (x_type && x_type.sym != &builtins::kInteger && x_type.sym != &builtins::kFloat &&
+              !(x_type.sym->Flags() & semantic::SymbolFlags::kEnum)) [[unlikely]] {
             EmitError(TypeError{
                 .range = m->x->nrange,
                 .message = std::format("integer or float expected, got '{}'", x_type->GetName()),
@@ -1445,6 +1481,13 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const semantic:
           if (type_sym && (type_sym->Flags() & semantic::SymbolFlags::kEnum)) {
             resulting_type = type_sym;
           }
+        } else {
+          resulting_type = desired_type->Members()->Lookup(sf_.Text(m));
+          if (resulting_type) {
+            // TODO: consider replacing vector with set for module->unresolved
+            auto& vec = sf_.module->unresolved;
+            vec.erase(std::ranges::remove(vec, m).begin(), vec.end());
+          }
         }
 
         break;
@@ -1513,13 +1556,7 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
       const auto* m = n->As<ast::nodes::ValueDecl>();
 
       const auto* expected_type = CheckType(m->type).sym;
-      if (!expected_type || !(expected_type->Flags() & semantic::SymbolFlags::kType)) {
-        EmitError({
-            .range = m->type->nrange,
-            .message = std::format("'{}' is not a type", sf_.Text(m->type)),
-        });
-        // we don't break to call CheckType on values
-      }
+      EnsureIsAType(expected_type, m->type);
 
       for (const auto* decl : m->decls) {
         if (!decl->value) [[unlikely]] {
@@ -1534,8 +1571,9 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
 
     case ast::NodeKind::FormalPar: {
       const auto* m = n->As<ast::nodes::FormalPar>();
+      const auto* expected_type = sf_.module->scope->Resolve(sf_.Text(m->type));
+      EnsureIsAType(expected_type, m->type);
       if (const auto* default_value = m->value; default_value) {
-        const auto* expected_type = sf_.module->scope->Resolve(sf_.Text(m->type));
         const auto actual_type = CheckType(default_value, expected_type);
         MatchTypes(default_value->nrange, actual_type, {.sym = expected_type, .instance = m});
       }

@@ -50,61 +50,19 @@ std::optional<SymbolSearchResult> FindSymbol(const core::SourceFile* file, const
     case core::ast::NodeKind::Field: {
       const auto* f = n->parent->As<core::ast::nodes::Field>();
       const auto* owner = f->parent;
-      switch (owner->nkind) {
-        case core::ast::NodeKind::StructTypeDecl: {
-          const auto* stdecl = owner->As<core::ast::nodes::StructTypeDecl>();
-          if (!stdecl->name) [[unlikely]] {
-            break;
-          }
-          const auto* structsym = file->module->scope->ResolveDirect(file->Text(*stdecl->name));
-          return SymbolSearchResult{
-              .node = n,
-              .scope = nullptr,
-              .symbol = structsym->Members()->Lookup(file->Text(*f->name)),
-          };
-          break;
-        }
-        case core::ast::NodeKind::StructSpec: {
-          const auto* structsym = [&](this auto&& self,
-                                      const core::ast::Node* stdecl) -> const core::semantic::Symbol* {
-            switch (stdecl->nkind) {
-              case core::ast::NodeKind::StructTypeDecl: {
-                const auto name = stdecl->As<core::ast::nodes::StructTypeDecl>()->name;
-                if (!name) [[unlikely]] {
-                  return nullptr;
-                }
-                return file->module->scope->ResolveDirect(file->Text(*name));
-              }
-              case core::ast::NodeKind::StructSpec: {
-                const auto* stdecl_parent = stdecl->parent;  // most likely Field
-                if (stdecl_parent->nkind != core::ast::NodeKind::Field) [[unlikely]] {
-                  return nullptr;
-                }
-                const auto* stdecl_owning_field = stdecl_parent->As<core::ast::nodes::Field>();
-                if (!stdecl_owning_field->name) {
-                  return nullptr;
-                }
-                const core::semantic::Symbol* parent_struct_sym = self(stdecl_owning_field->parent);
-                if (!parent_struct_sym || !(parent_struct_sym->Flags() & core::semantic::SymbolFlags::kStructural)) {
-                  return nullptr;
-                }
-                return parent_struct_sym->Members()->LookupShadow(file->Text(*stdecl_owning_field->name));
-              }
-              default: {
-                return nullptr;
-              }
-            }
-          }(owner);
-          return SymbolSearchResult{
-              .node = n,
-              .scope = nullptr,
-              .symbol = structsym->Members()->Lookup(file->Text(*f->name)),
-          };
-        }
-        default: {
-          break;
-        }
+
+      // TODO: ResolveExprSymbol - it's no longer actually "Expr".
+      const auto* structsym =
+          core::checker::ResolveExprSymbol(file, file->module->scope, owner->As<core::ast::nodes::Expr>());
+      if (!structsym) {
+        return std::nullopt;
       }
+
+      return SymbolSearchResult{
+          .node = n,
+          .scope = nullptr,
+          .symbol = structsym->Members()->Lookup(file->Text(*f->name)),
+      };
       break;
     }
     case core::ast::NodeKind::CaseClause: {
@@ -126,6 +84,21 @@ std::optional<SymbolSearchResult> FindSymbol(const core::SourceFile* file, const
           .node = n,
           .scope = nullptr,
           .symbol = usym->Members()->Lookup(property_name),
+      };
+    }
+    case core::ast::NodeKind::EnumTypeDecl: {
+      const auto* etd = n->parent->As<core::ast::nodes::EnumTypeDecl>();
+      if (!etd->name) {
+        return std::nullopt;
+      }
+      const auto* sym = file->module->scope->ResolveDirect(file->Text(*etd->name));
+      if (!sym || !(sym->Flags() & core::semantic::SymbolFlags::kEnum)) {
+        return std::nullopt;
+      }
+      return SymbolSearchResult{
+          .node = n,
+          .scope = nullptr,
+          .symbol = sym->Members()->Lookup(file->Text(n)),
       };
     }
     default:
