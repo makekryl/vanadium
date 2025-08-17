@@ -6,6 +6,7 @@
 #include "LanguageServerLogger.h"
 #include "LanguageServerMethods.h"
 #include "LanguageServerSession.h"
+#include "Program.h"
 #include "detail/Diagnostic.h"
 
 namespace vanadium::ls {
@@ -30,9 +31,11 @@ void methods::textDocument::didOpen::operator()(LsContext& ctx, const lsp::DidOp
     const auto read_file = [&](std::string_view, std::string& srcbuf) {
       srcbuf = std::move(params.textDocument.text);
     };
-    project.program.Commit([&](auto& modify) {
+    project.program.Update([&](auto& modify) {
       modify.update(path, read_file);
     });
+    const_cast<core::SourceFile*>(project.program.GetFile(path))->skip_analysis = false;
+    project.program.Commit([](auto&) {});
 
     ctx.Notify<"textDocument/publishDiagnostics">(lsp::PublishDiagnosticsParams{
         .uri = params.textDocument.uri,

@@ -3,7 +3,8 @@
 #include <tbb/enumerable_thread_specific.h>
 #include <tbb/task_arena.h>
 
-#include <filesystem>
+#include <set>
+#include <string>
 #include <type_traits>
 #include <unordered_map>
 #include <utility>

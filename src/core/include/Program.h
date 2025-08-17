@@ -100,6 +100,7 @@ struct SourceFile {
   std::optional<ModuleDescriptor> module;
 
   bool dirty;
+  bool skip_analysis{false};
 
   [[nodiscard]] std::string_view Text(const ast::Node* n) const noexcept {
     return ast.Text(n);

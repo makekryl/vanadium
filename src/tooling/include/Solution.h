@@ -5,6 +5,7 @@
 
 #include "Error.h"
 #include "Filesystem.h"
+#include "FunctionRef.h"
 #include "Program.h"
 #include "Project.h"
 
@@ -47,7 +48,7 @@ class Solution {
     return projects_ | std::views::values;
   }
 
-  static std::expected<Solution, Error> Load(const fs::Path&);
+  static std::expected<Solution, Error> Load(const fs::Path&, lib::Consumer<Solution&> precommit = [](auto&) {});
 
  private:
   Solution(Project&& root_project);

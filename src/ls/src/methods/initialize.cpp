@@ -5,6 +5,7 @@
 #include "LSProtocol.h"
 #include "LanguageServerContext.h"
 #include "LanguageServerMethods.h"
+#include "Program.h"
 #include "Solution.h"
 #include "impl/SystemFS.h"
 
@@ -22,7 +23,15 @@ rpc::ExpectedResult<lsp::InitializeResult> methods::initialize::operator()(LsCon
 
     const auto manifest_path = root_directory / tooling::Project::kManifestFilename;
     if (std::filesystem::exists(manifest_path)) {
-      auto result = tooling::Solution::Load(tooling::fs::Root<tooling::fs::SystemFS>(root_directory.string()));
+      const auto precommit = [&](tooling::Solution& solution) {
+        for (auto& proj : solution.Projects()) {
+          for (const auto& file : proj.program.Files() | std::views::values) {
+            const_cast<core::SourceFile&>(file).skip_analysis = true;
+          }
+        }
+      };
+      auto result =
+          tooling::Solution::Load(tooling::fs::Root<tooling::fs::SystemFS>(root_directory.string()), precommit);
       if (result.has_value()) {
         ctx->solution = std::move(*result);
       } else {
@@ -77,7 +86,7 @@ rpc::ExpectedResult<lsp::InitializeResult> methods::initialize::operator()(LsCon
       .serverInfo =
           lsp::ServerInfo{
               .name = "vanadiumd",
-              .version = "0.0.0.3",
+              .version = "0.0.0.5",
           },
   };
 }

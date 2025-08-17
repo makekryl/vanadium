@@ -40,7 +40,7 @@ void InitSubproject(const Solution& solution, SolutionProject& subproject) {
 }
 }  // namespace
 
-std::expected<Solution, Error> Solution::Load(const fs::Path& path) {
+std::expected<Solution, Error> Solution::Load(const fs::Path& path, lib::Consumer<Solution&> precommit) {
   auto root_load_result = tooling::Project::Load(path);
   if (!root_load_result.has_value()) {
     return std::unexpected{Error{"Failed to load root project", std::move(root_load_result.error())}};
@@ -113,6 +113,8 @@ std::expected<Solution, Error> Solution::Load(const fs::Path& path) {
       subproj.program.AddReference(&it->second.program);
     }
   }
+
+  precommit(solution);
 
   for (auto& proj : solution.projects_ | std::views::values) {
     proj.program.Commit([](auto&) {});

@@ -205,7 +205,7 @@ void Program::Crossbind() {
   };
 
   tbb::parallel_for_each(files_ | std::views::values, [&](SourceFile& sf) {
-    if (!sf.dirty) {
+    if (!sf.dirty || sf.skip_analysis) {
       return;
     }
 
@@ -335,7 +335,7 @@ void Program::Crossbind() {
   });
 
   tbb::parallel_for_each(files_ | std::views::values, [&](SourceFile& sf) {
-    if (!sf.dirty) {
+    if (!sf.dirty || sf.skip_analysis) {
       return;
     }
 
