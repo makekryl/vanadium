@@ -709,6 +709,10 @@ const semantic::Symbol* ResolveExprSymbol(const SourceFile* file, const semantic
       const auto* fun = m->fun;
       return ResolveExprSymbol(file, scope, fun);
     }
+    case ast::NodeKind::AssignmentExpr: {
+      const auto* m = expr->As<ast::nodes::AssignmentExpr>();
+      return ResolveExprSymbol(file, scope, m->property);
+    }
     case ast::NodeKind::SelectorExpr: {
       const auto* m = expr->As<ast::nodes::SelectorExpr>();
       return detail::ResolveSelectorExprSymbol(file, scope, m);
