@@ -154,7 +154,7 @@ lsp::SemanticTokens CollectSemanticTokens(const lsp::SemanticTokensRangeParams& 
               }
             }
 
-            return false;
+            return true;
           }
           return true;
         }
