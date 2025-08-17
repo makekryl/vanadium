@@ -158,7 +158,7 @@ Parameters:
 {}
 ```
 )",
-          provider_file->Text(*m->parent->As<core::ast::nodes::ClassTypeDecl>()->name),  //
+          provider_file->Text(*decl->parent->parent->As<core::ast::nodes::ClassTypeDecl>()->name),  //
           m->params->list.empty()
               ? ""
               : std::format("\nArguments:\n{}", BuildMarkdownParameterList<core::ast::nodes::FormalPar>(

@@ -437,7 +437,7 @@ const semantic::Symbol* ResolveAssignmentTarget(const SourceFile* file, const se
     case core::ast::NodeKind::CompositeLiteral: {
       const auto* m = n->parent->As<core::ast::nodes::CompositeLiteral>();
       const auto* sym = core::checker::ext::DeduceCompositeLiteralType(file, scope, m);
-      if (!sym) {
+      if (!sym || !(sym->Flags() & semantic::SymbolFlags::kStructural)) {
         return nullptr;
       }
       return sym->Members()->Lookup(property_name);
