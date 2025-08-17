@@ -728,15 +728,19 @@ nodes::StructTypeDecl* Parser::ParseStructTypeDecl() {
     if (tok_ == TokenKind::LT) {
       s.pars = ParseTypeFormalPars();
     }
-    Expect(TokenKind::LBRACE);
-    while (tok_ != TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
-      s.fields.push_back(ParseField());
-      if (tok_ != TokenKind::COMMA) {
-        break;
+    if (tok_ == TokenKind::LBRACE) [[likely]] {
+      ConsumeInvariant(TokenKind::LBRACE);
+      while (tok_ != TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
+        s.fields.push_back(ParseField());
+        if (tok_ != TokenKind::COMMA) {
+          break;
+        }
+        Consume();
       }
-      Consume();
+      Expect(TokenKind::RBRACE);
+    } else {
+      Expect(TokenKind::LBRACE);
     }
-    Expect(TokenKind::RBRACE);
     s.with = ParseWith();
   });
 }
