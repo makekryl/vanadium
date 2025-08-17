@@ -24,6 +24,10 @@ class SignatureInformationBuilder {
  public:
   SignatureInformationBuilder(std::string& buf) : buf_(buf) {}
 
+  void Estimate(std::size_t count) {
+    buf_.reserve(count * 32);
+  }
+
   void Push(std::invocable<std::string&> auto f) {
     std::uint32_t begin = buf_.size();
     f(buf_);
@@ -124,6 +128,7 @@ lsp::SignatureHelpResult ProvideSignatureHelp(const lsp::SignatureHelpParams& pa
       label += "(";
       //
       SignatureInformationBuilder builder{label};
+      builder.Estimate(callable_params->list.size());
       for (const auto* param : callable_params->list) {
         builder.Push([&](std::string& buf) {
           buf += callable_file->Text(param);
@@ -180,6 +185,7 @@ lsp::SignatureHelpResult ProvideSignatureHelp(const lsp::SignatureHelpParams& pa
       label += "{";
       //
       SignatureInformationBuilder builder{label};
+      builder.Estimate(stfields.size());
       for (const auto* field : stfields) {
         builder.Push([&](std::string& buf) {
           buf += stdecl_file->Text(field);

@@ -16,8 +16,7 @@ namespace lsp {
 inline SemanticTokenModifiers operator|(SemanticTokenModifiers lhs, SemanticTokenModifiers rhs) {
   using U = std::underlying_type_t<SemanticTokenModifiers>;
   return static_cast<SemanticTokenModifiers>(static_cast<U>(lhs) | static_cast<U>(rhs));
-
-}  // namespace
+}
 }  // namespace lsp
 
 namespace vanadium::ls {

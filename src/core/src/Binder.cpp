@@ -250,6 +250,10 @@ bool Binder::Hoist(const ast::Node* n) {
       HoistName<ast::nodes::ClassTypeDecl, TargetSetPtr>(n);
       return false;
     }
+    case ast::NodeKind::EnumTypeDecl: {
+      HoistName<ast::nodes::EnumTypeDecl, TargetSetPtr>(n);
+      return false;
+    }
     case ast::NodeKind::PortTypeDecl: {
       HoistName<ast::nodes::PortTypeDecl, TargetSetPtr>(n);
       return false;

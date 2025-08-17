@@ -11,16 +11,16 @@ namespace vanadium::ls::detail {
 
 void VisitLocalReferences(const core::SourceFile* file, lsp::Position pos, bool include_decl,
                           lib::Consumer<const core::ast::nodes::Ident*> accept) {
-  const auto result = detail::FindSymbol(file, pos);
-  if (!result || !result->scope || result->node->nkind != core::ast::NodeKind::Ident ||
-      !(result->symbol->Flags() & (core::semantic::SymbolFlags::kVariable | core::semantic::SymbolFlags::kArgument)) ||
-      core::ast::utils::SourceFileOf(result->node) != file) {
+  const auto symres = detail::FindSymbol(file, pos);
+  if (!symres || !symres->scope || symres->node->nkind != core::ast::NodeKind::Ident ||
+      !(symres->symbol->Flags() & (core::semantic::SymbolFlags::kVariable | core::semantic::SymbolFlags::kArgument)) ||
+      core::ast::utils::SourceFileOf(symres->node) != file) {
     return;
   }
 
-  const auto name = file->Text(result->node);
+  const auto name = file->Text(symres->node);
 
-  const auto* decl = result->symbol->Declaration();
+  const auto* decl = symres->symbol->Declaration();
   switch (decl->nkind) {
     case core::ast::NodeKind::Declarator: {
       decl = std::addressof(*decl->As<core::ast::nodes::Declarator>()->name);
@@ -37,7 +37,7 @@ void VisitLocalReferences(const core::SourceFile* file, lsp::Position pos, bool 
     accept(decl->As<core::ast::nodes::Ident>());
   }
 
-  const auto* scope = result->scope;
+  const auto* scope = symres->scope;
   scope->Container()->Accept([&](this auto&& self, const core::ast::Node* n) {
     if (n->nkind == core::ast::NodeKind::AssignmentExpr) {
       const auto* ae = n->As<core::ast::nodes::AssignmentExpr>();

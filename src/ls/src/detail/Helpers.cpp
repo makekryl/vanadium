@@ -38,11 +38,10 @@ core::ast::pos_t FindPositionAfterLastImport(const core::ast::AST& ast) {
 
   core::ast::pos_t last_import_range_end = FindModuleBodyStart(ast, module);
   for (const auto* def : module->defs) {
-    if (def->def->nkind == core::ast::NodeKind::ImportDecl) {
-      last_import_range_end = def->nrange.end;
-    } else if (last_import_range_end != kFailureRet) {
+    if (def->def->nkind != core::ast::NodeKind::ImportDecl) {
       break;
     }
+    last_import_range_end = def->nrange.end;
   }
   return last_import_range_end;
 }

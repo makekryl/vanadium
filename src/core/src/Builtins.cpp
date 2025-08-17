@@ -85,16 +85,31 @@ const semantic::Symbol* ResolveBuiltinDef(std::string_view name) {
     sf.module->scope = &scope;
 
     sf.ast.root->Accept([&](const ast::Node* n) {
-      if (n->nkind != ast::NodeKind::FuncDecl) {
-        return true;
+      switch (n->nkind) {
+        case ast::NodeKind::FuncDecl: {
+          const auto* m = n->As<ast::nodes::FuncDecl>();
+          scope.symbols.Add({
+              sf.Text(*m->name),
+              m,
+              semantic::SymbolFlags::Value(semantic::SymbolFlags::kFunction | semantic::SymbolFlags::kBuiltinDef),
+          });
+          return false;
+        }
+        case ast::NodeKind::ValueDecl: {
+          const auto* m = n->As<ast::nodes::ValueDecl>();
+          for (const auto* d : m->decls) {
+            scope.symbols.Add({
+                sf.Text(*d->name),
+                m,
+                semantic::SymbolFlags::Value(semantic::SymbolFlags::kVariable | semantic::SymbolFlags::kBuiltinDef),
+            });
+          }
+          return false;
+        }
+        default: {
+          return true;
+        }
       }
-      const auto* m = n->As<ast::nodes::FuncDecl>();
-      scope.symbols.Add({
-          sf.Text(*m->name),
-          m,
-          semantic::SymbolFlags::Value(semantic::SymbolFlags::kFunction | semantic::SymbolFlags::kBuiltinDef),
-      });
-      return false;
     });
 
     return &scope;

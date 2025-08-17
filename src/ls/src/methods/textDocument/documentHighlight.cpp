@@ -13,24 +13,27 @@
 #include "detail/References.h"
 
 namespace vanadium::ls {
+namespace {
+lsp::DocumentHighlightResults ProvideHighlight(const lsp::DocumentHighlightParams& params, const core::SourceFile& file,
+                                               LsSessionRef) {
+  std::vector<lsp::DocumentHighlight> hls;
+
+  detail::VisitLocalReferences(&file, params.position, true, [&](const core::ast::nodes::Ident* ident) {
+    const bool is_write = ident->parent->nkind == core::ast::NodeKind::AssignmentExpr &&
+                          ident->parent->As<core::ast::nodes::AssignmentExpr>()->property == ident;
+    hls.emplace_back(lsp::DocumentHighlight{
+        .range = conv::ToLSPRange(ident->nrange, file.ast),
+        .kind = is_write ? lsp::DocumentHighlightKind::kWrite : lsp::DocumentHighlightKind::kRead,
+    });
+  });
+
+  return hls;
+}
+}  // namespace
+
 template <>
 rpc::ExpectedResult<lsp::DocumentHighlightResults> methods::textDocument::documentHighlight::operator()(
     LsContext& ctx, const lsp::DocumentHighlightParams& params) {
-  auto res = ctx->WithFile<lsp::DocumentHighlightResults>(
-      params, [&](const auto&, const core::SourceFile& file, LsSessionRef) -> lsp::DocumentHighlightResults {
-        std::vector<lsp::DocumentHighlight> hls;
-
-        detail::VisitLocalReferences(&file, params.position, true, [&](const core::ast::nodes::Ident* ident) {
-          const bool is_write = ident->parent->nkind == core::ast::NodeKind::AssignmentExpr &&
-                                ident->parent->As<core::ast::nodes::AssignmentExpr>()->property == ident;
-          hls.emplace_back(lsp::DocumentHighlight{
-              .range = conv::ToLSPRange(ident->nrange, file.ast),
-              .kind = is_write ? lsp::DocumentHighlightKind::kWrite : lsp::DocumentHighlightKind::kRead,
-          });
-        });
-
-        return hls;
-      });
-  return res.value_or(nullptr);
+  return ctx->WithFile<lsp::DocumentHighlightResults>(params, ProvideHighlight).value_or(nullptr);
 }
 }  // namespace vanadium::ls

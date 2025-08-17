@@ -11,6 +11,8 @@
 #include "LanguageServerContext.h"
 #include "LanguageServerConv.h"
 #include "LanguageServerMethods.h"
+#include "LanguageServerSession.h"
+#include "Program.h"
 #include "Semantic.h"
 #include "detail/Definition.h"
 #include "magic_enum/magic_enum.hpp"
@@ -64,25 +66,14 @@ std::string BuildMarkdownParameterList(const core::ast::AST& ast, std::span<cons
 
   return buf;
 }
-}  // namespace
 
-template <>
-rpc::ExpectedResult<lsp::HoverResult> methods::textDocument::hover::operator()(LsContext& ctx,
-                                                                               const lsp::HoverParams& params) {
-  // TODO: shorten the handler, use ctx->WithFile
-  const auto& resolution = ctx->ResolveFileUri(params.textDocument.uri);
-  if (!resolution) {
+lsp::HoverResult ProvideHover(const lsp::HoverParams& params, const core::SourceFile& file, LsSessionRef d) {
+  const auto symres = detail::FindSymbol(&file, params.position);
+  if (!symres) {
     return nullptr;
   }
-  const auto& [project, path] = *resolution;
-  const auto* file = project.program.GetFile(path);
-
-  const auto result = detail::FindSymbol(file, params.position);
-  if (!result) {
-    return nullptr;
-  }
-  const auto* n = result->node;
-  const auto* sym = result->symbol;
+  const auto* n = symres->node;
+  const auto* sym = symres->symbol;
 
   if (!sym || (sym->Flags() & core::semantic::SymbolFlags::kBuiltin)) {
     return nullptr;
@@ -90,7 +81,7 @@ rpc::ExpectedResult<lsp::HoverResult> methods::textDocument::hover::operator()(L
   const auto* decl = sym->Declaration();
   const auto* provider_file = core::ast::utils::SourceFileOf(decl);
 
-  auto& content = ctx->Temp<std::string>();
+  auto& content = *d.arena.Alloc<std::string>();
   content.reserve(256);  // TODO: check if it is justified actually
 
   switch (decl->nkind) {
@@ -146,6 +137,33 @@ Parameters:
           provider_file->ast.Text(core::ast::Range{
               .begin = decl->nrange.begin,
               .end = m->value->nrange.begin,
+          }));
+      break;
+    }
+    case core::ast::NodeKind::ConstructorDecl: {
+      const auto* m = decl->As<core::ast::nodes::ConstructorDecl>();
+      content += std::format(
+          R"(
+### class `{}` constructor
+
+---
+
+{}
+
+---
+
+```ttcn
+{}
+```
+)",
+          provider_file->Text(*m->parent->As<core::ast::nodes::ClassTypeDecl>()->name),  //
+          m->params->list.empty()
+              ? ""
+              : std::format("\nArguments:\n{}", BuildMarkdownParameterList<core::ast::nodes::FormalPar>(
+                                                    provider_file->ast, m->params->list)),
+          provider_file->ast.Text(core::ast::Range{
+              .begin = m->nrange.begin,
+              .end = m->body ? m->body->nrange.begin : m->nrange.end,
           }));
       break;
     }
@@ -338,7 +356,7 @@ Type: `{}`
         m = n->parent->As<core::ast::nodes::ImportDecl>();
       }
 
-      const auto* module = project.program.GetModule(provider_file->ast.Text(*m->module));
+      const auto* module = file.program->GetModule(provider_file->ast.Text(*m->module));
       if (!module) {
         break;
       }
@@ -362,6 +380,40 @@ Transitively imports modules:
       }
 
       content += std::format("\n---\n`{}`", module->sf->path);
+      break;
+    }
+    case core::ast::NodeKind::ComponentTypeDecl: {
+      const auto* m = decl->As<core::ast::nodes::ComponentTypeDecl>();
+      content += std::format(R"(
+### component `{}`
+---
+
+```ttcn
+{}
+```
+)",
+                             provider_file->ast.Text(*m->name),  //
+                             provider_file->ast.Text(core::ast::Range{
+                                 .begin = m->nrange.begin,
+                                 .end = m->name->nrange.end,
+                             }));
+      break;
+    }
+    case core::ast::NodeKind::PortTypeDecl: {
+      const auto* m = decl->As<core::ast::nodes::PortTypeDecl>();
+      content += std::format(R"(
+### port `{}`
+---
+
+```ttcn
+{}
+```
+)",
+                             provider_file->ast.Text(*m->name),  //
+                             provider_file->ast.Text(core::ast::Range{
+                                 .begin = m->nrange.begin,
+                                 .end = m->name->nrange.end,
+                             }));
       break;
     }
     default:
@@ -393,14 +445,14 @@ Transitively imports modules:
       break;
   }
 
-  if (provider_file != file) {
+  if (provider_file != &file) {
     const auto source_loc = conv::ToLSPPosition(provider_file->ast.lines.Translate(decl->nrange.begin));
     content += std::format(R"(
 ---
 
 [module {}]({}#L{}C{}))",
-                           provider_file->module->name, ctx->PathToFileUri(provider_file->path), source_loc.line + 1,
-                           source_loc.character);
+                           provider_file->module->name, helpers::PathToFileUri(d.solution, provider_file->path),
+                           source_loc.line + 1, source_loc.character);
   }
   return lsp::Hover{
       .contents =
@@ -408,7 +460,14 @@ Transitively imports modules:
               .kind = lsp::MarkupKind::kMarkdown,
               .value = content,
           },
-      .range = conv::ToLSPRange(n->nrange, file->ast),
+      .range = conv::ToLSPRange(n->nrange, file.ast),
   };
+}
+}  // namespace
+
+template <>
+rpc::ExpectedResult<lsp::HoverResult> methods::textDocument::hover::operator()(LsContext& ctx,
+                                                                               const lsp::HoverParams& params) {
+  return ctx->WithFile<lsp::HoverResult>(params, ProvideHover).value_or(nullptr);
 }
 }  // namespace vanadium::ls

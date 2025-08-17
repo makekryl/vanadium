@@ -9,6 +9,7 @@
 #include "LanguageServerSession.h"
 #include "Linter.h"
 #include "Program.h"
+#include "detail/CodeAction.h"
 #include "magic_enum/magic_enum.hpp"
 
 namespace vanadium::ls::detail {
@@ -40,7 +41,7 @@ void CollectModuleDiagnostics(const core::SourceFile& file, std::vector<lsp::Dia
         .source = "vanadium",
         .message = *d.arena.Alloc<std::string>(std::format("use of unknown symbol '{}'", ident->On(file.ast.src))),
         .data = {{
-            {"unresolved", 1},
+            {codeAction::kPayloadKeyUnresolved, 1},  // TODO: replace with bitmask when there will be more options
         }},
     });
     // item.data. // TODO
@@ -59,10 +60,11 @@ void CollectModuleDiagnostics(const core::SourceFile& file, std::vector<lsp::Dia
     if (problem.autofix) {
       diags.back().data = glz::json_t{
           {
-              "autofix",
+              codeAction::kPayloadKeyAutofix,
               {
                   {"title", "Remove unused import"},
                   {"range", {problem.autofix->range.begin, problem.autofix->range.end}},
+                  {"replacement", problem.autofix->replacement},
               },
           },
       };

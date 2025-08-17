@@ -8,6 +8,8 @@
 #include "LanguageServerContext.h"
 #include "LanguageServerConv.h"
 #include "LanguageServerMethods.h"
+#include "LanguageServerSession.h"
+#include "Program.h"
 #include "Semantic.h"
 #include "TypeChecker.h"
 #include "detail/Definition.h"
@@ -16,22 +18,14 @@
 
 namespace vanadium::ls {
 
-template <>
-rpc::ExpectedResult<lsp::TypeDefinitionResult> methods::textDocument::typeDefinition::operator()(
-    LsContext& ctx, const lsp::TypeDefinitionParams& params) {
-  // TODO: shorten the handler, use ctx->WithFile
-  const auto& resolution = ctx->ResolveFileUri(params.textDocument.uri);
-  if (!resolution) {
+namespace {
+lsp::TypeDefinitionResult ProvideTypeDefinition(const lsp::TypeDefinitionParams& params, const core::SourceFile& file,
+                                                LsSessionRef d) {
+  const auto symres = detail::FindSymbol(&file, params.position);
+  if (!symres) {
     return nullptr;
   }
-  const auto& [project, path] = *resolution;
-  const auto* file = project.program.GetFile(path);
-
-  const auto result = detail::FindSymbol(file, params.position);
-  if (!result) {
-    return nullptr;
-  }
-  const auto* sym = result->symbol;
+  const auto* sym = symres->symbol;
 
   if (!sym || (sym->Flags() & core::semantic::SymbolFlags::kBuiltin)) {
     return nullptr;
@@ -48,10 +42,16 @@ rpc::ExpectedResult<lsp::TypeDefinitionResult> methods::textDocument::typeDefini
   const auto* type_decl = detail::GetReadableDefinition(type_sym->Declaration());
   const auto* type_file = core::ast::utils::SourceFileOf(type_decl);
 
-  const auto& uri = ctx->Temp<std::string>(ctx->PathToFileUri(type_file->path));
   return lsp::Location{
-      .uri = uri,
+      .uri = *d.arena.Alloc<std::string>(helpers::PathToFileUri(d.solution, type_file->path)),
       .range = conv::ToLSPRange(type_decl->nrange, type_file->ast),
   };
+}
+}  // namespace
+
+template <>
+rpc::ExpectedResult<lsp::TypeDefinitionResult> methods::textDocument::typeDefinition::operator()(
+    LsContext& ctx, const lsp::TypeDefinitionParams& params) {
+  return ctx->WithFile<lsp::TypeDefinitionResult>(params, ProvideTypeDefinition).value_or(nullptr);
 }
 }  // namespace vanadium::ls

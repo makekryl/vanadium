@@ -1,6 +1,8 @@
 R"(
 module TTCNBuiltins {
 
+const charstring __SCOPE__;
+
 /*
 The valueof operation allows to return the value specified within a template.
 The returned value can be assigned to a variable, may be used in expressions, as an actual value parameter, etc.
@@ -796,8 +798,8 @@ IfPresent) shall be allowed and shall be treated as if the value expression were
 expression against a template instance which evaluates to the omit matching mechanism shall return false.
 */
 function match(
-	in anytype expression,
-	in template anytype instance
+	in __infer_arg_t expression,
+	in template __infer_arg_t instance
 ) return boolean
 
 /*

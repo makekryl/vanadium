@@ -637,7 +637,11 @@ const semantic::Symbol* DeduceExpectedType(const SourceFile* file, const semanti
       const auto* params_file = ast::utils::SourceFileOf(params);
       const auto* params_scope = params_file->module->scope;
 
-      return ResolveExprType(params_file, params_scope, params->list[idx]->type);
+      const auto* sym = ResolveExprType(params_file, params_scope, params->list[idx]->type);
+      if (sym == &symbols::kInferType) [[unlikely]] {
+        return ResolveExprType(file, scope, pe->list.back()->As<ast::nodes::Expr>());
+      }
+      return sym;
     }
     case ast::NodeKind::CompositeLiteral: {
       const auto* cl = parent->As<ast::nodes::CompositeLiteral>();
@@ -816,7 +820,7 @@ const semantic::Symbol* ResolveExprTypeViaDecl(const SourceFile* file, const sem
       if (ce->args->list.empty()) {
         return nullptr;
       }
-      return ResolveExprType(file, scope, ce->args->list.front());
+      return ResolveExprType(file, scope, ce->args->list.back());
     }
     return ret_sym;
   }
@@ -1005,6 +1009,10 @@ void BasicTypeChecker::PerformArgumentsTypeCheck(std::span<const ast::nodes::Exp
   const auto check_argument = [&](const TParamDescriptorNode* param, const ast::Node* n) {
     const auto* exp_sym =  // TODO: TypeSpec (field->type) is not Expr actually
         ResolveExprType(params_file, params_file->module->scope, param->type->template As<ast::nodes::Expr>());
+    if (exp_sym == &symbols::kInferType) [[unlikely]] {
+      exp_sym = ResolveExprType(&sf_, scope_, args.back());
+    }
+
     const auto actual_instance = CheckType(n, exp_sym);
     MatchTypes(n->nrange, actual_instance, {.sym = exp_sym});
   };
@@ -1120,7 +1128,7 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const semantic:
       //
       if (resulting_type.sym == &symbols::kInferType && !m->args->list.empty()) {
         // do not call CheckType for it to avoid double error emitting
-        resulting_type = ResolveExprType(&sf_, scope_, m->args->list.front());
+        resulting_type = ResolveExprType(&sf_, scope_, m->args->list.back());
       }
       //
 
