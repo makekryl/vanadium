@@ -11,8 +11,8 @@ namespace vanadium::ls {
 namespace detail {
 
 namespace codeAction {
-constexpr std::string_view kPayloadKeyUnresolved = "f";
-constexpr std::string_view kPayloadKeyAutofix = "a";  // TODO: glz::json_t wrapper
+const char* const kPayloadKeyUnresolved = "f";
+const char* const kPayloadKeyAutofix = "a";  // TODO: glz::json_t wrapper
 }  // namespace codeAction
 
 [[nodiscard]] lsp::CodeActionResult ProvideCodeActions(const lsp::CodeActionParams&, const core::SourceFile&,

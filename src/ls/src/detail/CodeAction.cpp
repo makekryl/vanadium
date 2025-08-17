@@ -40,7 +40,7 @@ lsp::CodeActionResult ProvideCodeActions(const lsp::CodeActionParams& params, co
           return true;
         }
 
-        const auto& replacement = *d.arena.Alloc<std::string>(std::format("import from {} all;\n", module.name));
+        const auto& replacement = *d.arena.Alloc<std::string>(std::format("\nimport from {} all;", module.name));
 
         const core::ast::pos_t last_import_pos = detail::FindPositionAfterLastImport(file.ast);
         if (last_import_pos == core::ast::pos_t(-1)) {
@@ -67,7 +67,7 @@ lsp::CodeActionResult ProvideCodeActions(const lsp::CodeActionParams& params, co
         return false;
       });
     } else if (data.contains(codeAction::kPayloadKeyAutofix)) {  // TODO: extract to shared constant
-      const auto& af_data = data["af"];
+      const auto& af_data = data[codeAction::kPayloadKeyAutofix];
       actions.emplace_back(
           lsp::CodeAction{
               .title = af_data["title"].as<std::string_view>(),

@@ -38,6 +38,7 @@ void methods::textDocument::didChange::operator()(LsContext& ctx, const lsp::Did
 
     ctx.Notify<"textDocument/publishDiagnostics">(lsp::PublishDiagnosticsParams{
         .uri = params.textDocument.uri,
+        .version = params.textDocument.version,
         .diagnostics = detail::CollectDiagnostics(file, d),
     });
   });
