@@ -874,6 +874,12 @@ InstantiatedType ResolveExprInstantiatedType(const SourceFile* file, const seman
       .sym = type_sym,
       .instance = [&] -> const ast::Node* {
         switch (expr->nkind) {
+          case ast::NodeKind::Ident: {
+            if (expr->parent->nkind == ast::NodeKind::FormalPar) {
+              return expr->parent;
+            }
+            break;
+          }
           case ast::NodeKind::IndexExpr:
             return expr;
           default:
@@ -1036,14 +1042,15 @@ void BasicTypeChecker::PerformArgumentsTypeCheck(std::span<const ast::nodes::Exp
   }
 
   const auto check_argument = [&](const TParamDescriptorNode* param, const ast::Node* n) {
-    const auto* exp_sym =  // TODO: TypeSpec (field->type) is not Expr actually
-        ResolveExprType(params_file, params_file->module->scope, param->type->template As<ast::nodes::Expr>());
-    if (exp_sym == &symbols::kInferType) [[unlikely]] {
-      exp_sym = ResolveExprType(&sf_, scope_, args.back());
+    auto expected_type =  // TODO: TypeSpec (field->type) is not Expr actually
+        ResolveExprInstantiatedType(params_file, params_file->module->scope,
+                                    param->type->template As<ast::nodes::Expr>());
+    if (expected_type.sym == &symbols::kInferType) [[unlikely]] {
+      expected_type.sym = ResolveExprType(&sf_, scope_, args.back());
     }
 
-    const auto actual_instance = CheckType(n, exp_sym);
-    MatchTypes(n->nrange, actual_instance, {.sym = exp_sym});
+    const auto actual_instance = CheckType(n, expected_type.sym);
+    MatchTypes(n->nrange, actual_instance, expected_type);
   };
 
   bool seen_named_argument{false};
