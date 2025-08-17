@@ -72,11 +72,17 @@ class Binder {
   explicit Binder(SourceFile& sf) : sf_(sf), inspector_(ast::NodeInspector::create<Binder, &Binder::Inspect>(this)) {}
 
   void Bind() {
-    HoistNamesOf<ast::RootNode, &Binder::hoisted_names_>(sf_.ast.root);
+    if (sf_.ast.root->nodes.empty() || sf_.ast.root->nodes.front()->nkind != ast::NodeKind::Module) [[unlikely]] {
+      return;
+    }
+
+    const auto* top_level_node = sf_.ast.root->nodes.front()->As<ast::nodes::Module>();
+
+    HoistNamesOf<ast::nodes::Module, &Binder::hoisted_names_>(top_level_node);
 
     Scope trash_scope(nullptr);  // to avoid scope_ != nullptr checks
     scope_ = &trash_scope;
-    sf_.ast.root->Accept(inspector_);
+    Visit(top_level_node);
   }
 
  private:
@@ -131,10 +137,6 @@ class Binder {
 
   template <SymbolAdditionOptions Options = {}>
   void AddSymbol(SymbolTable& table, Symbol&& sym) {
-    if (!scope_) [[unlikely]] {
-      // parser leniency: more }'s than {'s
-      return;
-    }
     if (table.Has(sym.GetName())) {
       if constexpr (!Options.redefine_if_exists) {
         return;

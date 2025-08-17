@@ -17,6 +17,10 @@ const core::ast::Node* FindNode(const core::SourceFile* file, lsp::Position pos)
 }
 
 std::optional<SymbolSearchResult> FindSymbol(const core::SourceFile* file, const core::ast::Node* n) {
+  if (!file->module) [[unlikely]] {
+    return std::nullopt;
+  }
+
   if (n->nkind != core::ast::NodeKind::Ident) {
     return std::nullopt;
   }

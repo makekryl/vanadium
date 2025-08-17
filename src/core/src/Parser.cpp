@@ -872,6 +872,9 @@ nodes::Field* Parser::ParseField() {
     if (tok_ == TokenKind::LBRACK) {
       f.arraydef = ParseArrayDefs();
     }
+    if (tok_ == TokenKind::LENGTH) {
+      f.length = ParseLengthExpr(nullptr);
+    }
     if (tok_ == TokenKind::LPAREN) {
       f.value_constraint = ParseParenExpr();
     }

@@ -9,6 +9,7 @@ Field:
   type: TypeSpec*
   name: Ident
   arraydef: ParenExpr*[]?
+  length: LengthExpr*?
   pars: FormalPars*?
   value_constraint: ParenExpr*?
   optional: bool

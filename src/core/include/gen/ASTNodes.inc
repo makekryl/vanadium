@@ -1036,6 +1036,7 @@ struct Field : Node {
   TypeSpec* type;
   std::optional<Ident> name;
   std::vector<ParenExpr*> arraydef;
+  LengthExpr* length{nullptr};
   FormalPars* pars{nullptr};
   ParenExpr* value_constraint{nullptr};
   bool optional{false};
@@ -1049,6 +1050,9 @@ struct Field : Node {
       if (n != nullptr) {
         Inspect(n, inspector);
       }
+    }
+    if (length != nullptr) {
+      Inspect(length, inspector);
     }
     if (pars != nullptr) {
       Inspect(pars, inspector);
