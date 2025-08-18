@@ -440,8 +440,8 @@ bool Binder::Inspect(const ast::Node* n) {
       }
 
       auto* originated_scope = Scoped(m, [&] {
-        MaybeVisit(m->params);
         const auto process = [&] {
+          MaybeVisit(m->params);
           MaybeVisit(m->body);
         };
 
@@ -586,11 +586,19 @@ bool Binder::Inspect(const ast::Node* n) {
       MaybeVisit(field->value_constraint);
 
       if (field->name) {
-        AddSymbol(semantic::Symbol{
-            Lit(*field->name),
-            m,
-            SymbolFlags::kSubTypeType,
-        });
+        if (field->type->nkind == ast::NodeKind::ListSpec) {
+          AddSymbol(semantic::Symbol{
+              Lit(*field->name),
+              field,
+              SymbolFlags::kListType,
+          });
+        } else {
+          AddSymbol(semantic::Symbol{
+              Lit(*field->name),
+              m,
+              SymbolFlags::kSubTypeType,
+          });
+        }
       }
 
       return false;

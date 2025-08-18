@@ -73,6 +73,20 @@ const ast::nodes::FormalPars* ResolveCallableParams(const SourceFile* file, cons
 std::string_view GetReadableTypeName(const SourceFile* sf, const semantic::Symbol* sym) {
   const auto* decl = sym->Declaration();
   switch (decl->nkind) {
+    case ast::NodeKind::FuncDecl: {
+      const auto* m = decl->As<ast::nodes::FuncDecl>();
+      return sf->Text(ast::Range{
+          .begin = m->kind.range.begin,
+          .end = m->name->nrange.end,
+      });
+    }
+    case ast::NodeKind::TemplateDecl: {
+      const auto* m = decl->As<ast::nodes::TemplateDecl>();
+      return sf->Text(ast::Range{
+          .begin = m->type->nrange.begin,
+          .end = m->name->nrange.end,
+      });
+    }
     case ast::NodeKind::StructTypeDecl: {
       const auto* m = decl->As<ast::nodes::StructTypeDecl>();
       return sf->Text(ast::Range{
@@ -176,12 +190,18 @@ class SelectorExprResolver {
  public:
   SelectorExprResolver(Options options) : options_(std::move(options)) {}
 
-  const semantic::Symbol* Resolve(const SourceFile* sf, const semantic::Scope* scope,
-                                  const ast::nodes::SelectorExpr* se) {
+  struct Result {
+    const semantic::Symbol* sym;
+    bool is_static;
+  };
+
+  Result Resolve(const SourceFile* sf, const semantic::Scope* scope, const ast::nodes::SelectorExpr* se) {
     sf_ = sf;
     scope_ = scope;
     se_tgt_ = se;
-    return ResolveSelectorExpr(se);
+
+    const auto* sym = ResolveSelectorExpr(se);
+    return {.sym = sym, .is_static = mode_static_};
   }
 
  private:
@@ -284,7 +304,7 @@ const semantic::Symbol* ResolveSelectorExprSymbol(const SourceFile* sf, const se
       .on_non_static_property_invalid_access = [](const auto*, auto) {},
       .on_static_property_invalid_access = [](const auto*, auto) {},
   }};
-  return resolver.Resolve(sf, scope, se);
+  return resolver.Resolve(sf, scope, se).sym;
 }
 
 template <IsInstantiatedTypeResolver InstantiatedTypeResolver, typename OnNonSubscriptableType, typename IndexChecker>
@@ -358,23 +378,12 @@ class IndexExprResolver {
       }
     }
 
-    if (!(x_sym->Flags() & semantic::SymbolFlags::kSubtype)) {
+    if (!(x_sym->Flags() & semantic::SymbolFlags::kList)) {
       options_.on_non_subscriptable_type(ie->x, x_sym);
       return nullptr;
     }
 
-    const auto* subtype_decl = x_sym->Declaration()->As<ast::nodes::SubTypeDecl>();
-    const auto* subtype_file = ast::utils::SourceFileOf(subtype_decl);
-
-    const auto* f = subtype_decl->field;
-    if (f->type->nkind != ast::NodeKind::ListSpec) {
-      options_.on_non_subscriptable_type(ie->x, x_sym);
-      return nullptr;
-    }
-    const auto* ls = f->type->As<ast::nodes::ListSpec>();
-    const auto* rs = ls->elemtype->As<ast::nodes::RefSpec>();
-
-    return subtype_file->module->scope->Resolve(subtype_file->Text(rs->x));
+    return ResolveListElementType(x_sym);
   }
 
   const SourceFile* sf_;
@@ -413,6 +422,17 @@ const semantic::Symbol* ResolvePotentiallyAliasedType(const semantic::Symbol* sy
     return sym;
   }
   return ResolveAliasedType(sym);
+}
+
+const semantic::Symbol* ResolveListElementType(const semantic::Symbol* sym) {
+  const ast::Node* decl = sym->Declaration()->As<ast::nodes::Field>()->type;
+  if (decl) {
+    const auto* decl_file = ast::utils::SourceFileOf(decl);
+    sym = ResolveExprType(decl_file, decl_file->module->scope,
+                          decl->As<ast::nodes::ListSpec>()->elemtype->As<ast::nodes::Expr>());  // TODO: typespec expr
+    return sym;
+  }
+  return nullptr;
 }
 
 namespace ext {
@@ -459,17 +479,8 @@ const semantic::Symbol* DeduceCompositeLiteralType(const SourceFile* file, const
         return nullptr;
       }
 
-      if (sym->Flags() & semantic::SymbolFlags::kSubtype) {
-        sym = ResolveAliasedType(sym);
-        const ast::Node* decl = sym->Declaration()->As<ast::nodes::SubTypeDecl>()->field->type;
-        if (decl && decl->nkind == ast::NodeKind::ListSpec) {
-          const auto* decl_file = ast::utils::SourceFileOf(decl);
-          sym = ResolveExprType(
-              decl_file, decl_file->module->scope,
-              decl->As<ast::nodes::ListSpec>()->elemtype->As<ast::nodes::Expr>());  // TODO: typespec expr
-          return sym;
-        }
-        return nullptr;
+      if (sym->Flags() & semantic::SymbolFlags::kList) {
+        return ResolveListElementType(sym);
       }
 
       const auto* decl = sym->Declaration();
@@ -505,16 +516,8 @@ const semantic::Symbol* DeduceCompositeLiteralType(const SourceFile* file, const
             return nullptr;
           }
 
-          if (cl_sym->Flags() & semantic::SymbolFlags::kSubtype) {
-            cl_sym = ResolveAliasedType(cl_sym);
-            const ast::Node* decl = cl_sym->Declaration()->As<ast::nodes::SubTypeDecl>()->field->type;
-            if (decl && decl->nkind == ast::NodeKind::ListSpec && ae->property->nkind == ast::NodeKind::IndexExpr) {
-              const auto* decl_file = ast::utils::SourceFileOf(decl);
-              cl_sym = ResolveExprType(
-                  decl_file, decl_file->module->scope,
-                  decl->As<ast::nodes::ListSpec>()->elemtype->As<ast::nodes::Expr>());  // TODO: typespec expr
-            }
-            return cl_sym;
+          if (cl_sym->Flags() & semantic::SymbolFlags::kList) {
+            return ResolveListElementType(cl_sym);
           }
 
           const auto* property_sym = cl_sym->Members()->Lookup(property_name);
@@ -698,6 +701,10 @@ const semantic::Symbol* ResolveExprSymbol(const SourceFile* file, const semantic
       const auto* sym = scope->Resolve(label);
       if (!sym) {
         const auto* expected_type = core::checker::ext::DeduceExpectedType(file, scope, expr);
+        // TODO: generalize kList element type resolver
+        if (expected_type && expected_type->Flags() & semantic::SymbolFlags::kList) {
+          expected_type = ResolveListElementType(expected_type);
+        }
         if (expected_type && (expected_type->Flags() & semantic::SymbolFlags::kEnum)) {
           sym = expected_type->Members()->Lookup(label);
         }
@@ -874,14 +881,16 @@ InstantiatedType ResolveExprInstantiatedType(const SourceFile* file, const seman
       .sym = type_sym,
       .instance = [&] -> const ast::Node* {
         switch (expr->nkind) {
-          case ast::NodeKind::Ident: {
-            if (expr->parent->nkind == ast::NodeKind::FormalPar) {
-              return expr->parent;
-            }
-            break;
-          }
           case ast::NodeKind::IndexExpr:
             return expr;
+          default:
+            break;
+        }
+        switch (expr->parent->nkind) {
+          case ast::NodeKind::IndexExpr:
+          case ast::NodeKind::SelectorExpr:  // <-- TODO
+          case ast::NodeKind::FormalPar:
+            return expr->parent;
           default:
             break;
         }
@@ -1005,6 +1014,9 @@ void BasicTypeChecker::MatchTypes(const ast::Range& range, const InstantiatedTyp
     return;
   }
 
+  if (expected.sym == actual.sym) {
+    return;
+  }
   // TODO: read language spec and maybe make something more precise
   if (ResolvePotentiallyAliasedType(expected.sym) == ResolvePotentiallyAliasedType(actual.sym)) {
     return;
@@ -1163,6 +1175,7 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const semantic:
 
       //
       resulting_type.sym = ResolveCallableReturnType(callee_file, callee_file->module->scope, callee_decl);
+      resulting_type.instance = m;
       //
 
       const ast::nodes::FormalPars* params = ast::utils::GetCallableDeclParams(callee_decl);
@@ -1223,7 +1236,8 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const semantic:
 
       const auto match_both = [&](const semantic::Symbol* expected_sym) {
         //
-        resulting_type = expected_sym;
+        resulting_type.sym = expected_sym;
+        resulting_type.instance = m;
         //
         MatchTypes(m->x->nrange, x_type, {.sym = expected_sym});
         MatchTypes(m->y->nrange, y_type, {.sym = expected_sym});
@@ -1239,13 +1253,14 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const semantic:
         case ast::TokenKind::EQ:
         case ast::TokenKind::NE: {
           match_both(x_type.sym);
+          resulting_type.sym = &builtins::kBoolean;
           break;
         }
         case ast::TokenKind::CONCAT: {
-          if (x_type && !(x_type->Flags() & semantic::SymbolFlags::kBuiltinStringType)) {
+          if (x_type && !(x_type->Flags() & (semantic::SymbolFlags::kBuiltinString | semantic::SymbolFlags::kList))) {
             EmitError({
                 .range = m->x->nrange,
-                .message = std::format("string type expected, got '{}'", x_type->GetName()),
+                .message = std::format("string or list type expected, got '{}'", x_type->GetName()),
             });
           } else {
             match_both(x_type.sym);
@@ -1325,7 +1340,7 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const semantic:
         break;
       }
 
-      if (!(desired_type->Flags() & (semantic::SymbolFlags::kStructural | semantic::SymbolFlags::kSubtype))) {
+      if (!(desired_type->Flags() & (semantic::SymbolFlags::kStructural | semantic::SymbolFlags::kList))) {
         //
         resulting_type = &symbols::kTypeError;
         //
@@ -1364,22 +1379,6 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const semantic:
             }
           }
         };
-        if (desired_type->Flags() & semantic::SymbolFlags::kSubtype) {
-          const auto* subtype_sym = desired_type;
-          const auto* subtype_decl = subtype_sym->Declaration()->As<ast::nodes::SubTypeDecl>();
-          if (!subtype_decl) {
-            Introspect(m);
-            break;
-          }
-          const auto* subtype_file = ast::utils::SourceFileOf(subtype_decl);
-
-          const auto* f = subtype_decl->field;
-          if (f->type->nkind == ast::NodeKind::ListSpec) {
-            match_listspec(f->type->As<ast::nodes::ListSpec>(), subtype_file);
-          }
-
-          break;
-        }
         if (desired_type->Flags() & semantic::SymbolFlags::kList) {
           match_listspec(desired_type->Declaration()->As<ast::nodes::ListSpec>(),
                          ast::utils::SourceFileOf(desired_type->Declaration()));
@@ -1457,10 +1456,16 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const semantic:
               },
       }};
 
-      const auto* property_sym = resolver.Resolve(&sf_, scope_, se);
+      const auto resolution = resolver.Resolve(&sf_, scope_, se);
+      const auto* property_sym = resolution.sym;
       if (!property_sym) {
         break;
       }
+
+      if (!resolution.is_static) {
+        resulting_type.instance = se;
+      }
+
       if (property_sym->Flags() &
           (semantic::SymbolFlags::kFunction | semantic::SymbolFlags::kBuiltin | semantic::SymbolFlags::kAnonymous)) {
         //
