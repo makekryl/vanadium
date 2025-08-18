@@ -77,11 +77,17 @@ lsp::HoverResult ProvideHover(const lsp::HoverParams& params, const core::Source
   const auto* n = symres->node;
   const auto* sym = symres->symbol;
 
-  if (!sym || (sym->Flags() & core::semantic::SymbolFlags::kBuiltin)) {
+  if (!sym) {
     return nullptr;
   }
   const auto* decl = sym->Declaration();
+  if (!decl) {
+    return nullptr;
+  }
   const auto* provider_file = core::ast::utils::SourceFileOf(decl);
+  if (!provider_file) {
+    return nullptr;
+  }
 
   auto& content = *d.arena.Alloc<std::string>();
   content.reserve(256);  // TODO: check if it is justified actually
