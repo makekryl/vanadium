@@ -277,8 +277,8 @@ class SelectorExprResolver {
       return nullptr;
     } else if (!mode_static_ && (property_sym->Flags() & semantic::SymbolFlags::kVisibilityStatic)) [[unlikely]] {
       // TODO: figure out how to forward static-flag and uncomment this
-      options_.on_static_property_invalid_access(se, x_sym);
-      return nullptr;
+      // options_.on_static_property_invalid_access(se, x_sym);
+      // return nullptr;
     }
 
     if (se == se_tgt_) {
