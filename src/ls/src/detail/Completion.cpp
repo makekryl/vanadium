@@ -70,13 +70,17 @@ lsp::CompletionList CollectCompletions(const lsp::CompletionParams& params, cons
 
   const auto* n = detail::FindNode(&file, params.position);
 
-  VLS_WARN("n={}, parent={}, grandparent={}", magic_enum::enum_name(n->nkind), magic_enum::enum_name(n->parent->nkind),
-           magic_enum::enum_name(n->parent->parent->nkind));
+  VLS_WARN("--- compl:: n={}, parent={}, grandparent={}", magic_enum::enum_name(n->nkind),
+           magic_enum::enum_name(n->parent->nkind), magic_enum::enum_name(n->parent->parent->nkind));
 
   const core::semantic::Scope* scope = core::semantic::utils::FindScope(file.module->scope, n);
 
   const auto mask = file.Text(n);
-  VLS_WARN("mask: '{}'", mask);
+  VLS_WARN("    compl:: mask: '{}'", mask);
+
+  if (n->nkind == core::ast::NodeKind::Ident && n->parent->nkind == core::ast::NodeKind::SelectorExpr) {
+    n = n->parent;
+  }
 
   if (n->nkind == core::ast::NodeKind::SelectorExpr) {
     n = n->As<core::ast::nodes::SelectorExpr>()->x;
