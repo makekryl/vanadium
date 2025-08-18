@@ -430,8 +430,21 @@ const semantic::Symbol* ResolvePotentiallyAliasedType(const semantic::Symbol* sy
   return ResolveAliasedType(sym);
 }
 
+namespace {
+const ast::nodes::ListSpec* ExtractListSpecNode(const semantic::Symbol* sym) {
+  const auto* decl = sym->Declaration();
+  switch (decl->nkind) {
+    case ast::NodeKind::Field:
+      return decl->As<ast::nodes::Field>()->type->As<ast::nodes::ListSpec>();
+    case ast::NodeKind::ListSpec:
+      return decl->As<ast::nodes::ListSpec>();
+    default:
+      return nullptr;
+  }
+}
+}  // namespace
 const semantic::Symbol* ResolveListElementType(const semantic::Symbol* sym) {
-  const ast::Node* decl = sym->Declaration()->As<ast::nodes::Field>()->type;
+  const ast::Node* decl = ExtractListSpecNode(sym);
   if (decl) {
     const auto* decl_file = ast::utils::SourceFileOf(decl);
     sym = ResolveExprType(decl_file, decl_file->module->scope,
@@ -1357,39 +1370,33 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const semantic:
       resulting_type = desired_type;
       //
 
-      {
-        const auto match_listspec = [&](const ast::nodes::ListSpec* ls, const SourceFile* ls_file) {
-          if (ls->length) {
-            if (const auto& bounds_opt = detail::GetLengthExprBounds(ls_file, ls->length); bounds_opt) {
-              const auto& [min_args, max_args] = *bounds_opt;
-              const auto args_count = m->list.size();
-              if (args_count < min_args || args_count > max_args) {
-                EmitError(TypeError{
-                    .range =
-                        ast::Range{
-                            .begin = m->nrange.end - 1,
-                            .end = m->nrange.end,  // closing paren
-                        },
-                    .message = std::format("elements count is required to be in between {} and {}", min_args, max_args),
-                });
-              }
-            }
-          }
+      if (desired_type->Flags() & semantic::SymbolFlags::kList) {
+        const auto* ls = ExtractListSpecNode(desired_type);
+        const auto* ls_file = ast::utils::SourceFileOf(desired_type->Declaration());
 
-          if (ls->elemtype->nkind == ast::NodeKind::RefSpec) {
-            const auto* rs = ls->elemtype->As<ast::nodes::RefSpec>();
-            const auto* inner_type_sym = ls_file->module->scope->Resolve(ls_file->Text(rs->x));
-            for (const auto* arg : m->list) {
-              const auto actual_sym = CheckType(arg, inner_type_sym);
-              MatchTypes(arg->nrange, actual_sym, {.sym = inner_type_sym});
+        if (ls->length) {
+          if (const auto& bounds_opt = detail::GetLengthExprBounds(ls_file, ls->length); bounds_opt) {
+            const auto& [min_args, max_args] = *bounds_opt;
+            const auto args_count = m->list.size();
+            if (args_count < min_args || args_count > max_args) {
+              EmitError(TypeError{
+                  .range =
+                      ast::Range{
+                          .begin = m->nrange.end - 1,
+                          .end = m->nrange.end,  // closing paren
+                      },
+                  .message = std::format("elements count is expected to be in between {} and {}", min_args, max_args),
+              });
             }
           }
-        };
-        if (desired_type->Flags() & semantic::SymbolFlags::kList) {
-          match_listspec(desired_type->Declaration()->As<ast::nodes::ListSpec>(),
-                         ast::utils::SourceFileOf(desired_type->Declaration()));
-          break;
         }
+
+        const auto* element_type_sym = ResolveListElementType(desired_type);
+        for (const auto* arg : m->list) {
+          const auto actual_sym = CheckType(arg, element_type_sym);
+          MatchTypes(arg->nrange, actual_sym, {.sym = element_type_sym});
+        }
+        break;
       }
 
       const auto* record_sym = desired_type;
