@@ -702,6 +702,13 @@ const semantic::Symbol* DeduceExpectedType(const SourceFile* file, const semanti
 
       return ResolveExprType(fields_file, fields_scope, fields[idx]->type->As<ast::nodes::Expr>());
     }
+    case ast::NodeKind::CaseClause: {
+      const auto* m = parent->As<core::ast::nodes::CaseClause>();
+      const auto* ss = m->parent->As<core::ast::nodes::SelectStmt>();
+
+      const core::semantic::Scope* scope = semantic::utils::FindScope(file->module->scope, parent);
+      return core::checker::ResolveExprType(file, scope, ss->tag);
+    }
     default:
       break;
   }
