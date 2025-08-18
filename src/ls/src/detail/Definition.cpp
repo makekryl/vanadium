@@ -141,6 +141,8 @@ const core::ast::Node* GetReadableDefinition(const core::ast::Node* n) {
     READABLE_DEFINITION_CASE(TemplateDecl, name)
     READABLE_DEFINITION_CASE(ComponentTypeDecl, name)
     READABLE_DEFINITION_CASE(StructTypeDecl, name)
+    READABLE_DEFINITION_CASE(ClassTypeDecl, name)
+    READABLE_DEFINITION_CASE(EnumTypeDecl, name)
     READABLE_DEFINITION_CASE(SubTypeDecl, field->name)
     READABLE_DEFINITION_CASE(Field, name)
     READABLE_DEFINITION_CASE(Declarator, name)

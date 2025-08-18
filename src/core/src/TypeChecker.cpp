@@ -268,8 +268,9 @@ class SelectorExprResolver {
       if (x_sym->Flags() & semantic::SymbolFlags::kStructural) [[likely]] {
         return x_sym->Members()->LookupShadow(property_name);
       }
-      options_.on_non_static_property_invalid_access(se, x_sym);
-      return nullptr;
+      // TODO: figure out how to forward static-flag and uncomment this
+      // options_.on_non_static_property_invalid_access(se, x_sym);
+      // return nullptr;
     } else if (!mode_static_ && (property_sym->Flags() & semantic::SymbolFlags::kVisibilityStatic)) [[unlikely]] {
       options_.on_static_property_invalid_access(se, x_sym);
       return nullptr;
@@ -888,7 +889,7 @@ InstantiatedType ResolveExprInstantiatedType(const SourceFile* file, const seman
         }
         switch (expr->parent->nkind) {
           case ast::NodeKind::IndexExpr:
-          case ast::NodeKind::SelectorExpr:  // <-- TODO
+          case ast::NodeKind::SelectorExpr:  // <-- TODO (related to on_static_property_invalid_access TODO)
           case ast::NodeKind::FormalPar:
             return expr->parent;
           default:
