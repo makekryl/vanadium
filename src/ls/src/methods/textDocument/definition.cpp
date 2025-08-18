@@ -21,7 +21,7 @@ lsp::DefinitionResult ProvideDefinition(const lsp::DefinitionParams& params, con
   }
   const auto* sym = symres->symbol;
 
-  if (!sym || (sym->Flags() & (core::semantic::SymbolFlags::kBuiltin | core::semantic::SymbolFlags::kBuiltinDef))) {
+  if (!sym || (sym->Flags() & (core::semantic::SymbolFlags::kBuiltin | core::semantic::SymbolFlags::kBuiltin))) {
     return nullptr;
   }
   if (sym->Flags() & core::semantic::SymbolFlags::kImportedModule) {

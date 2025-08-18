@@ -27,7 +27,19 @@ const semantic::Symbol kOctetstring{"octetstring", nullptr, semantic::SymbolFlag
 const semantic::Symbol kHexstring{"hexstring", nullptr, semantic::SymbolFlags::kBuiltinStringType};
 const semantic::Symbol kUniversalCharstring{"universal charstring", nullptr, semantic::SymbolFlags::kBuiltinStringType};
 const semantic::Symbol kVerdictType{"verdicttype", nullptr, semantic::SymbolFlags::kBuiltinType};
-const semantic::Symbol kTimer{"timer", nullptr, semantic::SymbolFlags::kBuiltinType};
+const semantic::Symbol kTimer{
+    "timer", nullptr,
+    semantic::SymbolFlags::Value(semantic::SymbolFlags::kBuiltinType | semantic::SymbolFlags::kClassType),
+    [] -> semantic::Scope* {
+      static semantic::Scope scope(nullptr);
+      scope.symbols.Add(semantic::Symbol("timeout", nullptr, semantic::SymbolFlags::kBuiltin));
+      // scope.symbols.Add(semantic::Symbol(
+      //     "start", [] -> const ast::nodes::FuncDecl* {
+
+      //     }(),
+      //     semantic::SymbolFlags::Value(semantic::SymbolFlags::kFunction | semantic::SymbolFlags::kBuiltin)));
+      return &scope;
+    }()};
 
 namespace {
 const semantic::Symbol* ResolveBuiltinType(std::string_view name) {
@@ -56,7 +68,7 @@ const semantic::Symbol* ResolveBuiltinType(std::string_view name) {
 }  // namespace
 
 namespace {
-constexpr std::string_view kBuiltinDefsModule{
+constexpr std::string_view kBuiltinsModule{
 #include "blob/TTCNBuiltinDefs.inc"
 };
 
@@ -66,7 +78,7 @@ const semantic::Symbol* ResolveBuiltinDef(std::string_view name) {
 
     static SourceFile sf{
         .path = "",
-        .ast = ast::Parse(arena, kBuiltinDefsModule),
+        .ast = ast::Parse(arena, kBuiltinsModule),
     };
     sf.ast.root->file = &sf;
 #ifndef NDEBUG
@@ -93,7 +105,7 @@ const semantic::Symbol* ResolveBuiltinDef(std::string_view name) {
           scope.symbols.Add({
               sf.Text(*m->name),
               m,
-              semantic::SymbolFlags::Value(semantic::SymbolFlags::kFunction | semantic::SymbolFlags::kBuiltinDef),
+              semantic::SymbolFlags::Value(semantic::SymbolFlags::kFunction | semantic::SymbolFlags::kBuiltin),
           });
           return false;
         }
@@ -103,7 +115,7 @@ const semantic::Symbol* ResolveBuiltinDef(std::string_view name) {
             scope.symbols.Add({
                 sf.Text(*d->name),
                 m,
-                semantic::SymbolFlags::Value(semantic::SymbolFlags::kVariable | semantic::SymbolFlags::kBuiltinDef),
+                semantic::SymbolFlags::Value(semantic::SymbolFlags::kVariable | semantic::SymbolFlags::kBuiltin),
             });
           }
           return false;

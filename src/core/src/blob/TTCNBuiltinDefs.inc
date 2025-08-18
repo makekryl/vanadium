@@ -817,5 +817,9 @@ function setverdict(
 	in charstring reason := none
 )
 
+function log2str(in anytype v) return charstring
+
+function ttcn2string(in anytype v) return charstring
+
 }
 )"

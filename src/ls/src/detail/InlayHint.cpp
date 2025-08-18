@@ -79,7 +79,7 @@ template <typename Options>
       // return core::checker::utils::ResolveCallableParams(file, scope, m->args);  // -> FormalPars
 
       const auto* fun_sym = core::checker::ResolveExprType(&file, scope, m->fun);
-      if (!fun_sym || (fun_sym->Flags() & core::semantic::SymbolFlags::kBuiltinDef) ||
+      if (!fun_sym || (fun_sym->Flags() & core::semantic::SymbolFlags::kBuiltin) ||
           !(fun_sym->Flags() & (core::semantic::SymbolFlags::kFunction | core::semantic::SymbolFlags::kTemplate))) {
         return nullptr;
       }

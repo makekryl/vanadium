@@ -81,14 +81,13 @@ enum Value : std::uint32_t {
   kBuiltinType = kType | kBuiltin,
   kBuiltinString = 1 << 21,
   kBuiltinStringType = kType | kBuiltin | kBuiltinString,
-  kBuiltinDef = 1 << 22,
 
-  kTemplateSpec = 1 << 23,
+  kTemplateSpec = 1 << 22,
 
-  kPort = 1 << 24,
+  kPort = 1 << 23,
   kPortType = kType | kPort,
 
-  kAnonymous = 1 << 25,
+  kAnonymous = 1 << 24,
 };
 }
 
