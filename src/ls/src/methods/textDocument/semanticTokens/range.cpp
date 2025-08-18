@@ -107,7 +107,7 @@ lsp::SemanticTokens CollectSemanticTokens(const lsp::SemanticTokensRangeParams& 
                   if (decl->nkind == core::ast::NodeKind::Declarator) {
                     const auto* dd = decl->As<core::ast::nodes::Declarator>();
                     const auto* vd = dd->parent->As<core::ast::nodes::ValueDecl>();
-                    if (vd->kind && vd->kind->kind == core::ast::TokenKind::CONST) {  // TODO: modulepar float parsing
+                    if (vd->kind && vd->kind->kind != core::ast::TokenKind::VAR) {  // modulepar+const, todo: refactor
                       return {lsp::SemanticTokenTypes::kVariable,
                               lsp::SemanticTokenModifiers::kDefinition | lsp::SemanticTokenModifiers::kReadonly};
                     }

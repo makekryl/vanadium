@@ -375,7 +375,7 @@ nodes::Definition* Parser::ParseDefinition() {
 }
 
 nodes::Decl* Parser::ParseModulePar() {
-  Consume();
+  auto modulepar_tok = ConsumeInvariant(TokenKind::MODULEPAR);
   if (tok_ == TokenKind::LBRACE) {
     return NewNode<nodes::ModuleParameterGroup>([&](auto& mpg) {
       Consume();  // LBrace
@@ -392,6 +392,7 @@ nodes::Decl* Parser::ParseModulePar() {
     });
   }
   return NewNode<nodes::ValueDecl>([&](auto& vd) {
+    vd.kind = TokAlloc(std::move(modulepar_tok));
     vd.template_restriction = ParseRestrictionSpec();
     vd.type = ParseTypeRef();
     vd.decls = ParseDeclList();
