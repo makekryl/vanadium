@@ -14,6 +14,7 @@
 #include "ScopedNodeVisitor.h"
 #include "Semantic.h"
 #include "utils/ASTUtils.h"
+#include "utils/SemanticUtils.h"
 
 namespace vanadium::core {
 namespace checker {
@@ -709,6 +710,38 @@ const semantic::Symbol* DeduceExpectedType(const SourceFile* file, const semanti
 
 }  // namespace ext
 
+namespace {
+const semantic::Symbol* TryResolveExprSymbolViaHierarchy(const SourceFile* file, const semantic::Scope*,
+                                                         const ast::nodes::Expr* expr) {
+  switch (expr->parent->nkind) {
+    case core::ast::NodeKind::CaseClause: {
+      const auto* m = expr->parent->As<core::ast::nodes::CaseClause>();
+      const auto* ss = m->parent->As<core::ast::nodes::SelectStmt>();
+
+      const core::semantic::Scope* scope = semantic::utils::FindScope(file->module->scope, expr);
+      const auto* tag_sym = core::checker::ResolveExprType(file, scope, ss->tag);
+      if (!tag_sym) {
+        return nullptr;
+      }
+
+      if (ss->is_union) {
+        if (!tag_sym || !(tag_sym->Flags() & core::semantic::SymbolFlags::kUnion)) {
+          return nullptr;
+        }
+        return tag_sym->Members()->Lookup(file->Text(expr));
+      }
+      if (tag_sym->Flags() & semantic::SymbolFlags::kEnum) {
+        return tag_sym->Members()->Lookup(file->Text(expr));
+      }
+
+      return nullptr;
+    }
+    default:
+      return nullptr;
+  }
+}
+}  // namespace
+
 // Expression -> Declaration
 const semantic::Symbol* ResolveExprSymbol(const SourceFile* file, const semantic::Scope* scope,
                                           const ast::nodes::Expr* expr) {
@@ -720,13 +753,15 @@ const semantic::Symbol* ResolveExprSymbol(const SourceFile* file, const semantic
       const auto* sym = scope->Resolve(label);
       if (!sym) {
         const auto* expected_type = core::checker::ext::DeduceExpectedType(file, scope, expr);
-        // TODO: generalize kList element type resolver
         if (expected_type && expected_type->Flags() & semantic::SymbolFlags::kList) {
           expected_type = ResolveListElementType(expected_type);
         }
         if (expected_type && (expected_type->Flags() & semantic::SymbolFlags::kEnum)) {
           sym = expected_type->Members()->Lookup(label);
         }
+      }
+      if (!sym) [[unlikely]] {
+        return TryResolveExprSymbolViaHierarchy(file, scope, expr);
       }
       return sym;
     }
@@ -778,7 +813,7 @@ const semantic::Symbol* ResolveExprSymbol(const SourceFile* file, const semantic
       return containing_sym->Members()->LookupShadow(file->Text(*owner->name));
     }
     default: {
-      return nullptr;
+      return TryResolveExprSymbolViaHierarchy(file, scope, expr);
     }
   }
 }
@@ -1741,31 +1776,41 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
 
     case ast::NodeKind::SelectStmt: {
       const auto* m = n->As<ast::nodes::SelectStmt>();
-      if (!m->is_union) {
-        return true;
-      }
 
       const auto tag_type = CheckType(m->tag);
-      if (!tag_type || !(tag_type->Flags() & semantic::SymbolFlags::kUnion)) {
-        EmitError(TypeError{
-            .range = m->tag->nrange,
-            .message = "union type expected",
-        });
+      if (!tag_type) {
         return true;
       }
 
-      for (const auto* clause : m->clauses) {
-        for (const auto* cond : clause->cond) {
-          const auto property = sf_.Text(cond);
-          if (!tag_type->Members()->Has(property)) {
-            EmitError(TypeError{
-                .range = cond->nrange,
-                .message = std::format("property '{}' does not exist on type '{}'", property,
-                                       utils::GetReadableTypeName(tag_type.sym)),
-            });
-          }
+      if (m->is_union) {
+        if (!tag_type || !(tag_type->Flags() & semantic::SymbolFlags::kUnion)) {
+          EmitError(TypeError{
+              .range = m->tag->nrange,
+              .message = "union type expected",
+          });
+          return true;
         }
-        Inspect(clause->body);
+
+        for (const auto* clause : m->clauses) {
+          for (const auto* cond : clause->cond) {
+            const auto property = sf_.Text(cond);
+            if (!tag_type->Members()->Has(property)) {
+              EmitError(TypeError{
+                  .range = cond->nrange,
+                  .message = std::format("property '{}' does not exist on type '{}'", property,
+                                         utils::GetReadableTypeName(tag_type.sym)),
+              });
+            }
+          }
+          Inspect(clause->body);
+        }
+      } else if (tag_type->Flags() & semantic::SymbolFlags::kEnum) {
+        for (const auto* clause : m->clauses) {
+          for (const auto* cond : clause->cond) {
+            MatchTypes(cond->nrange, CheckType(cond, tag_type.sym), tag_type);
+          }
+          Inspect(clause->body);
+        }
       }
 
       return false;
