@@ -668,7 +668,7 @@ const semantic::Symbol* DeduceExpectedType(const SourceFile* file, const semanti
       const auto* params_scope = params_file->module->scope;
 
       const auto* sym = ResolveExprType(params_file, params_scope, params->list[idx]->type);
-      if (sym == &symbols::kInferType) [[unlikely]] {
+      if (sym == &symbols::kInferType && n != pe->list.back()) [[unlikely]] {
         return ResolveExprType(file, scope, pe->list.back()->As<ast::nodes::Expr>());
       }
       return sym;
@@ -681,7 +681,12 @@ const semantic::Symbol* DeduceExpectedType(const SourceFile* file, const semanti
         return nullptr;
       }
       if (!(sym->Flags() & semantic::SymbolFlags::kStructural)) {
-        // e.g. ListSpec
+        if (sym->Flags() & semantic::SymbolFlags::kList) {
+          const auto* spec = sym->Declaration()->As<ast::nodes::ListSpec>();
+          return ResolveExprType(file, ast::utils::SourceFileOf(spec)->module->scope,
+                                 spec->elemtype->As<ast::nodes::Expr>());
+        }
+        // should not be generally possible
         return sym;
       }
       const auto* decl = sym->Declaration();
@@ -948,6 +953,7 @@ InstantiatedType ResolveExprInstantiatedType(const SourceFile* file, const seman
             break;
         }
         switch (expr->parent->nkind) {
+          case ast::NodeKind::ReturnSpec:
           case ast::NodeKind::IndexExpr:
           case ast::NodeKind::SelectorExpr:  // <-- TODO (related to on_static_property_invalid_access TODO)
           case ast::NodeKind::FormalPar:
@@ -1759,9 +1765,9 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
         break;
       }
 
-      const auto* expected_type = sf_.module->scope->Resolve(sf_.Text(fdecl->ret->type));
-      const auto actual_type = CheckType(m->result, expected_type);
-      MatchTypes(m->result->nrange, actual_type, {.sym = expected_type, .instance = fdecl->ret});
+      const auto expected_type = ResolveExprInstantiatedType(&sf_, sf_.module->scope, fdecl->ret->type);
+      const auto actual_type = CheckType(m->result, expected_type.sym);
+      MatchTypes(m->result->nrange, actual_type, expected_type);
 
       return false;
     }
