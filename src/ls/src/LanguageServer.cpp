@@ -23,8 +23,12 @@ using ServerMethods = mp::Typelist<methods::initialize,   //
                                    methods::shutdown,     //
                                    methods::exit,         //
                                    //
+                                   methods::dollar::cancelRequest,  //
+                                   methods::dollar::setTrace,       //
+                                   //
                                    methods::textDocument::didOpen,                //
                                    methods::textDocument::didChange,              //
+                                   methods::textDocument::didSave,                //
                                    methods::textDocument::didClose,               //
                                    methods::textDocument::diagnostic,             //
                                    methods::textDocument::codeAction,             //
@@ -89,9 +93,9 @@ void Serve(lserver::Transport& transport, std::size_t concurrency, std::size_t j
   {
     ServerMethods::Apply([&]<typename P>() {
       rpc_server.on<P::kMethodName>([&](const auto& params) -> glz::expected<typename P::TResult, glz::rpc::error> {
-        if constexpr (std::is_same_v<typename P::TResult, std::nullptr_t>) {
+        if constexpr (std::is_same_v<typename P::TResult, rpc::Empty>) {
           P{}(ctx, params);
-          return std::nullptr_t{};
+          return rpc::Empty{};
         } else {
           return P{}(ctx, params);
         }

@@ -20,7 +20,7 @@ struct Request : Method<Name, Params, Result> {
   ExpectedResult<Result> operator()(LsContext&, const Params&);
 };
 
-template <glz::string_literal Name, typename Params, typename Result>
+template <glz::string_literal Name, typename Params, typename Result = rpc::Empty>
 struct Notification : Method<Name, Params, Result> {
   void operator()(LsContext&, const Params&);
 };
@@ -41,9 +41,9 @@ struct Notification : Method<Name, Params, Result> {
 #define DECL_REQUEST_1(W0, NAME, PARAMS, RESULT) DECL_METHOD_1(W0, NAME, Request, PARAMS, RESULT)
 #define DECL_REQUEST_2(W0, W1, NAME, PARAMS, RESULT) DECL_METHOD_2(W0, W1, NAME, Request, PARAMS, RESULT)
 
-#define DECL_NOTIFIC_0(NAME, PARAMS) DECL_METHOD_0(NAME, Notification, PARAMS, std::nullptr_t)
-#define DECL_NOTIFIC_1(W0, NAME, PARAMS) DECL_METHOD_1(W0, NAME, Notification, PARAMS, std::nullptr_t)
-#define DECL_NOTIFIC_2(W0, W1, NAME, PARAMS) DECL_METHOD_2(W0, W1, NAME, Notification, PARAMS, std::nullptr_t)
+#define DECL_NOTIFIC_0(NAME, PARAMS) DECL_METHOD_0(NAME, Notification, PARAMS, rpc::Empty)
+#define DECL_NOTIFIC_1(W0, NAME, PARAMS) DECL_METHOD_1(W0, NAME, Notification, PARAMS, rpc::Empty)
+#define DECL_NOTIFIC_2(W0, W1, NAME, PARAMS) DECL_METHOD_2(W0, W1, NAME, Notification, PARAMS, rpc::Empty)
 
 // NOLINTBEGIN(readability-identifier-naming)
 
@@ -54,9 +54,15 @@ DECL_NOTIFIC_0(initialized, rpc::Empty);
 DECL_REQUEST_0(shutdown, rpc::Empty, std::nullptr_t);
 DECL_NOTIFIC_0(exit, rpc::Empty);
 
+namespace dollar {
+using cancelRequest = rpc::Notification<"$/cancelRequest", lsp::CancelParams>;
+using setTrace = rpc::Notification<"$/setTrace", lsp::SetTraceParams>;
+}  // namespace dollar
+
 // textDocument
 DECL_NOTIFIC_1(textDocument, didOpen, lsp::DidOpenTextDocumentParams);
 DECL_NOTIFIC_1(textDocument, didChange, lsp::DidChangeTextDocumentParams);
+DECL_NOTIFIC_1(textDocument, didSave, lsp::DidSaveTextDocumentParams);
 DECL_NOTIFIC_1(textDocument, didClose, lsp::DidCloseTextDocumentParams);
 DECL_REQUEST_1(textDocument, diagnostic, lsp::DocumentDiagnosticParams, lsp::DocumentDiagnosticReport);
 DECL_REQUEST_1(textDocument, codeAction, lsp::CodeActionParams, lsp::CodeActionResult);
