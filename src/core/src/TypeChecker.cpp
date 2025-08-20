@@ -1293,7 +1293,7 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const semantic:
       const auto* m = n->As<ast::nodes::BinaryExpr>();
 
       auto x_type = CheckType(m->x);
-      const auto y_type = CheckType(m->y);
+      const auto y_type = CheckType(m->y, x_type.sym);
 
       const auto match_both = [&](const semantic::Symbol* expected_sym) {
         //
