@@ -106,36 +106,37 @@ lsp::CompletionList CollectCompletions(const lsp::CompletionParams& params, cons
             .sortText = "0",
         });
       }
-    } else if (sym->Flags() & core::semantic::SymbolFlags::kSubtype) {
-      if (sym->Declaration()->As<core::ast::nodes::SubTypeDecl>()->field->type->nkind ==
-          core::ast::NodeKind::ListSpec) {
-        // // todo
-        // items.emplace_back(lsp::CompletionItem{
-        //     .label = "lengthof",
-        //     .kind = lsp::CompletionItemKind::kSnippet,
-        //     .textEdit =
-        //         lsp::TextEdit{
-        //             .range = conv::ToLSPRange(n->nrange, file.ast),
-        //             .newText = *d.arena.Alloc<std::string>(std::format("lengthof({})", file.Text(n))),
-        //         },
-        // });
-      }
+    } else if (sym->Flags() & core::semantic::SymbolFlags::kList) {
+      // // todo
+      // items.emplace_back(lsp::CompletionItem{
+      //     .label = "lengthof",
+      //     .kind = lsp::CompletionItemKind::kSnippet,
+      //     .textEdit =
+      //         lsp::TextEdit{
+      //             .range = conv::ToLSPRange(n->nrange, file.ast),
+      //             .newText = *d.arena.Alloc<std::string>(std::format("lengthof({})", file.Text(n))),
+      //         },
+      // });
     }
     return completion_list;  // todo: extract filler to separate func
   }
 
   const auto complete_props = [&](const core::semantic::Symbol* sym) {
-    if (!sym || !(sym->Flags() & core::semantic::SymbolFlags::kStructural)) {
+    if (!sym) {
       return;
     }
-    for (const auto& [name, msym] : sym->Members()->Enumerate()) {
-      // TODO: show type
-      items.emplace_back(lsp::CompletionItem{
-          .label = name,
-          .kind = lsp::CompletionItemKind::kProperty,
-          .sortText = "0",
-          .insertText = *d.arena.Alloc<std::string>(std::format("{} := ", name)),
-      });
+    if (sym->Flags() & core::semantic::SymbolFlags::kStructural) {
+      for (const auto& [name, msym] : sym->Members()->Enumerate()) {
+        // TODO: show type
+        items.emplace_back(lsp::CompletionItem{
+            .label = name,
+            .kind = lsp::CompletionItemKind::kProperty,
+            .sortText = "0",
+            .insertText = *d.arena.Alloc<std::string>(std::format("{} := ", name)),
+        });
+      }
+    } else if (sym->Flags() & core::semantic::SymbolFlags::kList) {
+      // TODO
     }
   };
 
@@ -183,14 +184,12 @@ lsp::CompletionList CollectCompletions(const lsp::CompletionParams& params, cons
       break;
     }
     case core::ast::NodeKind::AssignmentExpr: {
-      if (parent->nkind == core::ast::NodeKind::AssignmentExpr) {
-        const auto* ae = parent->As<core::ast::nodes::AssignmentExpr>();
-        if ((n == ae->property) && (ae->parent->nkind == core::ast::NodeKind::CompositeLiteral/* ||
+      const auto* ae = parent->As<core::ast::nodes::AssignmentExpr>();
+      if ((n == ae->property) && (ae->parent->nkind == core::ast::NodeKind::CompositeLiteral/* ||
                                     ae->parent->nkind == core::ast::NodeKind::ParenExpr*/)) {
-          complete_props(core::checker::ext::DeduceCompositeLiteralType(
-              &file, scope, ae->parent->As<core::ast::nodes::CompositeLiteral>()));
-          return completion_list;  // todo: extract filler to separate func
-        }
+        complete_props(core::checker::ext::DeduceCompositeLiteralType(
+            &file, scope, ae->parent->As<core::ast::nodes::CompositeLiteral>()));
+        return completion_list;  // todo: extract filler to separate func
       }
 
       break;
@@ -238,9 +237,14 @@ lsp::CompletionList CollectCompletions(const lsp::CompletionParams& params, cons
       if (!sym.GetName().contains(mask)) {
         continue;
       }
-      if (expected_type_opt &&
-          expected_type_opt != core::checker::ResolveCallableReturnType(
-                                   module.sf, module.scope, sym.Declaration()->As<core::ast::nodes::Decl>())) {
+
+      const core::semantic::Symbol* actual_type =
+          (sym.Flags() & (core::semantic::SymbolFlags::kFunction | core::semantic::SymbolFlags::kTemplate))
+              ? core::checker::ResolveCallableReturnType(module.sf, module.scope,
+                                                         sym.Declaration()->As<core::ast::nodes::Decl>())
+              : core::checker::ResolveDeclarationType(module.sf, module.scope,
+                                                      sym.Declaration()->As<core::ast::nodes::Decl>());
+      if (expected_type_opt && expected_type_opt != actual_type) {
         continue;
       }
       items.emplace_back(lsp::CompletionItem{
