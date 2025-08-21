@@ -1,3 +1,5 @@
+add_subdirectory(ast)
+
 add_subdirectory(core)
 add_subdirectory(tooling)
 

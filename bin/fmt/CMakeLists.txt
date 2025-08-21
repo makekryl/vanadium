@@ -7,5 +7,5 @@ target_include_directories(vanadium_fmt PRIVATE
 )
 
 target_link_libraries(vanadium_fmt PRIVATE
-  vanadium_core
+  vanadium_ast
 )

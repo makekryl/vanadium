@@ -8,7 +8,7 @@ target_include_directories(vanadium_format PUBLIC
 
 # lib -- private
 target_link_libraries(vanadium_format PUBLIC
-  vanadium_core
+  vanadium_ast
 )
 
 add_test_executable(vanadium_format)
