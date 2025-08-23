@@ -28,8 +28,10 @@ constexpr auto kKeywordLookup = lib::MakeStaticMap<std::string_view, TokenKind>(
     {"OCTET", TokenKind::OCTET},
     {"BOOLEAN", TokenKind::BOOLEAN},
 
+    {"DEFAULT", TokenKind::DEFAULT},
     {"OPTIONAL", TokenKind::OPTIONAL},
     {"SIZE", TokenKind::SIZE},
+    {"CONTAINING", TokenKind::CONTAINING},
 
     {"OF", TokenKind::OF},
 
@@ -101,6 +103,8 @@ Token Scanner::Scan() {
           kind = TokenKind::COMMENT;
           ++pos_;
           ScanLine();
+        } else if (std::isdigit(next)) {
+          kind = ScanNumber();
         }
         break;
       case '.':

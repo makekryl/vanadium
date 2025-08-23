@@ -14,6 +14,7 @@ target_link_libraries(vanadium_ast_asn1 PUBLIC
 target_link_libraries(vanadium_ast_asn1 PRIVATE
   vanadium_lib_common
   vanadium_lib_arena
+  magic_enum
 )
 
 add_test_executable(vanadium_ast_asn1)

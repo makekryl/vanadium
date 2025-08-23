@@ -1311,37 +1311,40 @@ nodes::MtcSpec* Parser::ParseMtc() {
   });
 }
 
-nodes::Ident* Parser::ParseName() {
+auto Parser::TryParseName(std::invocable auto parse, std::invocable auto failure) {
   switch (tok_) {
     case TokenKind::IDENT:
     case TokenKind::CREATE:
     case TokenKind::ADDRESS:
     case TokenKind::CONTROL:
     case TokenKind::CLASS:
-      return NewNode<nodes::Ident>([&](auto&) {
-        Consume();
-      });
+      return parse();
     default:
       EmitErrorExpected("name ident");
-      return nullptr;
+      return failure();
   }
 }
 
+nodes::Ident* Parser::ParseName() {
+  return TryParseName(
+      [&] -> nodes::Ident* {
+        return NewNode<nodes::Ident>([&](auto&) {
+          Consume();
+        });
+      },
+      [] -> nodes::Ident* {
+        return nullptr;
+      });
+}
+
 void Parser::ParseName(std::optional<nodes::Ident>& ident) {
-  switch (tok_) {
-    case TokenKind::IDENT:
-    case TokenKind::CREATE:
-    case TokenKind::ADDRESS:
-    case TokenKind::CONTROL:
-    case TokenKind::CLASS:
-      ident.emplace();
-      ident->parent = last_node_;
-      ident->nrange = Consume().range;
-      break;
-    default:
-      EmitErrorExpected("name ident");
-      break;
-  }
+  TryParseName(
+      [&] -> void {
+        ident.emplace();
+        ident->parent = last_node_;
+        ident->nrange = Consume().range;
+      },
+      [] -> void {});
 }
 
 nodes::Ident* Parser::ParseAnyIdent() {
@@ -2509,10 +2512,6 @@ std::string_view Parser::Lit(std::uint8_t i) {
   return Peek(i).On(src_);
 }
 
-ast::pos_t Parser::Pos(std::uint8_t i) {
-  return Peek(i).range.begin;
-}
-
 Token Parser::Expect(TokenKind expected) {
   if (tok_ != expected) [[unlikely]] {
     EmitErrorExpected(magic_enum::enum_name(expected));
@@ -2600,7 +2599,7 @@ Token* Parser::TokAlloc(Token&& token) {
   return arena_->Alloc<Token>(std::move(token));
 }
 
-template <typename T, typename Initializer>
+template <IsNode T, typename Initializer>
   requires std::is_invocable_v<Initializer, T&>
 T* Parser::NewNode(Initializer f) {
   auto* p = arena_->Alloc<T>();

@@ -3,6 +3,7 @@
 #include <iostream>
 #include <sstream>
 
+#include "Asn1Transparser.h"
 #include "Parser.h"
 #include "TextDumper.h"
 
@@ -24,14 +25,18 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
-  const auto src = ReadFile(argv[1]);
+  const std::string_view filename{argv[1]};
+
+  const auto src = ReadFile(filename.data());
   if (!src) {
-    std::cerr << std::format("Failed to open '{}'", argv[1]) << std::endl;
+    std::cerr << std::format("Failed to open '{}'", filename) << std::endl;
     return 1;
   }
 
+  const auto parse_fn = filename.ends_with(".asn") ? vanadium::asn1::ast::Parse : vanadium::core::ast::Parse;
+
   vanadium::lib::Arena arena;
-  auto ast = vanadium::core::ast::Parse(arena, *src);
+  auto ast = parse_fn(arena, *src);
 
   // TODO: display errors
   if (!ast.errors.empty()) {

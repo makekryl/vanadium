@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "AST.h"
+#include "ASTNodes.h"
 #include "ASTTypes.h"
 #include "Arena.h"
 #include "Asn1AST.h"
@@ -16,12 +17,35 @@ class Transparser {
  public:
   Transparser(lib::Arena& arena, std::string_view src);
 
-  ttcn_ast::RootNode* ParseRoot();
+  std::pair<ttcn_ast::RootNode*, std::string_view> ParseRoot();
   std::vector<ttcn_ast::SyntaxError>&& GetErrors() noexcept;
   std::vector<ttcn_ast::pos_t>&& ExtractLineMapping() noexcept;
 
  private:
-  ttcn_ast::Node* Parse();
+  ttcn_ast::RootNode* ParseRootInternal();
+
+  void RewriteIdentName(const Token&);
+  ttcn_ast::nodes::Ident* ParseName();
+  void ParseName(std::optional<ttcn_ast::nodes::Ident>&);
+
+  ttcn_ast::nodes::Module* ParseModule();
+  ttcn_ast::nodes::Definition* ParseDefinition();
+
+  ttcn_ast::nodes::ValueDecl* ParseConstDecl(ttcn_ast::nodes::Ident&& name);
+
+  ttcn_ast::nodes::TypeSpec* ParseTypeSpec();
+
+  void ParseFields(std::vector<ttcn_ast::nodes::Field*>&, TokenKind term = TokenKind::RBRACE);
+  ttcn_ast::nodes::Field* ParseField();
+
+  void ParseEnumValues(std::vector<ttcn_ast::nodes::Expr*>&);
+
+  ttcn_ast::nodes::LengthExpr* ParseSizeConstraint();
+  ttcn_ast::nodes::ParenExpr* ParseValueConstraint();
+
+  ttcn_ast::nodes::Ident VerIdent(std::uint32_t);
+
+  //
 
   Token Consume();
   Token ConsumeInvariant(TokenKind);
@@ -36,33 +60,33 @@ class Transparser {
 
   Token* TokAlloc(Token&& token);
 
-  template <typename T, typename Initializer>
+  template <ttcn_ast::IsNode T, typename Initializer>
     requires std::is_invocable_v<Initializer, T&>
   T* NewNode(Initializer f);
 
   ttcn_ast::Node* last_node_{nullptr};
 
-  bool seen_closing_brace_;
-
   std::vector<ttcn_ast::SyntaxError> errors_;
 
   TokenKind tok_;
   std::vector<Token> queue_;
+  ttcn_ast::pos_t cursor_{};
   ttcn_ast::pos_t last_consumed_pos_;
 
   Scanner scanner_;
   std::string_view src_;
+  std::uint32_t max_ver_{1};
 
   lib::Arena* arena_;
 };
 
 }  // namespace parser
 
-inline core::ast::AST Parse(lib::Arena& arena, std::string_view src) {
+inline ttcn_ast::AST Parse(lib::Arena& arena, std::string_view src) {
   parser::Transparser parser(arena, src);
-  auto* root = parser.ParseRoot();
+  auto [root, new_src] = parser.ParseRoot();
   return {
-      .src = src,
+      .src = new_src,
       .root = root,
       .lines = parser.ExtractLineMapping(),
       .errors = parser.GetErrors(),

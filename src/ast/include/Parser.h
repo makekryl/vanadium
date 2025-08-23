@@ -24,6 +24,7 @@ class Parser {
  private:
   Node* Parse();
   //
+  auto TryParseName(std::invocable auto parse, std::invocable auto failure);
   nodes::Ident* ParseName();
   void ParseName(std::optional<nodes::Ident>&);
   //
@@ -149,7 +150,6 @@ class Parser {
   void Grow(std::uint8_t n);
   Token& Peek(std::uint8_t i);
   std::string_view Lit(std::uint8_t i);
-  ast::pos_t Pos(std::uint8_t i);
   Token Expect(TokenKind expected);
   void MaybeExpectSemi();
   void ExpectSemi();
@@ -168,7 +168,7 @@ class Parser {
 
   Token* TokAlloc(Token&& token);
 
-  template <typename T, typename Initializer>
+  template <IsNode T, typename Initializer>
     requires std::is_invocable_v<Initializer, T&>
   T* NewNode(Initializer f);
 
