@@ -394,7 +394,7 @@ ttcn_ast::nodes::TypeSpec* Transparser::ParseTypeSpec() {
 }
 
 void Transparser::ParseFields(std::vector<ttcn_ast::nodes::Field*>& fields, TokenKind term) {
-  std::size_t ver{1};
+  std::size_t ver{0};
   while (tok_ != term) {
     if (tok_ == TokenKind::ELIPSIS) {
       Consume();
