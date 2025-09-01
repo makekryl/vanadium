@@ -36,7 +36,7 @@ void InitSubproject(const Solution& solution, SolutionProject& subproject) {
 
   subproject.program.Update([&](const core::Program::ProgramModifier& modify) {
     dir.VisitFiles([&](const std::string& filepath) {
-      if (!filepath.ends_with(".ttcn")) {
+      if (!filepath.ends_with(".ttcn") && !filepath.ends_with(".asn")) {
         return;
       }
       if (filepath.contains("stubs")) {

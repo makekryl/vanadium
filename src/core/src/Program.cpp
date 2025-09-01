@@ -17,6 +17,7 @@
 
 #include "ASTNodes.h"
 #include "Arena.h"
+#include "Asn1Transparser.h"
 #include "Bitset.h"
 #include "ImportVisitor.h"
 #include "Parser.h"
@@ -69,7 +70,7 @@ void Program::UpdateFile(const std::string& path, const FileReadFn& read) {
   }
 
   read(path, sf.src);
-  sf.ast = ast::Parse(sf.arena, sf.src);
+  sf.ast = (path.ends_with(".asn") ? asn1::ast::Parse : ast::Parse)(sf.arena, sf.src);
   sf.ast.root->file = &sf;
 
   AttachFile(sf);
