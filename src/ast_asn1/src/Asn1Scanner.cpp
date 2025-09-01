@@ -13,6 +13,7 @@ constexpr auto kKeywordLookup = lib::MakeStaticMap<std::string_view, TokenKind>(
     {"DEFINITIONS", TokenKind::DEFINITIONS},
     {"AUTOMATIC", TokenKind::AUTOMATIC},
     {"TAGS", TokenKind::TAGS},
+    {"IMPORTS", TokenKind::IMPORTS},
 
     {"BEGIN", TokenKind::BEGIN},
     {"END", TokenKind::END},
@@ -73,6 +74,9 @@ Token Scanner::Scan() {
     switch (ch) {
       case ',':
         kind = TokenKind::COMMA;
+        break;
+      case ';':
+        kind = TokenKind::SEMICOLON;
         break;
       case '(':
         kind = TokenKind::LPAREN;

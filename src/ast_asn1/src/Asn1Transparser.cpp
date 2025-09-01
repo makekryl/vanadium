@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <cstring>
 #include <format>
+#include <iomanip>
 #include <memory>
 #include <optional>
 #include <string_view>
@@ -108,15 +109,18 @@ std::vector<ttcn_ast::pos_t>&& Transparser::ExtractLineMapping() noexcept {
 
 void Transparser::RewriteIdentName(const Token& tok) {
   auto v = tok.range.String(src_);
-  auto* p = const_cast<char*>(v.data());
+  auto* const p = const_cast<char*>(v.data());
   auto mut_v = std::span<char>{p, p + v.size()};
 
   switch (tok.kind) {
     case TokenKind::INTEGER:
-      std::ranges::copy("integer", mut_v.begin());
+      std::ranges::copy(std::string_view{"integer"}, mut_v.begin());
       break;
     case TokenKind::BOOLEAN:
-      std::ranges::copy("boolean", mut_v.begin());
+      std::ranges::copy(std::string_view{"boolean"}, mut_v.begin());
+      break;
+    case TokenKind::STRING:
+      std::ranges::copy(std::string_view{"string"}, mut_v.begin());
       break;
     default:
       std::ranges::replace(mut_v, '-', '_');
@@ -156,6 +160,13 @@ ttcn_ast::nodes::Module* Transparser::ParseModule() {
       return;
     }
     ConsumeInvariant(TokenKind::BEGIN);
+
+    if (tok_ == TokenKind::IMPORTS) {
+      while (tok_ != TokenKind::kEOF && tok_ != TokenKind::SEMICOLON) {
+        Consume();
+      }
+      ConsumeInvariant(TokenKind::SEMICOLON);
+    }
 
     while (tok_ != TokenKind::END && tok_ != TokenKind::kEOF) {
       if (tok_ != TokenKind::IDENT) {
@@ -303,10 +314,34 @@ ttcn_ast::nodes::TypeSpec* Transparser::ParseTypeSpec() {
 
   switch (tok_) {
     case TokenKind::BIT:
-    case TokenKind::OCTET:
-      Consume();
-      // Expect(TokenKind::STRING);
-      [[fallthrough]];
+    case TokenKind::OCTET: {
+      // NAME ::= BIT STRING
+      //       to
+      // NAME ::=  bitSTRING
+      const auto specrange = Consume().range;
+
+      if (tok_ != TokenKind::STRING) [[unlikely]] {
+        EmitErrorExpected(magic_enum::enum_name(TokenKind::STRING));
+      }
+      auto* const rs = parse_ref_spec([&] {
+        ParseSizeConstraint();
+      });
+      const auto& namerange = rs->x->nrange;
+
+      // TODO: consider what to do with the necessity of ASN1 source text mutation
+      auto* const mut_src = const_cast<char*>(src_.data());
+      for (std::size_t i = 0; i < specrange.Length(); ++i) {
+        mut_src[namerange.begin - 1 - i] = std::tolower(mut_src[specrange.end - i - 1]);
+      }
+      for (std::size_t i = 0; i < namerange.begin - specrange.begin - specrange.Length(); ++i) {
+        mut_src[specrange.begin + i] = ' ';
+      }
+
+      rs->x->nrange.begin -= specrange.Length();
+      rs->nrange.begin -= specrange.Length();
+
+      return rs;
+    }
     case TokenKind::STRING:
       return parse_ref_spec([&] {
         ParseSizeConstraint();

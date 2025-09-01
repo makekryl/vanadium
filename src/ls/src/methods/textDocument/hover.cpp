@@ -69,6 +69,13 @@ std::string BuildMarkdownParameterList(const core::ast::AST& ast, std::span<cons
   return buf;
 }
 
+std::string_view SafeExtractText(const core::SourceFile* file, const core::ast::Range& range) {
+  if (range.begin > range.end) [[unlikely]] {
+    return "";
+  }
+  return file->Text(range);
+}
+
 lsp::HoverResult ProvideHover(const lsp::HoverParams& params, const core::SourceFile& file, LsSessionRef d) {
   const auto symres = detail::FindSymbol(&file, params.position);
   if (!symres) {
@@ -169,10 +176,10 @@ Parameters:
               ? ""
               : std::format("\nArguments:\n{}", BuildMarkdownParameterList<core::ast::nodes::FormalPar>(
                                                     provider_file->ast, m->params->list)),
-          provider_file->ast.Text(core::ast::Range{
-              .begin = m->nrange.begin,
-              .end = m->body ? m->body->nrange.begin : m->nrange.end,
-          }));
+          SafeExtractText(provider_file, core::ast::Range{
+                                             .begin = m->nrange.begin,
+                                             .end = m->body ? m->body->nrange.begin : m->nrange.end,
+                                         }));
       break;
     }
     case core::ast::NodeKind::StructTypeDecl: {
@@ -193,10 +200,10 @@ Fields:
                              provider_file->Text(m->kind.range),  //
                              provider_file->ast.Text(*m->name),
                              BuildMarkdownParameterList<core::ast::nodes::Field>(provider_file->ast, m->fields),
-                             provider_file->ast.Text(core::ast::Range{
-                                 .begin = m->nrange.begin,
-                                 .end = m->name->nrange.end,
-                             }));
+                             SafeExtractText(provider_file, core::ast::Range{
+                                                                .begin = m->nrange.begin,
+                                                                .end = m->name->nrange.end,
+                                                            }));
       break;
     }
     case core::ast::NodeKind::ClassTypeDecl: {
@@ -210,10 +217,10 @@ Fields:
 ```
 )",
                              provider_file->ast.Text(*m->name),
-                             provider_file->ast.Text(core::ast::Range{
-                                 .begin = m->nrange.begin,
-                                 .end = m->name->nrange.end,
-                             }));
+                             SafeExtractText(provider_file, core::ast::Range{
+                                                                .begin = m->nrange.begin,
+                                                                .end = m->name->nrange.end,
+                                                            }));
       break;
     }
     case core::ast::NodeKind::EnumTypeDecl: {
@@ -249,10 +256,10 @@ Values:
 
             return buf;
           }(),
-          provider_file->ast.Text(core::ast::Range{
-              .begin = m->nrange.begin,
-              .end = m->name->nrange.end,
-          }));
+          SafeExtractText(provider_file, core::ast::Range{
+                                             .begin = m->nrange.begin,
+                                             .end = m->name->nrange.end,
+                                         }));
       break;
     }
     case core::ast::NodeKind::SubTypeDecl: {
@@ -267,10 +274,10 @@ Values:
 ```
 )",
                              provider_file->ast.Text(*m->field->name),
-                             provider_file->ast.Text(core::ast::Range{
-                                 .begin = m->nrange.begin,
-                                 .end = m->field->name->nrange.end,
-                             }));
+                             SafeExtractText(provider_file, core::ast::Range{
+                                                                .begin = m->nrange.begin,
+                                                                .end = m->nrange.end,
+                                                            }));
       break;
     }
     case core::ast::NodeKind::Declarator: {
@@ -294,16 +301,19 @@ Type: `{}`
           provider_file->ast.Text(vd->kind->range),  //
           provider_file->ast.Text(*m->name),         //
           provider_file->ast.Text(vd->type),         //
-          provider_file->ast.Text(core::ast::Range{
-              .begin = vd->kind->range.begin,
-              .end = vd->type->nrange.end,
-          }),
+          SafeExtractText(provider_file,
+                          core::ast::Range{
+                              .begin = vd->kind->range.begin,
+                              .end = vd->type->nrange.end,
+                          }),
           provider_file->ast.Text(*m->name),
-          (vd->kind->kind == core::ast::TokenKind::CONST && m->value) ? provider_file->ast.Text(core::ast::Range{
-                                                                            .begin = m->name->nrange.end + 1,
-                                                                            .end = m->value->nrange.end,
-                                                                        })
-                                                                      : "");
+          (vd->kind->kind == core::ast::TokenKind::CONST && m->value)
+              ? SafeExtractText(provider_file,
+                                core::ast::Range{
+                                    .begin = m->name->nrange.end + 1,
+                                    .end = m->value->nrange.end,
+                                })
+              : "");
       break;
     }
     case core::ast::NodeKind::FormalPar: {
@@ -324,10 +334,10 @@ Type: `{}`
                              provider_file->ast.Text(*m->name),  //
                              provider_file->ast.Text(m->type),   //
                              provider_file->ast.Text(m),
-                             provider_file->ast.Text(core::ast::Range{
-                                 .begin = m->nrange.begin,
-                                 .end = m->name->nrange.end,
-                             }));
+                             SafeExtractText(provider_file, core::ast::Range{
+                                                                .begin = m->nrange.begin,
+                                                                .end = m->name->nrange.end,
+                                                            }));
       break;
     }
     case core::ast::NodeKind::Field: {
@@ -401,10 +411,10 @@ Transitively imports modules:
 ```
 )",
                              provider_file->ast.Text(*m->name),  //
-                             provider_file->ast.Text(core::ast::Range{
-                                 .begin = m->nrange.begin,
-                                 .end = m->name->nrange.end,
-                             }));
+                             SafeExtractText(provider_file, core::ast::Range{
+                                                                .begin = m->nrange.begin,
+                                                                .end = m->name->nrange.end,
+                                                            }));
       break;
     }
     case core::ast::NodeKind::PortTypeDecl: {
@@ -418,10 +428,10 @@ Transitively imports modules:
 ```
 )",
                              provider_file->ast.Text(*m->name),  //
-                             provider_file->ast.Text(core::ast::Range{
-                                 .begin = m->nrange.begin,
-                                 .end = m->name->nrange.end,
-                             }));
+                             SafeExtractText(provider_file, core::ast::Range{
+                                                                .begin = m->nrange.begin,
+                                                                .end = m->name->nrange.end,
+                                                            }));
       break;
     }
     default:

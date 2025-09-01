@@ -53,6 +53,10 @@ std::optional<SymbolSearchResult> FindSymbol(const core::SourceFile* file, const
     }
     case core::ast::NodeKind::Field: {
       const auto* f = n->parent->As<core::ast::nodes::Field>();
+      if (f->parent->nkind == core::ast::NodeKind::SubTypeDecl) {
+        break;
+      }
+
       const auto* owner = f->parent;
 
       // TODO: ResolveExprSymbol - it's no longer actually "Expr".
@@ -67,7 +71,6 @@ std::optional<SymbolSearchResult> FindSymbol(const core::SourceFile* file, const
           .scope = nullptr,
           .symbol = structsym->Members()->Lookup(file->Text(*f->name)),
       };
-      break;
     }
     case core::ast::NodeKind::EnumTypeDecl: {
       const auto* etd = n->parent->As<core::ast::nodes::EnumTypeDecl>();

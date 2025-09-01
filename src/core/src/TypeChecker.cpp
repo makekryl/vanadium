@@ -99,7 +99,7 @@ std::string_view GetReadableTypeName(const SourceFile* sf, const semantic::Symbo
       const auto* m = decl->As<ast::nodes::SubTypeDecl>();
       return sf->Text(ast::Range{
           .begin = m->field->nrange.begin,
-          .end = m->field->name->nrange.end,
+          .end = m->nrange.end,
       });
     }
     case ast::NodeKind::ClassTypeDecl: {

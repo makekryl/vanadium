@@ -35,7 +35,8 @@ enum class TokenKind : std::uint8_t {
 
   //
 
-  COMMA,  // ,
+  COMMA,      // ,
+  SEMICOLON,  // ;
 
   RANGE,    // ..
   ELIPSIS,  // ...
@@ -53,6 +54,7 @@ enum class TokenKind : std::uint8_t {
   DEFINITIONS,
   AUTOMATIC,
   TAGS,
+  IMPORTS,
 
   BEGIN,
   END,
