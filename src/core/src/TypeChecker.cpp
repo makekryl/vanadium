@@ -1728,7 +1728,7 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
       const auto* m = n->As<ast::nodes::TemplateDecl>();
 
       if (m->params) {
-        CheckType(m->params);
+        Visit(m->params);
       }
 
       const auto* expected_type = sf_.module->scope->Resolve(sf_.Text(m->type));
