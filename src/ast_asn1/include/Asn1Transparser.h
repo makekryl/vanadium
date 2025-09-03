@@ -24,7 +24,7 @@ class Transparser {
  private:
   ttcn_ast::RootNode* ParseRootInternal();
 
-  void RewriteIdentName(const Token&);
+  void RewriteIdentName(Token&);
   ttcn_ast::nodes::Ident* ParseName();
   void ParseName(std::optional<ttcn_ast::nodes::Ident>&);
 

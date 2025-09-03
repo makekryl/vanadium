@@ -107,22 +107,34 @@ std::vector<ttcn_ast::pos_t>&& Transparser::ExtractLineMapping() noexcept {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Transparser::RewriteIdentName(const Token& tok) {
+void Transparser::RewriteIdentName(Token& tok) {
   auto v = tok.range.String(src_);
   auto* const p = const_cast<char*>(v.data());
   auto mut_v = std::span<char>{p, p + v.size()};
+  const auto rewrite_to = [&](std::string_view replacement) {
+    std::ranges::copy(replacement, mut_v.begin());
+  };
 
   switch (tok.kind) {
     case TokenKind::INTEGER:
-      std::ranges::copy(std::string_view{"integer"}, mut_v.begin());
+      rewrite_to("integer");
       break;
     case TokenKind::BOOLEAN:
-      std::ranges::copy(std::string_view{"boolean"}, mut_v.begin());
+      rewrite_to("boolean");
       break;
     case TokenKind::STRING:
-      std::ranges::copy(std::string_view{"string"}, mut_v.begin());
+      rewrite_to("string");
       break;
     default:
+      // for reserved TTCN-3 keywords
+      const auto insert_underscore_suffix = [&]() {
+        *mut_v.end() = '_';
+        ++tok.range.end;
+      };
+      if ("message" == tok.On(src_)) {
+        insert_underscore_suffix();
+        break;
+      }
       std::ranges::replace(mut_v, '-', '_');
       break;
   }
@@ -130,7 +142,9 @@ void Transparser::RewriteIdentName(const Token& tok) {
 
 ttcn_ast::nodes::Ident* Transparser::ParseName() {
   return NewNode<ttcn_ast::nodes::Ident>([&](auto&) {
-    RewriteIdentName(Consume());
+    auto tok = Consume();
+    RewriteIdentName(tok);
+    last_consumed_pos_ = tok.range.end;
   });
 }
 
