@@ -1114,8 +1114,8 @@ void BasicTypeChecker::PerformArgumentsTypeCheck(std::span<const ast::nodes::Exp
   const auto minimal_args_cnt = static_cast<std::size_t>(std::ranges::count_if(params, is_param_required));
   const auto maximal_args_cnt = params.size();
 
-  if constexpr (!Options.is_union && !Options.allow_missing_fields) {
-    if (args_count < minimal_args_cnt || args_count > maximal_args_cnt) {
+  if constexpr (!Options.is_union) {
+    if ((!Options.allow_missing_fields && (args_count < minimal_args_cnt)) || args_count > maximal_args_cnt) {
       EmitError(TypeError{
               .range = (args_count < minimal_args_cnt) ?
                   ast::Range{
