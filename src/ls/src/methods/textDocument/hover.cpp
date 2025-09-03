@@ -435,16 +435,36 @@ Transitively imports modules:
       break;
     }
     default:
-      const auto* parent = decl->parent;
-      if (parent->nkind == core::ast::NodeKind::EnumTypeDecl ||
-          (parent->nkind == core::ast::NodeKind::CallExpr &&
-           parent->parent->nkind == core::ast::NodeKind::EnumTypeDecl)) {
-        const auto* enumdecl = ((parent->nkind == core::ast::NodeKind::EnumTypeDecl) ? parent : parent->parent)
-                                   ->As<core::ast::nodes::EnumTypeDecl>();
-        const auto* valname = parent->nkind == core::ast::NodeKind::CallExpr
-                                  ? parent->As<core::ast::nodes::CallExpr>()->fun->As<core::ast::Node>()
-                                  : decl->As<core::ast::Node>();
-        const auto* valdecl = (parent->nkind == core::ast::NodeKind::EnumTypeDecl) ? decl : parent;
+      if (sym->Flags() & core::semantic::SymbolFlags::kEnumMember) {
+        std::string_view enum_name;
+        const auto* parent = decl->parent;
+        switch (parent->nkind) {
+          case core::ast::NodeKind::EnumTypeDecl: {
+            enum_name = provider_file->Text(*parent->As<core::ast::nodes::EnumTypeDecl>()->name);
+            break;
+          }
+          case core::ast::NodeKind::EnumSpec: {
+            auto& buf = *d.arena.Alloc<std::string>();
+            for (const auto* pn = parent->parent; pn->nkind == core::ast::NodeKind::Field;) {
+              buf = std::format("{}.{}", provider_file->Text(*pn->As<core::ast::nodes::Field>()->name), buf);
+
+              if (pn->parent->nkind == core::ast::NodeKind::StructTypeDecl) {
+                buf = std::format("{}.{}",
+                                  provider_file->Text(*pn->parent->As<core::ast::nodes::StructTypeDecl>()->name), buf);
+              }
+
+              pn = pn->parent->parent;
+            }
+            enum_name = buf;
+            enum_name.remove_suffix(1);  // trailing dot
+            break;
+          }
+          default: {
+            enum_name = "<anonymous>";
+            break;
+          }
+        }
+
         content += std::format(R"(
 ### enum value `{}::{}`
 
@@ -454,9 +474,9 @@ Transitively imports modules:
 {}
 ```
 )",
-                               provider_file->ast.Text(*enumdecl->name),  //
-                               provider_file->ast.Text(valname),          //
-                               provider_file->ast.Text(valdecl));
+                               enum_name,       //
+                               sym->GetName(),  //
+                               provider_file->ast.Text(decl));
         break;
       }
       content += std::format("TODO: provide hover details for '{}'", magic_enum::enum_name(decl->nkind));
