@@ -1691,7 +1691,7 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
 
     case ast::NodeKind::FormalPar: {
       const auto* m = n->As<ast::nodes::FormalPar>();
-      const auto* expected_type = sf_.module->scope->Resolve(sf_.Text(m->type));
+      const auto* expected_type = CheckType(m->type).sym;
       EnsureIsAType(expected_type, m->type);
       if (const auto* default_value = m->value; default_value) {
         const auto actual_type = CheckType(default_value, expected_type);
@@ -1721,7 +1721,7 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
         }
       }
 
-      if (f->value_constraint && f->type->nkind == ast::NodeKind::RefSpec) {
+      if (f->value_constraint && f->type->nkind == ast::NodeKind::RefSpec) {  // TODO
         const auto* sym = scope_->Resolve(sf_.Text(*f->type->As<ast::nodes::RefSpec>()->x));
         for (const auto* item : f->value_constraint->list) {
           CheckType(item, sym);
