@@ -448,6 +448,11 @@ const semantic::Symbol* ResolveListElementType(const semantic::Symbol* sym) {
   const ast::Node* decl = ExtractListSpecNode(sym);
   if (decl) {
     const auto* decl_file = ast::utils::SourceFileOf(decl);
+    if (sym->Members()) {
+      if (const auto* isym = sym->Members()->LookupShadow(""); isym) {
+        return isym;
+      }
+    }
     sym = ResolveExprType(decl_file, decl_file->module->scope,
                           decl->As<ast::nodes::ListSpec>()->elemtype->As<ast::nodes::Expr>());  // TODO: typespec expr
     return sym;
@@ -817,6 +822,14 @@ const semantic::Symbol* ResolveExprSymbol(const SourceFile* file, const semantic
     case ast::NodeKind::ListSpec: {
       const auto* m = expr->As<ast::nodes::StructSpec>();
       const auto* parent = m->parent;
+      if (parent->nkind == ast::NodeKind::ListSpec) {
+        const auto* ls_sym = ResolveExprSymbol(file, scope, parent->As<ast::nodes::Expr>());
+        if (!ls_sym) {
+          return nullptr;
+        }
+        return ResolveListElementType(ls_sym);
+      }
+
       if (parent->nkind != core::ast::NodeKind::Field) [[unlikely]] {
         return nullptr;
       }
@@ -1440,7 +1453,7 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const semantic:
                           .begin = m->nrange.end - 1,
                           .end = m->nrange.end,  // closing paren
                       },
-                  .message = std::format("elements count is expected to be in between {} and {}", min_args, max_args),
+                  .message = std::format("elements count is restricted to be in between {} and {}", min_args, max_args),
               });
             }
           }

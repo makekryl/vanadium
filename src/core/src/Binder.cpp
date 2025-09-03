@@ -853,9 +853,26 @@ std::optional<Symbol> Binder::BindTypeSpec(std::string_view name, SymbolFlags::V
       Visit(spec);
       return Symbol{name, spec, SymbolFlags::Value(flags | SymbolFlags::kEnumType),
                     &BindEnumMembers(spec->As<ast::nodes::EnumSpec>()->values)};
-    case ast::NodeKind::ListSpec:
-      Visit(spec);
-      return Symbol{name, spec, SymbolFlags::Value(flags | SymbolFlags::kListType)};
+    case ast::NodeKind::ListSpec: {
+      SymbolTable* containment{nullptr};
+      if (spec->nkind == ast::NodeKind::ListSpec) {
+        const auto* ls = spec->As<ast::nodes::ListSpec>();
+        if (ls->elemtype->nkind == ast::NodeKind::StructSpec) {
+          containment = sf_.arena.Alloc<SymbolTable>();
+          const auto* ss = ls->elemtype->As<ast::nodes::StructSpec>();
+          containment->Add(std::move(*BindTypeSpec(
+              [&] {
+                std::span<char> shadow_name = sf_.arena.AllocStringBuffer(1);
+                shadow_name.front() = kShadowStaticMemberPrefix;
+                return std::string_view{shadow_name};
+              }(),
+              SymbolFlags::kAnonymous, ss)));
+        } else {
+          Visit(ls->elemtype);
+        }
+      }
+      return Symbol{name, spec, SymbolFlags::Value(flags | SymbolFlags::kListType), containment};
+    }
     default:
       return std::nullopt;
   }
