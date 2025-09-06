@@ -37,6 +37,7 @@ const semantic::Symbol kQuestionType{
 struct InstantiatedType {
   const semantic::Symbol* sym{nullptr};
   const ast::Node* instance{nullptr};
+  std::size_t depth{0};
 
   operator bool() const {
     return sym != nullptr;
@@ -966,15 +967,8 @@ InstantiatedType ResolveExprInstantiatedType(const SourceFile* file, const seman
   return {
       .sym = type_sym,
       .instance = [&] -> const ast::Node* {
-        switch (expr->nkind) {
-          case ast::NodeKind::IndexExpr:
-            return expr;
-          default:
-            break;
-        }
         switch (expr->parent->nkind) {
           case ast::NodeKind::ReturnSpec:
-          case ast::NodeKind::IndexExpr:
           case ast::NodeKind::SelectorExpr:  // <-- TODO (related to on_static_property_invalid_access TODO)
           case ast::NodeKind::FormalPar:
             return expr->parent;
@@ -996,6 +990,14 @@ InstantiatedType ResolveExprInstantiatedType(const SourceFile* file, const seman
           default:
             return nullptr;
         }
+      }(),
+      .depth = [&] -> std::size_t {
+        const auto* declnode = decl_sym->Declaration();
+        if (!declnode) {
+          return 0;
+        }
+        const auto* ad = ast::utils::GetArrayDef(declnode);
+        return ad ? ad->size() : 0;
       }(),
   };
 }
@@ -1024,7 +1026,7 @@ class BasicTypeChecker {
 
   void MatchTypes(const ast::Range& range, const InstantiatedType& actual, const InstantiatedType& expected);
 
-  InstantiatedType CheckType(const ast::Node* n, const semantic::Symbol* desired_type = nullptr);
+  InstantiatedType CheckType(const ast::Node* n, const InstantiatedType& desired_type = {});
   bool Inspect(const ast::Node*);
 
   void Introspect(const ast::Node* n) {
@@ -1082,6 +1084,14 @@ void BasicTypeChecker::MatchTypes(const ast::Range& range, const InstantiatedTyp
     //     .message = std::format("expected argument of type '{}', got unknown type",
     //                            utils::GetReadableTypeName(expected)),
     // });
+    return;
+  }
+
+  if (actual.depth != expected.depth) {
+    EmitError(TypeError{
+        .range = range,
+        .message = std::format("expected value of array depth {}, got with depth {}", actual.depth, expected.depth),
+    });
     return;
   }
 
@@ -1148,7 +1158,7 @@ void BasicTypeChecker::PerformArgumentsTypeCheck(std::span<const ast::nodes::Exp
       expected_type.sym = ResolveExprType(&sf_, scope_, args.back());
     }
 
-    const auto actual_instance = CheckType(n, expected_type.sym);
+    const auto actual_instance = CheckType(n, expected_type);
     MatchTypes(n->nrange, actual_instance, expected_type);
   };
 
@@ -1236,7 +1246,7 @@ void BasicTypeChecker::PerformArgumentsTypeCheck(std::span<const ast::nodes::Exp
   }
 }
 
-InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const semantic::Symbol* desired_type) {
+InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const InstantiatedType& desired_type) {
   InstantiatedType resulting_type{};
   switch (n->nkind) {
     case ast::NodeKind::CallExpr: {
@@ -1319,7 +1329,7 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const semantic:
       const auto* m = n->As<ast::nodes::BinaryExpr>();
 
       auto x_type = CheckType(m->x);
-      const auto y_type = CheckType(m->y, x_type.sym);
+      const auto y_type = CheckType(m->y, x_type);
 
       const auto match_both = [&](const semantic::Symbol* expected_sym) {
         //
@@ -1438,8 +1448,18 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const semantic:
       resulting_type = desired_type;
       //
 
+      if (desired_type.depth > 0) {
+        for (const auto* arg : m->list) {
+          const InstantiatedType expected_arg_sym{
+              .sym = desired_type.sym, .instance = arg, .depth = desired_type.depth - 1};
+          const auto actual_sym = CheckType(arg, expected_arg_sym);
+          MatchTypes(arg->nrange, actual_sym, expected_arg_sym);
+        }
+        break;
+      }
+
       if (desired_type->Flags() & semantic::SymbolFlags::kList) {
-        const auto* ls = ExtractListSpecNode(desired_type);
+        const auto* ls = ExtractListSpecNode(desired_type.sym);
         const auto* ls_file = ast::utils::SourceFileOf(desired_type->Declaration());
 
         if (ls->length) {
@@ -1459,15 +1479,16 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const semantic:
           }
         }
 
-        const auto* element_type_sym = ResolveListElementType(desired_type);
+        const auto* element_type_sym = ResolveListElementType(desired_type.sym);
         for (const auto* arg : m->list) {
-          const auto actual_sym = CheckType(arg, element_type_sym);
-          MatchTypes(arg->nrange, actual_sym, {.sym = element_type_sym});
+          const InstantiatedType expected_arg_sym{.sym = element_type_sym, .instance = arg};
+          const auto actual_sym = CheckType(arg, expected_arg_sym);
+          MatchTypes(arg->nrange, actual_sym, expected_arg_sym);
         }
         break;
       }
 
-      const auto* record_sym = desired_type;
+      const auto* record_sym = desired_type.sym;
       const auto* record_decl = record_sym->Declaration();
       if (!record_decl) {
         Introspect(m);
@@ -1588,7 +1609,7 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const semantic:
               },
           .check_index =
               [&](const ast::nodes::Expr* index) {
-                MatchTypes(index->nrange, CheckType(index, nullptr), {.sym = &builtins::kInteger});
+                MatchTypes(index->nrange, CheckType(index, {}), {.sym = &builtins::kInteger});
               },
       }};
 
@@ -1688,27 +1709,33 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
     case ast::NodeKind::ValueDecl: {
       const auto* m = n->As<ast::nodes::ValueDecl>();
 
-      const auto* expected_type = CheckType(m->type).sym;
-      EnsureIsAType(expected_type, m->type);
+      const auto expected_type = CheckType(m->type);
+      EnsureIsAType(expected_type.sym, m->type);
 
       for (const auto* decl : m->decls) {
         if (!decl->value) [[unlikely]] {
           continue;
         }
 
-        const auto actual_type = CheckType(decl->value, expected_type);
-        MatchTypes(decl->nrange, actual_type, {.sym = expected_type, .instance = m});
+        const InstantiatedType expected_decl_type{
+            .sym = expected_type.sym,
+            .instance = decl,
+            .depth = decl->arraydef.size(),
+        };
+        const auto actual_type = CheckType(decl->value, expected_decl_type);
+        MatchTypes(decl->nrange, actual_type, expected_decl_type);
       }
       return false;
     };
 
     case ast::NodeKind::FormalPar: {
       const auto* m = n->As<ast::nodes::FormalPar>();
-      const auto* expected_type = CheckType(m->type).sym;
-      EnsureIsAType(expected_type, m->type);
+      auto expected_type = CheckType(m->type);
+      expected_type.instance = m;
+      EnsureIsAType(expected_type.sym, m->type);
       if (const auto* default_value = m->value; default_value) {
         const auto actual_type = CheckType(default_value, expected_type);
-        MatchTypes(default_value->nrange, actual_type, {.sym = expected_type, .instance = m});
+        MatchTypes(default_value->nrange, actual_type, expected_type);
       }
       return false;
     };
@@ -1737,7 +1764,7 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
       if (f->value_constraint && f->type->nkind == ast::NodeKind::RefSpec) {  // TODO
         const auto* sym = scope_->Resolve(sf_.Text(*f->type->As<ast::nodes::RefSpec>()->x));
         for (const auto* item : f->value_constraint->list) {
-          CheckType(item, sym);
+          CheckType(item, {.sym = sym});
         }
       }
 
@@ -1751,9 +1778,9 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
         Visit(m->params);
       }
 
-      const auto* expected_type = sf_.module->scope->Resolve(sf_.Text(m->type));
+      const auto expected_type = CheckType(m->type);
       const auto actual_type = CheckType(m->value, expected_type);
-      MatchTypes(m->value->nrange, actual_type, {.sym = expected_type});
+      MatchTypes(m->value->nrange, actual_type, expected_type);
 
       return false;
     }
@@ -1786,7 +1813,7 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
       }
 
       const auto expected_type = ResolveExprInstantiatedType(&sf_, sf_.module->scope, fdecl->ret->type);
-      const auto actual_type = CheckType(m->result, expected_type.sym);
+      const auto actual_type = CheckType(m->result, expected_type);
       MatchTypes(m->result->nrange, actual_type, expected_type);
 
       return false;
@@ -1801,7 +1828,7 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
       }
 
       const auto expected_type = CheckType(m->property);
-      const auto actual_type = CheckType(m->value, expected_type.sym);
+      const auto actual_type = CheckType(m->value, expected_type);
       MatchTypes(m->value->nrange, actual_type, expected_type);
 
       return false;
@@ -1840,7 +1867,7 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
       } else if (tag_type->Flags() & semantic::SymbolFlags::kEnum) {
         for (const auto* clause : m->clauses) {
           for (const auto* cond : clause->cond) {
-            MatchTypes(cond->nrange, CheckType(cond, tag_type.sym), tag_type);
+            MatchTypes(cond->nrange, CheckType(cond, tag_type), tag_type);
           }
           Inspect(clause->body);
         }
