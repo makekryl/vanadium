@@ -168,7 +168,7 @@ lsp::SignatureHelpResult ProvideSignatureHelp(const lsp::SignatureHelpParams& pa
       const core::semantic::Scope* scope = core::semantic::utils::FindScope(file.module->scope, cl);
 
       const auto* type = core::checker::ext::DeduceCompositeLiteralType(&file, scope, cl);
-      if (!type || !(type->Flags() & core::semantic::SymbolFlags::kStructuralType)) {
+      if (!type || !(type->Flags() & core::semantic::SymbolFlags::kStructural)) {
         break;
       }
 
