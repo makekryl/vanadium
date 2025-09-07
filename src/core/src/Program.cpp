@@ -26,6 +26,12 @@
 
 namespace vanadium::core {
 
+namespace {
+inline AnalysisState::Value& operator|=(AnalysisState::Value& lhs, AnalysisState::Value rhs) {
+  return lhs = static_cast<AnalysisState::Value>(lhs | rhs);
+}
+}  // namespace
+
 void Program::Update(const lib::Consumer<const ProgramModifier&>& modify) {
   tbb::task_group wg;
   modify({
@@ -88,7 +94,7 @@ void Program::AttachFile(SourceFile& sf) {
   semantic::Bind(sf);
 
   if (sf.module.has_value()) [[likely]] {
-    sf.dirty = true;
+    sf.analysis_state = AnalysisState::kDirty;
   }
 
   {
@@ -138,7 +144,7 @@ void Program::DetachFile(SourceFile& sf) {
       dependent->dependencies.erase(it);
     }
 
-    dependent->sf->dirty = true;
+    dependent->sf->analysis_state = AnalysisState::kDirty;
   }
 
   {
@@ -206,7 +212,7 @@ void Program::Crossbind() {
   };
 
   tbb::parallel_for_each(files_ | std::views::values, [&](SourceFile& sf) {
-    if (!sf.dirty) {
+    if (sf.analysis_state & AnalysisState::kCrossbind) {
       return;
     }
 
@@ -333,17 +339,19 @@ void Program::Crossbind() {
         }
       }
     }
+
+    sf.analysis_state |= AnalysisState::kCrossbind;
   });
 
   tbb::parallel_for_each(files_ | std::views::values, [&](SourceFile& sf) {
-    if (!sf.dirty || sf.skip_analysis) {
+    if (sf.skip_analysis || (sf.analysis_state & AnalysisState::kTypecheck)) {
       return;
     }
 
     sf.type_errors.clear();
     checker::PerformTypeCheck(sf);
 
-    sf.dirty = false;
+    sf.analysis_state |= AnalysisState::kTypecheck;
   });
 
   for (auto* program : dependents_) {

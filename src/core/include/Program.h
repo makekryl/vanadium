@@ -84,6 +84,17 @@ struct ModuleDescriptor {
   }
 };
 
+namespace AnalysisState {  // NOLINT(readability-identifier-naming)
+enum Value : std::uint8_t {
+  kDirty = 0,
+
+  kCrossbind = 1 << 0,
+  kTypecheck = 1 << 1,
+
+  kComplete = kCrossbind | kTypecheck
+};
+}
+
 class Program;
 struct SourceFile {
   lib::Arena arena;
@@ -99,7 +110,7 @@ struct SourceFile {
 
   std::optional<ModuleDescriptor> module;
 
-  bool dirty;
+  AnalysisState::Value analysis_state{AnalysisState::kDirty};
   bool skip_analysis{false};
 
   [[nodiscard]] std::string_view Text(const ast::Node* n) const noexcept {

@@ -1,5 +1,6 @@
 #include <glaze/ext/jsonrpc.hpp>
 #include <glaze/json/write.hpp>
+#include <utility>
 
 #include "LSProtocol.h"
 #include "LanguageServerContext.h"
@@ -25,7 +26,8 @@ void methods::textDocument::didOpen::operator()(LsContext& ctx, const lsp::DidOp
     const auto [it, inserted] = ctx->file_versions.try_emplace(path, params.textDocument.version);
     if (inserted || it->second == params.textDocument.version) {
       if (const auto* sf = project.program.GetFile(path); sf) {
-        VLS_DEBUG("didOpen({}): dirty={}, skipped={}", path, sf->dirty, sf->skip_analysis);
+        VLS_DEBUG("didOpen({}): analysis={:b}, skipped={}", path, std::to_underlying(sf->analysis_state),
+                  sf->skip_analysis);
       }
 
       it->second = params.textDocument.version;
