@@ -51,7 +51,7 @@ enum Value : std::uint32_t {
   kStructuralType = kType | kStructural,
 
   kComponent = 1 << 9,
-  kComponentStructuralType = kType | kStructural | kComponent,
+  kComponentType = kType | kComponent,
 
   kUnion = 1 << 10,
   kUnionStructuralType = kType | kStructural | kUnion,

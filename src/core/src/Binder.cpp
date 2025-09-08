@@ -53,11 +53,11 @@ class ExternalsTracker {
     active_ = upper;
   }
 
-  ExternallyResolvedGroup* operator->() {
-    return active_;
+  ExternallyResolvedGroup* TopLevel() {
+    return &top_level_;
   }
-  ExternallyResolvedGroup& operator*() {
-    return *active_;
+  ExternallyResolvedGroup* Active() {
+    return active_;
   }
 
  private:
@@ -170,7 +170,7 @@ class Binder {
     return sf_.Text(n);
   }
 
-  void BindReference(const ast::nodes::Ident* ident) {
+  void BindReference(const ast::nodes::Ident* ident, ExternallyResolvedGroup* externals_group) {
     const auto name = Lit(ident);
 
     if (hoisted_names_.contains(name) || hoisted_inner_names_.contains(name)) {
@@ -184,7 +184,10 @@ class Binder {
       return;
     }
 
-    externals_->idents.emplace_back(ident);
+    externals_group->idents.emplace_back(ident);
+  }
+  void BindReference(const ast::nodes::Ident* ident) {
+    BindReference(ident, externals_.Active());
   }
 
   template <ast::IsNode NodeToInspect, auto TargetSetPtr>
@@ -202,6 +205,8 @@ class Binder {
       (this->*TargetSetPtr).insert(Lit(*m->name));
     }
   };
+
+  void AugmentByExtensible(std::invocable auto f);
 
   std::optional<Symbol> BindTypeSpec(std::string_view name, SymbolFlags::Value flags, const ast::nodes::TypeSpec*);
   SymbolTable& BindFields(const std::vector<ast::nodes::Field*>&);
@@ -345,32 +350,57 @@ bool Binder::Inspect(const ast::Node* n) {
     case ast::NodeKind::ComponentTypeDecl: {
       const auto* m = n->As<ast::nodes::ComponentTypeDecl>();
 
-      auto& members = NewSymbolTable();
-      for (const auto* stmt : m->body->stmts) {
-        if (stmt->nkind == ast::NodeKind::DeclStmt) {
-          const auto* d = stmt->As<ast::nodes::DeclStmt>();
-          if (d->decl->nkind == ast::NodeKind::ValueDecl) {
+      auto* originated_scope = Scoped(m, [&] {
+        const auto process = [&] {
+          for (const auto* stmt : m->body->stmts) {
+            if (stmt->nkind != ast::NodeKind::DeclStmt) {
+              continue;
+            }
+            const auto* d = stmt->As<ast::nodes::DeclStmt>();
+            if (d->decl->nkind != ast::NodeKind::ValueDecl) {
+              continue;
+            }
             const auto* vd = d->decl->As<ast::nodes::ValueDecl>();
             Visit(vd->type);
             for (const auto* declarator : vd->decls) {
               if (declarator->name) {
-                AddSymbol(members, {
-                                       Lit(std::addressof(*declarator->name)),
-                                       declarator,
-                                       SymbolFlags::kField,
-                                   });
+                AddSymbol({
+                    Lit(std::addressof(*declarator->name)),
+                    declarator,
+                    SymbolFlags::kField,
+                });
               }
             }
           }
+        };
+
+        if (m->extends.empty()) {
+          process();
+        } else {
+          const auto augment_by = Lit(m->extends.front());  // <-- TODO
+          if (const auto* sym = scope_->Resolve(augment_by)) {
+            if (sym->Flags() & SymbolFlags::kComponent) {
+              scope_->augmentation.push_back(&sym->OriginatedScope()->symbols);
+            } else {
+              // TODO: try to also bring up this error from xbind
+              EmitError(SemanticError{
+                  .range = m->extends.front()->nrange,
+                  .type = SemanticError::Type::kClassCanBeExtendedByClassOnly,
+              });
+            }
+            process();
+          } else {
+            externals_.Augmented(augment_by, scope_, process);
+          }
         }
-      }
+      });
 
       if (m->name) {
         AddSymbol({
             Lit(std::addressof(*m->name)),
             m,
-            SymbolFlags::kComponentStructuralType,
-            &members,
+            SymbolFlags::kComponentType,
+            originated_scope,
         });
         // TODO
       }
@@ -449,7 +479,7 @@ bool Binder::Inspect(const ast::Node* n) {
           const auto augment_by = Lit(m->runs_on->comp);
           if (const auto* sym = scope_->Resolve(augment_by)) {
             if (sym->Flags() & SymbolFlags::kComponent) {
-              scope_->augmentation.push_back(sym->Members());
+              scope_->augmentation.push_back(&sym->OriginatedScope()->symbols);
             } else {
               // TODO: try to also bring up this error from xbind
               EmitError(SemanticError{
@@ -721,7 +751,7 @@ bool Binder::Inspect(const ast::Node* n) {
             } else {
               // TODO: try to also bring up this error from xbind
               EmitError(SemanticError{
-                  .range = m->runs_on->nrange,
+                  .range = m->extends.front()->nrange,
                   .type = SemanticError::Type::kClassCanBeExtendedByClassOnly,
               });
             }
