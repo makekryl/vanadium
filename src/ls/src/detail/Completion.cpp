@@ -4,6 +4,7 @@
 #include <glaze/core/read.hpp>
 #include <glaze/json/write.hpp>
 #include <print>
+#include <string_view>
 #include <variant>
 
 #include "AST.h"
@@ -58,6 +59,82 @@ namespace {
 }
 }  // namespace
 
+namespace {
+struct CompletionContext {
+  const core::semantic::Scope* scope;
+  std::vector<lsp::CompletionItem>& items;
+  lib::Arena& arena;
+};
+
+// todo: extract to lib as strings concat
+std::string_view Suborder(lib::Arena& arena, std::string_view s1, std::string_view s2) {
+  auto buf = arena.AllocStringBuffer(s1.length() + s2.length());
+  auto it = std::ranges::copy(s1, buf.begin()).out;
+  it = std::ranges::copy(s2, it).out;
+  return std::string_view(buf);
+}
+std::string_view Suborder(lib::Arena& arena, std::string_view s1, std::string_view s2, std::string_view s3) {
+  auto buf = arena.AllocStringBuffer(s1.length() + s2.length() + s3.length());
+  auto it = std::ranges::copy(s1, buf.begin()).out;
+  it = std::ranges::copy(s2, it).out;
+  it = std::ranges::copy(s3, it).out;
+  return std::string_view(buf);
+}
+
+void CollectVisibleSymbols(CompletionContext& ctx, std::string_view order) {
+  const auto bring_symbols = [&](const core::semantic::SymbolTable& symbols, std::string_view s_order,
+                                 std::optional<std::string_view> description = std::nullopt) {
+    for (const auto& [name, sym] : symbols.Enumerate()) {
+      ctx.items.emplace_back(lsp::CompletionItem{
+          .label = name,
+          .labelDetails =
+              lsp::CompletionItemLabelDetails{
+                  // .detail = core::checker::utils::GetReadableTypeName(&sym), // <-- TODO: obtain type
+                  .description = description,
+              },
+          .kind = LspSymbolKind(sym),
+          .sortText = s_order,
+      });
+    }
+  };
+
+  const auto bring_from_augmentation = [&](const core::semantic::Scope* scope, std::string_view ks_order) {
+    std::size_t i{0};
+    for (const auto* t : scope->augmentation) {
+      std::optional<std::string_view> description{std::nullopt};
+      {
+        auto r = t->Enumerate();
+        const auto it = r.begin();
+        if (it != r.end()) {
+          const auto* decl = it->second.Declaration();
+          if (decl->parent->nkind == core::ast::NodeKind::ValueDecl) {
+            decl = decl->parent;
+          }
+          if (decl->parent->nkind == core::ast::NodeKind::Definition &&
+              decl->parent->parent->nkind == core::ast::NodeKind::ComponentTypeDecl) {
+            description = core::ast::utils::SourceFileOf(decl)->Text(
+                *decl->parent->parent->As<core::ast::nodes::ComponentTypeDecl>()->name);
+          }
+        }
+      }
+
+      bring_symbols(*t, Suborder(ctx.arena, order, ks_order, std::to_string(i++)), description);
+    }
+  };
+
+  bring_symbols(ctx.scope->symbols, Suborder(ctx.arena, order, "1"));
+  bring_from_augmentation(ctx.scope, "1");
+
+  {
+    std::size_t i{0};
+    for (const auto* cs = ctx.scope->ParentScope(); cs != nullptr; cs = cs->ParentScope()) {
+      bring_symbols(cs->symbols, Suborder(ctx.arena, order, "2", std::to_string(i++)));
+      bring_from_augmentation(cs, "2");
+    }
+  }
+}
+}  // namespace
+
 lsp::CompletionList CollectCompletions(const lsp::CompletionParams& params, const core::SourceFile& file,
                                        LsSessionRef d) {
   if (!file.module) {
@@ -74,6 +151,12 @@ lsp::CompletionList CollectCompletions(const lsp::CompletionParams& params, cons
            magic_enum::enum_name(n->parent->nkind), magic_enum::enum_name(n->parent->parent->nkind));
 
   const core::semantic::Scope* scope = core::semantic::utils::FindScope(file.module->scope, n);
+
+  CompletionContext completion_ctx{
+      .scope = scope,
+      .items = items,
+      .arena = d.arena,
+  };
 
   const auto mask = file.Text(n);
   VLS_WARN("    compl:: mask: '{}'", mask);
@@ -213,15 +296,7 @@ lsp::CompletionList CollectCompletions(const lsp::CompletionParams& params, cons
     return completion_list;  // todo: extract filler to separate func
   }
 
-  for (const auto* cs = scope; cs != nullptr; cs = cs->ParentScope()) {
-    for (const auto& [name, msym] : cs->symbols.Enumerate()) {
-      items.emplace_back(lsp::CompletionItem{
-          .label = name,
-          .kind = LspSymbolKind(msym),
-          .sortText = "0",
-      });
-    }
-  }
+  CollectVisibleSymbols(completion_ctx, "1");
 
   file.program->VisitAccessibleModules([&](const core::ModuleDescriptor& module) {
     for (const auto& sym : module.scope->symbols.Enumerate() | std::views::values) {

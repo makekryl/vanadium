@@ -89,6 +89,14 @@ std::string_view GetReadableTypeName(const SourceFile* sf, const semantic::Symbo
           .end = m->name->nrange.end,
       });
     }
+    case ast::NodeKind::ComponentTypeDecl: {
+      const auto* m = decl->As<ast::nodes::ComponentTypeDecl>();
+      constexpr std::uint32_t kTypeOffset = std::string_view{"type "}.length();
+      return sf->Text(ast::Range{
+          .begin = m->nrange.begin + kTypeOffset,
+          .end = m->name->nrange.end,
+      });
+    }
     case ast::NodeKind::StructTypeDecl: {
       const auto* m = decl->As<ast::nodes::StructTypeDecl>();
       return sf->Text(ast::Range{
