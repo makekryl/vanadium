@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cassert>
 #include <memory>
 #include <ranges>
@@ -20,49 +21,59 @@ namespace semantic {
 
 class ExternalsTracker {
  public:
-  ExternalsTracker() : active_(&top_level_) {}
+  ExternalsTracker() : active_(&primary_) {}
 
-  std::vector<ExternallyResolvedGroup> Build() {
-    std::vector<ExternallyResolvedGroup> result;
-    result.reserve(mapping_.size() + (top_level_.idents.empty() ? 0 : 1));
+  ModuleExternals Build() {
+    ModuleExternals result{
+        .primary = std::move(primary_),
+        .secondary = std::move(secondary_),
+        .augmented = {},
+    };
 
-    if (!top_level_.idents.empty()) {
-      top_level_.resolution_set = lib::Bitset(top_level_.idents.size());
-      result.push_back(std::move(top_level_));
+    result.augmented.reserve(augmented_.size());
+    for (auto& group : augmented_ | std::ranges::views::values) {
+      result.augmented.push_back(std::move(group));
     }
 
-    for (auto& group : mapping_ | std::ranges::views::values) {
-      // TODO: do something with this ugly bitset after-construction resizing (actually, replacing the 0-sized one)
-      //       also applies to the same thing few lines upper
+    const auto resize_resolution_set = [](ExternallyResolvedGroup& group) {
       group.resolution_set = lib::Bitset(group.idents.size());
-      result.push_back(std::move(group));
-    }
+    };
+    resize_resolution_set(result.primary);
+    resize_resolution_set(result.secondary);
+    std::ranges::for_each(result.augmented, resize_resolution_set);
+
     return result;
   }
 
-  void Augmented(std::string_view provider, Scope* scope, std::invocable auto f) {
+  void With(ExternallyResolvedGroup* target, std::invocable auto f) {
     auto* upper = active_;
 
-    auto [group_it, _] = mapping_.try_emplace(provider, std::vector<const ast::nodes::Ident*>{},
-                                              std::vector<semantic::Scope*>{}, provider);
-    active_ = &group_it->second;
-    active_->scopes.emplace_back(scope);
-    //
+    active_ = target;
     f();
-    //
     active_ = upper;
   }
 
-  ExternallyResolvedGroup* TopLevel() {
-    return &top_level_;
+  void Augmented(std::string_view provider, Scope* scope, std::invocable auto f) {
+    auto [group_it, _] = augmented_.try_emplace(provider, std::vector<const ast::nodes::Ident*>{},
+                                                std::vector<semantic::Scope*>{}, provider);
+    group_it->second.scopes.emplace_back(scope);
+    With(&group_it->second, f);
+  }
+
+  ExternallyResolvedGroup* Primary() {
+    return &primary_;
+  }
+  ExternallyResolvedGroup* Secondary() {
+    return &primary_;
   }
   ExternallyResolvedGroup* Active() {
     return active_;
   }
 
  private:
-  ExternallyResolvedGroup top_level_{{}, {}, ""};
-  std::unordered_map<std::string_view, ExternallyResolvedGroup> mapping_;
+  ExternallyResolvedGroup primary_{};
+  ExternallyResolvedGroup secondary_{};
+  std::unordered_map<std::string_view, ExternallyResolvedGroup> augmented_;
 
   ExternallyResolvedGroup* active_;
 };
@@ -82,6 +93,9 @@ class Binder {
 
     Scope trash_scope(nullptr);  // to avoid scope_ != nullptr checks
     scope_ = &trash_scope;
+
+    vd_types_external_group_ = externals_.Secondary();
+
     Visit(top_level_node);
   }
 
@@ -214,7 +228,9 @@ class Binder {
 
   std::unordered_multimap<std::string_view, ImportDescriptor> imports_;
   std::unordered_set<std::string_view> required_imports_;
+
   ExternalsTracker externals_;
+  ExternallyResolvedGroup* vd_types_external_group_;
 
   std::unordered_set<std::string_view> hoisted_names_;
   std::unordered_set<std::string_view> hoisted_inner_names_;
@@ -321,6 +337,16 @@ bool Binder::Inspect(const ast::Node* n) {
       return false;
     }
 
+    case ast::NodeKind::Definition: {
+      auto* pg = vd_types_external_group_;
+
+      vd_types_external_group_ = externals_.Primary();
+      Introspect(n);
+      vd_types_external_group_ = pg;
+
+      return false;
+    }
+
     case ast::NodeKind::ImportDecl: {
       const auto* m = n->As<ast::nodes::ImportDecl>();
 
@@ -361,7 +387,9 @@ bool Binder::Inspect(const ast::Node* n) {
               continue;
             }
             const auto* vd = d->decl->As<ast::nodes::ValueDecl>();
-            Visit(vd->type);
+            externals_.With(externals_.Primary(), [&] {
+              Visit(vd->type);
+            });
             for (const auto* declarator : vd->decls) {
               if (declarator->name) {
                 AddSymbol({
@@ -578,7 +606,11 @@ bool Binder::Inspect(const ast::Node* n) {
 
     case ast::NodeKind::FormalPar: {
       const auto* m = n->As<ast::nodes::FormalPar>();
-      Visit(m->type);
+
+      externals_.With(externals_.Primary(), [&] {
+        Visit(m->type);
+      });
+
       MaybeVisit(m->value);
       if (m->name) {
         AddSymbol({
@@ -587,6 +619,17 @@ bool Binder::Inspect(const ast::Node* n) {
             SymbolFlags::kArgument,
         });
       }
+      return false;
+    }
+
+    case ast::NodeKind::ValueDecl: {
+      const auto* m = n->As<ast::nodes::ValueDecl>();
+
+      externals_.With(vd_types_external_group_, [&] {
+        Visit(m->type);
+      });
+      Visit(m->decls);
+
       return false;
     }
 

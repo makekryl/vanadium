@@ -30,16 +30,15 @@ struct ExternallyResolvedGroup {
   bool augmentation_provider_injected{false};
   lib::Bitset resolution_set;
 
-  ExternallyResolvedGroup(std::vector<const ast::nodes::Ident*>&& idents_, std::vector<semantic::Scope*>&& scopes_,
-                          std::string_view augmentation_provider_ = {})
-      : idents(std::move(idents_)),
-        scopes(std::move(scopes_)),
-        augmentation_provider(augmentation_provider_),
-        resolution_set(idents_.size()) {}
-
   [[nodiscard]] bool IsResolved() const {
     return resolution_set.All();
   }
+};
+
+struct ModuleExternals {
+  ExternallyResolvedGroup primary;                 // top-level definitions mandatory for dependent modules analysis
+  ExternallyResolvedGroup secondary;               // other definitions that should be available from top-level scope
+  std::vector<ExternallyResolvedGroup> augmented;  // scopes that needs to be augmented to complete resolution
 };
 
 struct DependencyEntry {
@@ -69,7 +68,7 @@ struct ModuleDescriptor {
   std::unordered_set<ModuleDescriptor*> dependents;
   std::unordered_set<std::string_view> required_imports;
 
-  std::vector<ExternallyResolvedGroup> externals;
+  ModuleExternals externals;
   std::vector<const ast::nodes::Ident*> unresolved;
 
   tbb::speculative_spin_mutex crossbind_mutex_;
@@ -88,10 +87,11 @@ namespace AnalysisState {  // NOLINT(readability-identifier-naming)
 enum Value : std::uint8_t {
   kDirty = 0,
 
-  kCrossbind = 1 << 0,
-  kTypecheck = 1 << 1,
+  kBasicCrossbind = 1 << 0,
+  kFullCrossbind = 1 << 1,
+  kTypecheck = 1 << 2,
 
-  kComplete = kCrossbind | kTypecheck
+  kComplete = kBasicCrossbind | kFullCrossbind | kTypecheck
 };
 }
 
@@ -193,7 +193,8 @@ class Program {
   void AttachFile(SourceFile&);
   void DetachFile(SourceFile&);
 
-  void Crossbind();
+  void Crossbind(SourceFile&, ExternallyResolvedGroup&);
+  void Analyze();
 
   std::unordered_map<std::string, SourceFile> files_;
   tbb::speculative_spin_mutex files_mutex_;

@@ -53,7 +53,7 @@ void Program::Update(const lib::Consumer<const ProgramModifier&>& modify) {
 
 void Program::Commit(const lib::Consumer<const ProgramModifier&>& modify) {
   Update(modify);
-  Crossbind();
+  Analyze();
 }
 
 void Program::UpdateFile(const std::string& path, const FileReadFn& read) {
@@ -192,7 +192,9 @@ template <typename NodeTextProvider>
 }
 }  // namespace
 
-void Program::Crossbind() {
+void Program::Crossbind(SourceFile& sf, ExternallyResolvedGroup& ext_group) {
+  auto& module = *sf.module;
+
   const auto register_dependency = [&](ModuleDescriptor& module, ModuleDescriptor* imported_module,
                                        DependencyEntry&& dependency) -> bool {
     const auto& [it, inserted] = module.dependencies.try_emplace(imported_module);
@@ -211,151 +213,161 @@ void Program::Crossbind() {
     }
   };
 
-  tbb::parallel_for_each(files_ | std::views::values, [&](SourceFile& sf) {
-    if (sf.analysis_state & AnalysisState::kCrossbind) {
+  const auto on_missing_module = [&](ModuleDescriptor* via, std::string_view /* missing_module */) {
+    if (!via) {
       return;
     }
+    // it may become useful after, we should keep an eye on it
+    module.transitive_dependency_providers.insert(via);
+  };
 
-    auto& module = *sf.module;
-    module.unresolved.clear();
+  if (!ext_group.augmentation_provider.empty() && !ext_group.augmentation_provider_injected) {
+    const auto resolve_through = [&](const semantic::Symbol* sym, ModuleDescriptor* imported_module) {
+      const semantic::SymbolTable* augmentation_table =
+          (sym->Flags() & semantic::SymbolFlags::kStructural) ? sym->Members() : &sym->OriginatedScope()->symbols;
+      const auto contribution_opt = ResolveContribution(
+          ext_group,
+          [&sf](const ast::nodes::Ident* ident) {
+            return sf.Text(ident);
+          },
+          *augmentation_table,
+          [](const std::size_t) {
+            return true;
+          });
 
-    const auto on_missing_module = [&](ModuleDescriptor* via, std::string_view /* missing_module */) {
-      if (!via) {
+      if (!contribution_opt) {
         return;
       }
-      // it may become useful after, we should keep an eye on it
-      module.transitive_dependency_providers.insert(via);
+      ext_group.resolution_set |= *contribution_opt;
+
+      for (auto* scope : ext_group.scopes) {
+        scope->augmentation.push_back(augmentation_table);
+      }
+      ext_group.augmentation_provider_injected = true;
+
+      register_dependency(module, imported_module,
+                          DependencyEntry{
+                              .provider = augmentation_table,
+                              .injected_to = nullptr,  // i.e. injected to ext_group->scopes
+                              .ext_group = &ext_group,
+                              .contribution = *contribution_opt,
+                              .augmenting_locals = true,
+                          });
     };
 
-    for (auto& ext_group : module.externals) {
-      if (!ext_group.augmentation_provider.empty() && !ext_group.augmentation_provider_injected) {
-        const auto resolve_through = [&](const semantic::Symbol* sym, ModuleDescriptor* imported_module) {
-          const semantic::SymbolTable* augmentation_table =
-              (sym->Flags() & semantic::SymbolFlags::kStructural) ? sym->Members() : &sym->OriginatedScope()->symbols;
+    semantic::VisitImports<{.accept_private_imports = true}>(
+        this, module, on_missing_module, [&](auto* imported_module, auto* via) {
+          const auto* sym = imported_module->scope->ResolveDirect(ext_group.augmentation_provider);
+          if (!sym) {
+            // continue search
+            return true;
+          }
+
+          resolve_through(sym, imported_module);
+          if (via != nullptr) {
+            register_transitive_dependency(module, via);
+          }
+          return false;
+        });
+  }
+
+  if (!ext_group.IsResolved()) {
+    semantic::VisitImports<{.accept_private_imports = true}>(
+        this, module, on_missing_module, [&](auto* imported_module, auto* via) {
+          if (ext_group.IsResolved()) {
+            return false;
+          }
+
+          const semantic::SymbolTable& imported_table = imported_module->scope->symbols;
           const auto contribution_opt = ResolveContribution(
               ext_group,
               [&sf](const ast::nodes::Ident* ident) {
                 return sf.Text(ident);
               },
-              *augmentation_table,
-              [](const std::size_t) {
-                return true;
+              imported_table,
+              [&ext_group](const std::size_t idx) {
+                return !ext_group.resolution_set.Get(idx);
               });
 
           if (!contribution_opt) {
-            return;
+            // there's still unresolved symbols as nothing new has been resolved
+            // continue search
+            return true;
           }
           ext_group.resolution_set |= *contribution_opt;
 
-          for (auto* scope : ext_group.scopes) {
-            scope->augmentation.push_back(augmentation_table);
+          // About ".injected_to = module.scope," - we've noticed that some unresolved symbols from this group
+          // are actually are global symbols imported into this scope from another module.
+          // We bind dependency to ext_group as we would want to recheck this group only if dependent symbol
+          // goes out of the imported module scope.
+          const bool is_new_dependency = register_dependency(module, imported_module,
+                                                             DependencyEntry{
+                                                                 .provider = &imported_table,
+                                                                 .injected_to = module.scope,
+                                                                 .ext_group = &ext_group,
+                                                                 .contribution = *contribution_opt,
+                                                                 .augmenting_locals = false,
+                                                             });
+
+          // better to double check than capture mutex in register_transitive_dependency
+          if (is_new_dependency ||
+              std::ranges::all_of(module.dependencies[imported_module], [](const DependencyEntry& entry) {
+                return entry.augmenting_locals;
+              })) {
+            module.scope->augmentation.push_back(&imported_table);
+            if (via != nullptr) {
+              register_transitive_dependency(module, via);
+            }
           }
-          ext_group.augmentation_provider_injected = true;
 
-          register_dependency(module, imported_module,
-                              DependencyEntry{
-                                  .provider = augmentation_table,
-                                  .injected_to = nullptr,  // i.e. injected to ext_group->scopes
-                                  .ext_group = &ext_group,
-                                  .contribution = *contribution_opt,
-                                  .augmenting_locals = true,
-                              });
-        };
+          return !ext_group.IsResolved();
+        });
+  }
 
-        semantic::VisitImports<{.accept_private_imports = true}>(
-            this, module, on_missing_module, [&](auto* imported_module, auto* via) {
-              const auto* sym = imported_module->scope->ResolveDirect(ext_group.augmentation_provider);
-              if (!sym) {
-                // continue search
-                return true;
-              }
-
-              resolve_through(sym, imported_module);
-              if (via != nullptr) {
-                register_transitive_dependency(module, via);
-              }
-              return false;
-            });
-      }
-
-      if (!ext_group.IsResolved()) {
-        semantic::VisitImports<{.accept_private_imports = true}>(
-            this, module, on_missing_module, [&](auto* imported_module, auto* via) {
-              if (ext_group.IsResolved()) {
-                return false;
-              }
-
-              const semantic::SymbolTable& imported_table = imported_module->scope->symbols;
-              const auto contribution_opt = ResolveContribution(
-                  ext_group,
-                  [&sf](const ast::nodes::Ident* ident) {
-                    return sf.Text(ident);
-                  },
-                  imported_table,
-                  [&ext_group](const std::size_t idx) {
-                    return !ext_group.resolution_set.Get(idx);
-                  });
-
-              if (!contribution_opt) {
-                // there's still unresolved symbols as nothing new has been resolved
-                // continue search
-                return true;
-              }
-              ext_group.resolution_set |= *contribution_opt;
-
-              // About ".injected_to = module.scope," - we've noticed that some unresolved symbols from this group
-              // are actually are global symbols imported into this scope from another module.
-              // We bind dependency to ext_group as we would want to recheck this group only if dependent symbol
-              // goes out of the imported module scope.
-              const bool is_new_dependency = register_dependency(module, imported_module,
-                                                                 DependencyEntry{
-                                                                     .provider = &imported_table,
-                                                                     .injected_to = module.scope,
-                                                                     .ext_group = &ext_group,
-                                                                     .contribution = *contribution_opt,
-                                                                     .augmenting_locals = false,
-                                                                 });
-
-              // better to double check than capture mutex in register_transitive_dependency
-              if (is_new_dependency ||
-                  std::ranges::all_of(module.dependencies[imported_module], [](const DependencyEntry& entry) {
-                    return entry.augmenting_locals;
-                  })) {
-                module.scope->augmentation.push_back(&imported_table);
-                if (via != nullptr) {
-                  register_transitive_dependency(module, via);
-                }
-              }
-
-              return !ext_group.IsResolved();
-            });
-      }
-
-      if (!ext_group.IsResolved()) {  // IsResolved() is very fast, faster than checking individual bits
-        for (std::size_t idx = 0; idx < ext_group.resolution_set.Size(); idx++) {
-          if (!ext_group.resolution_set.Get(idx)) {
-            module.unresolved.push_back(ext_group.idents[idx]);
-          }
-        }
+  if (!ext_group.IsResolved()) {  // IsResolved() is very fast, faster than checking individual bits
+    for (std::size_t idx = 0; idx < ext_group.resolution_set.Size(); idx++) {
+      if (!ext_group.resolution_set.Get(idx)) {
+        module.unresolved.push_back(ext_group.idents[idx]);
       }
     }
+  }
+}
 
-    sf.analysis_state |= AnalysisState::kCrossbind;
-  });
-
+void Program::Analyze() {
   tbb::parallel_for_each(files_ | std::views::values, [&](SourceFile& sf) {
-    if (sf.skip_analysis || (sf.analysis_state & AnalysisState::kTypecheck)) {
-      return;
+    auto& module = *sf.module;
+
+    if (sf.analysis_state == AnalysisState::kDirty) {
+      sf.type_errors.clear();
     }
 
-    sf.type_errors.clear();
-    checker::PerformTypeCheck(sf);
+    if (!(sf.analysis_state & AnalysisState::kBasicCrossbind)) {
+      module.unresolved.clear();
 
-    sf.analysis_state |= AnalysisState::kTypecheck;
+      Crossbind(sf, module.externals.primary);
+
+      sf.analysis_state |= AnalysisState::kBasicCrossbind;
+    }
+
+    if (!sf.skip_analysis && !(sf.analysis_state & AnalysisState::kFullCrossbind)) {
+      Crossbind(sf, module.externals.secondary);
+      for (auto& ext_group : module.externals.augmented) {
+        Crossbind(sf, ext_group);
+      }
+
+      sf.analysis_state |= AnalysisState::kFullCrossbind;
+    }
+  });
+  tbb::parallel_for_each(files_ | std::views::values, [&](SourceFile& sf) {
+    if (!sf.skip_analysis && !(sf.analysis_state & AnalysisState::kTypecheck)) {
+      checker::PerformTypeCheck(sf);
+
+      sf.analysis_state |= AnalysisState::kTypecheck;
+    }
   });
 
   for (auto* program : dependents_) {
-    program->Crossbind();
+    program->Analyze();
   }
 }
 
