@@ -13,6 +13,7 @@
 #include "ASTNodes.h"
 #include "Arena.h"
 #include "Bitset.h"
+#include "DelimitedStringView.h"
 #include "FunctionRef.h"
 #include "Semantic.h"
 #include "TypeChecker.h"
@@ -25,9 +26,11 @@ struct ModuleDescriptor;
 struct ExternallyResolvedGroup {
   std::vector<const ast::nodes::Ident*> idents;
   std::vector<semantic::Scope*> scopes;
-  std::string_view augmentation_provider;
 
-  bool augmentation_provider_injected{false};
+  lib::DelimitedStringView<','> augmentation_providers;
+  semantic::SymbolFlags::Value augmentation_provider_required_flags;
+  bool augmentation_providers_injected{false};
+
   lib::Bitset resolution_set;
 
   [[nodiscard]] bool IsResolved() const {

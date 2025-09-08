@@ -23,6 +23,7 @@
 #include "Parser.h"
 #include "Semantic.h"
 #include "TypeChecker.h"
+#include "utils/ASTUtils.h"
 
 namespace vanadium::core {
 
@@ -135,7 +136,7 @@ void Program::DetachFile(SourceFile& sf) {
         }
 
         if (entry.augmenting_locals) {
-          entry.ext_group->augmentation_provider_injected = false;
+          entry.ext_group->augmentation_providers_injected = false;
         }
 
         entry.contribution.Flip();  // it is no longer needed
@@ -221,8 +222,13 @@ void Program::Crossbind(SourceFile& sf, ExternallyResolvedGroup& ext_group) {
     module.transitive_dependency_providers.insert(via);
   };
 
-  if (!ext_group.augmentation_provider.empty() && !ext_group.augmentation_provider_injected) {
-    const auto resolve_through = [&](const semantic::Symbol* sym, ModuleDescriptor* imported_module) {
+  if (!ext_group.augmentation_providers.sv().empty() && !ext_group.augmentation_providers_injected) {
+    std::size_t total_providers{};
+    std::size_t injected_providers{0};
+
+    const auto inject_augmentation_provider = [&](const semantic::Symbol* sym, ModuleDescriptor* imported_module) {
+      ++injected_providers;
+
       const semantic::SymbolTable* augmentation_table =
           (sym->Flags() & semantic::SymbolFlags::kStructural) ? sym->Members() : &sym->OriginatedScope()->symbols;
       const auto contribution_opt = ResolveContribution(
@@ -243,7 +249,6 @@ void Program::Crossbind(SourceFile& sf, ExternallyResolvedGroup& ext_group) {
       for (auto* scope : ext_group.scopes) {
         scope->augmentation.push_back(augmentation_table);
       }
-      ext_group.augmentation_provider_injected = true;
 
       register_dependency(module, imported_module,
                           DependencyEntry{
@@ -255,20 +260,53 @@ void Program::Crossbind(SourceFile& sf, ExternallyResolvedGroup& ext_group) {
                           });
     };
 
-    semantic::VisitImports<{.accept_private_imports = true}>(
-        this, module, on_missing_module, [&](auto* imported_module, auto* via) {
-          const auto* sym = imported_module->scope->ResolveDirect(ext_group.augmentation_provider);
-          if (!sym) {
-            // continue search
-            return true;
-          }
+    const auto try_inject_augmentation_provider_via = [&](ModuleDescriptor* provider_module,
+                                                          std::string_view provider_name) -> const semantic::Symbol* {
+      if (const auto* sym = provider_module->scope->ResolveDirect(provider_name); sym) {
+        inject_augmentation_provider(sym, provider_module);
+        return sym;
+      }
+      return nullptr;
+    };
 
-          resolve_through(sym, imported_module);
-          if (via != nullptr) {
-            register_transitive_dependency(module, via);
-          }
+    const auto search_for_augmentation_provider = [&, pthis = this](this auto&& self_search, ModuleDescriptor& pov,
+                                                                    std::string_view provider_name) {
+      if (ext_group.IsResolved()) {
+        return;
+      }
+      ++total_providers;
+
+      const auto check_module = [&](ModuleDescriptor* imported_module, auto* via) {
+        const auto* sym = try_inject_augmentation_provider_via(imported_module, provider_name);
+        if (!sym) {
           return false;
-        });
+        }
+
+        if (via != nullptr) {
+          register_transitive_dependency(module, via);
+        }
+
+        const auto& extension_base = ast::utils::GetExtendsBase(sym->Declaration());
+        for (const auto* ih : extension_base) {
+          const auto ename = imported_module->sf->Text(ih);
+          if (!try_inject_augmentation_provider_via(imported_module, ename)) {
+            self_search(*imported_module, ename);
+          }
+        }
+        return true;
+      };
+
+      semantic::VisitImports<{.accept_private_imports = true}>(pthis, pov, on_missing_module,
+                                                               std::not_fn(check_module));
+    };
+
+    for (const auto& provider_name : ext_group.augmentation_providers.range()) {
+      search_for_augmentation_provider(module, provider_name);
+    }
+
+    if (injected_providers == total_providers) {
+      ext_group.augmentation_providers_injected = true;
+    }
   }
 
   if (!ext_group.IsResolved()) {

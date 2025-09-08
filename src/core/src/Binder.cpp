@@ -12,6 +12,7 @@
 #include "ASTNodes.h"
 #include "ASTTypes.h"
 #include "Bitset.h"
+#include "DelimitedStringView.h"
 #include "Program.h"
 #include "Semantic.h"
 #include "utils/ASTUtils.h"
@@ -53,9 +54,10 @@ class ExternalsTracker {
     active_ = upper;
   }
 
-  void Augmented(std::string_view provider, Scope* scope, std::invocable auto f) {
-    auto [group_it, _] = augmented_.try_emplace(provider, std::vector<const ast::nodes::Ident*>{},
-                                                std::vector<semantic::Scope*>{}, provider);
+  void Augmented(std::string_view providers, Scope* scope, std::invocable auto f) {
+    auto [group_it, _] =
+        augmented_.try_emplace(providers,  //
+                               std::vector<const ast::nodes::Ident*>{}, std::vector<semantic::Scope*>{}, providers);
     group_it->second.scopes.emplace_back(scope);
     With(&group_it->second, f);
   }
@@ -220,7 +222,10 @@ class Binder {
     }
   };
 
-  void AugmentByExtensible(std::invocable auto f);
+  // returns true if resolution is done internally, otherwise false
+  bool AugmentByExtensible(std::string_view extensible, SymbolFlags::Value flags_mask, std::invocable auto f,
+                           const ast::Range& errrange = {});
+  bool AugmentByExtensibles(std::string_view extensibles, SymbolFlags::Value flags_mask, std::invocable auto f);
 
   std::optional<Symbol> BindTypeSpec(std::string_view name, SymbolFlags::Value flags, const ast::nodes::TypeSpec*);
   SymbolTable& BindFields(const std::vector<ast::nodes::Field*>&);
@@ -302,13 +307,105 @@ bool Binder::Hoist(const ast::Node* n) {
   return true;
 }
 
+bool Binder::AugmentByExtensible(std::string_view extensible, SymbolFlags::Value flags_mask, std::invocable auto f,
+                                 const ast::Range& errrange) {
+  const auto* sym = scope_->ResolveOwn(extensible);
+  if (!sym) {
+    externals_.Augmented(extensible, scope_, f);
+    return false;
+  }
+
+  if (!(sym->Flags() & flags_mask)) {
+    // TODO: add this check to xbind
+    if (errrange.Length() > 0) {
+      EmitError(SemanticError{
+          .range = errrange,
+          .type = SemanticError::Type::kClassCanBeExtendedByClassOnly,  // TODO: create proper error code
+      });
+    }
+    return true;
+  }
+
+  const auto inject_internal_augmentation_provider = [&](const Symbol* provider_sym) {
+    const semantic::SymbolTable* augmentation_table = (provider_sym->Flags() & semantic::SymbolFlags::kStructural)
+                                                          ? provider_sym->Members()
+                                                          : &provider_sym->OriginatedScope()->symbols;
+    scope_->augmentation.push_back(augmentation_table);
+  };
+
+  if (const auto& extension_base = ast::utils::GetExtendsBase(sym->Declaration()); !extension_base.empty()) {
+    bool pass_to_xbind{false};
+    for (const auto* ename : extension_base) {
+      const auto* esym = scope_->ResolveOwn(Lit(ename));
+      if (!esym || !ast::utils::GetExtendsBase(esym->Declaration()).empty()) {
+        // can be resolved here recursively, but such cases are very rare
+        pass_to_xbind = true;
+        break;
+      }
+    }
+
+    inject_internal_augmentation_provider(sym);  // we can access it and it will be 1st
+
+    // to avoid augmenting twice - partially hereby and completely (with duplicating) during xbind
+    if (pass_to_xbind) {
+      externals_.Augmented(sf_.Text(ast::Range{
+                               .begin = extension_base.front()->nrange.begin,
+                               .end = extension_base.front()->nrange.end,
+                           }),
+                           scope_, f);
+      return false;
+    }
+
+    for (const auto* ename : extension_base) {
+      inject_internal_augmentation_provider(scope_->ResolveOwn(Lit(ename)));
+    }
+  }
+
+  inject_internal_augmentation_provider(sym);
+  //
+  f();
+
+  return true;
+}
+
+bool Binder::AugmentByExtensibles(std::string_view extensibles, SymbolFlags::Value flags_mask, std::invocable auto f) {
+  if (auto extension_base = lib::DelimitedStringView<','>{extensibles}.range(); !extension_base.empty()) {
+    bool pass_to_xbind{false};
+    for (const auto& ename : extension_base) {
+      const auto* esym = scope_->ResolveOwn(ename);
+      if (!esym || !ast::utils::GetExtendsBase(esym->Declaration()).empty()) {
+        // can be resolved here recursively, but such cases are very rare
+        pass_to_xbind = true;
+        break;
+      }
+    }
+
+    // to avoid augmenting twice - partially hereby and completely (with duplicating) during xbind
+    if (pass_to_xbind) {
+      externals_.Augmented(extensibles, scope_, f);
+      return false;
+    }
+
+    for (const auto& ename : extension_base) {
+      const auto* esym = scope_->ResolveOwn(ename);
+      const semantic::SymbolTable* augmentation_table =
+          (esym->Flags() & semantic::SymbolFlags::kStructural) ? esym->Members() : &esym->OriginatedScope()->symbols;
+      scope_->augmentation.push_back(augmentation_table);
+    }
+    //
+    f();
+  }
+
+  return true;
+}
+
 bool Binder::Inspect(const ast::Node* n) {
   switch (n->nkind) {
     case ast::NodeKind::Module: {
       if (sf_.module.has_value()) [[unlikely]] {
         EmitError(SemanticError{
             .range = n->nrange,
-            .type = SemanticError::Type::kToDo,  // 1 module per file
+            .type = SemanticError::Type::kFileCanContainOnlyOneModule,
         });
         return false;
       }
@@ -376,6 +473,7 @@ bool Binder::Inspect(const ast::Node* n) {
     case ast::NodeKind::ComponentTypeDecl: {
       const auto* m = n->As<ast::nodes::ComponentTypeDecl>();
 
+      Visit(m->extends);
       auto* originated_scope = Scoped(m, [&] {
         const auto process = [&] {
           for (const auto* stmt : m->body->stmts) {
@@ -498,29 +596,14 @@ bool Binder::Inspect(const ast::Node* n) {
       }
 
       auto* originated_scope = Scoped(m, [&] {
-        const auto process = [&] {
+        const auto bindf = [&] {
           MaybeVisit(m->params);
           MaybeVisit(m->body);
         };
-
         if (m->runs_on) {
-          const auto augment_by = Lit(m->runs_on->comp);
-          if (const auto* sym = scope_->Resolve(augment_by)) {
-            if (sym->Flags() & SymbolFlags::kComponent) {
-              scope_->augmentation.push_back(&sym->OriginatedScope()->symbols);
-            } else {
-              // TODO: try to also bring up this error from xbind
-              EmitError(SemanticError{
-                  .range = m->runs_on->nrange,
-                  .type = SemanticError::Type::kRunsOnRequiresComponent,
-              });
-            }
-            process();
-          } else {
-            externals_.Augmented(augment_by, scope_, process);
-          }
+          AugmentByExtensible(Lit(m->runs_on->comp), SymbolFlags::kComponent, bindf, m->runs_on->comp->nrange);
         } else {
-          process();
+          bindf();
         }
       });
 
@@ -765,45 +848,36 @@ bool Binder::Inspect(const ast::Node* n) {
           });
         }
 
-        const auto process = [&] {
+        const auto bindf = [&] {
           Visit(m->defs);
         };
 
-        // this mixed hot mess copied from FuncDecl will be cleaned up after supporting multi-augmentation
-        if (m->runs_on) {
-          const auto augment_by = Lit(m->runs_on->comp);
-          if (const auto* sym = scope_->Resolve(augment_by)) {
-            if (sym->Flags() & SymbolFlags::kComponent) {
-              scope_->augmentation.push_back(sym->Members());
-            } else {
-              // TODO: try to also bring up this error from xbind
-              EmitError(SemanticError{
-                  .range = m->runs_on->nrange,
-                  .type = SemanticError::Type::kRunsOnRequiresComponent,
-              });
-            }
-            process();
-          } else {
-            externals_.Augmented(augment_by, scope_, process);
+        if (m->runs_on && m->extends.empty()) {
+          AugmentByExtensible(Lit(m->runs_on->comp), SymbolFlags::kClass, bindf);
+        } else if (!m->runs_on && !m->extends.empty()) {
+          AugmentByExtensibles(sf_.Text(ast::Range{
+                                   .begin = m->extends.front()->nrange.begin,
+                                   .end = m->extends.back()->nrange.end,
+                               }),
+                               SymbolFlags::kClass, bindf);
+        } else if (m->runs_on && !m->extends.empty()) {
+          std::size_t len{m->runs_on->comp->nrange.Length()};
+          for (const auto* ename : m->extends) {
+            len += 1;  // ,
+            len += ename->nrange.Length();
           }
-        } else if (!m->extends.empty()) {
-          const auto augment_by = Lit(m->extends.front());  // <-- TODO
-          if (const auto* sym = scope_->Resolve(augment_by)) {
-            if (sym->Flags() & SymbolFlags::kClass) {
-              scope_->augmentation.push_back(&sym->OriginatedScope()->symbols);
-            } else {
-              // TODO: try to also bring up this error from xbind
-              EmitError(SemanticError{
-                  .range = m->extends.front()->nrange,
-                  .type = SemanticError::Type::kClassCanBeExtendedByClassOnly,
-              });
-            }
-            process();
-          } else {
-            externals_.Augmented(augment_by, scope_, process);
+
+          auto buf = sf_.arena.AllocStringBuffer(len);
+          //
+          auto it = std::ranges::copy(Lit(m->runs_on->comp), buf.begin()).out;
+          for (const auto* ename : m->extends) {
+            *it = ',';
+            it = std::ranges::copy(Lit(ename), it).out;
           }
-        } else {
-          process();
+
+          AugmentByExtensibles(std::string_view(buf), SymbolFlags::kClass, bindf);
+        } else {  // !m.runs_on && m.extends.empty()
+          bindf();
         }
       });
       hoisted_inner_names_.clear();  // <--- hoist/end

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <span>
+
 #include "AST.h"
 #include "ASTNodes.h"
 #include "ASTTypes.h"
@@ -55,6 +57,17 @@ inline const nodes::RestrictionSpec* GetTemplateRestriction(const Node* n) {
       return n->As<nodes::ReturnSpec>()->restriction;
     default:
       return nullptr;
+  }
+}
+
+inline std::span<const nodes::Expr* const> GetExtendsBase(const Node* n) {
+  switch (n->nkind) {
+    case NodeKind::ComponentTypeDecl:
+      return n->As<nodes::ComponentTypeDecl>()->extends;
+    case NodeKind::ClassTypeDecl:
+      return n->As<nodes::ClassTypeDecl>()->extends;
+    default:
+      return {};
   }
 }
 
