@@ -1,0 +1,75 @@
+import * as vscode from 'vscode';
+import * as os from 'os';
+import * as fs from 'fs';
+import * as path from 'path';
+import { execSync, spawnSync } from 'child_process';
+
+const TTCN3FMT_BIN = 'ttcn3fmt';
+
+// https://github.com/prettier/prettier-vscode/blob/ba0c734448feeb7a27a8e48d8c282251141db7b0/src/PrettierEditService.ts#L372C1-L397C4
+function minimalEdit(document: vscode.TextDocument, string1: string) {
+  const string0 = document.getText();
+  // length of common prefix
+  let i = 0;
+  while (i < string0.length && i < string1.length && string0[i] === string1[i]) {
+    ++i;
+  }
+  // length of common suffix
+  let j = 0;
+  while (
+    i + j < string0.length &&
+    i + j < string1.length &&
+    string0[string0.length - j - 1] === string1[string1.length - j - 1]
+  ) {
+    ++j;
+  }
+  const newText = string1.substring(i, string1.length - j);
+  const pos0 = document.positionAt(i);
+  const pos1 = document.positionAt(string0.length - j);
+
+  return vscode.TextEdit.replace(new vscode.Range(pos0, pos1), newText);
+}
+
+export const checkAvailability = () => {
+  if (os.platform() === 'win32') {
+    return false;
+  }
+  try {
+    execSync(`which ${TTCN3FMT_BIN}`);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+export const provideDocumentFormattingEdits = (
+  document: vscode.TextDocument,
+  _options: vscode.FormattingOptions,
+  token: vscode.CancellationToken
+): vscode.TextEdit[] => {
+  const abortController = new AbortController();
+  token.onCancellationRequested(() => abortController.abort());
+
+  const tmpFile = path.join(os.tmpdir(), `ttcn3fmt-${Date.now()}.in`);
+  try {
+    fs.writeFileSync(tmpFile, document.getText(), {
+      signal: abortController.signal,
+    });
+    if (token.isCancellationRequested) {
+      return [];
+    }
+
+    // unfortunately, /dev/stdin won't work
+    const process = spawnSync(TTCN3FMT_BIN, [tmpFile], {
+      signal: abortController.signal,
+    });
+
+    if (process.status !== 0) {
+      return [];
+    }
+
+    return [minimalEdit(document, process.stdout.toString())];
+  } finally {
+    fs.unlinkSync(tmpFile);
+  }
+};

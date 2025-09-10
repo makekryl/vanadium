@@ -6,7 +6,7 @@ import {
   TransportKind,
 } from 'vscode-languageclient/node';
 
-export class Client {
+export class LsClient {
   private outputChannel: vscode.OutputChannel;
   private traceOutputChannel: vscode.OutputChannel;
   private clientOptions: LanguageClientOptions;
