@@ -73,10 +73,10 @@ struct Path {
 };
 
 template <std::derived_from<Filesystem> ConcreteFS>
-[[nodiscard]] Path Root(std::string path = "") {
+[[nodiscard]] Path Root(const std::string& path = "") {
   return Path{
       .fs = std::make_shared<ConcreteFS>(),
-      .base_path = std::move(path),
+      .base_path = path,
   };
 }
 

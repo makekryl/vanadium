@@ -5,6 +5,8 @@ import {
   ServerOptions,
   TransportKind,
 } from 'vscode-languageclient/node';
+import { config } from './config';
+import { logger } from './logger';
 
 export class LsClient {
   private outputChannel: vscode.OutputChannel;
@@ -25,7 +27,7 @@ export class LsClient {
   async start(ctx: vscode.ExtensionContext): Promise<void> {
     const serverOptions: ServerOptions = {
       command: `${ctx.extensionPath}/bin/vanadiumd`,
-      // args: ['--wait-dbg'],
+      args: config.get<string[]>('arguments'),
       transport: TransportKind.stdio,
     };
 

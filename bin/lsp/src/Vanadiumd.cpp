@@ -15,6 +15,11 @@ int main(int argc, char* argv[]) {
   argparse::ArgumentParser ap("vanadiumd");
   ap.add_description("TTCN-3 language server");
   //
+  std::uint32_t jobs{std::clamp(std::thread::hardware_concurrency(), 1U, 4U)};
+  ap.add_argument("-j", "--parallel", "").store_into(jobs).help("maximum number of worker threads");
+  std::uint32_t concurrency{1};  // >1 is not supported at the moment
+  ap.add_argument("--concurrency").store_into(concurrency).help("number of concurrently served LS requests");
+  //
   ap.add_argument("--wait-dbg").flag();
   //
   auto& group = ap.add_mutually_exclusive_group();
@@ -39,7 +44,7 @@ int main(int argc, char* argv[]) {
   vanadium::lserver::StdioTransport::Setup();
   vanadium::lserver::StdioTransport transport;
 
-  vanadium::ls::Serve(transport, 1, 4);
+  vanadium::ls::Serve(transport, concurrency, jobs);
 
   return 0;
 }

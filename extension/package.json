@@ -5,7 +5,7 @@
   "icon": "icon.png",
   "author": "Mikhail Krylov",
   "publisher": "Mikhail Krylov",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "private": true,
   "engines": {
     "vscode": "^1.100.0"
@@ -59,7 +59,43 @@
         "title": "Restart language server",
         "category": "vanadiumd"
       }
-    ]
+    ],
+    "configuration": {
+      "type": "object",
+      "title": "vanadiumd",
+      "properties": {
+        "vanadiumd.arguments": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Arguments for vanadiumd server."
+        },
+        "vanadiumd.formattingEngine": {
+          "type": "string",
+          "enum": [
+            "vanadium",
+            "ttcn3fmt"
+          ],
+          "markdownEnumDescriptions": [
+            "built-in",
+            "if available"
+          ],
+          "enumItemLabels": [
+            "vanadium-fmt",
+            "ttcn3fmt"
+          ],
+          "default": "vanadium",
+          "description": "TTCN-3 formatting engine"
+        },
+        "vanadiumd.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable vanadiumd language server features"
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",

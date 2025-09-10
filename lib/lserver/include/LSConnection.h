@@ -39,15 +39,16 @@ class Connection;
 
 template <typename Payload>
 class ConnectionContext {
-  using TServer = Connection<Payload>;
+  using TConnection = Connection<Payload>;
 
  public:
-  ConnectionContext(TServer* server);
+  ConnectionContext(TConnection* server);
 
   PooledMessageToken AcquireToken() {
     return pool_.Acquire();
   }
   void Send(PooledMessageToken&&);
+  [[nodiscard]] std::size_t GetConnectionConcurrency() const;
 
   template <glz::string_literal Method, typename Result, typename Params>
   glz::expected<Result, glz::rpc::error> Request(Params&& params);
@@ -70,7 +71,7 @@ class ConnectionContext {
   }
 
  private:
-  TServer* const server_;
+  TConnection* const connection_;
   TokenPool pool_;
   Payload data_;
 };
@@ -281,24 +282,29 @@ class Connection {
 };
 
 template <typename Payload>
-ConnectionContext<Payload>::ConnectionContext(TServer* server)
-    : server_(server), pool_(server->GetConcurrency() * server->GetBacklog()) {}
+ConnectionContext<Payload>::ConnectionContext(TConnection* server)
+    : connection_(server), pool_(server->GetConcurrency() * server->GetBacklog()) {}
 
 template <typename Payload>
 void ConnectionContext<Payload>::Send(PooledMessageToken&& token) {
-  server_->Send(std::move(token));
+  connection_->Send(std::move(token));
+}
+
+template <typename Payload>
+std::size_t ConnectionContext<Payload>::GetConnectionConcurrency() const {
+  return connection_->GetConcurrency();
 }
 
 template <typename Payload>
 template <glz::string_literal Method, typename Result, typename Params>
 glz::expected<Result, glz::rpc::error> ConnectionContext<Payload>::Request(Params&& params) {
-  return server_->template Request<Method, Result, Params>(std::forward<Params>(params));
+  return connection_->template Request<Method, Result, Params>(std::forward<Params>(params));
 }
 
 template <typename Payload>
 template <glz::string_literal Method, typename Params>
 void ConnectionContext<Payload>::Notify(Params&& params) {
-  return server_->template Notify<Method, Params>(std::forward<Params>(params));
+  return connection_->template Notify<Method, Params>(std::forward<Params>(params));
 }
 
 }  // namespace vanadium::lserver

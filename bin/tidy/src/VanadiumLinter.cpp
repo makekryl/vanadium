@@ -29,7 +29,7 @@ vanadium::lint::Linter CreateLinter() {
 }
 
 int main(int argc, char* argv[]) {
-  std::uint32_t jobs{std::thread::hardware_concurrency()};
+  std::uint32_t jobs{std::clamp(std::thread::hardware_concurrency(), 1U, 4U)};
   bool use_autofix{false};
   std::string solution_path;
 

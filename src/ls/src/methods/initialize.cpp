@@ -4,6 +4,7 @@
 #include "Filesystem.h"
 #include "LSProtocol.h"
 #include "LanguageServerContext.h"
+#include "LanguageServerLogger.h"
 #include "LanguageServerMethods.h"
 #include "Program.h"
 #include "Solution.h"
@@ -14,6 +15,9 @@ namespace vanadium::ls {
 template <>
 rpc::ExpectedResult<lsp::InitializeResult> methods::initialize::operator()(LsContext& ctx,
                                                                            const lsp::InitializeParams& params) {
+  VLS_INFO("Initializing... (jobs={}, concurrency={})", ctx->task_arena.max_concurrency(),
+           ctx.GetConnectionConcurrency());
+
   if (params.workspaceFolders) {
     const auto& folders = *params.workspaceFolders;
 
@@ -40,6 +44,14 @@ rpc::ExpectedResult<lsp::InitializeResult> methods::initialize::operator()(LsCon
         std::fflush(stderr);
         std::abort();
       }
+    }
+  }
+
+  if (ctx->solution.has_value()) {
+    const auto& solution = *ctx->solution;
+    VLS_INFO("Loaded solution with {} subprojects", solution.Projects().size());
+    for (const auto& project : solution.Projects()) {
+      VLS_INFO(" * '{}' [{}]: {} units", project.Name(), project.Directory().base_path, project.program.Files().size());
     }
   }
 
