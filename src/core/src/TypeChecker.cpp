@@ -1017,6 +1017,9 @@ class BasicTypeChecker {
       : sf_(sf), inspector_(ast::NodeInspector::create<BasicTypeChecker, &BasicTypeChecker::Inspect>(this)) {}
 
   void Check() {
+    if (!sf_.module) [[unlikely]] {
+      return;
+    }
     semantic::InspectScope(
         sf_.module->scope,
         [&](const semantic::Scope* scope_under_inspection) {
