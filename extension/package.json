@@ -92,6 +92,7 @@
         "vanadiumd.enable": {
           "type": "boolean",
           "default": true,
+          "title": "Enable Language Server",
           "description": "Enable vanadiumd language server features"
         }
       }

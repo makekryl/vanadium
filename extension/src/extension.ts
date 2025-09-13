@@ -10,8 +10,9 @@ let lsClient: LsClient | undefined;
 
 export async function activate(context: vscode.ExtensionContext) {
   if (config.get<string>('formattingEngine') === 'ttcn3fmt') {
-    if (ttcn3fmt.checkAvailability()) {
-      logger.info('ttcn3fmt has been detected in the environment');
+    const ttcn3fmtPath = ttcn3fmt.searchExecutable();
+    if (ttcn3fmtPath) {
+      logger.info(`Using ttcn3fmt found at '${ttcn3fmtPath}'`);
       context.subscriptions.push(
         vscode.languages.registerDocumentFormattingEditProvider('ttcn3', {
           provideDocumentFormattingEdits: ttcn3fmt.provideDocumentFormattingEdits,

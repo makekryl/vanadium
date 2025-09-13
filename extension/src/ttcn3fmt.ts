@@ -30,15 +30,14 @@ function minimalEdit(document: vscode.TextDocument, string1: string) {
   return vscode.TextEdit.replace(new vscode.Range(pos0, pos1), newText);
 }
 
-export const checkAvailability = () => {
+export const searchExecutable = (): string | null => {
   if (os.platform() === 'win32') {
-    return false;
+    return null;
   }
   try {
-    execSync(`which ${TTCN3FMT_BIN}`);
-    return true;
+    return execSync(`which ${TTCN3FMT_BIN}`).toString().trim();
   } catch {
-    return false;
+    return null;
   }
 };
 
