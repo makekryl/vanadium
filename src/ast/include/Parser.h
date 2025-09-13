@@ -178,7 +178,7 @@ class Parser {
   ConcreteNode* NewErrorNode(const Token&);
 
   struct {
-    bool is_inside_external_scope;
+    bool is_inside_external_scope{false};
   } ext_state_;
 
   Node* last_node_{nullptr};
