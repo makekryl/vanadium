@@ -137,21 +137,30 @@ void ComputeInlayHint(const core::SourceFile& file, const core::semantic::Scope*
         if (idx >= std::ssize(params->list)) {
           break;
         }
-        if (arg->nkind == core::ast::NodeKind::AssignmentExpr) {
-          break;
+
+        const auto* param = params->list[idx];
+        if (param->direction && (param->direction->kind == core::ast::TokenKind::OUT ||
+                                 param->direction->kind == core::ast::TokenKind::INOUT)) {
+          out.emplace_back(lsp::InlayHint{
+              .position = conv::ToLSPPosition(file.ast.lines.Translate(arg->nrange.begin)),
+              .label = "&",
+              .kind = lsp::InlayHintKind::kParameter,
+          });
         }
 
-        const auto& param_name_opt = params->list[idx]->name;
-        if (!param_name_opt) [[unlikely]] {
-          break;
-        }
+        if (arg->nkind != core::ast::NodeKind::AssignmentExpr) {
+          const auto& param_name_opt = param->name;
+          if (!param_name_opt) [[unlikely]] {
+            break;
+          }
 
-        const auto param_name = params_file->Text(*param_name_opt);
-        if (param_name == file.Text(arg)) {
-          continue;
-        }
+          const auto param_name = params_file->Text(*param_name_opt);
+          if (param_name == file.Text(arg)) {
+            continue;
+          }
 
-        add_parameter_inlay_hint(arg->nrange.begin, param_name);
+          add_parameter_inlay_hint(arg->nrange.begin, param_name);
+        }
       }
 
       break;
