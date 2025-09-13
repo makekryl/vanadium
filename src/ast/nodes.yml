@@ -195,6 +195,7 @@ StructTypeDecl:
   pars: FormalPars*?
   with: WithSpec*?
 ClassTypeDecl:
+  external: bool
   kind: Token
   modif: Token*?
   name: Ident

@@ -605,6 +605,7 @@ nodes::Decl* Parser::ParseTypeDecl() {
       return ParsePortTypeDecl();
     case TokenKind::COMPONENT:
       return ParseComponentTypeDecl();
+    case TokenKind::EXTERNAL:
     case TokenKind::CLASS:
       return ParseClassTypeDecl();
     case TokenKind::UNION:
@@ -748,7 +749,13 @@ nodes::StructTypeDecl* Parser::ParseStructTypeDecl() {
 
 nodes::ClassTypeDecl* Parser::ParseClassTypeDecl() {
   return NewNode<nodes::ClassTypeDecl>([&](auto& ctd) {
-    Consume();             // TypeTok
+    Consume();  // TypeTok
+    if (tok_ == TokenKind::EXTERNAL) [[unlikely]] {
+      // seems to be a titan extension
+      Consume();
+      ctd.external = true;
+      ext_state_.is_inside_external_scope = true;
+    }
     ctd.kind = Consume();  // KindTok
     if (tok_ == TokenKind::MODIF) {
       ctd.modif = TokAlloc(Consume());
@@ -775,6 +782,8 @@ nodes::ClassTypeDecl* Parser::ParseClassTypeDecl() {
     }
     Expect(TokenKind::RBRACE);
     ctd.with = ParseWith();
+
+    ext_state_.is_inside_external_scope = false;
   });
 }
 
@@ -1115,8 +1124,15 @@ nodes::FuncDecl* Parser::ParseFuncDecl() {
     if (tok_ == TokenKind::RETURN) {
       d.ret = ParseReturn();
     }
-    if (tok_ == TokenKind::LBRACE) {
+    if (tok_ == TokenKind::LBRACE) [[likely]] {
       d.body = ParseBlockStmt();
+      if (ext_state_.is_inside_external_scope) [[unlikely]] {
+        EmitError(d.body->nrange, "external function cannot have a body");
+      }
+    } else [[unlikely]] {
+      if (!ext_state_.is_inside_external_scope) [[likely]] {
+        EmitErrorExpected("function body");
+      }
     }
     d.with = ParseWith();
   });
@@ -1157,7 +1173,16 @@ nodes::ConstructorDecl* Parser::ParseConstructorDecl() {
     } else {
       EmitErrorExpected("parameters parens");
     }
-    d.body = ParseBlockStmt();
+    if (tok_ == TokenKind::LBRACE) [[likely]] {
+      d.body = ParseBlockStmt();
+      if (ext_state_.is_inside_external_scope) [[unlikely]] {
+        EmitError(d.body->nrange, "external class constructor cannot have a body");
+      }
+    } else [[unlikely]] {
+      if (!ext_state_.is_inside_external_scope) [[likely]] {
+        EmitErrorExpected("constructor body");
+      }
+    }
   });
 }
 

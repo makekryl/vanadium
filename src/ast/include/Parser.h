@@ -177,6 +177,10 @@ class Parser {
   template <IsNode ConcreteNode>
   ConcreteNode* NewErrorNode(const Token&);
 
+  struct {
+    bool is_inside_external_scope;
+  } ext_state_;
+
   Node* last_node_{nullptr};
 
   bool seen_closing_brace_;

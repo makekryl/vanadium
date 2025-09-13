@@ -17,9 +17,9 @@ var ExampleType val = valueof(templateA); // OK
 var ExampleType val = valueof(templateB); // runtime error: omit is not a value
 ```
 */
-function valueof(in template anytype instance) return __infer_arg_t
+external function valueof(in template anytype instance) return __infer_arg_t
 
-function log(in anytype s,
+external function log(in anytype s,
   in anytype s1 := none,
   in anytype s2 := none,
   in anytype s3 := none,
@@ -35,12 +35,12 @@ function log(in anytype s,
 The __int2char__ function converts an __integer__ value in the range of 0 to 127 (8-bit encoding) into a single-character-length
  __charstring__ value. The __integer__ value describes the 8-bit encoding of the character
 */
-function int2char(in integer invalue) return charstring
+external function int2char(in integer invalue) return charstring
 
 /*
 The __int2unichar__ function n converts an __integer__ value in the range of 0 to 2147483647 (32-bit encoding) into a single-character-length __universal charstring__ value. The __integer__ value describes the 32-bit encoding of the character.
 */
-function int2unichar(
+external function int2unichar(
 	in integer invalue
 ) return universal charstring
 
@@ -49,7 +49,7 @@ The __int2bit__ function converts a single __integer__ value to a single __bitst
 * invalue is less than zero;
 * the conversion yields a return value with more bits than specified by length.
 */
-function int2bit(
+external function int2bit(
 	in integer invalue,
 	in integer length_
 ) return bitstring
@@ -57,7 +57,7 @@ function int2bit(
 /*
 The __int2enum__ function converts an integer value into an enumerated value of a given enumerated type. The integer value shall be provided as in parameter and the result of the conversion shall be stored in an out parameter. The type of the out parameter determines the type into which the in parameter is converted.
 */
-function int2enum(
+external function int2enum(
 	in integer inpar,
 	out Enumerated_type outpar)
 
@@ -66,7 +66,7 @@ The __int2hex__ function converts a single __integer__ value to a single __hexst
 * invalue is less than zero;
 * the conversion yields a return value with more hexadecimal characters than specified by length.
 */
-function int2hex(
+external function int2hex(
 	in integer invalue,
 	in integer length_
 ) return hexstring
@@ -76,7 +76,7 @@ The __int2oct__ function converts a single __integer__ value to a single __octet
 * invalue is less than zero;
 * the conversion yields a return value with more octets than specified by length.
 */
-function int2oct(
+external function int2oct(
 	in integer invalue,
 	in integer length_
 ) return octetstring
@@ -84,36 +84,36 @@ function int2oct(
 /*
 The __int2str__ function converts the __integer__ value into its string equivalent (the base of the return string is always decimal).
 */
-function int2str(in integer invalue) return charstring
+external function int2str(in integer invalue) return charstring
 
 /*
 The __int2float__ function converts an __integer__ value into a __float__ value.
 */
-function int2float(in integer invalue) return float
+external function int2float(in integer invalue) return float
 
 /*
 The __float2int__ function converts a __float__ value into an __integer__ value by removing the fractional part of the argument and returning the resulting __integer__. Error causes are:
 *invalue is __infinity__, __-infinity__ or not_a_number.
 */
-function float2int(in float invalue) return integer
+external function float2int(in float invalue) return integer
 
 /*
 The __char2int__ function converts a single-character-length __charstring__ value into an __integer__ value in the range of 0 to 127. The __integer__ value describes the 8-bit encoding of the character. Error causes are:
 * length of invalue does not equal 1.
 */
-function char2int(in charstring invalue) return integer
+external function char2int(in charstring invalue) return integer
 
 /*
 The __char2oct__ function converts a __charstring__ invalue to an __octetstring__. Each octet of the octetstring will contain the Recommendation _ITU-T T.50 [4]_ codes (according to the IRV) of the appropriate characters of invalue.
 */
-function char2oct(in charstring invalue) return octetstring
+external function char2oct(in charstring invalue) return octetstring
 
 /*
 The __unichar2int__ function converts a single-character-length __universal charstring__ value into an __integer__ value in the
 range of 0 to 2147483647. The __integer__ value describes the 32-bit encoding of the character. Error causes are:
 * length of invalue does not equal 1.
 */
-function unichar2int(
+external function unichar2int(
 	in universal charstring invalue
 ) return integer
 
@@ -126,7 +126,7 @@ The following values (see _ISO/IEC 10646 [2]_) are allowed as string_encoding ac
 
 a) __"UTF-8"__ b) __"UTF-16"__ c) __"UTF-16LE"__ d) __"UTF-16BE"__ e) __"UTF-32"__ f) __"UTF-32LE"__ g) __"UTF-32BE"__
 */
-function unichar2oct(
+external function unichar2oct(
 	in universal charstring invalue,
 	in charstring string_encoding := "UTF-8"
 ) return octetstring
@@ -134,7 +134,7 @@ function unichar2oct(
 /*
 The __bit2int__ function This function converts a single __bitstring__ value to a single __integer__ value.
 */
-function bit2int(in bitstring invalue) return integer
+external function bit2int(in bitstring invalue) return integer
 
 /*
 The __bit2hex__ function converts a single __bitstring__ value to a single __hexstring__. The resulting __hexstring__
@@ -144,32 +144,32 @@ When the leftmost group of bits does contain less than 4 bits, this group is fil
 exactly 4 bits and is converted afterwards. The consecutive order of hex digits in the resulting __hexstring__ is the same as
 the order of groups of 4 bits in the __bitstring__
 */
-function bit2hex(in bitstring invalue) return hexstring
+external function bit2hex(in bitstring invalue) return hexstring
 
 /*
 The __bit2oct__ function converts a single __bitstring__ value to a single __octetstring__. The resulting __octetstring__
 represents the same value as the __bitstring__. For the conversion the following holds: * bit2oct(value)=hex2oct(bit2hex(value)).
 */
-function bit2oct(in bitstring invalue) return octetstring
+external function bit2oct(in bitstring invalue) return octetstring
 
 /*
 The __bit2str__ function converts a single __bitstring__ value to a single __charstring__.
 The resulting __charstring__ has the same length as the __bitstring__ and contains only the __characters__ '0' and '1'.
 */
-function bit2str(in bitstring invalue) return charstring
+external function bit2str(in bitstring invalue) return charstring
 
 /*
 The __hex2int__ function  converts a single __hexstring__ value to a single __integer__ value.
 For the purposes of this conversion, a __hexstring__ shall be interpreted as a positive base 16 __integer__ value. The
 rightmost hexadecimal digit is least significant, the leftmost hexadecimal digit is the most significant.
 */
-function hex2int(in hexstring invalue) return integer
+external function hex2int(in hexstring invalue) return integer
 
 /*
 The __hex2bit__ function converts a single __hexstring__ value to a single __bitstring__. The resulting __bitstring__
  represents the same value as the __hexstring__.
 */
-function hex2bit(in hexstring invalue) return bitstring
+external function hex2bit(in hexstring invalue) return bitstring
 
 /*
 The __hex2oct__ function This function converts a single __hexstring__ value to a single __octetstring__.
@@ -179,13 +179,13 @@ __octetstring__ contains the same sequence of hex digits as the __hexstring__ wh
 modulo 2 is 0. Otherwise, the resulting __octetstring__ contains 0 as leftmost hex digit followed by the same sequence
 of hex digits as in the __hexstring__.
 */
-function hex2oct(in hexstring invalue) return octetstring
+external function hex2oct(in hexstring invalue) return octetstring
 
 /*
 The __hex2str__ function converts a single __hexstring__ value to a single __charstring__. The resulting __charstring__
 has the same length as the __hexstring__ and contains only the characters '0' to '9'and 'A' to 'F'.
 */
-function hex2str(in hexstring invalue) return charstring
+external function hex2str(in hexstring invalue) return charstring
 
 /*
 The __oct2int__ function converts a single __octetstring__ value to a single __integer__ value.
@@ -194,7 +194,7 @@ rightmost hexadecimal digit is least significant, the leftmost hexadecimal digit
 hexadecimal digits provided shall be multiples of 2 since one octet is composed of two hexadecimal digits. The
 hexadecimal digits 0 to F represent the decimal values 0 to 15 respectively.
 */
-function oct2int(in octetstring invalue) return integer
+external function oct2int(in octetstring invalue) return integer
 
 /*
 The __oct2bit__ function converts a single __octetstring__ value to a single __bitstring__.
@@ -202,7 +202,7 @@ The resulting __bitstring__ represents the same value as the octetstring.
 For the conversion the following holds:
 * oct2bit(value)=hex2bit(oct2hex(value))
 */
-function oct2bit(in octetstring invalue) return bitstring
+external function oct2bit(in octetstring invalue) return bitstring
 
 /*
 The __oct2hex__ function converts a single __octetstring__ value to a single __hexstring__.
@@ -210,7 +210,7 @@ The resulting __hexstring__ represents the same value as the __octetstring__.
 For the purpose of this conversion, a __octetstring__ shall be converted into a __hexstring__ containing the same
 sequence of hex digits as the __octetstring__.
 */
-function oct2hex(in octetstring invalue) return hexstring
+external function oct2hex(in octetstring invalue) return hexstring
 
 /*
 The __oct2str__ function converts an __octetstring__ invalue to an __charstring__ representing the string equivalent of the
@@ -219,7 +219,7 @@ For the purpose of this conversion each hex digit of invalue is converted into a
 '8', '9', 'A', 'B', 'C', 'D', 'E' or 'F' echoing the value of the hex digit. The consecutive order of __characters__
 in the resulting __charstring__ is the same as the order of hex digits in the __octetstring__.
 */
-function oct2str(in octetstring invalue) return charstring
+external function oct2str(in octetstring invalue) return charstring
 
 /*
 The __oct2char__ function converts an __octetstring__ invalue to a __charstring__. The input parameter invalue shall not
@@ -227,7 +227,7 @@ contain octet values higher than __7F__. The resulting __charstring__ shall have
 __octetstring__. The octets are interpreted as Recommendation _ITU-T T.50 [4]_ codes (according to the IRV) and the
 resulting characters are appended to the returned value.
 */
-function oct2char(in octetstring invalue) return charstring
+external function oct2char(in octetstring invalue) return charstring
 
 /*
 The __oct2unichar__ function converts an __octetstring__ invalue to a __universal charstring__ by use of the given
@@ -239,7 +239,7 @@ the codepoints see clause 27.5):
 
 a) __"UTF-8"__ b) __"UTF-16"__ c) __"UTF-16LE"__ d) __"UTF-16BE"__ e) __"UTF-32"__ f) __"UTF-32LE"__ g) __"UTF-32BE"__
 */
-function oct2unichar(
+external function oct2unichar(
 	in octetstring invalue,
 	in charstring string_encoding := "UTF-8"
 ) return universal charstring
@@ -250,7 +250,7 @@ Error causes are:
 * invalue contains characters other than "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" and "-".
 * invalue contains the character "-" at another position than the leftmost one.
 */
-function str2int(in charstring invalue) return integer
+external function str2int(in charstring invalue) return integer
 
 /*
 The __str2hex__ function converts a string of the type __charstring__ to a __hexstring__. The string invalue shall contain the
@@ -260,7 +260,7 @@ hexstring will have the same length as the incoming charstring.
 Error cause is:
 * invalue contains characters other than specified above.
 */
-function str2hex(in charstring invalue) return hexstring
+external function str2hex(in charstring invalue) return hexstring
 
 /*
 The __str2oct__ function converts a string of the type __charstring__ to an __octetstring__. The string invalue shall contain
@@ -271,7 +271,7 @@ lengthof (see clause C.2.1 for the resulting octetstring) will return half of le
 charstring. In addition to the general error causes in clause 16.1.2, error causes is:
 * invalue contains characters other than specified above.
 */
-function str2oct(in charstring invalue) return octetstring
+external function str2oct(in charstring invalue) return octetstring
 
 /*
 The __str2float__ function converts a __charstring__ comprising a number into a __float__ value. The format of the number in the
@@ -283,19 +283,19 @@ __charstring__ shall follow rules of plain ttcn-3 float values with the followin
 In addition to the general error causes in clause 16.1.2, error causes are:
 * the format of invalue is different than defined above.
 */
-function str2float(in charstring invalue) return float
+external function str2float(in charstring invalue) return float
 
 /*
 The __enum2int__ function accepts an enumerated value and returns the integer value associated to the enumerated value.
 The actual parameter passed to inpar always shall be a typed object.
 */
-function enum2int(in Enumerated_type inpar) return integer
+external function enum2int(in Enumerated_type inpar) return integer
 
 /*
 The __any2unistr__ function converts the content of a value or template to a single __universal charstring__. The resulting
 __universal charstring__ is the same as the string produced by the __log__ operation containing the same operand as
 the one passed to the __any2unistr__ function. The value or template passed as a parameter to the __any2unichar__
-function may be uninitialized, partially or completely initialized.
+external function may be uninitialized, partially or completely initialized.
 The optional format parameter is used for dynamic selection of how the resulting __universal charstring__
 should be produced from the provided invalue.
 * "": the resulting universal charstring is the same as the string produced by the __log__ operation for the same
@@ -304,7 +304,7 @@ operand.
 in assignment notation.
 * <custom string>: tool specific output
 */
-function any2unistr(
+external function any2unistr(
 	in template anytype invalue,
 	in universal charstring format := ""
 ) return universal charstring
@@ -313,7 +313,7 @@ function any2unistr(
 The __lengthof__ function returns the length of a value or template that is of type __bitstring__, __hexstring__,
 __octetstring__, __charstring__, __universal charstring__, __record of__, __set of__, or __array__.
 */
-function lengthof(
+external function lengthof(
 	in template (present) any_string_or_list_type inpar
 ) return integer
 
@@ -328,7 +328,7 @@ elements of nested types/values are taken into account at determining the return
 Error causes are:
 * when inpar is a template and it can match values of different sizes.
 */
-function sizeof(
+external function sizeof(
 	in template (present) any_record_set_type inpar
 ) return integer
 
@@ -337,7 +337,7 @@ The __ispresent__ function is allowed for templates of all data types and return
 * the value __true__ if the data object reference fulfils the (present) template restriction as described in clause 15.8;
 * the value __false__ otherwise.
 */
-function ispresent(in template anytype inpar) return boolean
+external function ispresent(in template anytype inpar) return boolean
 
 /*
 The __ischosen__ function is allowed for templates of all data types that are a union-field-reference or a type alternative of an
@@ -346,7 +346,7 @@ anytype. This function returns:
 alternative of the anytype that is actually selected for the given data object;
 * in all other cases __false__.
 */
-function ischosen(
+external function ischosen(
 	in template any_union_type_field inpar
 ) return boolean
 
@@ -358,17 +358,17 @@ inpar are set to omit. The function shall return __false__ otherwise.
 
 The __null__ value assigned to default and component references shall be considered as concrete values.
 */
-function isvalue(in template anytype inpar) return boolean
+external function isvalue(in template anytype inpar) return boolean
 
 /*
 The __isbound__ function is allowed for templates of all data types. The function shall return __true__, if inpar is at least partially
 initialized. If inpar is of a __record__ or __set__ type, omitted optional fields shall be considered as initialized, i.e. the
-function shall also return __true__ if at least one optional field of inpar is set to omit. The function shall return __false__
+external function shall also return __true__ if at least one optional field of inpar is set to omit. The function shall return __false__
 otherwise. Inaccessible fields (e.g. non-selected alternatives of __union__ types, subfields of omitted __record__ and __set__ types
 or subfields of non-selected __union__ fields) shall be considered as uninitialized, i.e. __isbound__ shall return for them __false__.
 The __null__ value assigned to default and component references shall be considered as concrete values.
 */
-function isbound(in template anytype inpar) return boolean
+external function isbound(in template anytype inpar) return boolean
 
 /*
 The __istemplatekind__ function allows to examine if a template contains a certain kind of the matching mechanisms.
@@ -403,7 +403,7 @@ In all other cases the function returns __false__.
 | "pattern" | Matching character pattern |
 
 */
-function istemplatekind (
+external function istemplatekind (
 	in template anytype invalue,
 	in charstring kind
 ) return boolean
@@ -453,7 +453,7 @@ Examples:
 	substr({ 4, 5, 6 }, 1, 2) // returns {5, 6}
 ```
 */
-function substr(
+external function substr(
 	in template (present) anytype inpar,
 	in integer index,
 	in integer count
@@ -493,7 +493,7 @@ Examples:
 	replace ("My name is JJ", 13, 0, "xx") // returns "My name is JJxx"
 ```
 */
-function replace(
+external function replace(
 	in anytype inparinpar,
 	in integer index,
 	in integer len,
@@ -515,7 +515,7 @@ In addition to the general error causes in clause 16.1.2, error causes are:
 * Encoding fails due to a runtime system problem (i.e. no encoding function exists for the actual type of
 _inpar_).
 */
-function encvalue(
+external function encvalue(
 	in template (value) anytype inpar,
 	in universal charstring encoding_info := "",
 	in universal charstring dynamic_encoding := ""
@@ -542,7 +542,7 @@ _encoded_value_ parameter contains an unitialized value.
 * The return value 2 indicates that decoding could not be completed as _encoded_value_ did not contain
 enough bits.
 */
-function decvalue(
+external function decvalue(
 	inout bitstring encoded_value,
 	out anytype decoded_value,
 	in universal charstring decoding_info := "",
@@ -588,7 +588,7 @@ The specific semantics of this function are explained by the following TTCN-3 de
 	}
 ```
 */
-function encvalue_unichar(
+external function encvalue_unichar(
 	in template (value) anytype inpar,
 	in charstring string_serialization := "UTF-8",
 	in universal charstring encoding_info := "",
@@ -653,7 +653,7 @@ The semantics of the function can be explained by the following TTCN-3 function:
 	}
 ```
 */
-function decvalue_unichar(
+external function decvalue_unichar(
 	inout universal charstring encoded_value,
 	out anytype decoded_value,
 	in charstring string_serialization:= "UTF-8",
@@ -678,7 +678,7 @@ In addition to the general error causes in clause 16.1.2 of the TTCN-3 core lang
 * Encoding fails due to a runtime system problem (i.e. no encoding function exists for the actual type of
 _inpar_).
 */
-function encvalue_o(
+external function encvalue_o(
 	in template (value) anytype inpar,
 	in universal charstring encoding_info := "",
 	in universal charstring dynamic_encoding := "",
@@ -707,7 +707,7 @@ _encoded_value_ parameter contains an unitialized value.
 enough octets.
 
 */
-function decvalue_o(
+external function decvalue_o(
     inout octetstring encoded_value,
     out anytype decoded_value,
     in universal charstring decoding_info := "",
@@ -732,7 +732,7 @@ Example:
 ```
 
 */
-function get_stringencoding(
+external function get_stringencoding(
 	in octetstring encoded_value
 ) return octetstring
 
@@ -743,7 +743,7 @@ within the encoding form, as defined in clause 10 of ISO/IEC 10646 [2]. If no FE
 SPACE sequence present in the _encoded_value_ parameter, the function shall return the value of the parameter
 without change.
 */
-function remove_bom(
+external function remove_bom(
 	in octetstring encoded_value
 ) return octetstring
 
@@ -768,7 +768,7 @@ To produce a random integers in a given range, the following formula can be used
   // Here, upperbound and lowerbound denote highest and lowest number in range.
 ```
 */
-function rnd(in float seed := omit) return float
+external function rnd(in float seed := omit) return float
 
 /*
 The __testcasename__ function shall return the unqualified name of the actually executing test case.
@@ -776,7 +776,7 @@ The __testcasename__ function shall return the unqualified name of the actually 
 When the function __testcasename__ is called if the control part is being executed but no testcase, it shall return the
 empty string.
 */
-function testcasename() return charstring
+external function testcasename() return charstring
 
 /*
 The __hostid__ function shall return the host id of the test component or module control executing the hostid function in form of a character string. The in parameter idkind allows to specify the expected id format to be returned.	Predefined _idkind_ values are:
@@ -784,7 +784,7 @@ The __hostid__ function shall return the host id of the test component or module
 * \"Ipv4\": The contents of the returned character string shall be an Ipv4 address.
 * \"Ipv6\": The contents of the returned characterstring shall be an Ipv6 address.
 */
-function hostid(
+external function hostid(
 	in charstring idkind := "Ipv4orIPv6"
 ) return charstring
 
@@ -797,7 +797,7 @@ template instance that matches an omitted field (i.e. one of the matching mechan
 IfPresent) shall be allowed and shall be treated as if the value expression were an optional field. Thus, matching a value
 expression against a template instance which evaluates to the omit matching mechanism shall return false.
 */
-function match(
+external function match(
 	in __infer_arg_t expression,
 	in template __infer_arg_t instance
 ) return boolean
@@ -812,14 +812,14 @@ component, the actual local verdict is logged together with the implicit __chars
 parameters can be seen as log information, the same rules and restrictions as for the parameters of the __log__ statement
 apply
 */
-function setverdict(
+external function setverdict(
 	in verdicttype verdict,
 	in charstring reason := none
 )
 
-function log2str(in anytype v) return charstring
+external function log2str(in anytype v) return charstring
 
-function ttcn2string(in anytype v) return charstring
+external function ttcn2string(in anytype v) return charstring
 
 }
 )"

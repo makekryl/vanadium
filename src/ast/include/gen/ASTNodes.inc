@@ -974,6 +974,7 @@ struct ClassTypeDecl : Decl {
 
   ClassTypeDecl() : Decl(NodeKind::ClassTypeDecl) {}
 
+  bool external{false};
   Token kind;
   Token* modif{nullptr};
   std::optional<Ident> name;
