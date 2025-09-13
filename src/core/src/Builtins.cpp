@@ -58,6 +58,7 @@ const semantic::Symbol* ResolveBuiltinType(std::string_view name) {
 
       {"object", &kAnytype},  // TODO
 
+      // DO NOT USE OR YOU WILL BE FIRED! (c)
       {"__infer_arg_t", &checker::symbols::kInferType},
   });
   if (const auto sym_opt = kBuiltinsTable.get(name); sym_opt) {
