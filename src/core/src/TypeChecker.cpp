@@ -696,9 +696,17 @@ const semantic::Symbol* DeduceExpectedType(const SourceFile* file, const semanti
       }
       if (!(sym->Flags() & semantic::SymbolFlags::kStructural)) {
         if (sym->Flags() & semantic::SymbolFlags::kList) {
-          const auto* spec = sym->Declaration()->As<ast::nodes::ListSpec>();
-          return ResolveExprType(file, ast::utils::SourceFileOf(spec)->module->scope,
-                                 spec->elemtype->As<ast::nodes::Expr>());
+          const auto* ldecl = sym->Declaration();
+          if (ldecl->nkind == ast::NodeKind::Field) {  // from SubTypeDecl
+            ldecl = ldecl->As<ast::nodes::Field>()->type;
+          }
+          switch (ldecl->nkind) {
+            case ast::NodeKind::ListSpec:
+              return ResolveExprType(file, ast::utils::SourceFileOf(ldecl)->module->scope,
+                                     ldecl->As<ast::nodes::ListSpec>()->elemtype->As<ast::nodes::Expr>());
+            default:
+              return nullptr;
+          }
         }
         // should not be generally possible
         return sym;
@@ -826,11 +834,10 @@ const semantic::Symbol* ResolveExprSymbol(const SourceFile* file, const semantic
       const auto* m = expr->As<ast::nodes::RefSpec>();
       return ResolveExprSymbol(file, scope, m->x);
     }
+    case ast::NodeKind::ListSpec:
     case ast::NodeKind::StructSpec:
-    case ast::NodeKind::EnumSpec:
-    case ast::NodeKind::ListSpec: {
-      const auto* m = expr->As<ast::nodes::StructSpec>();
-      const auto* parent = m->parent;
+    case ast::NodeKind::EnumSpec: {
+      const auto* parent = expr->parent;
       if (parent->nkind == ast::NodeKind::ListSpec) {
         const auto* ls_sym = ResolveExprSymbol(file, scope, parent->As<ast::nodes::Expr>());
         if (!ls_sym) {

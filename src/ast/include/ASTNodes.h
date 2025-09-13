@@ -248,14 +248,14 @@ enum class NodeKind : std::uint8_t {
   CommClause,
   stmt_end_,
 
-  spec_begin_,
+  typespec_begin_,
   RefSpec,
   StructSpec,
   ListSpec,
   MapSpec,
   EnumSpec,
   BehaviourSpec,
-  spec_end,
+  typespec_end,
 
   decl_begin_,
   Field,
@@ -364,6 +364,9 @@ struct Decl : Node {
 };
 struct TypeSpec : Node {
   TypeSpec(NodeKind nkind) : Node(nkind) {}
+  static bool IsTypeSpec(const Node* n) {
+    return NodeKind::typespec_begin_ < n->nkind && n->nkind < NodeKind::typespec_end;
+  }
 };
 
 struct DeclStmt : Stmt {
