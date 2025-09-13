@@ -64,6 +64,7 @@ async function initializeLanguageServer(context: vscode.ExtensionContext) {
 
   const status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right);
   status.text = `$(refresh) vanadiumd ${context.extension.packageJSON['version']}`;
+  status.tooltip = 'Restart vanadiumd TTCN-3 language server';
   if (context.extensionMode === vscode.ExtensionMode.Development) {
     status.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
   }
