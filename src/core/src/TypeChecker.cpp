@@ -1641,6 +1641,12 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const Instantia
       break;
     }
 
+    case ast::NodeKind::FromExpr: {  // TODO: make this more suitable for the "permutation" builtin
+      const auto* m = n->As<ast::nodes::FromExpr>();
+      resulting_type = CheckType(m->x);
+      break;
+    }
+
     case ast::NodeKind::Ident: {
       const auto* m = n->As<ast::nodes::Ident>();
 

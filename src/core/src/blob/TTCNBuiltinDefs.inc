@@ -821,5 +821,39 @@ external function log2str(in anytype v) return charstring
 
 external function ttcn2string(in anytype v) return charstring
 
+/*
+Permutation is an operation for matching that shall be used only on values of *record of* and array types.
+
+Example:
+```ttcn3
+type record of integer RoI;
+
+function generate() return RoI {
+  var RoI list := { 1, 2, 3, 4, 5 };
+  return { permutation(all from list) };
+}
+```
+*/
+external function permutation(in anytype v) return __infer_arg_t
+
+
+/*
+The __complement__ operation creates a matching expression that inverts a set of given templates.\
+It returns a template that matches any value that does NOT match any of the templates provided as its arguments.
+
+In terms of set theory, it is the logical NOT operation for template matching - the complement of the universal set.
+*/
+external function complement(in anytype v,
+  in anytype v1 := none,
+  in anytype v2 := none,
+  in anytype v3 := none,
+  in anytype v4 := none,
+  in anytype v5 := none,
+  in anytype v6 := none,
+  in anytype v7 := none,
+  in anytype v8 := none,
+  in anytype v9 := none,
+) return __infer_arg_t
+
 }
 )"
