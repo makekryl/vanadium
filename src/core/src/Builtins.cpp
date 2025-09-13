@@ -84,7 +84,7 @@ const semantic::Symbol* ResolveBuiltinDef(std::string_view name) {
     sf.ast.root->file = &sf;
 #ifndef NDEBUG
     if (!sf.ast.errors.empty()) {
-      std::println(stderr, "Builtin definitions module contains syntax errors:");
+      std::println(stderr, "Builtin definitions module has syntax errors:");
       for (const auto& err : sf.ast.errors) {
         std::println(stderr, " - ({}:{}) {}", err.range.begin, err.range.end, err.description);
       }
