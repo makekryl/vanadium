@@ -3,7 +3,7 @@
   "displayName": "vanadiumd - TTCN-3 language server",
   "description": "TTCN-3 Language Support",
   "icon": "icon.png",
-  "author": "Mikhail Krylov",
+  "author": "makekryl",
   "publisher": "Mikhail Krylov",
   "version": "0.0.8",
   "private": true,
