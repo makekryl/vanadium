@@ -26,19 +26,25 @@ const semantic::Symbol kVoidType{"<void>", nullptr, semantic::SymbolFlags::kBuil
 
 const semantic::Symbol kInferType{"<infer>", nullptr, semantic::SymbolFlags::kBuiltinType};
 
-const semantic::Symbol kVoidTypekWildcardType{
+const semantic::Symbol kTemplateWildcardType{
     "<*>", nullptr,
     semantic::SymbolFlags::Value(semantic::SymbolFlags::kBuiltinType | semantic::SymbolFlags::kTemplateSpec)};
-const semantic::Symbol kQuestionType{
+const semantic::Symbol kTemplateOptionalType{
     "<?>", nullptr,
+    semantic::SymbolFlags::Value(semantic::SymbolFlags::kBuiltinType | semantic::SymbolFlags::kTemplateSpec)};
+const semantic::Symbol kTemplateOmitType{
+    "<omit>", nullptr,
+    semantic::SymbolFlags::Value(semantic::SymbolFlags::kBuiltinType | semantic::SymbolFlags::kTemplateSpec)};
+const semantic::Symbol kTemplateNotUsedType{
+    "<->", nullptr,
     semantic::SymbolFlags::Value(semantic::SymbolFlags::kBuiltinType | semantic::SymbolFlags::kTemplateSpec)};
 }  // namespace symbols
 
 struct InstantiatedType {
   const semantic::Symbol* sym{nullptr};
-  std::size_t depth{0};
   const ast::Node* instance{nullptr};
-  const ast::nodes::RestrictionSpec* template_restriction{nullptr};
+  std::uint32_t depth{0};
+  bool is_template{false};  // TODO: enum { ANY, TokenKind::{OMIT, VALUE, PRESENT} }
 
   operator bool() const {
     return sym != nullptr;
@@ -1009,7 +1015,8 @@ InstantiatedType ResolveExprInstantiatedType(const SourceFile* file, const seman
 
   return {
       .sym = type_sym,
-      .depth = [&] -> std::size_t {
+      .instance = instance,
+      .depth = [&] -> std::uint32_t {
         const auto* declnode = decl_sym->Declaration();
         if (!declnode) {
           return 0;
@@ -1017,8 +1024,7 @@ InstantiatedType ResolveExprInstantiatedType(const SourceFile* file, const seman
         const auto* ad = ast::utils::GetArrayDef(declnode);
         return ad ? ad->size() : 0;
       }(),
-      .instance = instance,
-      .template_restriction = instance ? ast::utils::GetTemplateRestriction(instance) : nullptr,
+      .is_template = (instance != nullptr) && (ast::utils::GetTemplateRestriction(instance) != nullptr),
   };
 }
 }  // namespace
@@ -1081,7 +1087,7 @@ class BasicTypeChecker {
                       const SourceFile* params_file, const semantic::Symbol* subject_type_sym,
                       std::span<const TParamDescriptorNode* const> params,
                       std::predicate<const TParamDescriptorNode*> auto is_param_required,
-                      const ast::nodes::RestrictionSpec* = nullptr);
+                      bool inherited_is_template = false);
 
   const semantic::Scope* scope_;
 
@@ -1121,7 +1127,7 @@ void BasicTypeChecker::MatchTypes(const ast::Range& range, const InstantiatedTyp
   }
 
   const auto template_spec_providen = bool(actual->Flags() & semantic::SymbolFlags::kTemplateSpec);
-  if (!expected.template_restriction && (template_spec_providen || actual.template_restriction)) {
+  if (!expected.is_template && (template_spec_providen || actual.is_template)) {
     EmitError(TypeError{
         .range = range,
         .message = std::format("expected value, got template"),
@@ -1155,7 +1161,7 @@ void BasicTypeChecker::CheckArguments(std::span<const ast::nodes::Expr* const> a
                                       const SourceFile* params_file, const semantic::Symbol* subject_type_sym,
                                       std::span<const TParamDescriptorNode* const> params,
                                       std::predicate<const TParamDescriptorNode*> auto is_param_required,
-                                      const ast::nodes::RestrictionSpec* inherited_template_restriction) {
+                                      bool inherited_is_template) {
   const auto args_count = args.size();
 
   const auto minimal_args_cnt = static_cast<std::size_t>(std::ranges::count_if(params, is_param_required));
@@ -1179,7 +1185,7 @@ void BasicTypeChecker::CheckArguments(std::span<const ast::nodes::Expr* const> a
         ResolveExprInstantiatedType(params_file, params_file->module->scope,
                                     param->type->template As<ast::nodes::Expr>());
     if constexpr (Options.derive_template_restriction) {
-      expected_type.template_restriction = inherited_template_restriction;
+      expected_type.is_template = inherited_is_template;
     }
     if (expected_type.sym == &symbols::kInferType) [[unlikely]] {
       expected_type.sym = ResolveExprType(&sf_, scope_, args.back());
@@ -1300,6 +1306,8 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const Instantia
       //
       resulting_type.sym = ResolveCallableReturnType(callee_file, callee_file->module->scope, callee_decl);
       resulting_type.instance = m;
+      // resulting_type.is_template = callee_decl.
+      // <-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
       //
 
       const ast::nodes::FormalPars* params = ast::utils::GetCallableDeclParams(callee_decl);
@@ -1479,9 +1487,9 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const Instantia
         for (const auto* arg : m->list) {
           const InstantiatedType expected_arg_sym{
               .sym = desired_type.sym,
-              .depth = desired_type.depth - 1,
               .instance = arg,
-              .template_restriction = desired_type.template_restriction,
+              .depth = desired_type.depth - 1,
+              .is_template = desired_type.is_template,
           };
           const auto actual_sym = CheckType(arg, expected_arg_sym);
           MatchTypes(arg->nrange, actual_sym, expected_arg_sym);
@@ -1515,7 +1523,7 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const Instantia
           const InstantiatedType expected_arg_sym{
               .sym = element_type_sym,
               .instance = arg,
-              .template_restriction = desired_type.template_restriction,
+              .is_template = desired_type.is_template,
           };
           const auto actual_sym = CheckType(arg, expected_arg_sym);
           MatchTypes(arg->nrange, actual_sym, expected_arg_sym);
@@ -1539,14 +1547,14 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const Instantia
             [](const auto*) {
               return false;
             },
-            desired_type.template_restriction);
+            desired_type.is_template);
       } else {
         CheckArguments<ast::nodes::Field, {.allow_missing_fields = true, .derive_template_restriction = true}>(
             m->list, m->nrange, record_file, record_sym, fields,
             [](const ast::nodes::Field* field) {
               return !field->optional;
             },
-            desired_type.template_restriction);
+            desired_type.is_template);
       }
 
       break;
@@ -1721,9 +1729,13 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const Instantia
           case ast::TokenKind::INCONC:
             return &builtins::kVerdictType;
           case ast::TokenKind::MUL:
-            return &symbols::kVoidTypekWildcardType;
+            return &symbols::kTemplateWildcardType;
           case ast::TokenKind::ANY:
-            return &symbols::kQuestionType;
+            return &symbols::kTemplateOptionalType;
+          case ast::TokenKind::OMIT:
+            return &symbols::kTemplateOmitType;
+          case ast::TokenKind::SUB:
+            return &symbols::kTemplateNotUsedType;
           default:
             return nullptr;
         }
@@ -1764,9 +1776,9 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
 
         const InstantiatedType expected_decl_type{
             .sym = expected_type.sym,
-            .depth = declarator->arraydef.size(),
             .instance = declarator,
-            .template_restriction = m->template_restriction,
+            .depth = static_cast<std::uint32_t>(declarator->arraydef.size()),
+            .is_template = m->template_restriction != nullptr,
         };
         const auto actual_type = CheckType(declarator->value, expected_decl_type);
         MatchTypes(declarator->value->nrange, actual_type, expected_decl_type);
@@ -1779,7 +1791,7 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
 
       auto expected_type = CheckType(m->type);
       expected_type.instance = m;
-      expected_type.template_restriction = m->restriction;
+      expected_type.is_template = m->restriction != nullptr;
       //
       EnsureIsAType(expected_type.sym, m->type);
 
@@ -1830,7 +1842,7 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
       }
 
       auto expected_type = CheckType(m->type);
-      expected_type.template_restriction = m->restriction;
+      expected_type.is_template = m->restriction != nullptr;
       //
       const auto actual_type = CheckType(m->value, expected_type);
       MatchTypes(m->value->nrange, actual_type, expected_type);
