@@ -58,7 +58,7 @@ void NoUnusedImports::Exit(Context& ctx) {
       continue;
     }
     const auto* decl = FindImport(*ctx.GetFile().module, import, false).declaration;
-    report_import(decl, std::format("import '{}' is not used directly", import));
+    report_import(decl, std::format("imported module '{}' is not used directly", import));
   }
 
   for (const auto& used_transit : ctx.GetFile().module->transitive_dependency_providers) {
@@ -70,7 +70,7 @@ void NoUnusedImports::Exit(Context& ctx) {
       continue;
     }
     const auto* decl = FindImport(*ctx.GetFile().module, import, true).declaration;
-    report_import(decl, std::format("import '{}' is not used recursively", import));
+    report_import(decl, std::format("public imports of imported module '{}' are not used", import));
   }
 };
 
