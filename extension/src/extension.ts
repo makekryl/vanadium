@@ -63,26 +63,29 @@ async function initializeLanguageServer(context: vscode.ExtensionContext) {
 
   //
 
-  const status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right);
-  status.text = `$(refresh) vanadiumd ${context.extension.packageJSON['version']}`;
-  status.tooltip = 'Restart vanadiumd TTCN-3 language server';
-  if (context.extensionMode === vscode.ExtensionMode.Development) {
-    status.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
-  }
-  status.command = 'vanadiumd.restart';
-  context.subscriptions.push(status);
+  const statusItem = (() => {
+    const item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right);
+    item.text = `$(refresh) vanadiumd ${context.extension.packageJSON['version']}`;
+    item.tooltip = 'Restart vanadiumd TTCN-3 language server';
+    item.command = 'vanadiumd.restart';
+    if (context.extensionMode === vscode.ExtensionMode.Development) {
+      item.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
+    }
+    return item;
+  })();
+  context.subscriptions.push(statusItem);
 
   const isDocumentTargeted = (document?: vscode.TextDocument) =>
     document && (document.languageId === 'ttcn3' || document.fileName === '.vanadiumrc.toml');
   if (isDocumentTargeted(vscode.window.activeTextEditor?.document)) {
-    status.show();
+    statusItem.show();
   }
   context.subscriptions.push(
     vscode.window.onDidChangeActiveTextEditor((editor) => {
       if (isDocumentTargeted(editor?.document)) {
-        status.show();
+        statusItem.show();
       } else {
-        status.hide();
+        statusItem.hide();
       }
     })
   );
