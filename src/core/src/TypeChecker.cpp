@@ -36,8 +36,9 @@ const semantic::Symbol kQuestionType{
 
 struct InstantiatedType {
   const semantic::Symbol* sym{nullptr};
-  const ast::Node* instance{nullptr};
   std::size_t depth{0};
+  const ast::Node* instance{nullptr};
+  const ast::nodes::RestrictionSpec* template_restriction{nullptr};
 
   operator bool() const {
     return sym != nullptr;
@@ -979,33 +980,35 @@ InstantiatedType ResolveExprInstantiatedType(const SourceFile* file, const seman
     return {};
   }
   const auto* type_sym = ResolveExprTypeViaDecl(file, scope, decl_sym, expr);
+
+  const auto* instance = [&] -> const ast::Node* {
+    switch (expr->parent->nkind) {
+      case ast::NodeKind::ReturnSpec:
+      case ast::NodeKind::SelectorExpr:  // <-- TODO (related to on_static_property_invalid_access TODO)
+      case ast::NodeKind::FormalPar:
+        return expr->parent;
+      default:
+        break;
+    }
+
+    if (decl_sym == type_sym) {
+      return nullptr;
+    };
+
+    const auto* decl = decl_sym->Declaration();
+    switch (decl->nkind) {
+      case ast::NodeKind::FormalPar:
+      case ast::NodeKind::Declarator:
+        return decl;
+      case ast::NodeKind::ClassTypeDecl:  // this.
+        return expr;
+      default:
+        return nullptr;
+    }
+  }();
+
   return {
       .sym = type_sym,
-      .instance = [&] -> const ast::Node* {
-        switch (expr->parent->nkind) {
-          case ast::NodeKind::ReturnSpec:
-          case ast::NodeKind::SelectorExpr:  // <-- TODO (related to on_static_property_invalid_access TODO)
-          case ast::NodeKind::FormalPar:
-            return expr->parent;
-          default:
-            break;
-        }
-
-        if (decl_sym == type_sym) {
-          return nullptr;
-        };
-
-        const auto* decl = decl_sym->Declaration();
-        switch (decl->nkind) {
-          case ast::NodeKind::FormalPar:
-          case ast::NodeKind::Declarator:
-            return decl;
-          case ast::NodeKind::ClassTypeDecl:  // this.
-            return expr;
-          default:
-            return nullptr;
-        }
-      }(),
       .depth = [&] -> std::size_t {
         const auto* declnode = decl_sym->Declaration();
         if (!declnode) {
@@ -1014,6 +1017,8 @@ InstantiatedType ResolveExprInstantiatedType(const SourceFile* file, const seman
         const auto* ad = ast::utils::GetArrayDef(declnode);
         return ad ? ad->size() : 0;
       }(),
+      .instance = instance,
+      .template_restriction = instance ? ast::utils::GetTemplateRestriction(instance) : nullptr,
   };
 }
 }  // namespace
@@ -1068,13 +1073,15 @@ class BasicTypeChecker {
   struct ArgumentsTypeCheckOptions {
     bool is_union{false};
     bool allow_missing_fields{false};
+    bool derive_template_restriction{false};
   };
 
   template <ast::IsNode TParamDescriptorNode, ArgumentsTypeCheckOptions Options>
-  void PerformArgumentsTypeCheck(std::span<const ast::nodes::Expr* const> args, const ast::Range& args_range,
-                                 const SourceFile* params_file, const semantic::Symbol* subject_type_sym,
-                                 std::span<const TParamDescriptorNode* const> params,
-                                 std::predicate<const TParamDescriptorNode*> auto is_param_required);
+  void CheckArguments(std::span<const ast::nodes::Expr* const> args, const ast::Range& args_range,
+                      const SourceFile* params_file, const semantic::Symbol* subject_type_sym,
+                      std::span<const TParamDescriptorNode* const> params,
+                      std::predicate<const TParamDescriptorNode*> auto is_param_required,
+                      const ast::nodes::RestrictionSpec* = nullptr);
 
   const semantic::Scope* scope_;
 
@@ -1114,8 +1121,7 @@ void BasicTypeChecker::MatchTypes(const ast::Range& range, const InstantiatedTyp
   }
 
   const auto template_spec_providen = bool(actual->Flags() & semantic::SymbolFlags::kTemplateSpec);
-  if ((!expected.instance || ast::utils::GetTemplateRestriction(expected.instance) == nullptr) &&
-      (template_spec_providen || (actual.instance && ast::utils::GetTemplateRestriction(actual.instance) != nullptr))) {
+  if (!expected.template_restriction && (template_spec_providen || actual.template_restriction)) {
     EmitError(TypeError{
         .range = range,
         .message = std::format("expected value, got template"),
@@ -1145,11 +1151,11 @@ void BasicTypeChecker::MatchTypes(const ast::Range& range, const InstantiatedTyp
 }
 
 template <ast::IsNode TParamDescriptorNode, BasicTypeChecker::ArgumentsTypeCheckOptions Options = {}>
-void BasicTypeChecker::PerformArgumentsTypeCheck(std::span<const ast::nodes::Expr* const> args,
-                                                 const ast::Range& args_range, const SourceFile* params_file,
-                                                 const semantic::Symbol* subject_type_sym,
-                                                 std::span<const TParamDescriptorNode* const> params,
-                                                 std::predicate<const TParamDescriptorNode*> auto is_param_required) {
+void BasicTypeChecker::CheckArguments(std::span<const ast::nodes::Expr* const> args, const ast::Range& args_range,
+                                      const SourceFile* params_file, const semantic::Symbol* subject_type_sym,
+                                      std::span<const TParamDescriptorNode* const> params,
+                                      std::predicate<const TParamDescriptorNode*> auto is_param_required,
+                                      const ast::nodes::RestrictionSpec* inherited_template_restriction) {
   const auto args_count = args.size();
 
   const auto minimal_args_cnt = static_cast<std::size_t>(std::ranges::count_if(params, is_param_required));
@@ -1172,6 +1178,9 @@ void BasicTypeChecker::PerformArgumentsTypeCheck(std::span<const ast::nodes::Exp
     auto expected_type =  // TODO: TypeSpec (field->type) is not Expr actually
         ResolveExprInstantiatedType(params_file, params_file->module->scope,
                                     param->type->template As<ast::nodes::Expr>());
+    if constexpr (Options.derive_template_restriction) {
+      expected_type.template_restriction = inherited_template_restriction;
+    }
     if (expected_type.sym == &symbols::kInferType) [[unlikely]] {
       expected_type.sym = ResolveExprType(&sf_, scope_, args.back());
     }
@@ -1192,7 +1201,7 @@ void BasicTypeChecker::PerformArgumentsTypeCheck(std::span<const ast::nodes::Exp
         if (ae->property->nkind != ast::NodeKind::Ident) [[unlikely]] {
           // most likely it is IndexExpr, e.g. { [0] := value }
           EmitError(TypeError{
-              .range = ae->nrange,
+              .range = ae->value->nrange,
               .message =
                   std::format("type '{}' is not array-like", utils::GetReadableTypeName(params_file, subject_type_sym)),
           });
@@ -1307,10 +1316,10 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const Instantia
       }
       //
 
-      PerformArgumentsTypeCheck<ast::nodes::FormalPar>(m->args->list, m->args->nrange, callee_file, callee_sym,
-                                                       params->list, [](const ast::nodes::FormalPar* param) {
-                                                         return param->value == nullptr;
-                                                       });
+      CheckArguments<ast::nodes::FormalPar>(m->args->list, m->args->nrange, callee_file, callee_sym, params->list,
+                                            [](const ast::nodes::FormalPar* param) {
+                                              return param->value == nullptr;
+                                            });
 
       break;
     }
@@ -1469,7 +1478,11 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const Instantia
       if (desired_type.depth > 0) {
         for (const auto* arg : m->list) {
           const InstantiatedType expected_arg_sym{
-              .sym = desired_type.sym, .instance = arg, .depth = desired_type.depth - 1};
+              .sym = desired_type.sym,
+              .depth = desired_type.depth - 1,
+              .instance = arg,
+              .template_restriction = desired_type.template_restriction,
+          };
           const auto actual_sym = CheckType(arg, expected_arg_sym);
           MatchTypes(arg->nrange, actual_sym, expected_arg_sym);
         }
@@ -1499,7 +1512,11 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const Instantia
 
         const auto* element_type_sym = ResolveListElementType(desired_type.sym);
         for (const auto* arg : m->list) {
-          const InstantiatedType expected_arg_sym{.sym = element_type_sym, .instance = arg};
+          const InstantiatedType expected_arg_sym{
+              .sym = element_type_sym,
+              .instance = arg,
+              .template_restriction = desired_type.template_restriction,
+          };
           const auto actual_sym = CheckType(arg, expected_arg_sym);
           MatchTypes(arg->nrange, actual_sym, expected_arg_sym);
         }
@@ -1517,15 +1534,19 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const Instantia
       const auto* record_file = ast::utils::SourceFileOf(record_decl);
 
       if (record_sym->Flags() & semantic::SymbolFlags::kUnion) {
-        PerformArgumentsTypeCheck<ast::nodes::Field, {.is_union = true}>(m->list, m->nrange, record_file, record_sym,
-                                                                         fields, [](const auto*) {
-                                                                           return false;
-                                                                         });
+        CheckArguments<ast::nodes::Field, {.is_union = true, .derive_template_restriction = true}>(
+            m->list, m->nrange, record_file, record_sym, fields,
+            [](const auto*) {
+              return false;
+            },
+            desired_type.template_restriction);
       } else {
-        PerformArgumentsTypeCheck<ast::nodes::Field, {.allow_missing_fields = true}>(
-            m->list, m->nrange, record_file, record_sym, fields, [](const ast::nodes::Field* field) {
+        CheckArguments<ast::nodes::Field, {.allow_missing_fields = true, .derive_template_restriction = true}>(
+            m->list, m->nrange, record_file, record_sym, fields,
+            [](const ast::nodes::Field* field) {
               return !field->optional;
-            });
+            },
+            desired_type.template_restriction);
       }
 
       break;
@@ -1736,31 +1757,37 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
       const auto expected_type = CheckType(m->type);
       EnsureIsAType(expected_type.sym, m->type);
 
-      for (const auto* decl : m->decls) {
-        if (!decl->value) [[unlikely]] {
+      for (const auto* declarator : m->decls) {
+        if (!declarator->value) [[unlikely]] {
           continue;
         }
 
         const InstantiatedType expected_decl_type{
             .sym = expected_type.sym,
-            .instance = decl,
-            .depth = decl->arraydef.size(),
+            .depth = declarator->arraydef.size(),
+            .instance = declarator,
+            .template_restriction = m->template_restriction,
         };
-        const auto actual_type = CheckType(decl->value, expected_decl_type);
-        MatchTypes(decl->nrange, actual_type, expected_decl_type);
+        const auto actual_type = CheckType(declarator->value, expected_decl_type);
+        MatchTypes(declarator->value->nrange, actual_type, expected_decl_type);
       }
       return false;
     };
 
     case ast::NodeKind::FormalPar: {
       const auto* m = n->As<ast::nodes::FormalPar>();
+
       auto expected_type = CheckType(m->type);
       expected_type.instance = m;
+      expected_type.template_restriction = m->restriction;
+      //
       EnsureIsAType(expected_type.sym, m->type);
+
       if (const auto* default_value = m->value; default_value) {
         const auto actual_type = CheckType(default_value, expected_type);
         MatchTypes(default_value->nrange, actual_type, expected_type);
       }
+
       return false;
     };
 
@@ -1802,7 +1829,9 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
         Visit(m->params);
       }
 
-      const auto expected_type = CheckType(m->type);
+      auto expected_type = CheckType(m->type);
+      expected_type.template_restriction = m->restriction;
+      //
       const auto actual_type = CheckType(m->value, expected_type);
       MatchTypes(m->value->nrange, actual_type, expected_type);
 
