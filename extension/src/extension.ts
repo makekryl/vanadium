@@ -19,7 +19,7 @@ export async function activate(context: vscode.ExtensionContext) {
         })
       );
     } else {
-      logger.info('Cannot find ttcn3fmt in PATH');
+      logger.error('Cannot find ttcn3fmt in PATH');
     }
   }
 

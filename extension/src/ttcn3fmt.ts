@@ -1,7 +1,5 @@
 import * as vscode from 'vscode';
 import * as os from 'os';
-import * as fs from 'fs';
-import * as path from 'path';
 import { execSync, spawnSync } from 'child_process';
 
 const TTCN3FMT_BIN = 'ttcn3fmt';
@@ -49,26 +47,15 @@ export const provideDocumentFormattingEdits = (
   const abortController = new AbortController();
   token.onCancellationRequested(() => abortController.abort());
 
-  const tmpFile = path.join(os.tmpdir(), `ttcn3fmt-${Date.now()}.in`);
-  try {
-    fs.writeFileSync(tmpFile, document.getText(), {
-      signal: abortController.signal,
-    });
-    if (token.isCancellationRequested) {
-      return [];
-    }
+  const process = spawnSync(`cat | ${TTCN3FMT_BIN} /dev/stdin`, [], {
+    signal: abortController.signal,
+    shell: true,
+    input: document.getText(),
+  });
 
-    // unfortunately, /dev/stdin won't work
-    const process = spawnSync(TTCN3FMT_BIN, [tmpFile], {
-      signal: abortController.signal,
-    });
-
-    if (process.status !== 0) {
-      return [];
-    }
-
-    return [minimalEdit(document, process.stdout.toString())];
-  } finally {
-    fs.unlinkSync(tmpFile);
+  if (process.status !== 0) {
+    return [];
   }
+
+  return [minimalEdit(document, process.stdout.toString())];
 };
