@@ -17,6 +17,29 @@ class Scope;
 
 namespace checker {
 
+struct InstantiatedType {
+  const semantic::Symbol* sym{nullptr};
+  const ast::Node* instance{nullptr};
+  std::uint32_t depth{0};
+  bool is_template{false};  // TODO: enum { VALUE, ANY, TokenKind::{OMIT, VALUE, PRESENT} }
+
+  operator bool() const {
+    return sym != nullptr;
+  }
+  const semantic::Symbol* operator->() const {
+    return sym;
+  }
+
+  InstantiatedType& operator=(const semantic::Symbol* nsym) {
+    sym = nsym;
+    return *this;
+  }
+
+  static InstantiatedType None() {
+    return {};
+  }
+};
+
 namespace symbols {
 extern const semantic::Symbol kTypeError;
 extern const semantic::Symbol kVoidType;
@@ -25,7 +48,7 @@ extern const semantic::Symbol kInferType;
 
 const semantic::Symbol* ResolveExprSymbol(const SourceFile*, const semantic::Scope*, const ast::nodes::Expr*);
 const semantic::Symbol* ResolveDeclarationType(const SourceFile*, const semantic::Scope*, const ast::nodes::Decl*);
-const semantic::Symbol* ResolveCallableReturnType(const SourceFile*, const semantic::Scope*, const ast::nodes::Decl*);
+InstantiatedType ResolveCallableReturnType(const SourceFile*, const semantic::Scope*, const ast::nodes::Decl*);
 const semantic::Symbol* ResolveExprType(const SourceFile*, const semantic::Scope*, const ast::nodes::Expr*);
 const semantic::Symbol* ResolvePotentiallyAliasedType(const semantic::Symbol*);
 const semantic::Symbol* ResolveListElementType(const semantic::Symbol*);

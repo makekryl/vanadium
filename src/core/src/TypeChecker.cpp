@@ -40,24 +40,6 @@ const semantic::Symbol kTemplateNotUsedType{
     semantic::SymbolFlags::Value(semantic::SymbolFlags::kBuiltinType | semantic::SymbolFlags::kTemplateSpec)};
 }  // namespace symbols
 
-struct InstantiatedType {
-  const semantic::Symbol* sym{nullptr};
-  const ast::Node* instance{nullptr};
-  std::uint32_t depth{0};
-  bool is_template{false};  // TODO: enum { ANY, TokenKind::{OMIT, VALUE, PRESENT} }
-
-  operator bool() const {
-    return sym != nullptr;
-  }
-  const semantic::Symbol* operator->() const {
-    return sym;
-  }
-
-  InstantiatedType& operator=(const semantic::Symbol* nsym) {
-    sym = nsym;
-    return *this;
-  }
-};
 namespace {
 InstantiatedType ResolveExprInstantiatedType(const SourceFile*, const semantic::Scope*, const ast::nodes::Expr*);
 }  // namespace
@@ -250,7 +232,7 @@ class SelectorExprResolver {
       mode_static_ = false;
       const auto* tdecl = x_sym->Declaration();
       const auto* tfile = ast::utils::SourceFileOf(tdecl);
-      x_sym = ResolveCallableReturnType(tfile, tfile->module->scope, tdecl->As<ast::nodes::Decl>());
+      x_sym = ResolveCallableReturnType(tfile, tfile->module->scope, tdecl->As<ast::nodes::Decl>()).sym;
       if (!x_sym) {
         return nullptr;
       }
@@ -913,28 +895,39 @@ const semantic::Symbol* ResolveDeclarationType(const SourceFile* file, const sem
 }
 
 // Callable Declaration -> Effective Type
-const semantic::Symbol* ResolveCallableReturnType(const SourceFile* file, const semantic::Scope* scope,
-                                                  const ast::nodes::Decl* decl) {
+InstantiatedType ResolveCallableReturnType(const SourceFile* file, const semantic::Scope* scope,
+                                           const ast::nodes::Decl* decl) {
   switch (decl->nkind) {
     case ast::NodeKind::FuncDecl: {
       const auto* m = decl->As<ast::nodes::FuncDecl>();
       const auto* ret = m->ret;
       if (!ret) {
-        return &symbols::kVoidType;
+        return {.sym = &symbols::kVoidType};
       }
-      return ResolveExprType(file, scope, m->ret->type);
+      return {
+          .sym = ResolveExprType(file, scope, m->ret->type),
+          .instance = ret,
+          .is_template = ret->restriction != nullptr,
+      };
     }
     case ast::NodeKind::TemplateDecl: {
       const auto* m = decl->As<ast::nodes::TemplateDecl>();
-      return ResolveExprType(file, scope, m->type);
+      return {
+          .sym = ResolveExprType(file, scope, m->type),
+          .instance = m,
+          .is_template = true,
+      };
     }
     case ast::NodeKind::ConstructorDecl: {
-      const auto* m = decl->As<ast::nodes::FuncDecl>();
+      const auto* m = decl->As<ast::nodes::ConstructorDecl>();
       const auto* classdecl = m->parent->parent->As<ast::nodes::ClassTypeDecl>();  // Def->ClassTypeDecl
-      return file->module->scope->ResolveDirect(file->Text(*classdecl->name));
+      return {
+          .sym = file->module->scope->ResolveDirect(file->Text(*classdecl->name)),
+          .instance = m,
+      };
     }
     default: {
-      return nullptr;
+      return InstantiatedType::None();
     }
   }
 }
@@ -953,15 +946,15 @@ const semantic::Symbol* ResolveExprTypeViaDecl(const SourceFile* file, const sem
   const auto* decl_scope = decl_file->module->scope;
 
   if (expr->nkind == ast::NodeKind::CallExpr) {
-    const auto* ret_sym = ResolveCallableReturnType(decl_file, decl_scope, decl);
-    if (ret_sym == &symbols::kInferType) {
+    const auto ret_sym = ResolveCallableReturnType(decl_file, decl_scope, decl);
+    if (ret_sym.sym == &symbols::kInferType) {
       const auto* ce = expr->As<ast::nodes::CallExpr>();
       if (ce->args->list.empty()) {
         return nullptr;
       }
       return ResolveExprType(file, scope, ce->args->list.back());
     }
-    return ret_sym;
+    return ret_sym.sym;
   }
 
   return ResolveDeclarationType(decl_file, decl_scope, decl);
@@ -1104,7 +1097,7 @@ void BasicTypeChecker::MatchTypes(const ast::Range& range, const InstantiatedTyp
   InstantiatedType actual{actual_};  // TODO
   if (actual && actual->Flags() & semantic::SymbolFlags::kTemplate) {
     const auto* file = ast::utils::SourceFileOf(actual->Declaration());
-    actual.sym = ResolveCallableReturnType(file, file->module->scope, actual->Declaration()->As<ast::nodes::Decl>());
+    actual = ResolveCallableReturnType(file, file->module->scope, actual->Declaration()->As<ast::nodes::Decl>());
   }
   if (!actual) {
     // Seems like that is is too much as right side types that cannot be resolved
@@ -1304,9 +1297,7 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const Instantia
       const auto* callee_file = ast::utils::SourceFileOf(callee_decl);
 
       //
-      resulting_type.sym = ResolveCallableReturnType(callee_file, callee_file->module->scope, callee_decl);
-      resulting_type.instance = m;
-      // resulting_type.is_template = callee_decl.
+      resulting_type = ResolveCallableReturnType(callee_file, callee_file->module->scope, callee_decl);
       // <-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
       //
 

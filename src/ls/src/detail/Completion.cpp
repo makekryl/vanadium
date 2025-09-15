@@ -317,6 +317,7 @@ lsp::CompletionList CollectCompletions(const lsp::CompletionParams& params, cons
           (sym.Flags() & (core::semantic::SymbolFlags::kFunction | core::semantic::SymbolFlags::kTemplate))
               ? core::checker::ResolveCallableReturnType(module.sf, module.scope,
                                                          sym.Declaration()->As<core::ast::nodes::Decl>())
+                    .sym
               : core::checker::ResolveDeclarationType(module.sf, module.scope,
                                                       sym.Declaration()->As<core::ast::nodes::Decl>());
       if (expected_type_opt && expected_type_opt != actual_type) {
