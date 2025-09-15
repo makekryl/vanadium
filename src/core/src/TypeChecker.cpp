@@ -1463,13 +1463,6 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const Instantia
         break;
       }
 
-      if (!(desired_type->Flags() & (semantic::SymbolFlags::kStructural | semantic::SymbolFlags::kList))) {
-        //
-        resulting_type = &symbols::kTypeError;
-        //
-        break;
-      }
-
       //
       resulting_type = desired_type;
       //
@@ -1485,6 +1478,13 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const Instantia
           const auto actual_sym = CheckType(arg, expected_arg_sym);
           MatchTypes(arg->nrange, actual_sym, expected_arg_sym);
         }
+        break;
+      }
+
+      if (!(desired_type->Flags() & (semantic::SymbolFlags::kStructural | semantic::SymbolFlags::kList))) {
+        //
+        resulting_type = &symbols::kTypeError;
+        //
         break;
       }
 
