@@ -689,9 +689,10 @@ const semantic::Symbol* DeduceExpectedType(const SourceFile* file, const semanti
           if (ldecl->nkind == ast::NodeKind::Field) {  // from SubTypeDecl
             ldecl = ldecl->As<ast::nodes::Field>()->type;
           }
+          const auto* ldecl_file = ast::utils::SourceFileOf(ldecl);
           switch (ldecl->nkind) {
             case ast::NodeKind::ListSpec:
-              return ResolveExprType(file, ast::utils::SourceFileOf(ldecl)->module->scope,
+              return ResolveExprType(ldecl_file, ldecl_file->module->scope,
                                      ldecl->As<ast::nodes::ListSpec>()->elemtype->As<ast::nodes::Expr>());
             default:
               return nullptr;
