@@ -52,7 +52,7 @@ const semantic::Symbol* ResolveBuiltinType(std::string_view name) {
       {"charstring", &kCharstring},
       {"octetstring", &kOctetstring},
       {"hexstring", &kHexstring},
-      {"universal charstring", &kUniversalCharstring},
+      {"universal charstring", &kCharstring},  // TODO: investigate &kUniversalCharstring
       {"verdicttype", &kVerdictType},
       {"timer", &kTimer},
 
