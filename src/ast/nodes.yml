@@ -44,7 +44,7 @@ Declarator:
   arraydef: ParenExpr*[]?
   value: Expr*?
 TemplateDecl:
-  restriction: RestrictionSpec*?
+  restriction: RestrictionSpec*
   modif: Token*?
   type: Expr*
   name: Ident

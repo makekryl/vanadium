@@ -1834,7 +1834,7 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
       }
 
       auto expected_type = CheckType(m->type);
-      expected_type.is_template = m->restriction != nullptr;
+      expected_type.is_template = true;
       //
       const auto actual_type = CheckType(m->value, expected_type);
       MatchTypes(m->value->nrange, actual_type, expected_type);

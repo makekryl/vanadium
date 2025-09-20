@@ -1008,6 +1008,8 @@ nodes::TemplateDecl* Parser::ParseTemplateDecl() {
         n.type = Consume();  // omit/value/...
       });
       Expect(TokenKind::RPAREN);
+    } else {
+      td.restriction = NewNode<nodes::RestrictionSpec>([&](auto&) {});
     }
     if (tok_ == TokenKind::MODIF) {
       td.modif = TokAlloc(Consume());
