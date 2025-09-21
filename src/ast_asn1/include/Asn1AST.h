@@ -4,6 +4,9 @@
 
 #include "ASTTypes.h"
 
+// ASN.1 parametrization is not needed to be supported according to
+// ES 201 873-7	4.10.1 [TTCN-3: Using ASN.1 with TTCN-3] paragraph 10
+
 namespace vanadium::asn1 {
 namespace ast {
 
