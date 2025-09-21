@@ -71,7 +71,7 @@ FuncDecl:
   with: WithSpec*?
 ConstructorDecl:
   params: FormalPars*?
-  body: BlockStmt*
+  body: BlockStmt*?
 SignatureDecl:
   name: Ident
   pars: FormalPars*?

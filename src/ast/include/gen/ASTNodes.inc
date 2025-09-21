@@ -1181,13 +1181,15 @@ struct ConstructorDecl : Decl {
   ConstructorDecl() : Decl(NodeKind::ConstructorDecl) {}
 
   FormalPars* params{nullptr};
-  BlockStmt* body;
+  BlockStmt* body{nullptr};
 
   void Accept(const NodeInspector& inspector) const {
     if (params != nullptr) [[likely]] {
       Inspect(params, inspector);
     }
-    Inspect(body, inspector);
+    if (body != nullptr) {
+      Inspect(body, inspector);
+    }
   }
 };
 
