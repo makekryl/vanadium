@@ -13,9 +13,12 @@ endif()
 
 FetchContent_MakeAvailable(tbb)
 
-target_compile_options(tbb PRIVATE
-  -Wno-error=stringop-overflow
-)
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  # TODO: prevent leaking of -W to dependencies
+  target_compile_options(tbb PRIVATE
+    -Wno-error=stringop-overflow
+  )
+endif()
 
 if(VANADIUM_USE_ASAN)
   # https://github.com/uxlfoundation/oneTBB/issues/1726
