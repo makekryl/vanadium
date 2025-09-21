@@ -17,11 +17,23 @@ class Scope;
 
 namespace checker {
 
+// ES 201 873-1 [TTCN-3: Core Language], par. 15.8.1
+enum class TemplateRestrictionKind : std::uint8_t {
+  kNone = 0,
+
+  kOmit = 1 << 0,
+  kValue = 1 << 1,
+  kPresent = 1 << 2,
+
+  kRegular = kOmit | kValue | kPresent,
+};
+[[nodiscard]] TemplateRestrictionKind ParseTemplateRestriction(const ast::nodes::RestrictionSpec*);
+
 struct InstantiatedType {
   const semantic::Symbol* sym{nullptr};
   const ast::Node* instance{nullptr};
   std::uint32_t depth{0};
-  bool is_template{false};  // TODO: enum { VALUE, ANY, TokenKind::{OMIT, VALUE, PRESENT} }
+  TemplateRestrictionKind restriction{TemplateRestrictionKind::kNone};
 
   operator bool() const {
     return sym != nullptr;

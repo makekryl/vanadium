@@ -11,6 +11,8 @@ namespace ast {
 
 // NOLINTBEGIN(readability-identifier-naming)
 enum class TokenKind : std::uint8_t {
+  kSentinel,
+
   ILLEGAL,
 
   kEOF,

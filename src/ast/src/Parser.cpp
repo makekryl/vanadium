@@ -1009,7 +1009,9 @@ nodes::TemplateDecl* Parser::ParseTemplateDecl() {
       });
       Expect(TokenKind::RPAREN);
     } else {
-      td.restriction = NewNode<nodes::RestrictionSpec>([&](auto&) {});
+      td.restriction = NewNode<nodes::RestrictionSpec>([&](auto& n) {
+        n.type = {TokenKind::kSentinel};
+      });
     }
     if (tok_ == TokenKind::MODIF) {
       td.modif = TokAlloc(Consume());
@@ -1062,7 +1064,7 @@ nodes::RestrictionSpec* Parser::ParseRestrictionSpec() {
           rs.type = Consume();
           Expect(TokenKind::RPAREN);
         } else {
-          rs.type = {};
+          rs.type = {TokenKind::kSentinel};
         }
       });
     case TokenKind::OMIT:
