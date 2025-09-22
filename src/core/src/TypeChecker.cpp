@@ -342,19 +342,24 @@ class IndexExprResolver {
  public:
   IndexExprResolver(Options options) : options_(std::move(options)) {}
 
-  const semantic::Symbol* Resolve(const SourceFile* sf, const semantic::Scope* scope, const ast::nodes::IndexExpr* ie) {
+  InstantiatedType Resolve(const SourceFile* sf, const semantic::Scope* scope, const ast::nodes::IndexExpr* ie) {
     sf_ = sf;
     scope_ = scope;
 
-    const auto* res = ResolveIndexExpr(ie);
+    const auto* sym = ResolveIndexExpr(ie);
     if (depth_ != 0) [[unlikely]] {
-      return nullptr;
+      return InstantiatedType::None();
     }
-    return res;
+    return InstantiatedType{
+        .sym = sym,
+        .instance = ie,
+        .restriction = head_type_.restriction,
+    };
   }
 
  private:
   std::size_t depth_{0};
+  InstantiatedType head_type_;
   const semantic::Symbol* ResolveIndexExpr(const ast::nodes::IndexExpr* ie) {
     options_.check_index(ie->index);
 
@@ -366,16 +371,16 @@ class IndexExprResolver {
         return x_sym;
       }
     } else {
-      const auto type = options_.resolve_type(sf_, scope_, ie->x);
-      x_sym = type.sym;
-      if (!type.instance) [[unlikely]] {
-        if (type.sym) {
+      head_type_ = options_.resolve_type(sf_, scope_, ie->x);
+      x_sym = head_type_.sym;
+      if (!head_type_.instance) [[unlikely]] {
+        if (head_type_.sym) {
           options_.on_non_subscriptable_type(ie->x, x_sym);
         }
         return nullptr;
       }
-      if (const auto* arraydef_vec = ast::utils::GetArrayDef(type.instance); arraydef_vec && !arraydef_vec->empty())
-          [[unlikely]] {
+      if (const auto* arraydef_vec = ast::utils::GetArrayDef(head_type_.instance);
+          arraydef_vec && !arraydef_vec->empty()) [[unlikely]] {
         depth_ = arraydef_vec->size() - 1;
         return x_sym;
       }
@@ -418,7 +423,7 @@ const semantic::Symbol* ResolveIndexExprType(const SourceFile* sf, const semanti
       .on_non_subscriptable_type = [](const auto*, auto) {},
       .check_index = [](const auto*) {},
   }};
-  return resolver.Resolve(sf, scope, se);
+  return resolver.Resolve(sf, scope, se).sym;
 }
 
 }  // namespace detail
@@ -1000,7 +1005,7 @@ InstantiatedType ResolveExprInstantiatedType(const SourceFile* file, const seman
   const auto* instance = [&] -> const ast::Node* {
     switch (expr->parent->nkind) {
       case ast::NodeKind::ReturnSpec:
-      case ast::NodeKind::SelectorExpr:  // <-- TODO (related to on_static_property_invalid_access TODO)
+      // case ast::NodeKind::SelectorExpr:  // <-- TODO (related to on_static_property_invalid_access TODO)
       case ast::NodeKind::FormalPar:
         return expr->parent;
       default:
@@ -1578,10 +1583,11 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const Instantia
     case ast::NodeKind::SelectorExpr: {
       const auto* se = n->As<ast::nodes::SelectorExpr>();
 
+      InstantiatedType head_type{};
       detail::SelectorExprResolver resolver{detail::SelectorExprResolverOptions{
           .resolve_type =
               [&](const auto*, const auto*, const ast::nodes::Expr* expr) {
-                return CheckType(expr);
+                return head_type = CheckType(expr);
               },
           .on_non_structural_type =
               [&](const ast::Node* sel, const semantic::Symbol* sym) {
@@ -1646,6 +1652,7 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const Instantia
       if (!resulting_type) {
         resulting_type = &symbols::kTypeError;
       }
+      resulting_type.restriction = head_type.restriction;
       if (property_sym->Flags() & semantic::SymbolFlags::kField) {
         const auto* fld = property_sym->Declaration()->As<ast::nodes::Field>();
         if (fld->optional) {
@@ -1686,7 +1693,6 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const Instantia
       if (!resulting_type) {
         resulting_type = &symbols::kTypeError;
       }
-      resulting_type.instance = ie;
       //
       break;
     }
