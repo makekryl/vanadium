@@ -373,10 +373,16 @@ class IndexExprResolver {
     } else {
       head_type_ = options_.resolve_type(sf_, scope_, ie->x);
       x_sym = head_type_.sym;
-      if (!head_type_.instance) [[unlikely]] {
-        if (head_type_.sym) {
-          options_.on_non_subscriptable_type(ie->x, x_sym);
+      if (!x_sym) {
+        const auto* tgt_err_node = ie->x;
+        if (tgt_err_node->nkind == ast::NodeKind::SelectorExpr) {
+          tgt_err_node = tgt_err_node->As<ast::nodes::SelectorExpr>()->sel;
         }
+        options_.on_non_subscriptable_type(tgt_err_node, &symbols::kTypeError);
+        return nullptr;
+      }
+      if (!head_type_.instance) {
+        options_.on_non_subscriptable_type(ie->x, x_sym);
         return nullptr;
       }
       if (const auto* arraydef_vec = ast::utils::GetArrayDef(head_type_.instance);
