@@ -104,6 +104,7 @@ Token Scanner::Scan() {
         break;
       case '-':
         if (next == '-') {
+          --pos_;
           kind = ScanComment();
         } else if (std::isdigit(next)) {
           kind = ScanNumber();

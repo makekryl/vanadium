@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <cstring>
 #include <format>
+#include <iomanip>
 #include <iostream>
 #include <memory>
 #include <optional>
@@ -634,6 +635,7 @@ void Transparser::Grow(std::uint8_t n) {
 
   while (n > 0) {
     auto token = scanner_.Scan();
+    // std::println("CONSUME({}:{}) :: {}", token.range.begin, token.range.end, magic_enum::enum_name(token.kind));
     if (kShouldIgnore(token.kind)) {
       continue;
     }
@@ -666,7 +668,7 @@ Token Transparser::Expect(TokenKind expected) {
 
 void Transparser::EmitError(const ttcn_ast::Range& range, std::string&& message) {
   // TODO: remove after finishing xparser
-  std::cerr << std::stacktrace::current() << std::endl << std::flush;
+  std::cerr << std::quoted(src_.substr(0, 64)) << "\n---\n" << std::stacktrace::current() << std::endl << std::flush;
   errors_.emplace_back(range, std::move(message));
   throw ParsingCancellationSignal{};
 }
