@@ -27,6 +27,8 @@ class Scanner {
   void ScanAlnum();
   void ScanDigits();
 
+  TokenKind ScanComment();
+
   TokenKind ScanNumber();
 
   TokenKind ScanString();

@@ -104,9 +104,7 @@ Token Scanner::Scan() {
         break;
       case '-':
         if (next == '-') {
-          kind = TokenKind::COMMENT;
-          ++pos_;
-          ScanLine();
+          kind = ScanComment();
         } else if (std::isdigit(next)) {
           kind = ScanNumber();
         }
@@ -186,6 +184,23 @@ void Scanner::ScanDigits() {
   while (HasNext() && std::isdigit(Peek())) {
     ++pos_;
   }
+}
+
+TokenKind Scanner::ScanComment() {
+  pos_ += 2;  // skip the first '--'
+  while (HasNext()) {
+    const char ch = Peek();
+    ++pos_;
+    if (ch == '\n' || ch == '\v' || ch == '\f') {
+      lines_.push_back(pos_ + 1);
+      break;
+    }
+    if (ch == '-' && HasNext() && Peek() == '-') {
+      ++pos_;
+      break;
+    }
+  }
+  return TokenKind::COMMENT;
 }
 
 TokenKind Scanner::ScanNumber() {

@@ -29,6 +29,7 @@ class Transparser {
   void ParseName(std::optional<ttcn_ast::nodes::Ident>&);
 
   ttcn_ast::nodes::Module* ParseModule();
+  ttcn_ast::nodes::ImportDecl* ParseImport();
   ttcn_ast::nodes::Definition* ParseDefinition();
 
   ttcn_ast::nodes::ValueDecl* ParseConstDecl(ttcn_ast::nodes::Ident&& name);
@@ -46,6 +47,9 @@ class Transparser {
   ttcn_ast::nodes::Ident VerIdent(std::uint32_t);
 
   //
+
+  void MaybeSwallowBraceExpr();
+  void SwallowBraceExprRemains();
 
   Token Consume();
   Token ConsumeInvariant(TokenKind);

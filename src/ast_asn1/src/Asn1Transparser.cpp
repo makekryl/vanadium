@@ -7,9 +7,10 @@
 #include <cstdint>
 #include <cstring>
 #include <format>
-#include <iomanip>
+#include <iostream>
 #include <memory>
 #include <optional>
+#include <stacktrace>
 #include <string_view>
 #include <utility>
 
@@ -178,6 +179,11 @@ ttcn_ast::nodes::Module* Transparser::ParseModule() {
     if (tok_ == TokenKind::IMPORTS) {
       while (tok_ != TokenKind::kEOF && tok_ != TokenKind::SEMICOLON) {
         Consume();
+        if (tok_ == TokenKind::FROM) {
+          m.defs.emplace_back(NewNode<ttcn_ast::nodes::Definition>([&](auto& wdef) {
+            wdef.def = ParseImport();
+          }));
+        }
       }
       ConsumeInvariant(TokenKind::SEMICOLON);
     }
@@ -191,6 +197,18 @@ ttcn_ast::nodes::Module* Transparser::ParseModule() {
       m.defs.emplace_back(r);
     }
     Expect(TokenKind::END);
+  });
+}
+
+ttcn_ast::nodes::ImportDecl* Transparser::ParseImport() {
+  return NewNode<ttcn_ast::nodes::ImportDecl>([&](auto& d) {
+    ConsumeInvariant(TokenKind::FROM);
+    ParseName(d.module);
+    d.list = {
+        NewNode<ttcn_ast::nodes::DefKindExpr>([&](auto& dk) {
+          // TODO: check if this is sufficient
+        }),
+    };
   });
 }
 
@@ -287,6 +305,10 @@ ttcn_ast::nodes::ValueDecl* Transparser::ParseConstDecl(ttcn_ast::nodes::Ident&&
                   return ttcn_ast::TokenKind::FALSE;
                 case TokenKind::V_TRUE:
                   return ttcn_ast::TokenKind::TRUE;
+                case TokenKind::LBRACE: {
+                  SwallowBraceExprRemains();
+                  return ttcn_ast::TokenKind::LBRACE;
+                }
                 default:
                   return ttcn_ast::TokenKind::ILLEGAL;
               }
@@ -299,9 +321,17 @@ ttcn_ast::nodes::ValueDecl* Transparser::ParseConstDecl(ttcn_ast::nodes::Ident&&
 }
 
 ttcn_ast::nodes::TypeSpec* Transparser::ParseTypeSpec() {
-  const auto parse_ref_spec = [&](auto parse_constraint) -> ttcn_ast::nodes::RefSpec* {
+  const auto parse_ref_spec = [&](std::invocable auto parse_constraint,
+                                  bool skip_postname = false) -> ttcn_ast::nodes::RefSpec* {
     return NewNode<ttcn_ast::nodes::RefSpec>([&](auto& rs) {
       rs.x = ParseName();
+
+      if (skip_postname) {
+        // TODO: take it into account
+        // PriorityLevel				::= INTEGER { spare (0), highest (1), lowest (14), no-priority
+        // (15) } (0..15)
+        MaybeSwallowBraceExpr();
+      }
 
       // TODO: should moved out of here
       if (tok_ == TokenKind::LPAREN) {
@@ -361,13 +391,21 @@ ttcn_ast::nodes::TypeSpec* Transparser::ParseTypeSpec() {
         ParseSizeConstraint();
       });
     case TokenKind::BOOLEAN:
-    case TokenKind::INTEGER:
     case TokenKind::REAL:
     case TokenKind::kNULL:
-    case TokenKind::IDENT: {
       return parse_ref_spec([&] {
         ParseValueConstraint();
       });
+    case TokenKind::IDENT:
+      return parse_ref_spec([&] {
+        ParseSizeConstraint();
+      });
+    case TokenKind::INTEGER: {
+      return parse_ref_spec(
+          [&] {
+            ParseValueConstraint();
+          },
+          true);
     }
 
     case TokenKind::SEQUENCE: {
@@ -379,9 +417,13 @@ ttcn_ast::nodes::TypeSpec* Transparser::ParseTypeSpec() {
 
         Expect(TokenKind::OF);
 
-        return NewNode<ttcn_ast::nodes::ListSpec>([&](ttcn_ast::nodes::ListSpec& ls) {
+        auto* ret = NewNode<ttcn_ast::nodes::ListSpec>([&](ttcn_ast::nodes::ListSpec& ls) {
           ls.elemtype = ParseTypeSpec();
         });
+
+        MaybeSwallowBraceExpr();
+
+        return ret;
       }
 
       return parse_struct_spec(ttcn_ast::TokenKind::RECORD);
@@ -436,6 +478,10 @@ ttcn_ast::nodes::Field* Transparser::ParseField() {
     ParseName(f.name);
 
     f.type = ParseTypeSpec();
+
+    if (tok_ == TokenKind::LBRACE) {
+      MaybeSwallowBraceExpr();
+    }
 
     if (tok_ == TokenKind::OPTIONAL) {
       Consume();
@@ -493,6 +539,11 @@ ttcn_ast::nodes::LengthExpr* Transparser::ParseSizeConstraint() {
     ConsumeInvariant(TokenKind::RANGE);
     expect_value();
   }
+  if (tok_ == TokenKind::COMMA) {
+    // ENBname ::= PrintableString (SIZE (1..150,...))
+    Consume();
+    Expect(TokenKind::ELIPSIS);
+  }
   Expect(TokenKind::RPAREN);
 
   return nullptr;  // <-- TODO
@@ -512,6 +563,11 @@ ttcn_ast::nodes::ParenExpr* Transparser::ParseValueConstraint() {
     ConsumeInvariant(TokenKind::RANGE);
     expect_value();
   }
+  if (tok_ == TokenKind::COMMA) {  // todo: merge with ParseSizeConstraint
+    // E-RAB-ID		::= INTEGER (0..15, ...)
+    Consume();
+    Expect(TokenKind::ELIPSIS);
+  }
 
   return nullptr;  // <-- TODO
 }
@@ -530,6 +586,25 @@ ttcn_ast::nodes::Ident Transparser::VerIdent(std::uint32_t ver) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void Transparser::MaybeSwallowBraceExpr() {
+  if (tok_ != TokenKind::LBRACE) {
+    return;
+  }
+  Consume();
+  SwallowBraceExprRemains();
+}
+void Transparser::SwallowBraceExprRemains() {
+  std::int64_t c{1};
+  while ((tok_ != TokenKind::kEOF) && (c > 0)) {
+    if (tok_ == TokenKind::LBRACE) {
+      ++c;
+    } else if (tok_ == TokenKind::RBRACE) {
+      --c;
+    }
+    Consume();
+  }
+}
 
 Token Transparser::Consume() {
   auto tok = queue_[cursor_];
@@ -590,12 +665,13 @@ Token Transparser::Expect(TokenKind expected) {
 }
 
 void Transparser::EmitError(const ttcn_ast::Range& range, std::string&& message) {
+  // TODO: remove after finishing xparser
+  std::cerr << std::stacktrace::current() << std::endl << std::flush;
   errors_.emplace_back(range, std::move(message));
   throw ParsingCancellationSignal{};
 }
 void Transparser::EmitErrorExpected(std::string_view what) {
-  errors_.emplace_back(Peek(1).range, std::format("expected {}", what));
-  throw ParsingCancellationSignal{};
+  EmitError(Peek(1).range, std::format("expected {}, got {}", what, magic_enum::enum_name(tok_)));
 }
 
 //
