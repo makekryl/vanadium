@@ -257,7 +257,7 @@ Token Scanner::Scan() {
           kind = TokenKind::RANGE;
           if (HasNext() && Peek() == '.') {
             ++pos_;
-            kind = TokenKind::ELIPSIS;
+            kind = TokenKind::ELLIPSIS;
           }
         }
         break;

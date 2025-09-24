@@ -41,9 +41,9 @@ enum class TokenKind : std::uint8_t {
   COMMA,      // ,
   SEMICOLON,  // ;
 
-  RANGE,    // ..
-  ELIPSIS,  // ...
-  ASSIGN,   // ::=
+  RANGE,     // ..
+  ELLIPSIS,  // ...
+  ASSIGN,    // ::=
 
   LPAREN,   // (
   RPAREN,   // )

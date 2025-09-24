@@ -452,7 +452,7 @@ ttcn_ast::nodes::TypeSpec* Transparser::ParseTypeSpec() {
 void Transparser::ParseFields(std::vector<ttcn_ast::nodes::Field*>& fields, TokenKind term) {
   std::size_t ver{0};
   while (tok_ != term) {
-    if (tok_ == TokenKind::ELIPSIS) {
+    if (tok_ == TokenKind::ELLIPSIS) {
       Consume();
     } else if (tok_ == TokenKind::LDBRACK) {
       Consume();
@@ -492,7 +492,7 @@ ttcn_ast::nodes::Field* Transparser::ParseField() {
 
 void Transparser::ParseEnumValues(std::vector<ttcn_ast::nodes::Expr*>& values) {
   while (tok_ != TokenKind::RBRACE) {
-    if (tok_ == TokenKind::ELIPSIS) {
+    if (tok_ == TokenKind::ELLIPSIS) {
       Consume();
     } else {
       values.emplace_back([&] -> ttcn_ast::nodes::Expr* {
@@ -542,7 +542,7 @@ ttcn_ast::nodes::LengthExpr* Transparser::ParseSizeConstraint() {
   if (tok_ == TokenKind::COMMA) {
     // ENBname ::= PrintableString (SIZE (1..150,...))
     Consume();
-    Expect(TokenKind::ELIPSIS);
+    Expect(TokenKind::ELLIPSIS);
   }
   Expect(TokenKind::RPAREN);
 
@@ -566,7 +566,7 @@ ttcn_ast::nodes::ParenExpr* Transparser::ParseValueConstraint() {
   if (tok_ == TokenKind::COMMA) {  // todo: merge with ParseSizeConstraint
     // E-RAB-ID		::= INTEGER (0..15, ...)
     Consume();
-    Expect(TokenKind::ELIPSIS);
+    Expect(TokenKind::ELLIPSIS);
   }
 
   return nullptr;  // <-- TODO

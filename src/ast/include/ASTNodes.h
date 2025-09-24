@@ -55,7 +55,7 @@ enum class TokenKind : std::uint8_t {
   ANY,         // ?
   EXCL,        // !
   RANGE,       // ..
-  ELIPSIS,     // ...
+  ELLIPSIS,    // ...
   ASSIGN,      // :=
   COLONCOLON,  // ::
 
