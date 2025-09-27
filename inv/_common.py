@@ -11,7 +11,7 @@ CMAKE_PRESETS = [
 
 def get_preset(config: str, toolchain: str = DEFAULT_TOOLCHAIN):
   preset = f"{toolchain}-{config}"
-  assert preset in CMAKE_PRESETS
+  assert preset in CMAKE_PRESETS, f"Preset '{preset}' does not exist"
   return preset
 
 
