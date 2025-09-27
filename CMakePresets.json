@@ -1,0 +1,80 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 31,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "base",
+      "generator": "Ninja",
+      "hidden": true
+    },
+
+    {
+      "name": "gcc",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "gcc",
+        "CMAKE_CXX_COMPILER": "g++"
+      }
+    },
+
+    {
+      "name": "debug",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "release",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+
+    {
+      "name": "asan",
+      "hidden": true,
+      "cacheVariables": {
+        "VANADIUM_USE_ASAN": "ON"
+      }
+    },
+    {
+      "name": "ubsan",
+      "hidden": true,
+      "cacheVariables": {
+        "VANADIUM_USE_UBSAN": "ON"
+      }
+    },
+
+    {
+      "name": "static",
+      "hidden": true,
+      "cacheVariables": {
+        "VANADIUM_STATIC_BUILD": "ON"
+      }
+    },
+
+    {
+      "name": "gcc-debug",
+      "inherits": ["base", "gcc", "debug"]
+    },
+    {
+      "name": "gcc-debug-sanitizers",
+      "inherits": ["base", "gcc-debug", "asan"]
+    },
+
+    {
+      "name": "gcc-release",
+      "inherits": ["base", "gcc", "release"]
+    },
+    {
+      "name": "gcc-release-static",
+      "inherits": ["base", "gcc-release", "static"]
+    }
+  ]
+}
