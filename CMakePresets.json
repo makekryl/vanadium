@@ -15,6 +15,7 @@
     {
       "name": "gcc",
       "hidden": true,
+      "inherits": ["base"],
       "cacheVariables": {
         "CMAKE_C_COMPILER": "gcc",
         "CMAKE_CXX_COMPILER": "g++"
@@ -61,20 +62,20 @@
 
     {
       "name": "gcc-debug",
-      "inherits": ["base", "gcc", "debug"]
+      "inherits": ["gcc", "debug"]
     },
     {
       "name": "gcc-debug-sanitizers",
-      "inherits": ["base", "gcc-debug", "asan"]
+      "inherits": ["gcc-debug", "asan"]
     },
 
     {
       "name": "gcc-release",
-      "inherits": ["base", "gcc", "release"]
+      "inherits": ["gcc", "release"]
     },
     {
       "name": "gcc-release-static",
-      "inherits": ["base", "gcc-release", "static"]
+      "inherits": ["gcc-release", "static"]
     }
   ]
 }
