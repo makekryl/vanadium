@@ -9,7 +9,7 @@ CMAKE_PRESETS: list[str] = [
 ]
 
 
-DEFAULT_TOOLCHAIN = TOOLCHAINS[0]
+DEFAULT_TOOLCHAIN: str = TOOLCHAINS[0]
 
 
 def get_preset(config: str, toolchain: str = DEFAULT_TOOLCHAIN):
