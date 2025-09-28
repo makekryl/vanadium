@@ -5,7 +5,10 @@
   },
   "[python]": {
     "editor.defaultFormatter": "charliermarsh.ruff",
-    "editor.formatOnSave": true
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.organizeImports.ruff": "explicit"
+    }
   },
   "[typescript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
@@ -16,5 +19,6 @@
   "C_Cpp.intelliSenseEngine": "disabled",
   "cmake.buildDirectory": "${workspaceFolder}/build/${buildType}",
   "cmake.copyCompileCommands": "${workspaceFolder}/compile_commands.json",
+  "cmake.useCMakePresets": "always",
   "python.analysis.autoImportCompletions": true
 }
