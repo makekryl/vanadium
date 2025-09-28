@@ -3,6 +3,8 @@ add_library(vanadium_core STATIC
   src/Binder.cpp
   src/TypeChecker.cpp
   src/Program.cpp
+
+  src/utils/SemanticUtils.cpp
 )
 
 target_include_directories(vanadium_core PUBLIC

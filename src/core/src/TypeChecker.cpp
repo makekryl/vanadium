@@ -77,73 +77,6 @@ const ast::nodes::FormalPars* ResolveCallableParams(const SourceFile* file, cons
   return ast::utils::GetCallableDeclParams(fun_sym->Declaration()->As<ast::nodes::Decl>());
 }
 
-std::string_view GetReadableTypeName(const SourceFile* sf, const semantic::Symbol* sym) {
-  const auto* decl = sym->Declaration();
-  switch (decl->nkind) {
-    case ast::NodeKind::FuncDecl: {
-      const auto* m = decl->As<ast::nodes::FuncDecl>();
-      return sf->Text(ast::Range{
-          .begin = m->kind.range.begin,
-          .end = m->name->nrange.end,
-      });
-    }
-    case ast::NodeKind::TemplateDecl: {
-      const auto* m = decl->As<ast::nodes::TemplateDecl>();
-      return sf->Text(ast::Range{
-          .begin = m->type->nrange.begin,
-          .end = m->name->nrange.end,
-      });
-    }
-    case ast::NodeKind::ComponentTypeDecl: {
-      const auto* m = decl->As<ast::nodes::ComponentTypeDecl>();
-      constexpr std::uint32_t kTypeOffset = std::string_view{"type "}.length();
-      return sf->Text(ast::Range{
-          .begin = m->nrange.begin + kTypeOffset,
-          .end = m->name->nrange.end,
-      });
-    }
-    case ast::NodeKind::StructTypeDecl: {
-      const auto* m = decl->As<ast::nodes::StructTypeDecl>();
-      return sf->Text(ast::Range{
-          .begin = m->kind.range.begin,
-          .end = m->name->nrange.end,
-      });
-    }
-    case ast::NodeKind::SubTypeDecl: {
-      const auto* m = decl->As<ast::nodes::SubTypeDecl>();
-      return sf->Text(ast::Range{
-          .begin = m->field->nrange.begin,
-          .end = m->nrange.end,
-      });
-    }
-    case ast::NodeKind::ClassTypeDecl: {
-      const auto* m = decl->As<ast::nodes::ClassTypeDecl>();
-      return sf->Text(ast::Range{
-          .begin = m->kind.range.begin,
-          .end = m->name->nrange.end,
-      });
-    }
-    case ast::NodeKind::EnumTypeDecl: {
-      const auto* m = decl->As<ast::nodes::EnumTypeDecl>();
-      return sf->Text(ast::Range{
-          .begin = m->nrange.begin,
-          .end = m->name->nrange.end,
-      });
-    }
-    case ast::NodeKind::ConstructorDecl: {
-      return "class constructor";
-    }
-    default:
-      return sf->Text(sym->Declaration());
-  }
-}
-std::string_view GetReadableTypeName(const semantic::Symbol* sym) {
-  if (sym->Flags() & semantic::SymbolFlags::kBuiltin) {
-    return sym->GetName();
-  }
-  return GetReadableTypeName(ast::utils::SourceFileOf(sym->Declaration()), sym);
-}
-
 }  // namespace utils
 
 namespace {
@@ -1154,12 +1087,15 @@ void BasicTypeChecker::MatchTypes(const ast::Range& range, const InstantiatedTyp
 
   // !!! CHECK THE TODO BELOW ASAP !!!
   const auto template_spec_providen = bool(actual->Flags() & semantic::SymbolFlags::kTemplateSpec);  // todo: ???
-  if (expected.restriction == TemplateRestrictionKind::kNone &&
+  if ((expected.restriction == TemplateRestrictionKind::kNone) &&
       (template_spec_providen || (actual.restriction != TemplateRestrictionKind::kNone))) {
-    EmitError(TypeError{
-        .range = range,
-        .message = std::format("expected value, got template"),
-    });
+    if (!to_bool(expected.restriction & TemplateRestrictionKind::kOptionalField) ||
+        (actual.sym != &symbols::kTemplateOmitType)) [[likely]] {
+      EmitError(TypeError{
+          .range = range,
+          .message = std::format("expected value, got template"),
+      });
+    }
   }
   if (template_spec_providen) {
     return;
@@ -1179,8 +1115,9 @@ void BasicTypeChecker::MatchTypes(const ast::Range& range, const InstantiatedTyp
 
   EmitError(TypeError{
       .range = range,
-      .message = std::format("expected value of type '{}', got '{}'", utils::GetReadableTypeName(expected.sym),
-                             utils::GetReadableTypeName(actual.sym)),
+      .message =
+          std::format("expected value of type '{}', got '{}'", semantic::utils::GetReadableTypeName(expected.sym),
+                      semantic::utils::GetReadableTypeName(actual.sym)),
   });
 }
 
@@ -1236,8 +1173,8 @@ void BasicTypeChecker::CheckArguments(std::span<const ast::nodes::Expr* const> a
           // most likely it is IndexExpr, e.g. { [0] := value }
           EmitError(TypeError{
               .range = ae->value->nrange,
-              .message =
-                  std::format("type '{}' is not array-like", utils::GetReadableTypeName(params_file, subject_type_sym)),
+              .message = std::format("type '{}' is not array-like",
+                                     semantic::utils::GetReadableTypeName(params_file, subject_type_sym)),
           });
           continue;
         }
@@ -1268,10 +1205,11 @@ void BasicTypeChecker::CheckArguments(std::span<const ast::nodes::Expr* const> a
               .message = [&] -> std::string {
                 if constexpr (std::is_same_v<TParamDescriptorNode, ast::nodes::FormalPar>) {
                   return std::format("callable '{}' does not have an argument with name '{}'",
-                                     utils::GetReadableTypeName(params_file, subject_type_sym), property_name);
+                                     semantic::utils::GetReadableTypeName(params_file, subject_type_sym),
+                                     property_name);
                 } else {
                   return std::format("property '{}' does not exist on type '{}'", property_name,
-                                     utils::GetReadableTypeName(params_file, subject_type_sym));
+                                     semantic::utils::GetReadableTypeName(params_file, subject_type_sym));
                 }
               }(),
           });
@@ -1603,7 +1541,7 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const Instantia
                             .begin = sel->nrange.begin - 1,
                             .end = sel->nrange.end,
                         },
-                    .message = std::format("type '{}' is not structural", utils::GetReadableTypeName(sym)),
+                    .message = std::format("type '{}' is not structural", semantic::utils::GetReadableTypeName(sym)),
                 });
               },
           .on_unknown_property =
@@ -1611,7 +1549,7 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const Instantia
                 EmitError(TypeError{
                     .range = se->sel->nrange,
                     .message = std::format("property '{}' does not exist on type '{}'", sf_.Text(se->sel),
-                                           utils::GetReadableTypeName(sym)),
+                                           semantic::utils::GetReadableTypeName(sym)),
                 });
               },
           .on_non_static_property_invalid_access =
@@ -1619,7 +1557,7 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const Instantia
                 EmitError(TypeError{
                     .range = se->sel->nrange,
                     .message = std::format("property '{}' of type '{}' is not static", sf_.Text(se->sel),
-                                           utils::GetReadableTypeName(sym)),
+                                           semantic::utils::GetReadableTypeName(sym)),
                 });
               },
           .on_static_property_invalid_access =
@@ -1627,7 +1565,7 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const Instantia
                 EmitError(TypeError{
                     .range = se->sel->nrange,
                     .message = std::format("property '{}' of type '{}' is not instance-bound", sf_.Text(se->sel),
-                                           utils::GetReadableTypeName(sym)),
+                                           semantic::utils::GetReadableTypeName(sym)),
                 });
               },
       }};
@@ -1662,7 +1600,7 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const Instantia
       if (property_sym->Flags() & semantic::SymbolFlags::kField) {
         const auto* fld = property_sym->Declaration()->As<ast::nodes::Field>();
         if (fld->optional) {
-          resulting_type.restriction = TemplateRestrictionKind::kOmit;
+          resulting_type.restriction &= TemplateRestrictionKind::kOptionalField;
         }
       }
       //
@@ -1685,7 +1623,7 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const Instantia
               [&](const ast::Node* x, const semantic::Symbol* sym) {
                 EmitError(TypeError{
                     .range = x->nrange,
-                    .message = std::format("type '{}' is not subscriptable", utils::GetReadableTypeName(sym)),
+                    .message = std::format("type '{}' is not subscriptable", semantic::utils::GetReadableTypeName(sym)),
                 });
               },
           .check_index =
@@ -1956,7 +1894,7 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
               EmitError(TypeError{
                   .range = cond->nrange,
                   .message = std::format("property '{}' does not exist on type '{}'", property,
-                                         utils::GetReadableTypeName(tag_type.sym)),
+                                         semantic::utils::GetReadableTypeName(tag_type.sym)),
               });
             }
           }

@@ -6,6 +6,9 @@
 namespace vanadium::core::semantic {
 namespace utils {
 
+[[nodiscard]] std::string_view GetReadableTypeName(const SourceFile*, const semantic::Symbol*);
+[[nodiscard]] std::string_view GetReadableTypeName(const semantic::Symbol*);
+
 inline const Scope* FindScope(const Scope* where, const ast::Node* n) {
   if (!where->Container()->Contains(n)) [[unlikely]] {
     return nullptr;

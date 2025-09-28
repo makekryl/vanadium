@@ -7,7 +7,7 @@ namespace vanadium::lserver {
 
 class Transport {
  public:
-  ~Transport() {}
+  virtual ~Transport() = default;
   virtual void Read(std::span<char> chunk) = 0;
   virtual void ReadLine(std::span<char> chunk) = 0;
   virtual void Write(std::string_view) = 0;

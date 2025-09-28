@@ -2,6 +2,7 @@
 
 #include "ASTNodes.h"
 #include "ASTTypes.h"
+#include "EnumFlags.h"
 #include "Semantic.h"
 
 namespace vanadium::core {
@@ -26,7 +27,10 @@ enum class TemplateRestrictionKind : std::uint8_t {
   kPresent = 1 << 2,
 
   kRegular = kOmit | kValue | kPresent,
+
+  kOptionalField = 1 << 3,
 };
+ENUM_FLAGS_TRAITS(TemplateRestrictionKind)
 [[nodiscard]] TemplateRestrictionKind ParseTemplateRestriction(const ast::nodes::RestrictionSpec*);
 
 struct InstantiatedType {
@@ -77,9 +81,6 @@ const semantic::Symbol* DeduceExpectedType(const SourceFile*, const semantic::Sc
 namespace utils {
 [[nodiscard]] const ast::nodes::FormalPars* ResolveCallableParams(const SourceFile*, const semantic::Scope*,
                                                                   const ast::nodes::ParenExpr*);
-
-[[nodiscard]] std::string_view GetReadableTypeName(const SourceFile*, const semantic::Symbol*);
-[[nodiscard]] std::string_view GetReadableTypeName(const semantic::Symbol*);
 }  // namespace utils
 
 struct TypeError {
