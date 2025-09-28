@@ -21,6 +21,15 @@
         "CMAKE_CXX_COMPILER": "g++"
       }
     },
+    {
+      "name": "clang",
+      "hidden": true,
+      "inherits": ["base"],
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++"
+      }
+    },
 
     {
       "name": "debug",
@@ -76,6 +85,24 @@
     {
       "name": "gcc-release-static",
       "inherits": ["gcc-release", "static"]
+    },
+
+    {
+      "name": "clang-debug",
+      "inherits": ["clang", "debug"]
+    },
+    {
+      "name": "clang-debug-sanitizers",
+      "inherits": ["clang-debug", "asan"]
+    },
+
+    {
+      "name": "clang-release",
+      "inherits": ["clang", "release"]
+    },
+    {
+      "name": "clang-release-static",
+      "inherits": ["clang-release", "static"]
     }
   ]
 }

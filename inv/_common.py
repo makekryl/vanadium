@@ -1,12 +1,15 @@
 import json
 from pathlib import Path
 
-DEFAULT_TOOLCHAIN = "gcc"
-CMAKE_PRESETS = [
+TOOLCHAINS = ("gcc", "clang")
+CMAKE_PRESETS: list[str] = [
   preset["name"]
   for preset in json.loads(Path("CMakePresets.json").read_text())["configurePresets"]
   if "hidden" not in preset or not preset["hidden"]
 ]
+
+
+DEFAULT_TOOLCHAIN = TOOLCHAINS[0]
 
 
 def get_preset(config: str, toolchain: str = DEFAULT_TOOLCHAIN):
