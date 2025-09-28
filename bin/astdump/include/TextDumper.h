@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cassert>
+#include <cmath>
 #include <format>
 #include <iostream>
 #include <ostream>
@@ -10,15 +11,11 @@
 #include "AST.h"
 #include "ASTDumper.h"
 #include "ASTNodes.h"
+#include "ASTTypes.h"
 
 class TextASTDumper {
  private:
   TextASTDumper(vanadium::core::ast::AST& ast, std::ostream& out) : ast_(ast), out_(out) {}
-
-  void WriteLine() {
-    out_ << "\n";
-    WriteIndent();
-  }
 
   void WriteIndent() {
     out_ << "\e[38;5;255m";
@@ -28,8 +25,24 @@ class TextASTDumper {
     out_ << "\e[0m";
   }
 
-  void WriteName(std::string_view name) {
-    WriteLine();
+  void WriteName(std::string_view name, std::optional<vanadium::core::ast::Range> range = std::nullopt) {
+    out_ << "\n";
+
+    std::size_t padding{16};
+    if (range) {
+      out_ << "[" << range->begin << "; " << range->end << ")";
+
+      padding -= 1;
+      padding -= range->begin > 0 ? std::size_t(std::log10(double(range->begin))) + 1 : 1;
+      padding -= 2;
+      padding -= range->end > 0 ? std::size_t(std::log10(double(range->end))) + 1 : 1;
+      padding -= 1;
+    }
+    for (std::size_t i = 0; i < padding; i++) {
+      out_ << ' ';
+    }
+
+    WriteIndent();
     out_ << "\e[1;90m" << name << ":\e[0m ";
   }
 
@@ -66,7 +79,7 @@ class TextASTDumper {
 template <>
 inline void vanadium::core::ast::Dumper<TextASTDumper>::Dump(std::string_view name,
                                                              const vanadium::core::ast::Token& tok) {
-  impl_.WriteName(name);
+  impl_.WriteName(name, tok.range);
   impl_.WriteValue(tok.On(impl_.ast_.src));
 }
 
@@ -78,7 +91,7 @@ inline void vanadium::core::ast::Dumper<TextASTDumper>::DumpIdent(const vanadium
 template <>
 inline void vanadium::core::ast::Dumper<TextASTDumper>::Dump(std::string_view name,
                                                              const vanadium::core::ast::nodes::Ident& ident) {
-  impl_.WriteName(name);
+  impl_.WriteName(name, ident.nrange);
   DumpIdent(ident);
 }
 
@@ -105,8 +118,8 @@ inline void vanadium::core::ast::Dumper<TextASTDumper>::DumpPresence(std::string
 }
 
 template <>
-inline void vanadium::core::ast::Dumper<TextASTDumper>::DumpKey(std::string_view name) {
-  impl_.WriteName(name);
+inline void vanadium::core::ast::Dumper<TextASTDumper>::DumpKey(std::string_view name, const Range& range) {
+  impl_.WriteName(name, range);
 }
 
 template <>

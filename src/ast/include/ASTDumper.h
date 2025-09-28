@@ -5,6 +5,7 @@
 
 #include "AST.h"
 #include "ASTNodes.h"
+#include "ASTTypes.h"
 
 namespace vanadium::core {
 namespace ast {
@@ -25,7 +26,7 @@ class Dumper {
 
   void DumpPresence(std::string_view);
 
-  void DumpKey(std::string_view);
+  void DumpKey(std::string_view, const Range&);
 
   template <typename F>
   void DumpGroup(std::string_view name, F f);
@@ -52,10 +53,16 @@ class Dumper {
       return;
     }
 
-    DumpKey(name);
+    DumpKey(name, n->nrange);
 
     using namespace vanadium::core::ast;
     switch (n->nkind) {
+      case NodeKind::RootNode: {
+        DumpGroup("RootNode", [&] {
+          Dump("nodes", n->As<RootNode>()->nodes);
+        });
+        break;
+      }
       case NodeKind::Ident: {
         DumpIdent(*n->As<nodes::Ident>());
         break;
@@ -84,7 +91,7 @@ class Dumper {
   }
 
   void Dump(AST& ast) {
-    Dump("Root", ast.root->nodes);
+    Dump("", ast.root);
   }
 
   Impl impl_;
