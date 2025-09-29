@@ -1962,10 +1962,13 @@ nodes::Expr* Parser::ParseUnaryExpr() {
           case TokenKind::RBRACE:
           case TokenKind::RBRACK:
           case TokenKind::RPAREN:
-          case TokenKind::kEOF:
-            return NewNode<nodes::ValueLiteral>([&](auto& v) {
+          case TokenKind::kEOF: {
+            auto* vln = NewNode<nodes::ValueLiteral>([&](auto& v) {
               v.tok = tok;
             });
+            vln->nrange = vln->tok.range;
+            return vln;
+          }
           default:
             break;
         }

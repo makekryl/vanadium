@@ -114,6 +114,15 @@ std::optional<std::pair<std::size_t, std::size_t>> GetLengthExprBounds(const Sou
 }
 
 template <typename F>
+concept ErrorEmitterFn = std::invocable<F, TypeError&&>;
+
+template <typename F>
+concept ErrorEmitterProviderFn = requires(F&& with_error_emitter) {
+  // with_error_emitter([](ErrorEmitterFn auto emit_error) {});
+  true;
+};
+
+template <typename F>
 concept IsInstantiatedTypeResolver =
     std::is_invocable_r_v<InstantiatedType, F, const SourceFile*, const semantic::Scope*, const ast::nodes::Expr*>;
 
@@ -168,7 +177,7 @@ class SelectorExprResolver {
       mode_static_ = !type.instance && x_sym && !bool(x_sym->Flags() & semantic::SymbolFlags::kImportedModule);
     }
 
-    if (!x_sym) {
+    if (!x_sym || x_sym == &symbols::kTypeError) {
       return nullptr;
     }
 
@@ -219,6 +228,11 @@ class SelectorExprResolver {
 
     if (mode_static_ && !(property_sym->Flags() & semantic::SymbolFlags::kVisibilityStatic)) [[unlikely]] {
       if (x_sym->Flags() & semantic::SymbolFlags::kStructural) [[likely]] {
+        // property_sym.Flags() & semantic::SymbolFlags::kField === true
+        const auto* fnode = property_sym->Declaration()->As<ast::nodes::Field>();
+        if (fnode->type->nkind == ast::NodeKind::RefSpec) {
+          return ResolveExprSymbol(sf_, scope_, fnode->type->As<ast::nodes::Expr>());
+        }
         return x_sym->Members()->LookupShadow(property_name);
       }
       options_.on_non_static_property_invalid_access(se, x_sym);
@@ -261,13 +275,12 @@ const semantic::Symbol* ResolveSelectorExprSymbol(const SourceFile* sf, const se
   return resolver.Resolve(sf, scope, se).sym;
 }
 
-template <IsInstantiatedTypeResolver InstantiatedTypeResolver, typename OnNonSubscriptableType, typename IndexChecker>
-  requires(std::is_invocable_v<OnNonSubscriptableType, const ast::Node*, const semantic::Symbol*> &&
-           std::is_invocable_v<IndexChecker, const ast::nodes::Expr*>)
+template <IsInstantiatedTypeResolver InstantiatedTypeResolver, std::invocable<const ast::nodes::Expr*> IndexChecker,
+          ErrorEmitterProviderFn ErrorEmitterProvider>
 struct IndexExprResolverOptions {
   InstantiatedTypeResolver resolve_type;
-  OnNonSubscriptableType on_non_subscriptable_type;
   IndexChecker check_index;
+  ErrorEmitterProvider with_error_emitter;
 };
 
 template <typename Options>
@@ -285,7 +298,7 @@ class IndexExprResolver {
     }
     return InstantiatedType{
         .sym = sym,
-        .instance = ie,
+        .instance = mode_static_ ? nullptr : ie,
         .restriction = head_type_.restriction,
     };
   }
@@ -293,9 +306,8 @@ class IndexExprResolver {
  private:
   std::size_t depth_{0};
   InstantiatedType head_type_;
+  bool mode_static_{false};
   const semantic::Symbol* ResolveIndexExpr(const ast::nodes::IndexExpr* ie) {
-    options_.check_index(ie->index);
-
     const semantic::Symbol* x_sym{nullptr};
     if (ie->x->nkind == ast::NodeKind::IndexExpr) {
       x_sym = ResolveIndexExpr(ie->x->As<ast::nodes::IndexExpr>());
@@ -306,18 +318,55 @@ class IndexExprResolver {
     } else {
       head_type_ = options_.resolve_type(sf_, scope_, ie->x);
       x_sym = head_type_.sym;
+
       if (!x_sym) {
-        const auto* tgt_err_node = ie->x;
-        if (tgt_err_node->nkind == ast::NodeKind::SelectorExpr) {
-          tgt_err_node = tgt_err_node->As<ast::nodes::SelectorExpr>()->sel;
-        }
-        options_.on_non_subscriptable_type(tgt_err_node, &symbols::kTypeError);
+        options_.check_index(ie->index);
+        ReportNonSubscriptableType(
+            [&] {
+              const auto* tgt_err_node = ie->x;
+              if (tgt_err_node->nkind == ast::NodeKind::SelectorExpr) {
+                tgt_err_node = tgt_err_node->As<ast::nodes::SelectorExpr>()->sel;
+              }
+              return tgt_err_node;
+            }(),
+            &symbols::kTypeError);
         return nullptr;
       }
+
+      if (x_sym == &symbols::kTypeError) {
+        options_.check_index(ie->index);
+        return nullptr;
+      }
+
+      const bool is_inferrence_expr = "-" == sf_->Text(ie->index);
       if (!head_type_.instance) {
-        options_.on_non_subscriptable_type(ie->x, x_sym);
+        // RoTypeId[-]
+        if (is_inferrence_expr) {
+          if (!(x_sym->Flags() & semantic::SymbolFlags::kList)) {
+            ReportNonSubscriptableType(ie->x, x_sym);
+            return nullptr;
+          }
+          mode_static_ = true;
+          return ResolveListElementType(x_sym);
+        }
+
+        options_.check_index(ie->index);
+        ReportNonSubscriptableType(ie->x, x_sym);
         return nullptr;
       }
+
+      if (is_inferrence_expr) {
+        options_.with_error_emitter([&](ErrorEmitterFn auto emit_error) {
+          emit_error(TypeError{
+              .range = ie->x->nrange,
+              .message = std::format("'{}' is not a type reference", sf_->Text(ie->x)),
+          });
+        });
+        return nullptr;
+      }
+
+      options_.check_index(ie->index);
+
       if (const auto* arraydef_vec = ast::utils::GetArrayDef(head_type_.instance);
           arraydef_vec && !arraydef_vec->empty()) [[unlikely]] {
         depth_ = arraydef_vec->size() - 1;
@@ -344,11 +393,20 @@ class IndexExprResolver {
     }
 
     if (!(x_sym->Flags() & semantic::SymbolFlags::kList)) {
-      options_.on_non_subscriptable_type(ie->x, x_sym);
+      ReportNonSubscriptableType(ie->x, x_sym);
       return nullptr;
     }
 
     return ResolveListElementType(x_sym);
+  }
+
+  void ReportNonSubscriptableType(const ast::Node* x, const semantic::Symbol* sym) {
+    options_.with_error_emitter([&](ErrorEmitterFn auto emit_error) {
+      emit_error(TypeError{
+          .range = x->nrange,
+          .message = std::format("type '{}' is not subscriptable", semantic::utils::GetReadableTypeName(sym)),
+      });
+    });
   }
 
   const SourceFile* sf_;
@@ -359,8 +417,8 @@ const semantic::Symbol* ResolveIndexExprType(const SourceFile* sf, const semanti
                                              const ast::nodes::IndexExpr* se) {
   IndexExprResolver resolver{IndexExprResolverOptions{
       .resolve_type = ResolveExprInstantiatedType,
-      .on_non_subscriptable_type = [](const auto*, auto) {},
       .check_index = [](const auto*) {},
+      .with_error_emitter = [](const auto&) {},
   }};
   return resolver.Resolve(sf, scope, se).sym;
 }
@@ -1573,6 +1631,7 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const Instantia
       const auto resolution = resolver.Resolve(&sf_, scope_, se);
       const auto* property_sym = resolution.sym;
       if (!property_sym) {
+        resulting_type = &symbols::kTypeError;
         break;
       }
 
@@ -1581,7 +1640,7 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const Instantia
       }
 
       if (property_sym->Flags() &
-          (semantic::SymbolFlags::kFunction | semantic::SymbolFlags::kBuiltin | semantic::SymbolFlags::kAnonymous)) {
+          (semantic::SymbolFlags::kFunction | semantic::SymbolFlags::kType | semantic::SymbolFlags::kAnonymous)) {
         //
         resulting_type = property_sym;
         //
@@ -1619,16 +1678,15 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const Instantia
               [&](const auto*, const auto*, const ast::nodes::Expr* expr) {
                 return CheckType(expr);
               },
-          .on_non_subscriptable_type =
-              [&](const ast::Node* x, const semantic::Symbol* sym) {
-                EmitError(TypeError{
-                    .range = x->nrange,
-                    .message = std::format("type '{}' is not subscriptable", semantic::utils::GetReadableTypeName(sym)),
-                });
-              },
           .check_index =
               [&](const ast::nodes::Expr* index) {
                 MatchTypes(index->nrange, CheckType(index, {}), {.sym = &builtins::kInteger});
+              },
+          .with_error_emitter =
+              [&](auto accept_ee) {
+                accept_ee([&](TypeError&& err) {
+                  EmitError(std::move(err));
+                });
               },
       }};
 
