@@ -597,6 +597,7 @@ const semantic::Symbol* DeduceCompositeLiteralType(const SourceFile* file, const
         default:
           break;
       }
+      return nullptr;
     }
     case ast::NodeKind::ParenExpr: {
       const auto* pe = n->parent->As<ast::nodes::ParenExpr>();

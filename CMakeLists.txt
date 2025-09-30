@@ -10,6 +10,7 @@ include(configuration)
 include(sanitizers)
 include(python)
 include(externals)
+include(diagnostics)
 include(functions)
 
 enable_testing()
