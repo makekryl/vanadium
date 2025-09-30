@@ -25,7 +25,7 @@ def symlink_lsp(c: Context, config):
     _create_symlink()
 
 
-@task(call(build.build, config="release-static"))
+@task(call(build.build, config="release-static", target="vanadiumd"))
 def package(c: Context):
   c.run("rm -f ./extension/bin/vanadiumd")
   c.run(
