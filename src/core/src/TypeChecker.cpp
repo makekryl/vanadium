@@ -123,10 +123,10 @@ concept ErrorEmitterProviderFn = requires(F&& with_error_emitter) {
 };
 
 template <typename F>
-concept IsInstantiatedTypeResolver =
+concept InstantiatedTypeResolverFn =
     std::is_invocable_r_v<InstantiatedType, F, const SourceFile*, const semantic::Scope*, const ast::nodes::Expr*>;
 
-template <IsInstantiatedTypeResolver InstantiatedTypeResolver, typename OnNonStructuralType, typename OnUnknownProperty,
+template <InstantiatedTypeResolverFn InstantiatedTypeResolver, typename OnNonStructuralType, typename OnUnknownProperty,
           typename OnInvalidNonStaticPropertyAccess, typename OnInvalidStaticPropertyAccess>
   requires(
       std::is_invocable_v<OnNonStructuralType, const ast::Node*, const semantic::Symbol*> &&
@@ -275,7 +275,7 @@ const semantic::Symbol* ResolveSelectorExprSymbol(const SourceFile* sf, const se
   return resolver.Resolve(sf, scope, se).sym;
 }
 
-template <IsInstantiatedTypeResolver InstantiatedTypeResolver, std::invocable<const ast::nodes::Expr*> IndexChecker,
+template <InstantiatedTypeResolverFn InstantiatedTypeResolver, std::invocable<const ast::nodes::Expr*> IndexChecker,
           ErrorEmitterProviderFn ErrorEmitterProvider>
 struct IndexExprResolverOptions {
   InstantiatedTypeResolver resolve_type;
