@@ -231,7 +231,8 @@ class SelectorExprResolver {
         // property_sym.Flags() & semantic::SymbolFlags::kField === true
         const auto* fnode = property_sym->Declaration()->As<ast::nodes::Field>();
         if (fnode->type->nkind == ast::NodeKind::RefSpec) {
-          return ResolveExprSymbol(sf_, scope_, fnode->type->As<ast::nodes::Expr>());
+          const auto* fnode_file = ast::utils::SourceFileOf(fnode);
+          return ResolveExprSymbol(fnode_file, fnode_file->module->scope, fnode->type->As<ast::nodes::Expr>());
         }
         return x_sym->Members()->LookupShadow(property_name);
       }
