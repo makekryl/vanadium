@@ -1771,6 +1771,7 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const Instantia
             return nullptr;
         }
       }(m->tok.kind);
+      break;
     }
 
     default:
