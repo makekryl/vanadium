@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as os from 'os';
 import { execSync, spawnSync } from 'child_process';
+import { logger } from './logger';
 
 const TTCN3FMT_BIN = 'ttcn3fmt';
 
@@ -54,6 +55,14 @@ export const provideDocumentFormattingEdits = (
   });
 
   if (process.status !== 0) {
+    logger.warn(
+      `Failed to format code using ttcn3fmt (${process.status}):\n${process.stderr
+        .toString()
+        .trim()
+        .split('\n')
+        .map((line) => ` [ttcn3fmt] ${line}`)
+        .join('\n')}`
+    );
     return [];
   }
 
