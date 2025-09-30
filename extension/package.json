@@ -5,7 +5,7 @@
   "icon": "icon.png",
   "author": "makekryl",
   "publisher": "Mikhail Krylov",
-  "version": "0.0.12",
+  "version": "0.0.14",
   "private": true,
   "engines": {
     "vscode": "^1.100.0"
