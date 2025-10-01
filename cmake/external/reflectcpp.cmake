@@ -5,6 +5,7 @@ FetchContent_Declare(
   GIT_SHALLOW 1
 )
 
+set(REFLECTCPP_JSON OFF)
 set(REFLECTCPP_TOML ON)
 
 FetchContent_MakeAvailable(reflectcpp)
