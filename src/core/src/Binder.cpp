@@ -227,6 +227,7 @@ class Binder {
                            const ast::Range& errrange = {});
   bool AugmentByExtensibles(std::string_view extensibles, SymbolFlags::Value flags_mask, std::invocable auto f);
 
+  Symbol BindListSpec(std::string_view name, SymbolFlags::Value flags, const ast::nodes::ListSpec*);
   std::optional<Symbol> BindTypeSpec(std::string_view name, SymbolFlags::Value flags, const ast::nodes::TypeSpec*);
   SymbolTable& BindFields(const std::vector<ast::nodes::Field*>&);
   SymbolTable& BindEnumMembers(const std::vector<ast::nodes::Expr*>&);
@@ -743,11 +744,7 @@ bool Binder::Inspect(const ast::Node* n) {
 
       if (field->name) {
         if (field->type->nkind == ast::NodeKind::ListSpec) {
-          AddSymbol(semantic::Symbol{
-              Lit(*field->name),
-              field,
-              SymbolFlags::kListType,
-          });
+          AddSymbol(BindListSpec(Lit(*field->name), SymbolFlags::kNone, field->type->As<ast::nodes::ListSpec>()));
         } else {
           AddSymbol(semantic::Symbol{
               Lit(*field->name),
@@ -990,6 +987,25 @@ bool Binder::Inspect(const ast::Node* n) {
   return true;
 }
 
+Symbol Binder::BindListSpec(std::string_view name, SymbolFlags::Value flags, const ast::nodes::ListSpec* ls) {
+  SymbolTable* containment{nullptr};
+  //
+  if (ls->elemtype->nkind != ast::NodeKind::RefSpec) {
+    containment = sf_.arena.Alloc<SymbolTable>();
+    containment->Add(std::move(*BindTypeSpec(
+        [&] {
+          std::span<char> shadow_name = sf_.arena.AllocStringBuffer(1);
+          shadow_name.front() = kShadowStaticMemberPrefix;
+          return std::string_view{shadow_name};
+        }(),
+        SymbolFlags::kAnonymous, ls->elemtype)));
+  } else {
+    Visit(ls->elemtype);
+  }
+  //
+  return Symbol{name, ls, SymbolFlags::Value(flags | SymbolFlags::kListType), containment};
+}
+
 std::optional<Symbol> Binder::BindTypeSpec(std::string_view name, SymbolFlags::Value flags,
                                            const ast::nodes::TypeSpec* spec) {
   switch (spec->nkind) {
@@ -1001,24 +1017,7 @@ std::optional<Symbol> Binder::BindTypeSpec(std::string_view name, SymbolFlags::V
       return Symbol{name, spec, SymbolFlags::Value(flags | SymbolFlags::kEnumType),
                     &BindEnumMembers(spec->As<ast::nodes::EnumSpec>()->values)};
     case ast::NodeKind::ListSpec: {
-      SymbolTable* containment{nullptr};
-      if (spec->nkind == ast::NodeKind::ListSpec) {
-        const auto* ls = spec->As<ast::nodes::ListSpec>();
-        if (ls->elemtype->nkind == ast::NodeKind::StructSpec) {
-          containment = sf_.arena.Alloc<SymbolTable>();
-          const auto* ss = ls->elemtype->As<ast::nodes::StructSpec>();
-          containment->Add(std::move(*BindTypeSpec(
-              [&] {
-                std::span<char> shadow_name = sf_.arena.AllocStringBuffer(1);
-                shadow_name.front() = kShadowStaticMemberPrefix;
-                return std::string_view{shadow_name};
-              }(),
-              SymbolFlags::kAnonymous, ss)));
-        } else {
-          Visit(ls->elemtype);
-        }
-      }
-      return Symbol{name, spec, SymbolFlags::Value(flags | SymbolFlags::kListType), containment};
+      return BindListSpec(name, flags, spec->As<ast::nodes::ListSpec>());
     }
     default:
       return std::nullopt;

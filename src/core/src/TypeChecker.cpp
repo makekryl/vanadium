@@ -462,14 +462,16 @@ const ast::nodes::ListSpec* ExtractListSpecNode(const semantic::Symbol* sym) {
 }
 }  // namespace
 const semantic::Symbol* ResolveListElementType(const semantic::Symbol* sym) {
+  // assert sym.flags & kList
+  if (sym->Members()) {
+    if (const auto* isym = sym->Members()->LookupShadow(""); isym) {
+      return isym;
+    }
+  }
+
   const ast::Node* decl = ExtractListSpecNode(sym);
   if (decl) {
     const auto* decl_file = ast::utils::SourceFileOf(decl);
-    if (sym->Members()) {
-      if (const auto* isym = sym->Members()->LookupShadow(""); isym) {
-        return isym;
-      }
-    }
     sym = ResolveExprType(decl_file, decl_file->module->scope,
                           decl->As<ast::nodes::ListSpec>()->elemtype->As<ast::nodes::Expr>());  // TODO: typespec expr
     return sym;
