@@ -27,7 +27,7 @@ def symlink_lsp(c: Context, config):
 
 @task(call(build.build, config="release-static", target="vanadiumd"))
 def package(c: Context):
-  c.run("rm -f ./extension/bin/vanadiumd")
+  c.run("rm -f 'extension/bin/vanadiumd'")
   c.run(
     f"cp '{str(get_build_dir('gcc-release-static'))}/bin/lsp/vanadiumd' 'extension/bin'"
   )
