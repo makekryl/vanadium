@@ -8,26 +8,35 @@ import {
 import { config } from './config';
 import { logger } from './logger';
 
+type LaunchOptions = {
+  command: string;
+  args: string[];
+};
+
 export class LsClient {
-  private outputChannel: vscode.OutputChannel;
-  private traceOutputChannel: vscode.OutputChannel;
   private clientOptions: LanguageClientOptions;
   private client?: LanguageClient;
 
   constructor(outputChannel: vscode.OutputChannel, traceOutputChannel: vscode.OutputChannel) {
-    this.outputChannel = outputChannel;
-    this.traceOutputChannel = traceOutputChannel;
     this.clientOptions = {
       documentSelector: ['ttcn3'],
-      outputChannel: this.outputChannel,
-      traceOutputChannel: this.traceOutputChannel,
+      outputChannel: outputChannel,
+      traceOutputChannel: traceOutputChannel,
     };
   }
 
-  async start(ctx: vscode.ExtensionContext): Promise<void> {
-    const serverOptions: ServerOptions = {
+  private launchOptions!: LaunchOptions;
+  private getLaunchOptions(ctx: vscode.ExtensionContext): LaunchOptions {
+    return {
       command: `${ctx.extensionPath}/bin/vanadiumd`,
       args: config.get<string[]>('arguments'),
+    };
+  }
+
+  async start(ctx: vscode.ExtensionContext): Promise<vscode.Disposable> {
+    this.launchOptions = this.getLaunchOptions(ctx);
+    const serverOptions: ServerOptions = {
+      ...this.launchOptions,
       transport: TransportKind.stdio,
     };
 
@@ -35,19 +44,30 @@ export class LsClient {
       'ttcn3',
       'Vanadium TTCN-3 Language Client',
       serverOptions,
-      this.clientOptions,
-      true
+      this.clientOptions
     );
 
-    this.outputChannel.appendLine(`Starting language server...`);
+    logger.info('Starting language server...');
     await this.client.start();
+    return new vscode.Disposable(() => {
+      if (this.client) {
+        this.client.stop();
+      }
+    });
   }
 
-  async restart(_ctx: vscode.ExtensionContext): Promise<void> {
+  async restart(ctx: vscode.ExtensionContext): Promise<vscode.Disposable> {
     if (!this.client) {
       return Promise.reject(new Error('Language client is not initialized'));
     }
-    this.outputChannel.appendLine(`Restarting language server...`);
-    return this.client.restart();
+
+    if (JSON.stringify(this.launchOptions) !== JSON.stringify(this.getLaunchOptions(ctx))) {
+      logger.info(`Server launch options has been changed`);
+      return this.start(ctx);
+    }
+
+    logger.info(`Restarting language server...`);
+    await this.client.restart();
+    return new vscode.Disposable(() => {});
   }
 }

@@ -90,5 +90,5 @@ async function initializeLanguageServer(context: vscode.ExtensionContext) {
     })
   );
 
-  await lsClient.start(context);
+  context.subscriptions.push(await lsClient.start(context));
 }
