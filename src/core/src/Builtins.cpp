@@ -1,19 +1,16 @@
 #include "Builtins.h"
 
-#include "ASTNodes.h"
-#include "BuiltinsSuperbases.h"
-#include "TypeChecker.h"
-
-#ifndef NDEBUG
 #include <print>
-#endif
 
 #include "AST.h"
+#include "ASTNodes.h"
 #include "Arena.h"
+#include "BuiltinsSuperbases.h"
 #include "Parser.h"
 #include "Program.h"
 #include "Semantic.h"
 #include "StaticMap.h"
+#include "TypeChecker.h"
 
 namespace vanadium::core {
 namespace builtins {
@@ -49,6 +46,7 @@ const semantic::Symbol* ResolveBuiltinType(std::string_view name) {
 
       // DO NOT USE OR YOU WILL BE FIRED! (c)
       {"__infer_arg_t", &checker::symbols::kInferType},
+      {"__altstep_t", &checker::symbols::kAltstepType},
   });
   if (const auto sym_opt = kBuiltinsTable.get(name); sym_opt) {
     return *sym_opt;
@@ -111,6 +109,15 @@ const semantic::Scope* const kBuiltinsScope = [] {
               semantic::SymbolFlags::Value(semantic::SymbolFlags::kVariable | semantic::SymbolFlags::kBuiltin),
           });
         }
+        return false;
+      }
+      case ast::NodeKind::SubTypeDecl: {
+        const auto* m = n->As<ast::nodes::SubTypeDecl>();
+        scope->symbols.Add(semantic::Symbol{
+            sf.Text(*m->field->name),
+            m,
+            semantic::SymbolFlags::kSubTypeType,
+        });
         return false;
       }
       case ast::NodeKind::ClassTypeDecl: {

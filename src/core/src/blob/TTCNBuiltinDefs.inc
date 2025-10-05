@@ -22,6 +22,9 @@ type class BuiltinTestcaseType {
 }
 const BuiltinTestcaseType testcase_;
 
+type __altstep_t default;
+external function activate(in anytype altstep_invocation) return __altstep_t;
+
 /*
 The valueof operation allows to return the value specified within a template.
 The returned value can be assigned to a variable, may be used in expressions, as an actual value parameter, etc.

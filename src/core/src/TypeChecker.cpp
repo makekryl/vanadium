@@ -25,7 +25,12 @@ const semantic::Symbol kTypeError{"<error-type>", nullptr, semantic::SymbolFlags
 
 const semantic::Symbol kVoidType{"<void>", nullptr, semantic::SymbolFlags::kBuiltinType};
 
-const semantic::Symbol kInferType{"<infer>", nullptr, semantic::SymbolFlags::kBuiltinType};
+const semantic::Symbol kInferType{
+    "<infer>", nullptr,
+    semantic::SymbolFlags::Value(semantic::SymbolFlags::kBuiltinType | semantic::SymbolFlags::kAnonymous)};
+const semantic::Symbol kAltstepType{
+    "<altstep>", nullptr,
+    semantic::SymbolFlags::Value(semantic::SymbolFlags::kBuiltinType | semantic::SymbolFlags::kAnonymous)};
 
 const semantic::Symbol kTemplateWildcardType{
     "<*>", nullptr,
