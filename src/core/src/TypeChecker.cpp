@@ -10,6 +10,7 @@
 #include "ASTNodes.h"
 #include "ASTTypes.h"
 #include "Builtins.h"
+#include "BuiltinsSuperbases.h"
 #include "Program.h"
 #include "ScopedNodeVisitor.h"
 #include "Semantic.h"
@@ -175,6 +176,12 @@ class SelectorExprResolver {
       const auto type = options_.resolve_type(sf_, scope_, se->x);
       x_sym = type.sym;
       mode_static_ = !type.instance && x_sym && !bool(x_sym->Flags() & semantic::SymbolFlags::kImportedModule);
+
+      if (x_sym) {
+        if (const auto* superbase = builtins::GetSuperbase(x_sym); superbase) {
+          x_sym = superbase;
+        }
+      }
     }
 
     if (!x_sym || x_sym == &symbols::kTypeError) {

@@ -1,6 +1,7 @@
 #include "Builtins.h"
 
 #include "ASTNodes.h"
+#include "BuiltinsSuperbases.h"
 #include "TypeChecker.h"
 
 #ifndef NDEBUG
@@ -27,19 +28,8 @@ const semantic::Symbol kOctetstring{"octetstring", nullptr, semantic::SymbolFlag
 const semantic::Symbol kHexstring{"hexstring", nullptr, semantic::SymbolFlags::kBuiltinStringType};
 const semantic::Symbol kUniversalCharstring{"universal charstring", nullptr, semantic::SymbolFlags::kBuiltinStringType};
 const semantic::Symbol kVerdictType{"verdicttype", nullptr, semantic::SymbolFlags::kBuiltinType};
-const semantic::Symbol kTimer{
-    "timer", nullptr,
-    semantic::SymbolFlags::Value(semantic::SymbolFlags::kBuiltinType | semantic::SymbolFlags::kClassType),
-    [] -> semantic::Scope* {
-      static semantic::Scope scope(nullptr);
-      scope.symbols.Add(semantic::Symbol("timeout", nullptr, semantic::SymbolFlags::kBuiltin));
-      // scope.symbols.Add(semantic::Symbol(
-      //     "start", [] -> const ast::nodes::FuncDecl* {
 
-      //     }(),
-      //     semantic::SymbolFlags::Value(semantic::SymbolFlags::kFunction | semantic::SymbolFlags::kBuiltin)));
-      return &scope;
-    }()};
+Superbases superbases{};
 
 namespace {
 const semantic::Symbol* ResolveBuiltinType(std::string_view name) {
@@ -54,7 +44,6 @@ const semantic::Symbol* ResolveBuiltinType(std::string_view name) {
       {"hexstring", &kHexstring},
       {"universal charstring", &kCharstring},  // TODO: investigate &kUniversalCharstring
       {"verdicttype", &kVerdictType},
-      {"timer", &kTimer},
 
       {"object", &kAnytype},  // TODO
 
@@ -69,68 +58,118 @@ const semantic::Symbol* ResolveBuiltinType(std::string_view name) {
 }  // namespace
 
 namespace {
-constexpr std::string_view kBuiltinsModule{
+constexpr std::string_view kBuiltinsSource{
 #include "blob/TTCNBuiltinDefs.inc"
 };
 
-const semantic::Symbol* ResolveBuiltinDef(std::string_view name) {
-  static const auto* scope = [] {
-    static lib::Arena arena;
+const semantic::Scope* const kBuiltinsScope = [] {
+  static lib::Arena arena;
 
-    static SourceFile sf{
-        .path = "",
-        .ast = ast::Parse(arena, kBuiltinsModule),
-    };
-    sf.ast.root->file = &sf;
-#ifndef NDEBUG
-    if (!sf.ast.errors.empty()) {
-      std::println(stderr, "Builtin definitions module has syntax errors:");
-      for (const auto& err : sf.ast.errors) {
-        std::println(stderr, " - ({}:{}) {}", err.range.begin, err.range.end, err.description);
-      }
-      std::fflush(stderr);
-      std::abort();
+  static SourceFile sf{
+      .path = "",
+      .ast = ast::Parse(arena, kBuiltinsSource),
+  };
+  sf.ast.root->file = &sf;
+  if (!sf.ast.errors.empty()) [[unlikely]] {
+    std::println(stderr, "Builtin definitions module has syntax errors:");
+    for (const auto& err : sf.ast.errors) {
+      std::println(stderr, " - ({}:{}) {}", err.range.begin, err.range.end, err.description);
     }
-#endif
+    std::fflush(stderr);
+    std::abort();
+  }
 
-    sf.module.emplace();
-    sf.module->name = "TTCNBuiltins";
-    sf.module->sf = &sf;
-    static semantic::Scope scope{sf.ast.root};
-    sf.module->scope = &scope;
+  sf.module.emplace();
+  sf.module->name = "LanguageBuiltins";
+  sf.module->sf = &sf;
+  static semantic::Scope root_scope{sf.ast.root};
+  sf.module->scope = &root_scope;
 
-    sf.ast.root->Accept([&](const ast::Node* n) {
-      switch (n->nkind) {
-        case ast::NodeKind::FuncDecl: {
-          const auto* m = n->As<ast::nodes::FuncDecl>();
-          scope.symbols.Add({
-              sf.Text(*m->name),
-              m,
-              semantic::SymbolFlags::Value(semantic::SymbolFlags::kFunction | semantic::SymbolFlags::kBuiltin),
-          });
-          return false;
-        }
-        case ast::NodeKind::ValueDecl: {
-          const auto* m = n->As<ast::nodes::ValueDecl>();
-          for (const auto* d : m->decls) {
-            scope.symbols.Add({
-                sf.Text(*d->name),
-                m,
-                semantic::SymbolFlags::Value(semantic::SymbolFlags::kVariable | semantic::SymbolFlags::kBuiltin),
-            });
-          }
-          return false;
-        }
-        default: {
-          return true;
-        }
+  semantic::Scope* scope{&root_scope};
+  sf.ast.root->Accept([&](this auto&& self, const ast::Node* n) {
+    switch (n->nkind) {
+      case ast::NodeKind::FuncDecl: {
+        const auto* m = n->As<ast::nodes::FuncDecl>();
+        scope->symbols.Add({
+            sf.Text(*m->name),
+            m,
+            semantic::SymbolFlags::Value(semantic::SymbolFlags::kFunction | semantic::SymbolFlags::kBuiltin),
+        });
+        return false;
       }
-    });
+      case ast::NodeKind::ValueDecl: {
+        const auto* m = n->As<ast::nodes::ValueDecl>();
+        for (const auto* d : m->decls) {
+          constexpr std::string_view kStripTrailing{"_"};
+          auto name = sf.Text(*d->name);
+          if (name.ends_with(kStripTrailing)) {
+            name.remove_suffix(kStripTrailing.size());
+          }
+          scope->symbols.Add({
+              name,
+              d,
+              semantic::SymbolFlags::Value(semantic::SymbolFlags::kVariable | semantic::SymbolFlags::kBuiltin),
+          });
+        }
+        return false;
+      }
+      case ast::NodeKind::ClassTypeDecl: {
+        auto* prev_scope{scope};
+        scope = sf.arena.Alloc<semantic::Scope>(n, prev_scope);
+        //
 
-    return &scope;
-  }();
-  return scope->ResolveDirect(name);
-}
+        const auto* m = n->As<ast::nodes::ClassTypeDecl>();
+        for (const auto* d : m->defs) {
+          d->Accept(self);
+        }
+
+        // todo switch based on name if timer then push to parent scope otherwise assign the symbol to a variable inside
+        // builtins and return it from GetSuperscope
+        const auto name = sf.Text(*m->name);
+        if (name == "Timer") {
+          prev_scope->symbols.Add({
+              "timer",
+              m,
+              semantic::SymbolFlags::Value(semantic::SymbolFlags::kClassType | semantic::SymbolFlags::kBuiltin),
+              scope,
+          });
+        } else if (name == "BuiltinTestcaseType") {
+          prev_scope->symbols.Add({
+              name,
+              m,
+              semantic::SymbolFlags::Value(semantic::SymbolFlags::kClassType | semantic::SymbolFlags::kBuiltin |
+                                           semantic::SymbolFlags::kAnonymous),
+              scope,
+          });
+        } else {
+          const auto* sym = sf.arena.Alloc<semantic::Symbol>(semantic::Symbol{
+              name,
+              m,
+              semantic::SymbolFlags::Value(semantic::SymbolFlags::kClassType | semantic::SymbolFlags::kBuiltin),
+              scope,
+          });
+
+          if (name == "PortSuperbase") {
+            superbases.kPort = sym;
+          } else {
+            std::println(stderr, "Builtin definitions module has unknown class: {}", name);
+            std::fflush(stderr);
+            std::abort();
+          }
+        }
+
+        //
+        scope = prev_scope;
+        return false;
+      }
+      default: {
+        return true;
+      }
+    }
+  });
+
+  return &root_scope;
+}();
 
 }  // namespace
 
@@ -138,7 +177,7 @@ const semantic::Symbol* ResolveBuiltin(std::string_view name) {
   if (const auto* sym = ResolveBuiltinType(name); sym) {
     return sym;
   }
-  if (const auto* sym = ResolveBuiltinDef(name); sym) {
+  if (const auto* sym = kBuiltinsScope->ResolveDirect(name); sym) {
     return sym;
   }
   return nullptr;

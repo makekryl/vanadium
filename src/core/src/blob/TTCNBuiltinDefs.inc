@@ -1,7 +1,26 @@
 R"(
-module TTCNBuiltins {
+module LanguageBuiltins {
 
-const charstring __SCOPE__;
+// NOTE: trailing _ will be stripped from symbol names
+
+const charstring __SCOPE___;
+
+type class Timer {
+  external function start(in float tmo);
+  const __builtin_actiontype stop;
+  const __builtin_actiontype timeout;
+}
+
+type class PortSuperbase {
+  external function send(in anytype msg);
+  external function receive(in anytype msg);
+  const __builtin_actiontype trigger;
+}
+
+type class BuiltinTestcaseType {
+  external function stop(in charstring reason);
+}
+const BuiltinTestcaseType testcase_;
 
 /*
 The valueof operation allows to return the value specified within a template.
