@@ -40,12 +40,7 @@ export class LsClient {
       transport: TransportKind.stdio,
     };
 
-    this.client = new LanguageClient(
-      'ttcn3',
-      'Vanadium TTCN-3 Language Client',
-      serverOptions,
-      this.clientOptions
-    );
+    this.client = new LanguageClient('ttcn3', 'Vanadium', serverOptions, this.clientOptions);
 
     logger.info('Starting language server...');
     await this.client.start();
