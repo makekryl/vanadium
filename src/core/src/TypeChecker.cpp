@@ -1332,9 +1332,15 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const Instantia
       }
 
       if (!(callee_sym->Flags() & (semantic::SymbolFlags::kFunction | semantic::SymbolFlags::kTemplate))) {
+        const auto* tgt_errnode = m->fun;
+        if (tgt_errnode->nkind == ast::NodeKind::SelectorExpr) {
+          tgt_errnode = tgt_errnode->As<ast::nodes::SelectorExpr>()->sel;
+        }
         EmitError(TypeError{
-            .range = m->fun->nrange,
-            .message = std::format("'{}' is not callable", sf_.Text(m->fun)),
+            .range = tgt_errnode->nrange,
+            .message = callee_sym == &symbols::kTypeError
+                           ? std::format("'<error-type>.{}' is not callable", sf_.Text(tgt_errnode))
+                           : std::format("'{}' is not callable", sf_.Text(tgt_errnode)),
         });
         Inspect(m->args);
         break;
