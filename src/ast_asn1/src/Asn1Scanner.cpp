@@ -21,6 +21,7 @@ constexpr auto kKeywordLookup = lib::MakeStaticMap<std::string_view, TokenKind>(
     {"SEQUENCE", TokenKind::SEQUENCE},
     {"CHOICE", TokenKind::CHOICE},
     {"ENUMERATED", TokenKind::ENUMERATED},
+    {"CLASS", TokenKind::CLASS},
 
     {"INTEGER", TokenKind::INTEGER},
     {"REAL", TokenKind::REAL},
@@ -33,6 +34,7 @@ constexpr auto kKeywordLookup = lib::MakeStaticMap<std::string_view, TokenKind>(
     {"OPTIONAL", TokenKind::OPTIONAL},
     {"SIZE", TokenKind::SIZE},
     {"CONTAINING", TokenKind::CONTAINING},
+    {"WITH", TokenKind::WITH},
 
     {"OF", TokenKind::OF},
 
@@ -78,6 +80,12 @@ Token Scanner::Scan() {
       case ';':
         kind = TokenKind::SEMICOLON;
         break;
+      case '|':
+        kind = TokenKind::VERTICALBAR;
+        break;
+      case '&':
+        kind = TokenKind::REF;
+        break;
       case '(':
         kind = TokenKind::LPAREN;
         break;
@@ -118,6 +126,8 @@ Token Scanner::Scan() {
             ++pos_;
             kind = TokenKind::ELLIPSIS;
           }
+        } else {
+          kind = TokenKind::DOT;
         }
         break;
       case ':':
@@ -177,7 +187,16 @@ void Scanner::ScanAlnum() {
     return std::isalnum(c) || c == '-';
   };
   while (HasNext() && is_alnum_ex(Peek())) {
-    ++pos_;
+    const auto c = Peek();
+    if (std::isalnum(c) || c == '-') {
+      if (c == '-' && src_[pos_ - 1] == '-') {
+        --pos_;
+        break;
+      }
+      ++pos_;
+      continue;
+    }
+    break;
   }
 }
 

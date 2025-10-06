@@ -221,6 +221,7 @@ ttcn_ast::nodes::Definition* Transparser::ParseDefinition() {
       ParseName(opt);
       return *opt;
     }();
+    MaybeSwallowBraceExpr();
 
     if (tok_ == TokenKind::ASSIGN) {
       Consume();
@@ -256,6 +257,21 @@ ttcn_ast::nodes::Definition* Transparser::ParseDefinition() {
               ParseEnumValues(et.values);
               Expect(TokenKind::RBRACE);
             });
+          case TokenKind::CLASS: {
+            return NewNode<ttcn_ast::nodes::StructTypeDecl>([&](ttcn_ast::nodes::StructTypeDecl& st) {
+              Consume();
+              st.kind = {.kind = ttcn_ast::TokenKind::RECORD, .range = {}};
+              std::construct_at(&st.name, std::move(name));  // todo: dirty
+              Expect(TokenKind::LBRACE);
+              SwallowBraceExprRemains();
+              if (tok_ == TokenKind::WITH) {
+                Consume();
+                Consume();  // SYNTAX, etc.
+                MaybeSwallowBraceExpr();
+              }
+            });
+            break;
+          }
           default:
             return NewNode<ttcn_ast::nodes::SubTypeDecl>([&](ttcn_ast::nodes::SubTypeDecl& st) {
               st.field = NewNode<ttcn_ast::nodes::Field>([&](ttcn_ast::nodes::Field& field) {
@@ -264,6 +280,7 @@ ttcn_ast::nodes::Definition* Transparser::ParseDefinition() {
                 if (tok_ == TokenKind::LPAREN) {
                   ParseValueConstraint();
                 }
+                MaybeSwallowBraceExpr();
               });
             });
         };
@@ -326,6 +343,15 @@ ttcn_ast::nodes::TypeSpec* Transparser::ParseTypeSpec() {
                                   bool skip_postname = false) -> ttcn_ast::nodes::RefSpec* {
     return NewNode<ttcn_ast::nodes::RefSpec>([&](auto& rs) {
       rs.x = ParseName();
+      if (tok_ == TokenKind::DOT) {
+        Consume();
+        Expect(TokenKind::REF);
+        rs.x = NewNode<ttcn_ast::nodes::SelectorExpr>([&, prev_x = rs.x](ttcn_ast::nodes::SelectorExpr& se) {
+          se.x = prev_x;
+          se.sel = ParseName();
+        });
+        rs.x->nrange.begin = rs.x->template As<ttcn_ast::nodes::SelectorExpr>()->x->nrange.begin;
+      }
 
       if (skip_postname) {
         // TODO: take it into account
@@ -337,7 +363,21 @@ ttcn_ast::nodes::TypeSpec* Transparser::ParseTypeSpec() {
       // TODO: should moved out of here
       if (tok_ == TokenKind::LPAREN) {
         Consume();
-        parse_constraint();
+
+        // clang-format off
+        // 	criticality		S1AP-ELEMENTARY-PROCEDURE.&criticality ({S1AP-ELEMENTARY-PROCEDURES}{@procedureCode}),
+        // clang-format on
+        MaybeSwallowBraceExpr();
+        MaybeSwallowBraceExpr();
+        //
+
+        if (tok_ == TokenKind::WITH) {
+          Consume();
+          Consume();  // COMPONENTS, etc.
+          MaybeSwallowBraceExpr();
+        } else {
+          parse_constraint();
+        }
         Expect(TokenKind::RPAREN);
       }
 
@@ -399,7 +439,9 @@ ttcn_ast::nodes::TypeSpec* Transparser::ParseTypeSpec() {
       });
     case TokenKind::IDENT:
       return parse_ref_spec([&] {
-        ParseSizeConstraint();
+        if (tok_ == TokenKind::CONTAINING || tok_ == TokenKind::SIZE) {
+          ParseSizeConstraint();
+        }
       });
     case TokenKind::INTEGER: {
       return parse_ref_spec(
@@ -560,10 +602,17 @@ ttcn_ast::nodes::ParenExpr* Transparser::ParseValueConstraint() {
     return false;
   };
 
-  if (expect_value() && tok_ == TokenKind::RANGE) {
-    ConsumeInvariant(TokenKind::RANGE);
-    expect_value();
+  if (expect_value()) {
+    if (tok_ == TokenKind::RANGE) {
+      ConsumeInvariant(TokenKind::RANGE);
+      expect_value();
+    }
+    while (tok_ == TokenKind::VERTICALBAR) {
+      Consume();
+      expect_value();
+    }
   }
+
   if (tok_ == TokenKind::COMMA) {  // todo: merge with ParseSizeConstraint
     // E-RAB-ID		::= INTEGER (0..15, ...)
     Consume();

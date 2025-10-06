@@ -38,8 +38,12 @@ enum class TokenKind : std::uint8_t {
 
   //
 
-  COMMA,      // ,
-  SEMICOLON,  // ;
+  DOT,          // .
+  COMMA,        // ,
+  SEMICOLON,    // ;
+  VERTICALBAR,  // |
+
+  REF,  // &
 
   RANGE,     // ..
   ELLIPSIS,  // ...
@@ -66,6 +70,7 @@ enum class TokenKind : std::uint8_t {
   SEQUENCE,
   CHOICE,
   ENUMERATED,
+  CLASS,
 
   INTEGER,
   REAL,
@@ -78,6 +83,7 @@ enum class TokenKind : std::uint8_t {
   OPTIONAL,
   SIZE,
   CONTAINING,
+  WITH,
 
   OF,
 
