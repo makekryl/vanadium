@@ -327,7 +327,7 @@ std::optional<lsp::InlayHint> ResolveInlayHint(const lsp::InlayHint& original_hi
 
       const auto* params = tgt->As<core::ast::nodes::FormalPars>();
 
-      while (n->parent != m->args) {
+      while (n && n->parent != m->args) {
         n = n->parent;
       }
 
