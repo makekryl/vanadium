@@ -1016,6 +1016,10 @@ InstantiatedType ResolveExprInstantiatedType(const SourceFile* file, const seman
   const auto* type_sym = ResolveExprTypeViaDecl(file, scope, decl_sym, expr);
 
   const auto* instance = [&] -> const ast::Node* {
+    if (expr->nkind == ast::NodeKind::CallExpr) {
+      return expr;
+    }
+
     switch (expr->parent->nkind) {
       case ast::NodeKind::ReturnSpec:
       // case ast::NodeKind::SelectorExpr:  // <-- TODO (related to on_static_property_invalid_access TODO)
