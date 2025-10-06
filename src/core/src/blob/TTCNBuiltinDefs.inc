@@ -17,6 +17,12 @@ type class PortSuperbase {
   const __builtin_actiontype trigger;
 }
 
+type class ComponentSuperbase {
+  external function start(in anytype exec);
+  const __builtin_actiontype kill;
+  const __builtin_actiontype done;
+}
+
 type class BuiltinTestcaseType {
   external function stop(in charstring reason);
 }

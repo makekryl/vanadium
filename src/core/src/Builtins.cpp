@@ -158,6 +158,13 @@ const semantic::Scope* const kBuiltinsScope = [] {
 
           if (name == "PortSuperbase") {
             superbases.kPort = sym;
+          } else if (name == "ComponentSuperbase") {
+            scope->symbols.Add({
+                "create",
+                m,
+                semantic::SymbolFlags::kBuiltin,
+            });
+            superbases.kComponent = sym;
           } else {
             std::println(stderr, "Builtin definitions module has unknown class: {}", name);
             std::fflush(stderr);
