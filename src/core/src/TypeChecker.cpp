@@ -1327,7 +1327,7 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const Instantia
       const auto* callee_sym = CheckType(m->fun).sym;
       if (!callee_sym) {
         // error is raised by the semantic analyzer in such case
-        Inspect(m->args);
+        Visit(m->args);
         break;
       }
 
@@ -1342,7 +1342,7 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const Instantia
                            ? std::format("'<error-type>.{}' is not callable", sf_.Text(tgt_errnode))
                            : std::format("'{}' is not callable", sf_.Text(tgt_errnode)),
         });
-        Inspect(m->args);
+        Visit(m->args);
         break;
       }
 
@@ -1357,7 +1357,7 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const Instantia
       const ast::nodes::FormalPars* params = ast::utils::GetCallableDeclParams(callee_decl);
       if (!params) [[unlikely]] {
         // this is guaranteed to be possible due to parser leniency
-        Inspect(m->args);
+        Visit(m->args);
         break;
       }
 
@@ -1803,10 +1803,6 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const Instantia
 
 bool BasicTypeChecker::Inspect(const ast::Node* n) {
   switch (n->nkind) {
-    case ast::NodeKind::CompositeLiteral: {
-      return false;
-    }
-
     case ast::NodeKind::SelectorExpr:
     case ast::NodeKind::IndexExpr:
     case ast::NodeKind::BinaryExpr:
@@ -1979,14 +1975,14 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
               });
             }
           }
-          Inspect(clause->body);
+          Visit(clause->body);
         }
       } else if (tag_type->Flags() & semantic::SymbolFlags::kEnum) {
         for (const auto* clause : m->clauses) {
           for (const auto* cond : clause->cond) {
             MatchTypes(cond->nrange, CheckType(cond, tag_type), tag_type);
           }
-          Inspect(clause->body);
+          Visit(clause->body);
         }
       }
 
