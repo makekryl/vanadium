@@ -30,6 +30,8 @@ constexpr auto kKeywordLookup = lib::MakeStaticMap<std::string_view, TokenKind>(
     {"OCTET", TokenKind::OCTET},
     {"BOOLEAN", TokenKind::BOOLEAN},
 
+    {"OBJECT", TokenKind::OBJECT},
+
     {"DEFAULT", TokenKind::DEFAULT},
     {"OPTIONAL", TokenKind::OPTIONAL},
     {"SIZE", TokenKind::SIZE},

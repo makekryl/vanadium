@@ -79,6 +79,8 @@ enum class TokenKind : std::uint8_t {
   OCTET,
   BOOLEAN,
 
+  OBJECT,
+
   DEFAULT,
   OPTIONAL,
   SIZE,

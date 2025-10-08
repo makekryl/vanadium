@@ -520,6 +520,9 @@ ttcn_ast::nodes::Field* Transparser::ParseField() {
   return NewNode<ttcn_ast::nodes::Field>([&](ttcn_ast::nodes::Field& f) {
     ParseName(f.name);
 
+    if (tok_ == TokenKind::OBJECT) {
+      Consume();
+    }
     f.type = ParseTypeSpec();
 
     if (tok_ == TokenKind::LBRACE) {
