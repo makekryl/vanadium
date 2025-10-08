@@ -52,6 +52,7 @@ export const provideDocumentFormattingEdits = (
     signal: abortController.signal,
     shell: true,
     input: document.getText(),
+    timeout: 5000,
   });
 
   if (process.status !== 0) {
