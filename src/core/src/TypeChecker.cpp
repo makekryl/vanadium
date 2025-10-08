@@ -1134,7 +1134,7 @@ class BasicTypeChecker {
 
 void BasicTypeChecker::MatchTypes(const ast::Range& range, const InstantiatedType& actual_,
                                   const InstantiatedType& expected) {
-  if (!expected || expected.sym == &builtins::kAnytype) {
+  if (!expected || expected.sym == &symbols::kTypeError || expected.sym == &builtins::kAnytype) {
     return;
   }
 
