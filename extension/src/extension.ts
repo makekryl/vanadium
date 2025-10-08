@@ -91,4 +91,25 @@ async function initializeLanguageServer(context: vscode.ExtensionContext) {
   );
 
   context.subscriptions.push(await lsClient.start(context));
+
+  context.subscriptions.push(
+    vscode.workspace.onDidSaveTextDocument((document) => {
+      logger.warn(document.fileName);
+      if (!document.fileName.endsWith('.vanadiumrc.toml')) {
+        return;
+      }
+
+      vscode.window
+        .showInformationMessage(
+          `Vanadium configuration files has been changed. Do you like to restart Vanadium Language Server?`,
+          'Restart',
+          'Not now'
+        )
+        .then((selection) => {
+          if (selection === 'Restart') {
+            lsClient?.restart(context);
+          }
+        });
+    })
+  );
 }
