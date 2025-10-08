@@ -14,6 +14,7 @@ constexpr auto kKeywordLookup = lib::MakeStaticMap<std::string_view, TokenKind>(
     {"AUTOMATIC", TokenKind::AUTOMATIC},
     {"TAGS", TokenKind::TAGS},
     {"IMPORTS", TokenKind::IMPORTS},
+    {"FROM", TokenKind::FROM},
 
     {"BEGIN", TokenKind::BEGIN},
     {"END", TokenKind::END},
