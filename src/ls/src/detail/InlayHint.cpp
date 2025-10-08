@@ -12,8 +12,8 @@
 #include "ASTTypes.h"
 #include "LSProtocol.h"
 #include "LanguageServerConv.h"
-#include "LanguageServerHelpers.h"
 #include "LanguageServerLogger.h"
+#include "LanguageServerSolution.h"
 #include "Program.h"
 #include "ScopedNodeVisitor.h"
 #include "Semantic.h"
@@ -313,7 +313,7 @@ std::optional<lsp::InlayHint> ResolveInlayHint(const lsp::InlayHint& original_hi
         .value = std::get<std::string_view>(rendition.label),
         .location =
             lsp::Location{
-                .uri = *d.arena.Alloc<std::string>(helpers::PathToFileUri(d.solution, tgt_file->path)),
+                .uri = *d.arena.Alloc<std::string>(PathToFileUri(d.solution, tgt_file->path)),
                 .range = conv::ToLSPRange(range, tgt_file->ast),
             },
     }}};

@@ -489,7 +489,7 @@ Transitively imports modules:
 ---
 
 [module {}]({}#L{}C{}))",
-                           provider_file->module->name, helpers::PathToFileUri(d.solution, provider_file->path),
+                           provider_file->module->name, PathToFileUri(d.solution, provider_file->path),
                            source_loc.line + 1, source_loc.character);
   }
 

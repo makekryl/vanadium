@@ -1,8 +1,8 @@
 #include <filesystem>
-#include <print>
 
 #include "Filesystem.h"
 #include "LSProtocol.h"
+#include "LanguageServerClientMessaging.h"
 #include "LanguageServerContext.h"
 #include "LanguageServerLogger.h"
 #include "LanguageServerMethods.h"
@@ -39,10 +39,13 @@ rpc::ExpectedResult<lsp::InitializeResult> methods::initialize::operator()(LsCon
       if (result.has_value()) {
         ctx->solution = std::move(*result);
       } else {
-        // TODO
-        std::println(stderr, "Failed to load solution: {}", result.error().String());
-        std::fflush(stderr);
-        std::abort();
+        const auto& err_message = result.error().String();
+        VLS_ERROR("Failed to load solution: {}", err_message);
+        clientMessaging::ShowMessage(
+            ctx, lsp::ShowMessageRequestParams{
+                     .type = lsp::MessageType::kError,
+                     .message = ctx->Temp<std::string>(std::format("Solution initialization failed:\n{}", err_message)),
+                 });
       }
     }
   }

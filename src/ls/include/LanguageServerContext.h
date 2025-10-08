@@ -3,7 +3,6 @@
 #include <tbb/enumerable_thread_specific.h>
 #include <tbb/task_arena.h>
 
-#include <set>
 #include <string>
 #include <type_traits>
 #include <unordered_map>
@@ -11,9 +10,8 @@
 
 #include "Arena.h"
 #include "LSConnection.h"
-#include "LanguageServerHelpers.h"
-#include "LanguageServerLogger.h"
 #include "LanguageServerSession.h"
+#include "LanguageServerSolution.h"
 #include "Linter.h"
 #include "Metaprogramming.h"
 #include "Program.h"
@@ -84,10 +82,10 @@ struct LsState {
 
   [[nodiscard]] std::optional<std::pair<tooling::SolutionProject&, std::string>> ResolveFileUri(
       std::string_view file_uri) {
-    return helpers::ResolveFileUri(*solution, file_uri);
+    return ls::ResolveFileUri(*solution, file_uri);
   }
   [[nodiscard]] std::string PathToFileUri(std::string_view path) const {
-    return helpers::PathToFileUri(*solution, path);
+    return ls::PathToFileUri(*solution, path);
   }
 
  private:

@@ -30,7 +30,7 @@ lsp::DefinitionResult ProvideDefinition(const lsp::DefinitionParams& params, con
       return nullptr;
     }
     return lsp::Location{
-        .uri = *d.arena.Alloc<std::string>(helpers::PathToFileUri(d.solution, module->sf->path)),
+        .uri = *d.arena.Alloc<std::string>(PathToFileUri(d.solution, module->sf->path)),
         .range = {},
     };
   }
@@ -38,7 +38,7 @@ lsp::DefinitionResult ProvideDefinition(const lsp::DefinitionParams& params, con
   const auto* decl = sym->Declaration();
   const auto* provider_file = core::ast::utils::SourceFileOf(decl);
 
-  const auto& uri = *d.arena.Alloc<std::string>(helpers::PathToFileUri(d.solution, provider_file->path));
+  const auto& uri = *d.arena.Alloc<std::string>(PathToFileUri(d.solution, provider_file->path));
   return lsp::Location{
       .uri = uri,
       .range = conv::ToLSPRange(detail::GetReadableDefinition(decl)->nrange, provider_file->ast),

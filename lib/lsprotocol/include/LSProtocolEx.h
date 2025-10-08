@@ -6,6 +6,7 @@
 
 // NOLINTBEGIN(readability-identifier-naming)
 
+// Server -> Client
 namespace lsp {
 using CodeActionResult = std::variant<Command, std::vector<CodeAction>, std::nullptr_t>;
 using DefinitionResult = std::variant<Location, std::vector<Location>, std::vector<LocationLink>, std::nullptr_t>;
@@ -20,6 +21,11 @@ using DocumentSybmolResult = std::variant<std::vector<DocumentSymbol>, std::vect
 using SignatureHelpResult = std::variant<SignatureHelp, std::nullptr_t>;
 using SemanticTokensRangeResult = std::variant<SemanticTokens, std::nullptr_t>;
 }  // namespace lsp
+
+// Client -> Server
+namespace lsp {
+using ShowMessageRequestResult = std::variant<MessageActionItem, std::nullptr_t>;
+}
 
 namespace glz {
 template <>

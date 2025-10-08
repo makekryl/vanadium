@@ -1,12 +1,11 @@
-#include "LanguageServerHelpers.h"
-
 #include <filesystem>
 #include <optional>
 #include <string_view>
 
+#include "LanguageServerSolution.h"
 #include "Solution.h"
 
-namespace vanadium::ls::helpers {
+namespace vanadium::ls {
 
 static constexpr std::string_view kFileSchema = "file://";
 static constexpr auto kFileSchemaLength = kFileSchema.size();
@@ -30,4 +29,4 @@ std::string PathToFileUri(const tooling::Solution& solution, std::string_view pa
   return std::format("{}{}", kFileSchema, (std::filesystem::path(solution.Directory().base_path) / path).string());
 }
 
-}  // namespace vanadium::ls::helpers
+}  // namespace vanadium::ls

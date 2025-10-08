@@ -6,6 +6,7 @@
 
 #include <condition_variable>
 #include <cstddef>
+#include <glaze/core/reflect.hpp>
 #include <glaze/ext/jsonrpc.hpp>
 #include <glaze/glaze.hpp>
 #include <glaze/util/expected.hpp>
@@ -171,21 +172,25 @@ class Connection {
 
     {
       auto req_token = ctx_.AcquireToken();
-      if (auto err = glz::write_json(req, req_token->buf)) {
-        std::abort();  // TODO
-        return std::nullopt;
+      if (auto err = glz::write_json(req, req_token->buf)) [[unlikely]] {
+        return glz::unexpected(glz::rpc::error{
+            glz::rpc::error_e::invalid_params,
+            glz::format_error(err, req_token->buf),
+        });
       }
 
       res_token = RawRequest(id, std::move(req_token));
     }
 
     glz::rpc::response_t<Result> res;
-    if (auto err = glz::read_json<>(res, res_token->buf)) {
-      // TODO
-      std::abort();
+    if (auto err = glz::read_json<>(res, res_token->buf)) [[unlikely]] {
+      return glz::unexpected(glz::rpc::error{
+          glz::rpc::error_e::parse_error,
+          glz::format_error(err, res_token->buf),
+      });
     }
 
-    if (res.result.has_value()) {
+    if (res.result.has_value()) [[likely]] {
       return res.result.value();
     }
     return glz::unexpected(res.error.value());

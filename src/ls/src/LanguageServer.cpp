@@ -11,6 +11,7 @@
 #include "BuiltinRules.h"
 #include "LSConnection.h"
 #include "LanguageServerContext.h"
+#include "LanguageServerLogger.h"
 #include "LanguageServerMethods.h"
 #include "Metaprogramming.h"
 
