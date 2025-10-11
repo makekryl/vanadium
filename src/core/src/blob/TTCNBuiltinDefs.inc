@@ -9,6 +9,7 @@ type class Timer {
   external function start(in float tmo);
   const __builtin_actiontype stop;
   const __builtin_actiontype timeout;
+  const boolean running;
 }
 
 type class PortSuperbase {
