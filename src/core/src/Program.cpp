@@ -154,15 +154,41 @@ void Program::DetachFile(SourceFile& sf) {
   }
 }
 
-const ModuleDescriptor* Program::GetModule(std::string_view name) const {
+void Program::AddReference(Program* program) {
+  explicit_references_.emplace(program);
+  program->dependents_.emplace(this);
+}
+
+void Program::SealReferences() {
+  const auto bind_ref = [&, pthis = this](this auto&& self, Program* referenced_program) -> void {
+    pthis->references_.emplace(referenced_program);
+    referenced_program->dependents_.emplace(pthis);
+
+    for (auto* tref : referenced_program->explicit_references_) {
+      self(tref);
+    }
+  };
+  for (auto* program : explicit_references_) {
+    bind_ref(program);
+  }
+}
+
+const ModuleDescriptor* Program::GetOwnModule(std::string_view name) const {
   const auto it = modules_.find(name);
   if (it != modules_.end()) {
     return it->second;
   }
+  return nullptr;
+}
+
+const ModuleDescriptor* Program::GetModule(std::string_view name) const {
+  if (const auto* mod = GetOwnModule(name); mod) {
+    return mod;
+  }
 
   for (const auto* ref : references_) {
-    if (const auto* module = ref->GetModule(name); module) {
-      return module;
+    if (const auto* mod = ref->GetOwnModule(name); mod) {
+      return mod;
     }
   }
 

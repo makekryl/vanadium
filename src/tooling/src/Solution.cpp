@@ -122,6 +122,9 @@ std::expected<Solution, Error> Solution::Load(const fs::Path& path, lib::Consume
       subproj.program.AddReference(&it->second.program);
     }
   }
+  for (auto& subproj : solution.projects_ | std::views::values) {
+    subproj.program.SealReferences();
+  }
 
   precommit(solution);
 

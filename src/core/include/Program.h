@@ -162,6 +162,11 @@ class Program {
   void Update(const lib::Consumer<const ProgramModifier&>& modify);
   void Commit(const lib::Consumer<const ProgramModifier&>& modify);
 
+  const ModuleDescriptor* GetOwnModule(std::string_view name) const;
+  ModuleDescriptor* GetOwnModule(std::string_view name) {
+    return const_cast<ModuleDescriptor*>(static_cast<const Program*>(this)->GetOwnModule(name));
+  }
+
   const ModuleDescriptor* GetModule(std::string_view name) const;
   ModuleDescriptor* GetModule(std::string_view name) {
     return const_cast<ModuleDescriptor*>(static_cast<const Program*>(this)->GetModule(name));
@@ -172,24 +177,31 @@ class Program {
     return it == files_.end() ? nullptr : &it->second;
   }
 
-  std::span<const Program* const> References() const {
-    return references_;
+  void AddReference(Program*);
+  void SealReferences();
+  auto References() const {
+    return std::ranges::ref_view(references_);
   }
 
-  void AddReference(Program* program) {
-    references_.push_back(program);
-    program->dependents_.push_back(this);
-  }
-
-  void VisitAccessibleModules(std::predicate<const ModuleDescriptor&> auto visit) const {
+  bool VisitOwnModules(std::predicate<const ModuleDescriptor&> auto visit) const {
     for (const auto& module : Modules()) {
       if (!visit(module)) {
-        return;
+        return false;
       }
     }
-    for (const auto& ref : References()) {
-      ref->VisitAccessibleModules(visit);
+    return true;
+  }
+
+  bool VisitAccessibleModules(std::predicate<const ModuleDescriptor&> auto visit) const {
+    if (!VisitOwnModules(visit)) {
+      return false;
     }
+    for (const auto& ref : References()) {
+      if (!ref->VisitOwnModules(visit)) {
+        return false;
+      }
+    }
+    return true;
   }
 
  private:
@@ -205,8 +217,9 @@ class Program {
   std::unordered_map<std::string_view, ModuleDescriptor*> modules_;
   tbb::speculative_spin_mutex modules_mutex_;
 
-  std::vector<Program*> references_;
-  std::vector<Program*> dependents_;
+  std::unordered_set<Program*> explicit_references_;
+  std::unordered_set<Program*> references_;
+  std::unordered_set<Program*> dependents_;
 };
 
 }  // namespace vanadium::core

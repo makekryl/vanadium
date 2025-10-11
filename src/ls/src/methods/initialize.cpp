@@ -52,10 +52,14 @@ rpc::ExpectedResult<lsp::InitializeResult> methods::initialize::operator()(LsCon
 
   if (ctx->solution.has_value()) {
     const auto& solution = *ctx->solution;
-    VLS_INFO("Loaded solution with {} subprojects", solution.Projects().size());
+    VLS_INFO("Loaded solution with {} projects", solution.Projects().size());
+    std::size_t total_units{0};
     for (const auto& project : solution.Projects()) {
-      VLS_INFO(" * '{}' [{}]: {} units", project.Name(), project.Directory().base_path, project.program.Files().size());
+      const std::size_t units = project.program.Files().size();
+      total_units += units;
+      VLS_INFO(" * '{}' [{}]: {} units", project.Name(), project.Directory().base_path, units);
     }
+    VLS_INFO(" # Total units: {}", total_units);
   }
 
   return lsp::InitializeResult{
