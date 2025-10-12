@@ -13,14 +13,14 @@ void VisitLocalReferences(const core::SourceFile* file, lsp::Position pos, bool 
                           lib::Consumer<const core::ast::nodes::Ident*> accept) {
   const auto symres = detail::FindSymbol(file, pos);
   if (!symres || !symres->scope || symres->node->nkind != core::ast::NodeKind::Ident ||
-      !(symres->symbol->Flags() & (core::semantic::SymbolFlags::kVariable | core::semantic::SymbolFlags::kArgument)) ||
+      !(symres->type->Flags() & (core::semantic::SymbolFlags::kVariable | core::semantic::SymbolFlags::kArgument)) ||
       core::ast::utils::SourceFileOf(symres->node) != file) {
     return;
   }
 
   const auto name = file->Text(symres->node);
 
-  const auto* decl = symres->symbol->Declaration();
+  const auto* decl = symres->type->Declaration();
   switch (decl->nkind) {
     case core::ast::NodeKind::Declarator: {
       decl = std::addressof(*decl->As<core::ast::nodes::Declarator>()->name);

@@ -82,7 +82,7 @@ lsp::HoverResult ProvideHover(const lsp::HoverParams& params, const core::Source
     return nullptr;
   }
   const auto* n = symres->node;
-  const auto* sym = symres->symbol;
+  const auto* sym = symres->type.sym;
 
   if (!sym) {
     return nullptr;

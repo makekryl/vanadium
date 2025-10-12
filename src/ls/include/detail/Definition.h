@@ -4,6 +4,7 @@
 #include "LSProtocol.h"
 #include "Program.h"
 #include "Semantic.h"
+#include "TypeChecker.h"
 
 namespace vanadium::ls {
 namespace detail {
@@ -13,7 +14,7 @@ const core::ast::Node* FindNode(const core::SourceFile*, lsp::Position pos);
 struct SymbolSearchResult {
   const core::ast::Node* node;
   const core::semantic::Scope* scope;
-  const core::semantic::Symbol* symbol;
+  core::checker::InstantiatedType type;
 };
 std::optional<SymbolSearchResult> FindSymbol(const core::SourceFile*, const core::ast::Node*);
 std::optional<SymbolSearchResult> FindSymbol(const core::SourceFile*, lsp::Position pos);

@@ -54,7 +54,7 @@ namespace vanadium::ls::detail {
 
 namespace {
 template <typename DeduceCompositeLiteralTypeFn = decltype(&core::checker::ext::DeduceCompositeLiteralType)>
-  requires std::is_invocable_r_v<const core::semantic::Symbol*, DeduceCompositeLiteralTypeFn, const core::SourceFile*,
+  requires std::is_invocable_r_v<core::checker::InstantiatedType, DeduceCompositeLiteralTypeFn, const core::SourceFile*,
                                  const core::semantic::Scope*, const core::ast::nodes::CompositeLiteral*>
 struct InlayHintTargetLocatorOptions {
   DeduceCompositeLiteralTypeFn deduceCompositeLiteralType;
@@ -78,7 +78,7 @@ template <typename Options>
       // ResolveCallableParams is not used because we need to filter out builtin functions
       // return core::checker::utils::ResolveCallableParams(file, scope, m->args);  // -> FormalPars
 
-      const auto* fun_sym = core::checker::ResolveExprType(&file, scope, m->fun);
+      const auto fun_sym = core::checker::ResolveExprType(&file, scope, m->fun);
       if (!fun_sym || (fun_sym->Flags() & core::semantic::SymbolFlags::kBuiltin) ||
           !(fun_sym->Flags() & (core::semantic::SymbolFlags::kFunction | core::semantic::SymbolFlags::kTemplate))) {
         return nullptr;
@@ -89,7 +89,7 @@ template <typename Options>
     }
     case core::ast::NodeKind::CompositeLiteral: {
       const auto* m = n->As<core::ast::nodes::CompositeLiteral>();
-      const auto* sym = options.deduceCompositeLiteralType(&file, scope, m);
+      const auto sym = options.deduceCompositeLiteralType(&file, scope, m);
       if (!sym || (sym->Flags() & core::semantic::SymbolFlags::kBuiltin)) {
         return nullptr;
       }
@@ -216,7 +216,7 @@ std::vector<lsp::InlayHint> CollectInlayHints(const lsp::InlayHintParams& params
 
   const core::semantic::Scope* scope{nullptr};
 
-  std::stack<const core::semantic::Symbol*> cl_type_cache;
+  std::stack<core::checker::InstantiatedType> cl_type_cache;
   cl_type_cache.emplace(nullptr);
   //
   const auto memoizing_visitor = [&](this auto&& self, const core::ast::Node* n) {
@@ -225,8 +225,8 @@ std::vector<lsp::InlayHint> CollectInlayHints(const lsp::InlayHintParams& params
                          .deduceCompositeLiteralType =
                              [&](const core::SourceFile* _file, const core::semantic::Scope* _scope,
                                  const core::ast::nodes::CompositeLiteral* _cl) {
-                               const auto* res = core::checker::ext::DeduceCompositeLiteralType(_file, _scope, _cl,
-                                                                                                cl_type_cache.top());
+                               const auto res = core::checker::ext::DeduceCompositeLiteralType(_file, _scope, _cl,
+                                                                                               cl_type_cache.top());
                                cl_type_cache.emplace(res);
                                return res;
                              },

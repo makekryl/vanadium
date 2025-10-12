@@ -39,14 +39,14 @@ std::optional<SymbolSearchResult> FindSymbol(const core::SourceFile* file, const
       if (n == ae->property && (ae->parent->nkind == core::ast::NodeKind::CompositeLiteral ||
                                 ae->parent->nkind == core::ast::NodeKind::ParenExpr)) {
         const core::semantic::Scope* scope = core::semantic::utils::FindScope(file->module->scope, target_node);
-        const auto* sym = core::checker::ext::ResolveAssignmentTarget(file, scope, ae);
-        if (!sym) {
+        const auto type = core::checker::ext::ResolveAssignmentTarget(file, scope, ae);
+        if (!type) {
           return std::nullopt;
         }
         return SymbolSearchResult{
             .node = n,
             .scope = nullptr,
-            .symbol = sym,
+            .type = type,
         };
       }
       break;
@@ -60,7 +60,7 @@ std::optional<SymbolSearchResult> FindSymbol(const core::SourceFile* file, const
       const auto* owner = f->parent;
 
       // TODO: ResolveExprSymbol - it's no longer actually "Expr".
-      const auto* structsym =
+      const auto structsym =
           core::checker::ResolveExprSymbol(file, file->module->scope, owner->As<core::ast::nodes::Expr>());
       if (!structsym) {
         return std::nullopt;
@@ -69,7 +69,7 @@ std::optional<SymbolSearchResult> FindSymbol(const core::SourceFile* file, const
       return SymbolSearchResult{
           .node = n,
           .scope = nullptr,
-          .symbol = structsym->Members()->Lookup(file->Text(*f->name)),
+          .type = {.sym = structsym->Members()->Lookup(file->Text(*f->name))},
       };
     }
     case core::ast::NodeKind::EnumTypeDecl: {
@@ -84,7 +84,7 @@ std::optional<SymbolSearchResult> FindSymbol(const core::SourceFile* file, const
       return SymbolSearchResult{
           .node = n,
           .scope = nullptr,
-          .symbol = sym->Members()->Lookup(file->Text(n)),
+          .type = {.sym = sym->Members()->Lookup(file->Text(n))},
       };
     }
     default:
@@ -93,16 +93,14 @@ std::optional<SymbolSearchResult> FindSymbol(const core::SourceFile* file, const
 
   const core::semantic::Scope* scope = core::semantic::utils::FindScope(file->module->scope, target_node);
 
-  const auto* sym = core::checker::ResolveExprSymbol(file, scope, target_node->As<core::ast::nodes::Expr>());
-
+  const auto sym = core::checker::ResolveExprSymbol(file, scope, target_node->As<core::ast::nodes::Expr>());
   if (!sym) {
     return std::nullopt;
   }
-
   return SymbolSearchResult{
       .node = n,
       .scope = scope,
-      .symbol = sym,
+      .type = sym,
   };
 }
 

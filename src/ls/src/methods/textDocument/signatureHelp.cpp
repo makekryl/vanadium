@@ -119,6 +119,7 @@ lsp::SignatureHelpResult ProvideSignatureHelp(const lsp::SignatureHelpParams& pa
           label += callable_file->Text(*tdecl->name);
 
           return_type_name = callable_file->Text(tdecl->type);
+          break;
         }
         default: {
           break;
@@ -167,7 +168,7 @@ lsp::SignatureHelpResult ProvideSignatureHelp(const lsp::SignatureHelpParams& pa
 
       const core::semantic::Scope* scope = core::semantic::utils::FindScope(file.module->scope, cl);
 
-      const auto* type = core::checker::ext::DeduceCompositeLiteralType(&file, scope, cl);
+      const auto type = core::checker::ext::DeduceCompositeLiteralType(&file, scope, cl);
       if (!type || !(type->Flags() & core::semantic::SymbolFlags::kStructural)) {
         break;
       }

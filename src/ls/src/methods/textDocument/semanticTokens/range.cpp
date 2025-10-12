@@ -53,7 +53,7 @@ void HighlightIdent(const core::SourceFile* file, const core::semantic::Scope* s
     });
     return;
   }
-  if (const auto* sym = core::checker::ResolveExprSymbol(file, scope, ident); sym) {
+  if (const auto sym = core::checker::ResolveExprSymbol(file, scope, ident); sym) {
     SemanticTokenW w{.ident = ident};
     using Fu = std::pair<lsp::SemanticTokenTypes, lsp::SemanticTokenModifiers>;
     std::tie(w.type, w.modifiers) = [&] -> Fu {

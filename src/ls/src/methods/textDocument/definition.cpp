@@ -19,7 +19,7 @@ lsp::DefinitionResult ProvideDefinition(const lsp::DefinitionParams& params, con
   if (!symres) {
     return nullptr;
   }
-  const auto* sym = symres->symbol;
+  const auto* sym = symres->type.sym;
 
   if (!sym || (sym->Flags() & (core::semantic::SymbolFlags::kBuiltin | core::semantic::SymbolFlags::kBuiltin))) {
     return nullptr;

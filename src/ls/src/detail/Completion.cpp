@@ -167,7 +167,7 @@ lsp::CompletionList CollectCompletions(const lsp::CompletionParams& params, cons
 
   if (n->nkind == core::ast::NodeKind::SelectorExpr) {
     n = n->As<core::ast::nodes::SelectorExpr>()->x;
-    const auto* sym = core::checker::ResolveExprType(&file, scope, n->As<core::ast::nodes::Expr>());
+    const auto sym = core::checker::ResolveExprType(&file, scope, n->As<core::ast::nodes::Expr>());
     if (!sym) {
       return completion_list;  // todo: extract filler to separate func
     }
@@ -243,13 +243,14 @@ lsp::CompletionList CollectCompletions(const lsp::CompletionParams& params, cons
       break;
     }
     case core::ast::NodeKind::CompositeLiteral:
-      complete_props(core::checker::ext::DeduceCompositeLiteralType(&file, scope,
-                                                                    parent->As<core::ast::nodes::CompositeLiteral>()));
+      complete_props(
+          core::checker::ext::DeduceCompositeLiteralType(&file, scope, parent->As<core::ast::nodes::CompositeLiteral>())
+              .sym);
       break;
     case core::ast::NodeKind::ParenExpr: {
       const auto* pe = parent->As<core::ast::nodes::ParenExpr>();
       const auto* ce = pe->parent->As<core::ast::nodes::CallExpr>();
-      const auto* sym = core::checker::ResolveExprType(&file, scope, ce->fun);
+      const auto sym = core::checker::ResolveExprType(&file, scope, ce->fun);
       if (sym && (sym->Flags() & (core::semantic::SymbolFlags::kFunction | core::semantic::SymbolFlags::kTemplate))) {
         const auto* params = core::ast::utils::GetCallableDeclParams(sym->Declaration()->As<core::ast::nodes::Decl>());
         const auto* params_file = core::ast::utils::SourceFileOf(params);
@@ -271,7 +272,8 @@ lsp::CompletionList CollectCompletions(const lsp::CompletionParams& params, cons
       if ((n == ae->property) && (ae->parent->nkind == core::ast::NodeKind::CompositeLiteral/* ||
                                     ae->parent->nkind == core::ast::NodeKind::ParenExpr*/)) {
         complete_props(core::checker::ext::DeduceCompositeLiteralType(
-            &file, scope, ae->parent->As<core::ast::nodes::CompositeLiteral>()));
+                           &file, scope, ae->parent->As<core::ast::nodes::CompositeLiteral>())
+                           .sym);
         return completion_list;  // todo: extract filler to separate func
       }
 
@@ -282,7 +284,7 @@ lsp::CompletionList CollectCompletions(const lsp::CompletionParams& params, cons
       break;
   }
 
-  const core::semantic::Symbol* expected_type_opt = core::checker::ext::DeduceExpectedType(&file, scope, n);
+  const auto expected_type_opt = core::checker::ext::DeduceExpectedType(&file, scope, n);
   if (expected_type_opt && (expected_type_opt->Flags() & core::semantic::SymbolFlags::kEnum)) {
     for (const auto& [name, msym] : expected_type_opt->Members()->Enumerate()) {
       items.emplace_back(lsp::CompletionItem{
@@ -315,12 +317,9 @@ lsp::CompletionList CollectCompletions(const lsp::CompletionParams& params, cons
 
       const core::semantic::Symbol* actual_type =
           (sym.Flags() & (core::semantic::SymbolFlags::kFunction | core::semantic::SymbolFlags::kTemplate))
-              ? core::checker::ResolveCallableReturnType(module.sf, module.scope,
-                                                         sym.Declaration()->As<core::ast::nodes::Decl>())
-                    .sym
-              : core::checker::ResolveDeclarationType(module.sf, module.scope,
-                                                      sym.Declaration()->As<core::ast::nodes::Decl>());
-      if (expected_type_opt && expected_type_opt != actual_type) {
+              ? core::checker::ResolveCallableReturnType(module.sf, sym.Declaration()->As<core::ast::nodes::Decl>()).sym
+              : core::checker::ResolveDeclarationType(module.sf, sym.Declaration()->As<core::ast::nodes::Decl>()).sym;
+      if (expected_type_opt && expected_type_opt.sym != actual_type) {
         continue;
       }
       items.emplace_back(lsp::CompletionItem{

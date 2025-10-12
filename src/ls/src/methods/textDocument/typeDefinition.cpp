@@ -25,7 +25,7 @@ lsp::TypeDefinitionResult ProvideTypeDefinition(const lsp::TypeDefinitionParams&
   if (!symres) {
     return nullptr;
   }
-  const auto* sym = symres->symbol;
+  const auto* sym = symres->type.sym;
 
   if (!sym || (sym->Flags() & core::semantic::SymbolFlags::kBuiltin)) {
     return nullptr;
@@ -33,8 +33,7 @@ lsp::TypeDefinitionResult ProvideTypeDefinition(const lsp::TypeDefinitionParams&
   const auto* decl = sym->Declaration()->As<core::ast::nodes::Decl>();
   const auto* provider_file = core::ast::utils::SourceFileOf(decl);
 
-  const auto* type_sym = core::checker::ResolveDeclarationType(
-      provider_file, core::semantic::utils::FindScope(provider_file->module->scope, decl), decl);
+  const auto* type_sym = core::checker::ResolveDeclarationType(provider_file, decl).sym;
   if (!type_sym) {
     return nullptr;
   }

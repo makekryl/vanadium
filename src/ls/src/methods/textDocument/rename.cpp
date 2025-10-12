@@ -22,7 +22,7 @@ lsp::RenameResult ProvideRename(const lsp::RenameParams& params, const core::Sou
     return nullptr;
   }
 
-  const auto* sym = symres->symbol;
+  const auto* sym = symres->type.sym;
   const auto* scope = symres->scope;
   const auto sym_name = sym->GetName();
 

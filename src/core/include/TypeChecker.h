@@ -35,9 +35,9 @@ ENUM_FLAGS_TRAITS(TemplateRestrictionKind)
 
 struct InstantiatedType {
   const semantic::Symbol* sym{nullptr};
-  const ast::Node* instance{nullptr};
-  std::uint32_t depth{0};
   TemplateRestrictionKind restriction{TemplateRestrictionKind::kNone};
+  bool is_instance{false};
+  std::uint32_t depth{0};
 
   operator bool() const {
     return sym != nullptr;
@@ -51,7 +51,16 @@ struct InstantiatedType {
     return *this;
   }
 
-  static InstantiatedType None() {
+  InstantiatedType Derive(const semantic::Symbol* nsym) const {
+    return InstantiatedType{
+        .sym = nsym,
+        .restriction = restriction,
+        .is_instance = is_instance,
+        .depth = depth,
+    };
+  }
+
+  static constexpr InstantiatedType None() {
     return {};
   }
 };
@@ -63,10 +72,10 @@ extern const semantic::Symbol kInferType;
 extern const semantic::Symbol kAltstepType;
 }  // namespace symbols
 
-const semantic::Symbol* ResolveExprSymbol(const SourceFile*, const semantic::Scope*, const ast::nodes::Expr*);
-const semantic::Symbol* ResolveDeclarationType(const SourceFile*, const semantic::Scope*, const ast::nodes::Decl*);
-InstantiatedType ResolveCallableReturnType(const SourceFile*, const semantic::Scope*, const ast::nodes::Decl*);
-const semantic::Symbol* ResolveExprType(const SourceFile*, const semantic::Scope*, const ast::nodes::Expr*);
+InstantiatedType ResolveExprSymbol(const SourceFile*, const semantic::Scope*, const ast::nodes::Expr*);
+InstantiatedType ResolveDeclarationType(const SourceFile*, const ast::Node*);
+InstantiatedType ResolveCallableReturnType(const SourceFile*, const ast::nodes::Decl*);
+InstantiatedType ResolveExprType(const SourceFile*, const semantic::Scope*, const ast::nodes::Expr*);
 
 const semantic::Symbol* ResolveListElementType(const semantic::Symbol*);
 const semantic::Symbol* ResolveTypeSpecSymbol(const SourceFile*, const ast::nodes::TypeSpec*);
@@ -74,12 +83,11 @@ const semantic::Symbol* ResolveTypeSpecSymbol(const SourceFile*, const ast::node
 const semantic::Symbol* ResolvePotentiallyAliasedType(const semantic::Symbol*);
 
 namespace ext {
-const semantic::Symbol* ResolveAssignmentTarget(const SourceFile*, const semantic::Scope*,
-                                                const ast::nodes::AssignmentExpr*);
-const semantic::Symbol* DeduceCompositeLiteralType(const SourceFile*, const semantic::Scope*,
-                                                   const ast::nodes::CompositeLiteral*,
-                                                   const semantic::Symbol* parent_hint = nullptr);
-const semantic::Symbol* DeduceExpectedType(const SourceFile*, const semantic::Scope*, const ast::Node*);
+InstantiatedType ResolveAssignmentTarget(const SourceFile*, const semantic::Scope*, const ast::nodes::AssignmentExpr*);
+InstantiatedType DeduceCompositeLiteralType(const SourceFile*, const semantic::Scope*,
+                                            const ast::nodes::CompositeLiteral*,
+                                            const InstantiatedType& parent_hint = InstantiatedType::None());
+InstantiatedType DeduceExpectedType(const SourceFile*, const semantic::Scope*, const ast::Node*);
 }  // namespace ext
 
 namespace utils {

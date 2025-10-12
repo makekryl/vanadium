@@ -62,10 +62,6 @@ const semantic::Symbol kTemplateNotUsedType{
   }
 }
 
-namespace {
-InstantiatedType ResolveExprInstantiatedType(const SourceFile*, const semantic::Scope*, const ast::nodes::Expr*);
-}  // namespace
-
 namespace utils {
 const ast::nodes::FormalPars* ResolveCallableParams(const SourceFile* file, const semantic::Scope* scope,
                                                     const ast::nodes::ParenExpr* pe) {
@@ -75,7 +71,7 @@ const ast::nodes::FormalPars* ResolveCallableParams(const SourceFile* file, cons
   }
 
   const auto* ce = pe->parent->As<ast::nodes::CallExpr>();
-  const auto* fun_sym = ResolveExprType(file, scope, ce->fun);
+  const auto fun_sym = ResolveExprType(file, scope, ce->fun);
   if (!fun_sym || !(fun_sym->Flags() & (semantic::SymbolFlags::kFunction | semantic::SymbolFlags::kTemplate))) {
     return nullptr;
   }
@@ -153,21 +149,21 @@ class SelectorExprResolver {
  public:
   SelectorExprResolver(Options options) : options_(std::move(options)) {}
 
-  struct Result {
-    const semantic::Symbol* sym;
-    bool is_static;
-  };
-
-  Result Resolve(const SourceFile* sf, const semantic::Scope* scope, const ast::nodes::SelectorExpr* se) {
+  InstantiatedType Resolve(const SourceFile* sf, const semantic::Scope* scope, const ast::nodes::SelectorExpr* se) {
     sf_ = sf;
     scope_ = scope;
     se_tgt_ = se;
 
     const auto* sym = ResolveSelectorExpr(se);
-    return {.sym = sym, .is_static = mode_static_};
+    return InstantiatedType{
+        .sym = sym,
+        .restriction = restriction_,
+        .is_instance = !mode_static_,
+    };
   }
 
  private:
+  TemplateRestrictionKind restriction_;
   bool mode_static_;
   const semantic::Symbol* ResolveSelectorExpr(const ast::nodes::SelectorExpr* se) {
     if (se->sel == nullptr) [[unlikely]] {
@@ -180,7 +176,8 @@ class SelectorExprResolver {
     } else {
       const auto type = options_.resolve_type(sf_, scope_, se->x);
       x_sym = type.sym;
-      mode_static_ = !type.instance && x_sym && !bool(x_sym->Flags() & semantic::SymbolFlags::kImportedModule);
+      restriction_ = type.restriction;
+      mode_static_ = !type.is_instance && x_sym && !bool(x_sym->Flags() & semantic::SymbolFlags::kImportedModule);
 
       if (x_sym) {
         if (const auto* superbase = builtins::GetSuperbase(x_sym); superbase) {
@@ -202,7 +199,7 @@ class SelectorExprResolver {
       mode_static_ = false;
       const auto* tdecl = x_sym->Declaration();
       const auto* tfile = ast::utils::SourceFileOf(tdecl);
-      x_sym = ResolveCallableReturnType(tfile, tfile->module->scope, tdecl->As<ast::nodes::Decl>()).sym;
+      x_sym = ResolveCallableReturnType(tfile, tdecl->As<ast::nodes::Decl>()).sym;
       if (!x_sym) {
         return nullptr;
       }
@@ -268,7 +265,7 @@ class SelectorExprResolver {
     }
 
     const auto* property_file = ast::utils::SourceFileOf(property_sym->Declaration());
-    return ResolveDeclarationType(property_file, property_file->module->scope, property_decl->As<ast::nodes::Decl>());
+    return ResolveDeclarationType(property_file, property_decl->As<ast::nodes::Decl>()).sym;
   }
 
   const SourceFile* sf_;
@@ -276,16 +273,16 @@ class SelectorExprResolver {
   const ast::nodes::SelectorExpr* se_tgt_;
   Options options_;
 };
-const semantic::Symbol* ResolveSelectorExprSymbol(const SourceFile* sf, const semantic::Scope* scope,
-                                                  const ast::nodes::SelectorExpr* se) {
+InstantiatedType ResolveSelectorExprSymbol(const SourceFile* sf, const semantic::Scope* scope,
+                                           const ast::nodes::SelectorExpr* se) {
   SelectorExprResolver resolver{SelectorExprResolverOptions{
-      .resolve_type = ResolveExprInstantiatedType,
+      .resolve_type = ResolveExprType,
       .on_non_structural_type = [](const auto*, auto) {},
       .on_unknown_property = [](const auto*, auto) {},
       .on_non_static_property_invalid_access = [](const auto*, auto) {},
       .on_static_property_invalid_access = [](const auto*, auto) {},
   }};
-  return resolver.Resolve(sf, scope, se).sym;
+  return resolver.Resolve(sf, scope, se);
 }
 
 template <InstantiatedTypeResolverFn InstantiatedTypeResolver, std::invocable<const ast::nodes::Expr*> IndexChecker,
@@ -306,13 +303,11 @@ class IndexExprResolver {
     scope_ = scope;
 
     const auto* sym = ResolveIndexExpr(ie);
-    if (depth_ != 0) [[unlikely]] {
-      return InstantiatedType::None();
-    }
     return InstantiatedType{
         .sym = sym,
-        .instance = mode_static_ ? nullptr : ie,
         .restriction = head_type_.restriction,
+        .is_instance = !mode_static_,
+        .depth = static_cast<std::uint32_t>(depth_),
     };
   }
 
@@ -352,7 +347,7 @@ class IndexExprResolver {
       }
 
       const bool is_inferrence_expr = "-" == sf_->Text(ie->index);
-      if (!head_type_.instance) {
+      if (!head_type_.is_instance) {
         // RoTypeId[-]
         if (is_inferrence_expr) {
           if (!(x_sym->Flags() & semantic::SymbolFlags::kList)) {
@@ -380,9 +375,8 @@ class IndexExprResolver {
 
       options_.check_index(ie->index);
 
-      if (const auto* arraydef_vec = ast::utils::GetArrayDef(head_type_.instance);
-          arraydef_vec && !arraydef_vec->empty()) [[unlikely]] {
-        depth_ = arraydef_vec->size() - 1;
+      if (head_type_.depth != 0) {
+        depth_ = head_type_.depth - 1;
         return x_sym;
       }
     }
@@ -399,7 +393,7 @@ class IndexExprResolver {
       // yes, it does not use options_.resolve_type - avoids double error emit
       const auto* td = x_sym->Declaration()->As<ast::nodes::TemplateDecl>();
       const auto* tf = ast::utils::SourceFileOf(td);
-      x_sym = ResolveExprType(tf, tf->module->scope, td->type);
+      x_sym = ResolveExprType(tf, tf->module->scope, td->type).sym;
       if (!x_sym) {
         return nullptr;
       }
@@ -426,14 +420,14 @@ class IndexExprResolver {
   const semantic::Scope* scope_;
   Options options_;
 };
-const semantic::Symbol* ResolveIndexExprType(const SourceFile* sf, const semantic::Scope* scope,
-                                             const ast::nodes::IndexExpr* se) {
+InstantiatedType ResolveIndexExprType(const SourceFile* sf, const semantic::Scope* scope,
+                                      const ast::nodes::IndexExpr* se) {
   IndexExprResolver resolver{IndexExprResolverOptions{
-      .resolve_type = ResolveExprInstantiatedType,
+      .resolve_type = ResolveExprType,
       .check_index = [](const auto*) {},
       .with_error_emitter = [](const auto&) {},
   }};
-  return resolver.Resolve(sf, scope, se).sym;
+  return resolver.Resolve(sf, scope, se);
 }
 
 }  // namespace detail
@@ -442,7 +436,7 @@ const semantic::Symbol* ResolveAliasedType(const semantic::Symbol* sym) {
   const ast::Node* decl = sym->Declaration()->As<ast::nodes::SubTypeDecl>()->field->type;
   while (decl && decl->nkind == ast::NodeKind::RefSpec) {
     const auto* file = ast::utils::SourceFileOf(decl);
-    sym = ResolveExprType(file, file->module->scope, decl->As<ast::nodes::RefSpec>()->x);
+    sym = ResolveExprSymbol(file, file->module->scope, decl->As<ast::nodes::RefSpec>()->x).sym;
     if (!sym) [[unlikely]] {
       break;
     }
@@ -491,8 +485,8 @@ const semantic::Symbol* ResolveListElementType(const semantic::Symbol* sym) {
 }
 
 namespace ext {
-const semantic::Symbol* ResolveAssignmentTarget(const SourceFile* file, const semantic::Scope* scope,
-                                                const ast::nodes::AssignmentExpr* n) {
+InstantiatedType ResolveAssignmentTarget(const SourceFile* file, const semantic::Scope* scope,
+                                         const ast::nodes::AssignmentExpr* n) {
   const auto* property = n->property;
   const auto property_name = file->Text(property);
 
@@ -501,63 +495,63 @@ const semantic::Symbol* ResolveAssignmentTarget(const SourceFile* file, const se
       const auto* m = n->parent->As<core::ast::nodes::ParenExpr>();
 
       const auto* ce = m->parent->As<core::ast::nodes::CallExpr>();
-      const auto* callee_sym = core::checker::ResolveExprSymbol(file, scope, ce->fun);
+      const auto callee_sym = ResolveExprSymbol(file, scope, ce->fun);
       if (!callee_sym ||
           !(callee_sym->Flags() & (core::semantic::SymbolFlags::kFunction | semantic::SymbolFlags::kTemplate))) {
-        return nullptr;
+        return InstantiatedType::None();
       }
 
-      return callee_sym->OriginatedScope()->ResolveDirect(property_name);
+      return {.sym = callee_sym->OriginatedScope()->ResolveDirect(property_name)};
     }
     case core::ast::NodeKind::CompositeLiteral: {
       const auto* m = n->parent->As<core::ast::nodes::CompositeLiteral>();
-      const auto* sym = core::checker::ext::DeduceCompositeLiteralType(file, scope, m);
-      if (!sym || !(sym->Flags() & semantic::SymbolFlags::kStructural)) {
-        return nullptr;
+      const auto cl_type = ext::DeduceCompositeLiteralType(file, scope, m);
+      if (!cl_type || !(cl_type->Flags() & semantic::SymbolFlags::kStructural)) {
+        return InstantiatedType::None();
       }
-      return sym->Members()->Lookup(property_name);
+      return cl_type.Derive(cl_type->Members()->Lookup(property_name));
     }
     default: {
-      return core::checker::ResolveExprSymbol(file, scope, property);
+      return ResolveExprSymbol(file, scope, property);
     }
   }
 }
-const semantic::Symbol* DeduceCompositeLiteralType(const SourceFile* file, const semantic::Scope* scope,
-                                                   const ast::nodes::CompositeLiteral* n,
-                                                   const semantic::Symbol* parent_hint) {
+InstantiatedType DeduceCompositeLiteralType(const SourceFile* file, const semantic::Scope* scope,
+                                            const ast::nodes::CompositeLiteral* n,
+                                            const InstantiatedType& parent_hint) {
   switch (n->parent->nkind) {
     case ast::NodeKind::CompositeLiteral: {
       const auto* cl = n->parent->As<ast::nodes::CompositeLiteral>();
 
-      const auto* sym = parent_hint ? parent_hint : DeduceCompositeLiteralType(file, scope, cl);
-      if (!sym) {
-        return nullptr;
+      const auto parent_type = parent_hint ? parent_hint : DeduceCompositeLiteralType(file, scope, cl);
+      if (!parent_type) {
+        return InstantiatedType::None();
       }
 
-      if (sym->Flags() & semantic::SymbolFlags::kList) {
-        return ResolveListElementType(sym);
+      if (parent_type->Flags() & semantic::SymbolFlags::kList) {
+        return parent_type.Derive(ResolveListElementType(parent_type.sym));
       }
 
-      const auto* decl = sym->Declaration();
+      const auto* decl = parent_type->Declaration();
       if (decl->nkind != core::ast::NodeKind::StructTypeDecl && decl->nkind != ast::NodeKind::StructSpec) {
-        return nullptr;
+        return InstantiatedType::None();
       }
 
       const auto& fields = *ast::utils::GetStructFields(decl);
 
       const auto param_index = std::ranges::find(cl->list, n) - cl->list.begin();
       if (param_index >= std::ssize(fields)) {
-        return nullptr;
+        return InstantiatedType::None();
       }
 
       const auto* field = fields[param_index];
       const auto* decl_file = core::ast::utils::SourceFileOf(decl);
 
       if (field->type->nkind != ast::NodeKind::RefSpec && field->name) {
-        return sym->Members()->LookupShadow(decl_file->Text(*field->name));
+        return parent_type.Derive(parent_type->Members()->LookupShadow(decl_file->Text(*field->name)));
       }
 
-      return ResolveTypeSpecSymbol(decl_file, field->type);
+      return parent_type.Derive(ResolveTypeSpecSymbol(decl_file, field->type));
     }
     case ast::NodeKind::AssignmentExpr: {
       const auto* ae = n->parent->As<ast::nodes::AssignmentExpr>();
@@ -566,29 +560,28 @@ const semantic::Symbol* DeduceCompositeLiteralType(const SourceFile* file, const
       switch (ae->parent->nkind) {
         case ast::NodeKind::CompositeLiteral: {
           const auto* cl = ae->parent->As<ast::nodes::CompositeLiteral>();
-          const auto* cl_sym = parent_hint ? parent_hint : DeduceCompositeLiteralType(file, scope, cl);
+          const auto cl_sym = parent_hint ? parent_hint : DeduceCompositeLiteralType(file, scope, cl);
           if (!cl_sym) {
-            return nullptr;
+            return InstantiatedType::None();
           }
 
           if (cl_sym->Flags() & semantic::SymbolFlags::kList) {
-            return ResolveListElementType(cl_sym);
+            return cl_sym.Derive(ResolveListElementType(cl_sym.sym));
           }
 
           const auto* property_sym = cl_sym->Members()->Lookup(property_name);
           if (!property_sym) {
-            return nullptr;
+            return InstantiatedType::None();
           }
           const auto* property_file = ast::utils::SourceFileOf(property_sym->Declaration());
 
-          return ResolveDeclarationType(property_file, property_file->module->scope,
-                                        property_sym->Declaration()->As<ast::nodes::Decl>());
+          return ResolveDeclarationType(property_file, property_sym->Declaration()->As<ast::nodes::Decl>());
         }
         case ast::NodeKind::ParenExpr: {
           const auto* pe = ae->parent->As<ast::nodes::ParenExpr>();
           const auto* params = utils::ResolveCallableParams(file, scope, pe);
           if (!params) {
-            return nullptr;
+            return InstantiatedType::None();
           }
 
           const auto* params_file = ast::utils::SourceFileOf(params);
@@ -597,7 +590,7 @@ const semantic::Symbol* DeduceCompositeLiteralType(const SourceFile* file, const
             return par->name && params_file->Text(*par->name) == property_name;
           });
           if (it == params->list.end()) {
-            return nullptr;
+            return InstantiatedType::None();
           }
 
           const auto* param = *it;
@@ -610,18 +603,18 @@ const semantic::Symbol* DeduceCompositeLiteralType(const SourceFile* file, const
         default:
           break;
       }
-      return nullptr;
+      return InstantiatedType::None();
     }
     case ast::NodeKind::ParenExpr: {
       const auto* pe = n->parent->As<ast::nodes::ParenExpr>();
       const auto* params = utils::ResolveCallableParams(file, scope, pe);
       if (!params) {
-        return nullptr;
+        return InstantiatedType::None();
       }
 
       const auto param_index = std::ranges::find(pe->list, n) - pe->list.begin();
       if (param_index >= std::ssize(params->list)) {
-        return nullptr;
+        return InstantiatedType::None();
       }
 
       const auto* param = params->list[param_index];
@@ -642,16 +635,16 @@ const semantic::Symbol* DeduceCompositeLiteralType(const SourceFile* file, const
       const auto* rs = n->parent->As<ast::nodes::ReturnSpec>();
       const auto* decl = ast::utils::GetPredecessor<ast::nodes::FuncDecl>(rs);
       if (!decl || !decl->ret) {
-        return nullptr;
+        return InstantiatedType::None();
       }
       return ResolveExprType(file, scope, decl->ret->type);
     }
     default:
-      return nullptr;
+      return InstantiatedType::None();
   }
 }
 
-const semantic::Symbol* DeduceExpectedType(const SourceFile* file, const semantic::Scope* scope, const ast::Node* n) {
+InstantiatedType DeduceExpectedType(const SourceFile* file, const semantic::Scope* scope, const ast::Node* n) {
   const auto* parent = n->parent;
   switch (parent->nkind) {
     case ast::NodeKind::Declarator: {
@@ -676,16 +669,15 @@ const semantic::Symbol* DeduceExpectedType(const SourceFile* file, const semanti
         break;
       }
 
-      const auto* decl_sym = ResolveAssignmentTarget(file, scope, ae);
+      const auto decl_sym = ResolveAssignmentTarget(file, scope, ae);
       if (!decl_sym) {
         break;
       }
 
       const auto* decl = decl_sym->Declaration()->As<ast::nodes::Decl>();
       const auto* decl_file = ast::utils::SourceFileOf(decl);
-      const auto* decl_scope = decl_file->module->scope;
 
-      return ResolveDeclarationType(decl_file, decl_scope, decl);
+      return ResolveDeclarationType(decl_file, decl);
     }
     case ast::NodeKind::ParenExpr: {
       const auto* pe = parent->As<ast::nodes::ParenExpr>();
@@ -697,43 +689,43 @@ const semantic::Symbol* DeduceExpectedType(const SourceFile* file, const semanti
 
       const auto idx = std::ranges::find(pe->list, n) - pe->list.begin();
       if (idx >= std::ssize(params->list)) {
-        return nullptr;
+        return InstantiatedType::None();
       }
 
       const auto* params_file = ast::utils::SourceFileOf(params);
       const auto* params_scope = params_file->module->scope;
 
-      const auto* sym = ResolveExprType(params_file, params_scope, params->list[idx]->type);
-      if (sym == &symbols::kInferType && n != pe->list.back()) [[unlikely]] {
+      const auto type = ResolveExprType(params_file, params_scope, params->list[idx]->type);
+      if (type.sym == &symbols::kInferType && n != pe->list.back()) [[unlikely]] {
         return ResolveExprType(file, scope, pe->list.back());
       }
-      return sym;
+      return type;
     }
     case ast::NodeKind::CompositeLiteral: {
       const auto* cl = parent->As<ast::nodes::CompositeLiteral>();
 
-      const auto* sym = DeduceCompositeLiteralType(file, scope, cl);
-      if (!sym) {
-        return nullptr;
+      const auto type = DeduceCompositeLiteralType(file, scope, cl);
+      if (!type) {
+        return InstantiatedType::None();
       }
-      if (!(sym->Flags() & semantic::SymbolFlags::kStructural)) {
-        if (sym->Flags() & semantic::SymbolFlags::kList) {
-          const auto* ldecl = sym->Declaration();
+      if (!(type->Flags() & semantic::SymbolFlags::kStructural)) {
+        if (type->Flags() & semantic::SymbolFlags::kList) {
+          const auto* ldecl = type->Declaration();
           if (ldecl->nkind == ast::NodeKind::Field) {  // from SubTypeDecl
             ldecl = ldecl->As<ast::nodes::Field>()->type;
           }
           const auto* ldecl_file = ast::utils::SourceFileOf(ldecl);
           switch (ldecl->nkind) {
             case ast::NodeKind::ListSpec:
-              return ResolveTypeSpecSymbol(ldecl_file, ldecl->As<ast::nodes::ListSpec>()->elemtype);
+              return type.Derive(ResolveTypeSpecSymbol(ldecl_file, ldecl->As<ast::nodes::ListSpec>()->elemtype));
             default:
-              return nullptr;
+              return InstantiatedType::None();
           }
         }
         // should not be generally possible
-        return sym;
+        return type;
       }
-      const auto* decl = sym->Declaration();
+      const auto* decl = type->Declaration();
 
       const auto* fields_ptr = ast::utils::GetStructFields(decl);
       if (!fields_ptr) {
@@ -743,30 +735,30 @@ const semantic::Symbol* DeduceExpectedType(const SourceFile* file, const semanti
 
       const auto idx = std::ranges::find(cl->list, n) - cl->list.begin();
       if (idx >= std::ssize(fields)) {
-        return nullptr;
+        return InstantiatedType::None();
       }
 
       const auto* fields_file = ast::utils::SourceFileOf(decl);
-      return ResolveTypeSpecSymbol(fields_file, fields[idx]->type);
+      return type.Derive(ResolveTypeSpecSymbol(fields_file, fields[idx]->type));
     }
     case ast::NodeKind::TemplateDecl: {
       const auto* m = parent->As<core::ast::nodes::TemplateDecl>();
       if (n != m->value) {
         break;
       }
-      return core::checker::ResolveExprType(file, file->module->scope, m->type);
+      return ResolveExprType(file, file->module->scope, m->type);
     }
     case ast::NodeKind::CaseClause: {
       const auto* m = parent->As<core::ast::nodes::CaseClause>();
       const auto* ss = m->parent->As<core::ast::nodes::SelectStmt>();
 
       const core::semantic::Scope* scope = semantic::utils::FindScope(file->module->scope, parent);
-      return core::checker::ResolveExprType(file, scope, ss->tag);
+      return ResolveExprType(file, scope, ss->tag);
     }
     default:
       break;
   }
-  return nullptr;
+  return InstantiatedType::None();
 }
 
 }  // namespace ext
@@ -780,7 +772,7 @@ const semantic::Symbol* TryResolveExprSymbolViaHierarchy(const SourceFile* file,
       const auto* ss = m->parent->As<core::ast::nodes::SelectStmt>();
 
       const core::semantic::Scope* scope = semantic::utils::FindScope(file->module->scope, expr);
-      const auto* tag_sym = core::checker::ResolveExprType(file, scope, ss->tag);
+      const auto tag_sym = ResolveExprType(file, scope, ss->tag);
       if (!tag_sym) {
         return nullptr;
       }
@@ -814,7 +806,7 @@ const semantic::Symbol* ResolveTypeSpecSymbol(const SourceFile* file, const ast:
     }
     case ast::NodeKind::RefSpec: {
       const auto* m = spec->As<ast::nodes::RefSpec>();
-      return ResolveExprSymbol(file, file->module->scope, m->x);
+      return ResolveExprSymbol(file, file->module->scope, m->x).sym;
     }
     case ast::NodeKind::ListSpec:
     case ast::NodeKind::StructSpec:
@@ -848,8 +840,7 @@ const semantic::Symbol* ResolveTypeSpecSymbol(const SourceFile* file, const ast:
 }
 
 // Expression -> Declaration
-const semantic::Symbol* ResolveExprSymbol(const SourceFile* file, const semantic::Scope* scope,
-                                          const ast::nodes::Expr* expr) {
+InstantiatedType ResolveExprSymbol(const SourceFile* file, const semantic::Scope* scope, const ast::nodes::Expr* expr) {
   switch (expr->nkind) {
     case ast::NodeKind::Ident: {
       const auto* m = expr->As<ast::nodes::Ident>();
@@ -857,18 +848,18 @@ const semantic::Symbol* ResolveExprSymbol(const SourceFile* file, const semantic
 
       const auto* sym = scope->Resolve(label);
       if (!sym) {
-        const auto* expected_type = core::checker::ext::DeduceExpectedType(file, scope, expr);
+        auto expected_type = ext::DeduceExpectedType(file, scope, expr);
         if (expected_type && expected_type->Flags() & semantic::SymbolFlags::kList) {
-          expected_type = ResolveListElementType(expected_type);
+          expected_type = ResolveListElementType(expected_type.sym);
         }
         if (expected_type && (expected_type->Flags() & semantic::SymbolFlags::kEnum)) {
           sym = expected_type->Members()->Lookup(label);
         }
       }
       if (!sym) [[unlikely]] {
-        return TryResolveExprSymbolViaHierarchy(file, scope, expr);
+        return {.sym = TryResolveExprSymbolViaHierarchy(file, scope, expr)};
       }
-      return sym;
+      return {.sym = sym};
     }
     case ast::NodeKind::CallExpr: {
       const auto* m = expr->As<ast::nodes::CallExpr>();
@@ -888,53 +879,65 @@ const semantic::Symbol* ResolveExprSymbol(const SourceFile* file, const semantic
       return detail::ResolveIndexExprType(file, scope, m);
     }
     default: {
-      return TryResolveExprSymbolViaHierarchy(file, scope, expr);
+      return {.sym = TryResolveExprSymbolViaHierarchy(file, scope, expr)};
     }
   }
 }
 
 // Value Declaration -> Effective Type
-const semantic::Symbol* ResolveDeclarationType(const SourceFile* file, const semantic::Scope* scope,
-                                               const ast::nodes::Decl* decl) {
+InstantiatedType ResolveDeclarationType(const SourceFile* file, const ast::Node* decl) {
   switch (decl->nkind) {
     case ast::NodeKind::Declarator: {
       const auto* m = decl->As<ast::nodes::Declarator>();
       const auto* vd = m->parent->As<ast::nodes::ValueDecl>();
-      return ResolveExprType(file, scope, vd->type);
+      return InstantiatedType{
+          .sym = ResolveExprSymbol(file, file->module->scope, vd->type).sym,
+          .restriction = ParseTemplateRestriction(vd->template_restriction),
+          .is_instance = true,
+          .depth = static_cast<std::uint32_t>(ast::utils::GetArrayDef(m)->size()),
+      };
     }
     case ast::NodeKind::FormalPar: {
       const auto* m = decl->As<ast::nodes::FormalPar>();
-      return ResolveExprType(file, scope, m->type);
+      return InstantiatedType{
+          .sym = ResolveExprSymbol(file, file->module->scope, m->type).sym,
+          .restriction = ParseTemplateRestriction(m->restriction),
+          .is_instance = true,
+          .depth = static_cast<std::uint32_t>(ast::utils::GetArrayDef(m)->size()),
+      };
     }
     case ast::NodeKind::Field: {
       const auto* m = decl->As<ast::nodes::Field>();
-      return ResolveTypeSpecSymbol(file, m->type);
+      return {
+          .sym = ResolveTypeSpecSymbol(file, m->type),
+          .restriction = m->optional ? TemplateRestrictionKind::kOptionalField : TemplateRestrictionKind::kNone,
+          .depth = static_cast<std::uint32_t>(m->arraydef.size()),
+      };
     }
     case ast::NodeKind::ClassTypeDecl: {
       // we could come here only via Resolve("this")->Declaration()
       // use direct module symbol table for speed up
       const auto* m = decl->As<ast::nodes::ClassTypeDecl>();
-      return file->module->scope->ResolveDirect(file->Text(*m->name));
+      return {.sym = file->module->scope->ResolveDirect(file->Text(*m->name))};
     }
     case ast::NodeKind::FuncDecl: {
       const auto* m = decl->As<ast::nodes::FuncDecl>();
       const auto* declfile = ast::utils::SourceFileOf(m);
-      return declfile->module->scope->ResolveDirect(declfile->Text(*m->name));
+      return {.sym = declfile->module->scope->ResolveDirect(declfile->Text(*m->name))};
     }
     case ast::NodeKind::TemplateDecl: {
       const auto* m = decl->As<ast::nodes::TemplateDecl>();
       const auto* declfile = ast::utils::SourceFileOf(m);
-      return declfile->module->scope->ResolveDirect(declfile->Text(*m->name));
+      return {.sym = declfile->module->scope->ResolveDirect(declfile->Text(*m->name))};
     }
     default: {
-      return nullptr;
+      return InstantiatedType::None();
     }
   }
 }
 
 // Callable Declaration -> Effective Type
-InstantiatedType ResolveCallableReturnType(const SourceFile* file, const semantic::Scope* scope,
-                                           const ast::nodes::Decl* decl) {
+InstantiatedType ResolveCallableReturnType(const SourceFile* file, const ast::nodes::Decl* decl) {
   switch (decl->nkind) {
     case ast::NodeKind::FuncDecl: {
       const auto* m = decl->As<ast::nodes::FuncDecl>();
@@ -943,17 +946,17 @@ InstantiatedType ResolveCallableReturnType(const SourceFile* file, const semanti
         return {.sym = &symbols::kVoidType};
       }
       return {
-          .sym = ResolveExprType(file, scope, m->ret->type),
-          .instance = ret,
+          .sym = ResolveExprSymbol(file, file->module->scope, m->ret->type).sym,
           .restriction = ParseTemplateRestriction(ret->restriction),
+          .is_instance = true,
       };
     }
     case ast::NodeKind::TemplateDecl: {
       const auto* m = decl->As<ast::nodes::TemplateDecl>();
       return {
-          .sym = ResolveExprType(file, scope, m->type),
-          .instance = m,
+          .sym = ResolveExprSymbol(file, file->module->scope, m->type).sym,
           .restriction = ParseTemplateRestriction(m->restriction),
+          .is_instance = true,
       };
     }
     case ast::NodeKind::ConstructorDecl: {
@@ -961,7 +964,7 @@ InstantiatedType ResolveCallableReturnType(const SourceFile* file, const semanti
       const auto* classdecl = m->parent->parent->As<ast::nodes::ClassTypeDecl>();  // Def->ClassTypeDecl
       return {
           .sym = file->module->scope->ResolveDirect(file->Text(*classdecl->name)),
-          .instance = m,
+          .is_instance = true,
       };
     }
     default: {
@@ -970,104 +973,36 @@ InstantiatedType ResolveCallableReturnType(const SourceFile* file, const semanti
   }
 }
 
-namespace {
-const semantic::Symbol* ResolveExprTypeViaDecl(const SourceFile* file, const semantic::Scope* scope,
-                                               const semantic::Symbol* decl_sym, const ast::nodes::Expr* expr) {
-  if ((decl_sym->Flags() &
-       (semantic::SymbolFlags::kType | semantic::SymbolFlags::kImportedModule | semantic::SymbolFlags::kEnumMember)) ||
-      (expr->nkind != ast::NodeKind::CallExpr && (decl_sym->Flags() & semantic::SymbolFlags::kFunction))) {
-    return decl_sym;
+// Expression -> (Declaration) -> Effective Type
+InstantiatedType ResolveExprType(const SourceFile* file, const semantic::Scope* scope, const ast::nodes::Expr* expr) {
+  const auto decl_type = ResolveExprSymbol(file, scope, expr);
+  if (!decl_type) {
+    return InstantiatedType::None();
   }
 
-  const auto* decl = decl_sym->Declaration()->As<ast::nodes::Decl>();
+  if ((decl_type->Flags() &
+       (semantic::SymbolFlags::kType | semantic::SymbolFlags::kImportedModule | semantic::SymbolFlags::kEnumMember)) ||
+      (expr->nkind != ast::NodeKind::CallExpr && (decl_type->Flags() & semantic::SymbolFlags::kFunction))) {
+    return decl_type;
+  }
+
+  const auto* decl = decl_type->Declaration()->As<ast::nodes::Decl>();
   const auto* decl_file = ast::utils::SourceFileOf(decl);
-  const auto* decl_scope = decl_file->module->scope;
 
   if (expr->nkind == ast::NodeKind::CallExpr) {
-    const auto ret_sym = ResolveCallableReturnType(decl_file, decl_scope, decl);
-    if (ret_sym.sym == &symbols::kInferType) {
+    const auto itype = ResolveCallableReturnType(decl_file, decl);
+    if (itype.sym == &symbols::kInferType) {
       const auto* ce = expr->As<ast::nodes::CallExpr>();
       if (ce->args->list.empty()) {
-        return nullptr;
+        return InstantiatedType::None();
       }
       return ResolveExprType(file, scope, ce->args->list.back());
     }
-    return ret_sym.sym;
+    return itype;
   }
 
-  return ResolveDeclarationType(decl_file, decl_scope, decl);
+  return ResolveDeclarationType(decl_file, decl);
 }
-}  // namespace
-
-// Expression -> (Declaration) -> Effective Type
-const semantic::Symbol* ResolveExprType(const SourceFile* file, const semantic::Scope* scope,
-                                        const ast::nodes::Expr* expr) {
-  const auto* decl_sym = ResolveExprSymbol(file, scope, expr);
-  if (!decl_sym) {
-    return nullptr;
-  }
-  return ResolveExprTypeViaDecl(file, scope, decl_sym, expr);
-}
-
-namespace {
-InstantiatedType ResolveExprInstantiatedType(const SourceFile* file, const semantic::Scope* scope,
-                                             const ast::nodes::Expr* expr) {
-  const auto* decl_sym = ResolveExprSymbol(file, scope, expr);
-  if (!decl_sym) {
-    return {};
-  }
-  const auto* type_sym = ResolveExprTypeViaDecl(file, scope, decl_sym, expr);
-
-  const auto* instance = [&] -> const ast::Node* {
-    if (expr->nkind == ast::NodeKind::CallExpr) {
-      return expr;
-    }
-
-    switch (expr->parent->nkind) {
-      case ast::NodeKind::ReturnSpec:
-      // case ast::NodeKind::SelectorExpr:  // <-- TODO (related to on_static_property_invalid_access TODO)
-      case ast::NodeKind::FormalPar:
-        return expr->parent;
-      default:
-        break;
-    }
-
-    if (decl_sym == type_sym) {
-      return nullptr;
-    };
-
-    const auto* decl = decl_sym->Declaration();
-    switch (decl->nkind) {
-      case ast::NodeKind::FormalPar:
-      case ast::NodeKind::Declarator:
-        return decl;
-      case ast::NodeKind::ClassTypeDecl:  // this.
-        return expr;
-      default:
-        return nullptr;
-    }
-  }();
-
-  return {
-      .sym = type_sym,
-      .instance = instance,
-      .depth = [&] -> std::uint32_t {
-        const auto* declnode = decl_sym->Declaration();
-        if (!declnode) {
-          return 0;
-        }
-        const auto* ad = ast::utils::GetArrayDef(declnode);
-        return ad ? ad->size() : 0;
-      }(),
-      .restriction = [&] -> TemplateRestrictionKind {
-        if (!instance) {
-          return TemplateRestrictionKind::kNone;
-        }
-        return ParseTemplateRestriction(ast::utils::GetTemplateRestriction(instance));
-      }(),
-  };
-}
-}  // namespace
 
 class BasicTypeChecker {
  public:
@@ -1119,7 +1054,6 @@ class BasicTypeChecker {
   struct ArgumentsTypeCheckOptions {
     bool is_union{false};
     bool allow_missing_fields{false};
-    bool derive_template_restriction{false};
   };
 
   template <ast::IsNode TParamDescriptorNode, ArgumentsTypeCheckOptions Options>
@@ -1144,7 +1078,7 @@ void BasicTypeChecker::MatchTypes(const ast::Range& range, const InstantiatedTyp
   InstantiatedType actual{actual_};  // TODO
   if (actual && actual->Flags() & semantic::SymbolFlags::kTemplate) {
     const auto* file = ast::utils::SourceFileOf(actual->Declaration());
-    actual = ResolveCallableReturnType(file, file->module->scope, actual->Declaration()->As<ast::nodes::Decl>());
+    actual = ResolveCallableReturnType(file, actual->Declaration()->As<ast::nodes::Decl>());
   }
   if (!actual) {
     // Seems like that is is too much as right side types that cannot be resolved
@@ -1227,15 +1161,23 @@ void BasicTypeChecker::CheckArguments(std::span<const ast::nodes::Expr* const> a
   }
 
   const auto check_argument = [&](const TParamDescriptorNode* param, const ast::Node* n) {
-    auto expected_type =  // TODO: TypeSpec (field->type) is not Expr actually
-        ResolveExprInstantiatedType(params_file, params_file->module->scope,
-                                    param->type->template As<ast::nodes::Expr>());
-    if constexpr (Options.derive_template_restriction) {
-      expected_type.restriction = inherited_restriction_kind;
-    }
-    if (expected_type.sym == &symbols::kInferType) [[unlikely]] {
-      expected_type.sym = ResolveExprType(&sf_, scope_, args.back());
-    }
+    const auto expected_type = [&] -> InstantiatedType {
+      if constexpr (std::is_same_v<TParamDescriptorNode, ast::nodes::Field>) {
+        return InstantiatedType{
+            .sym = ResolveTypeSpecSymbol(params_file, param->type),
+            .restriction = inherited_restriction_kind,
+            .depth = static_cast<std::uint32_t>(param->arraydef.size()),
+        };
+      } else if constexpr (std::is_same_v<TParamDescriptorNode, ast::nodes::FormalPar>) {
+        auto restype = ResolveDeclarationType(params_file, param);
+        if (restype.sym == &symbols::kInferType) [[unlikely]] {
+          restype.sym = ResolveExprType(&sf_, scope_, args.back()).sym;
+        }
+        return restype;
+      } else {
+        std::unreachable();
+      }
+    }();
 
     const auto actual_instance = CheckType(n, expected_type);
     MatchTypes(n->nrange, actual_instance, expected_type);
@@ -1357,7 +1299,7 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const Instantia
       const auto* callee_file = ast::utils::SourceFileOf(callee_decl);
 
       //
-      resulting_type = ResolveCallableReturnType(callee_file, callee_file->module->scope, callee_decl);
+      resulting_type = ResolveCallableReturnType(callee_file, callee_decl);
       // <-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
       //
 
@@ -1420,7 +1362,7 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const Instantia
       const auto match_both = [&](const semantic::Symbol* expected_sym) {
         //
         resulting_type.sym = expected_sym;
-        resulting_type.instance = m;
+        resulting_type.is_instance = true;
         //
         MatchTypes(m->x->nrange, x_type, {.sym = expected_sym});
         MatchTypes(m->y->nrange, y_type, {.sym = expected_sym});
@@ -1429,7 +1371,7 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const Instantia
       if (x_type) [[likely]] {
         // TODO: 1) maybe just abort early if !x_sym
         //       2) resolve alias only if really needed, it's done by MatchTypes otherwise
-        x_type = ResolvePotentiallyAliasedType(x_type.sym);
+        x_type.sym = ResolvePotentiallyAliasedType(x_type.sym);
       }
 
       switch (m->op.kind) {
@@ -1531,9 +1473,9 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const Instantia
         for (const auto* arg : m->list) {
           const InstantiatedType expected_arg_sym{
               .sym = desired_type.sym,
-              .instance = arg,
-              .depth = desired_type.depth - 1,
               .restriction = desired_type.restriction,
+              .is_instance = true,
+              .depth = desired_type.depth - 1,
           };
           const auto actual_sym = CheckType(arg, expected_arg_sym);
           MatchTypes(arg->nrange, actual_sym, expected_arg_sym);
@@ -1573,8 +1515,8 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const Instantia
         for (const auto* arg : m->list) {
           const InstantiatedType expected_arg_sym{
               .sym = element_type_sym,
-              .instance = arg,
               .restriction = desired_type.restriction,
+              .is_instance = true,
           };
           const auto actual_sym = CheckType(arg, expected_arg_sym);
           MatchTypes(arg->nrange, actual_sym, expected_arg_sym);
@@ -1593,14 +1535,14 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const Instantia
       const auto* record_file = ast::utils::SourceFileOf(record_decl);
 
       if (record_sym->Flags() & semantic::SymbolFlags::kUnion) {
-        CheckArguments<ast::nodes::Field, {.is_union = true, .derive_template_restriction = true}>(
+        CheckArguments<ast::nodes::Field, {.is_union = true}>(
             m->list, m->nrange, record_file, record_sym, fields,
             [](const auto*) {
               return false;
             },
             desired_type.restriction);
       } else {
-        CheckArguments<ast::nodes::Field, {.allow_missing_fields = true, .derive_template_restriction = true}>(
+        CheckArguments<ast::nodes::Field, {.allow_missing_fields = true}>(
             m->list, m->nrange, record_file, record_sym, fields,
             [](const ast::nodes::Field* field) {
               return !field->optional;
@@ -1614,11 +1556,10 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const Instantia
     case ast::NodeKind::SelectorExpr: {
       const auto* se = n->As<ast::nodes::SelectorExpr>();
 
-      InstantiatedType head_type{};
       detail::SelectorExprResolver resolver{detail::SelectorExprResolverOptions{
           .resolve_type =
               [&](const auto*, const auto*, const ast::nodes::Expr* expr) {
-                return head_type = CheckType(expr);
+                return CheckType(expr);
               },
           .on_non_structural_type =
               [&](const ast::Node* sel, const semantic::Symbol* sym) {
@@ -1664,33 +1605,21 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const Instantia
         break;
       }
 
-      if (!resolution.is_static) {
-        resulting_type.instance = se;
-      }
-
       if (property_sym->Flags() &
           (semantic::SymbolFlags::kFunction | semantic::SymbolFlags::kType | semantic::SymbolFlags::kAnonymous)) {
-        //
-        resulting_type = property_sym;
-        //
+        resulting_type = resolution;
         break;
       }
 
       const auto* property_file = ast::utils::SourceFileOf(property_sym->Declaration());
 
       //
-      resulting_type = ResolveDeclarationType(property_file, property_file->module->scope,
-                                              property_sym->Declaration()->As<ast::nodes::Decl>());
+      resulting_type = ResolveDeclarationType(property_file, property_sym->Declaration()->As<ast::nodes::Decl>());
       if (!resulting_type) {
         resulting_type = &symbols::kTypeError;
       }
-      resulting_type.restriction = head_type.restriction;
-      if (property_sym->Flags() & semantic::SymbolFlags::kField) {
-        const auto* fld = property_sym->Declaration()->As<ast::nodes::Field>();
-        if (fld->optional) {
-          resulting_type.restriction &= TemplateRestrictionKind::kOptionalField;
-        }
-      }
+      resulting_type.restriction |= resolution.restriction;
+      resulting_type.is_instance = resolution.is_instance;
       //
       break;
     }
@@ -1742,7 +1671,7 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const Instantia
 
         if (resulting_type &&
             (resulting_type->Flags() & (semantic::SymbolFlags::kVariable | semantic::SymbolFlags::kArgument))) {
-          const auto* type_sym = ResolveExprType(&sf_, scope_, m);
+          const auto type_sym = ResolveExprType(&sf_, scope_, m);
           if (type_sym && (type_sym->Flags() & semantic::SymbolFlags::kEnum)) {
             resulting_type = type_sym;
           }
@@ -1758,13 +1687,13 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const Instantia
         break;
       }
 
-      resulting_type = ResolveExprInstantiatedType(&sf_, scope_, m);
+      resulting_type = ResolveExprType(&sf_, scope_, m);
       break;
     }
 
     case ast::NodeKind::ValueLiteral: {
       const auto* m = n->As<ast::nodes::ValueLiteral>();
-      resulting_type.instance = m;
+      resulting_type.is_instance = true;
       resulting_type = [](ast::TokenKind kind) -> const semantic::Symbol* {
         switch (kind) {
           case ast::TokenKind::TRUE:
@@ -1831,9 +1760,9 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
 
         const InstantiatedType expected_decl_type{
             .sym = expected_type.sym,
-            .instance = declarator,
-            .depth = static_cast<std::uint32_t>(declarator->arraydef.size()),
             .restriction = ParseTemplateRestriction(m->template_restriction),
+            .is_instance = true,
+            .depth = static_cast<std::uint32_t>(declarator->arraydef.size()),
         };
         const auto actual_type = CheckType(declarator->value, expected_decl_type);
         MatchTypes(declarator->value->nrange, actual_type, expected_decl_type);
@@ -1845,7 +1774,7 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
       const auto* m = n->As<ast::nodes::FormalPar>();
 
       auto expected_type = CheckType(m->type);
-      expected_type.instance = m;
+      expected_type.is_instance = true;
       expected_type.restriction = ParseTemplateRestriction(m->restriction);
       //
       EnsureIsAType(expected_type.sym, m->type);
@@ -1932,7 +1861,7 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
         break;
       }
 
-      const auto expected_type = ResolveExprInstantiatedType(&sf_, sf_.module->scope, fdecl->ret->type);
+      const auto expected_type = ResolveExprType(&sf_, sf_.module->scope, fdecl->ret->type);
       const auto actual_type = CheckType(m->result, expected_type);
       MatchTypes(m->result->nrange, actual_type, expected_type);
 
