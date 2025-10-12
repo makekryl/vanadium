@@ -59,9 +59,7 @@ std::optional<SymbolSearchResult> FindSymbol(const core::SourceFile* file, const
 
       const auto* owner = f->parent;
 
-      // TODO: ResolveExprSymbol - it's no longer actually "Expr".
-      const auto structsym =
-          core::checker::ResolveExprSymbol(file, file->module->scope, owner->As<core::ast::nodes::Expr>());
+      const auto* structsym = core::checker::ResolveTypeSpecSymbol(file, owner->As<core::ast::nodes::TypeSpec>());
       if (!structsym) {
         return std::nullopt;
       }

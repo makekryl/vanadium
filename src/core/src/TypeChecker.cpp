@@ -528,6 +528,11 @@ InstantiatedType DeduceCompositeLiteralType(const SourceFile* file, const semant
         return InstantiatedType::None();
       }
 
+      if (parent_type.depth > 0) {
+        auto type{parent_type};
+        --type.depth;
+        return type;
+      }
       if (parent_type->Flags() & semantic::SymbolFlags::kList) {
         return parent_type.Derive(ResolveListElementType(parent_type.sym));
       }
@@ -622,14 +627,9 @@ InstantiatedType DeduceCompositeLiteralType(const SourceFile* file, const semant
 
       return ResolveExprType(params_file, params_file->module->scope, param->type);
     }
-    case ast::NodeKind::Declarator: {
-      const auto* decl = n->parent->As<ast::nodes::Declarator>();
-      const auto* vd = decl->parent->As<ast::nodes::ValueDecl>();
-      return ResolveExprType(file, scope, vd->type);
-    }
+    case ast::NodeKind::Declarator:
     case ast::NodeKind::TemplateDecl: {
-      const auto* decl = n->parent->As<ast::nodes::TemplateDecl>();
-      return ResolveExprType(file, scope, decl->type);
+      return ResolveDeclarationType(file, n->parent);
     }
     case ast::NodeKind::ReturnStmt: {
       const auto* rs = n->parent->As<ast::nodes::ReturnSpec>();

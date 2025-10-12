@@ -94,7 +94,7 @@ template <typename Options>
         return nullptr;
       }
 
-      if (!(sym->Flags() & core::semantic::SymbolFlags::kStructural)) {
+      if ((sym.depth != 0) || !(sym->Flags() & core::semantic::SymbolFlags::kStructural)) {
         return nullptr;
       }
       return sym->Declaration();
