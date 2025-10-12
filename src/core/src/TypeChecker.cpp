@@ -679,6 +679,14 @@ InstantiatedType DeduceExpectedType(const SourceFile* file, const semantic::Scop
 
       return ResolveDeclarationType(decl_file, decl);
     }
+    case ast::NodeKind::BinaryExpr: {
+      const auto* be = parent->As<ast::nodes::BinaryExpr>();
+      if (n == be->y) [[likely]] {
+        return ResolveExprType(file, scope, be->x);
+      }
+      /* (n == be->x) */
+      return ResolveExprType(file, scope, be->y);
+    }
     case ast::NodeKind::ParenExpr: {
       const auto* pe = parent->As<ast::nodes::ParenExpr>();
 
@@ -911,6 +919,7 @@ InstantiatedType ResolveDeclarationType(const SourceFile* file, const ast::Node*
       return {
           .sym = ResolveTypeSpecSymbol(file, m->type),
           .restriction = m->optional ? TemplateRestrictionKind::kOptionalField : TemplateRestrictionKind::kNone,
+          .is_instance = true,
           .depth = static_cast<std::uint32_t>(m->arraydef.size()),
       };
     }
