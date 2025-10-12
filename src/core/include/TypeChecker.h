@@ -67,8 +67,11 @@ const semantic::Symbol* ResolveExprSymbol(const SourceFile*, const semantic::Sco
 const semantic::Symbol* ResolveDeclarationType(const SourceFile*, const semantic::Scope*, const ast::nodes::Decl*);
 InstantiatedType ResolveCallableReturnType(const SourceFile*, const semantic::Scope*, const ast::nodes::Decl*);
 const semantic::Symbol* ResolveExprType(const SourceFile*, const semantic::Scope*, const ast::nodes::Expr*);
-const semantic::Symbol* ResolvePotentiallyAliasedType(const semantic::Symbol*);
+
 const semantic::Symbol* ResolveListElementType(const semantic::Symbol*);
+const semantic::Symbol* ResolveTypeSpecSymbol(const SourceFile*, const ast::nodes::TypeSpec*);
+
+const semantic::Symbol* ResolvePotentiallyAliasedType(const semantic::Symbol*);
 
 namespace ext {
 const semantic::Symbol* ResolveAssignmentTarget(const SourceFile*, const semantic::Scope*,

@@ -244,7 +244,7 @@ class SelectorExprResolver {
         const auto* fnode = property_sym->Declaration()->As<ast::nodes::Field>();
         if (fnode->type->nkind == ast::NodeKind::RefSpec) {
           const auto* fnode_file = ast::utils::SourceFileOf(fnode);
-          return ResolveExprSymbol(fnode_file, fnode_file->module->scope, fnode->type->As<ast::nodes::Expr>());
+          return ResolveTypeSpecSymbol(fnode_file, fnode->type);
         }
         return x_sym->Members()->LookupShadow(property_name);
       }
@@ -484,8 +484,7 @@ const semantic::Symbol* ResolveListElementType(const semantic::Symbol* sym) {
   const ast::Node* decl = ExtractListSpecNode(sym);
   if (decl) {
     const auto* decl_file = ast::utils::SourceFileOf(decl);
-    sym = ResolveExprType(decl_file, decl_file->module->scope,
-                          decl->As<ast::nodes::ListSpec>()->elemtype->As<ast::nodes::Expr>());  // TODO: typespec expr
+    sym = ResolveTypeSpecSymbol(decl_file, decl->As<ast::nodes::ListSpec>()->elemtype);
     return sym;
   }
   return nullptr;
@@ -558,7 +557,7 @@ const semantic::Symbol* DeduceCompositeLiteralType(const SourceFile* file, const
         return sym->Members()->LookupShadow(decl_file->Text(*field->name));
       }
 
-      return ResolveExprType(decl_file, decl_file->module->scope, field->type->As<ast::nodes::Expr>());
+      return ResolveTypeSpecSymbol(decl_file, field->type);
     }
     case ast::NodeKind::AssignmentExpr: {
       const auto* ae = n->parent->As<ast::nodes::AssignmentExpr>();
@@ -706,7 +705,7 @@ const semantic::Symbol* DeduceExpectedType(const SourceFile* file, const semanti
 
       const auto* sym = ResolveExprType(params_file, params_scope, params->list[idx]->type);
       if (sym == &symbols::kInferType && n != pe->list.back()) [[unlikely]] {
-        return ResolveExprType(file, scope, pe->list.back()->As<ast::nodes::Expr>());
+        return ResolveExprType(file, scope, pe->list.back());
       }
       return sym;
     }
@@ -726,8 +725,7 @@ const semantic::Symbol* DeduceExpectedType(const SourceFile* file, const semanti
           const auto* ldecl_file = ast::utils::SourceFileOf(ldecl);
           switch (ldecl->nkind) {
             case ast::NodeKind::ListSpec:
-              return ResolveExprType(ldecl_file, ldecl_file->module->scope,
-                                     ldecl->As<ast::nodes::ListSpec>()->elemtype->As<ast::nodes::Expr>());
+              return ResolveTypeSpecSymbol(ldecl_file, ldecl->As<ast::nodes::ListSpec>()->elemtype);
             default:
               return nullptr;
           }
@@ -749,9 +747,7 @@ const semantic::Symbol* DeduceExpectedType(const SourceFile* file, const semanti
       }
 
       const auto* fields_file = ast::utils::SourceFileOf(decl);
-      const auto* fields_scope = fields_file->module->scope;
-
-      return ResolveExprType(fields_file, fields_scope, fields[idx]->type->As<ast::nodes::Expr>());
+      return ResolveTypeSpecSymbol(fields_file, fields[idx]->type);
     }
     case ast::NodeKind::TemplateDecl: {
       const auto* m = parent->As<core::ast::nodes::TemplateDecl>();
@@ -807,6 +803,50 @@ const semantic::Symbol* TryResolveExprSymbolViaHierarchy(const SourceFile* file,
 }
 }  // namespace
 
+const semantic::Symbol* ResolveTypeSpecSymbol(const SourceFile* file, const ast::nodes::TypeSpec* spec) {
+  switch (spec->nkind) {
+    case ast::NodeKind::StructTypeDecl: {
+      const auto* m = spec->As<ast::nodes::StructTypeDecl>();
+      if (!m->name) [[unlikely]] {
+        return nullptr;
+      }
+      return file->module->scope->ResolveDirect(file->Text(*m->name));
+    }
+    case ast::NodeKind::RefSpec: {
+      const auto* m = spec->As<ast::nodes::RefSpec>();
+      return ResolveExprSymbol(file, file->module->scope, m->x);
+    }
+    case ast::NodeKind::ListSpec:
+    case ast::NodeKind::StructSpec:
+    case ast::NodeKind::EnumSpec: {
+      const auto* parent = spec->parent;
+      if (parent->nkind == ast::NodeKind::ListSpec) {
+        const auto* ls_sym = ResolveTypeSpecSymbol(file, parent->As<ast::nodes::ListSpec>());
+        if (!ls_sym) {
+          return nullptr;
+        }
+        return ResolveListElementType(ls_sym);
+      }
+
+      if (parent->nkind != core::ast::NodeKind::Field) [[unlikely]] {
+        return nullptr;
+      }
+      const auto* owner = parent->As<core::ast::nodes::Field>();
+      if (!owner->name) {
+        return nullptr;
+      }
+      const core::semantic::Symbol* containing_sym =
+          ResolveTypeSpecSymbol(file, owner->parent->As<ast::nodes::TypeSpec>());
+      if (!containing_sym || !(containing_sym->Flags() & core::semantic::SymbolFlags::kStructural)) {
+        return nullptr;
+      }
+      return containing_sym->Members()->LookupShadow(file->Text(*owner->name));
+    }
+    default:
+      return nullptr;
+  }
+}
+
 // Expression -> Declaration
 const semantic::Symbol* ResolveExprSymbol(const SourceFile* file, const semantic::Scope* scope,
                                           const ast::nodes::Expr* expr) {
@@ -847,43 +887,6 @@ const semantic::Symbol* ResolveExprSymbol(const SourceFile* file, const semantic
       const auto* m = expr->As<ast::nodes::IndexExpr>();
       return detail::ResolveIndexExprType(file, scope, m);
     }
-    case ast::NodeKind::StructTypeDecl: {
-      const auto* m = expr->As<ast::nodes::StructTypeDecl>();
-      if (!m->name) [[unlikely]] {
-        return nullptr;
-      }
-      return scope->ResolveDirect(file->Text(*m->name));
-    }
-    case ast::NodeKind::RefSpec: {
-      const auto* m = expr->As<ast::nodes::RefSpec>();
-      return ResolveExprSymbol(file, scope, m->x);
-    }
-    case ast::NodeKind::ListSpec:
-    case ast::NodeKind::StructSpec:
-    case ast::NodeKind::EnumSpec: {
-      const auto* parent = expr->parent;
-      if (parent->nkind == ast::NodeKind::ListSpec) {
-        const auto* ls_sym = ResolveExprSymbol(file, scope, parent->As<ast::nodes::Expr>());
-        if (!ls_sym) {
-          return nullptr;
-        }
-        return ResolveListElementType(ls_sym);
-      }
-
-      if (parent->nkind != core::ast::NodeKind::Field) [[unlikely]] {
-        return nullptr;
-      }
-      const auto* owner = parent->As<core::ast::nodes::Field>();
-      if (!owner->name) {
-        return nullptr;
-      }
-      const core::semantic::Symbol* containing_sym =
-          ResolveExprSymbol(file, scope, owner->parent->As<ast::nodes::Expr>());
-      if (!containing_sym || !(containing_sym->Flags() & core::semantic::SymbolFlags::kStructural)) {
-        return nullptr;
-      }
-      return containing_sym->Members()->LookupShadow(file->Text(*owner->name));
-    }
     default: {
       return TryResolveExprSymbolViaHierarchy(file, scope, expr);
     }
@@ -905,7 +908,7 @@ const semantic::Symbol* ResolveDeclarationType(const SourceFile* file, const sem
     }
     case ast::NodeKind::Field: {
       const auto* m = decl->As<ast::nodes::Field>();
-      return ResolveExprType(file, scope, m->type->As<ast::nodes::Expr>());  // TODO: it is not Expr though
+      return ResolveTypeSpecSymbol(file, m->type);
     }
     case ast::NodeKind::ClassTypeDecl: {
       // we could come here only via Resolve("this")->Declaration()
