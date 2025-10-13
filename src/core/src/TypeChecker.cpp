@@ -1407,6 +1407,11 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, InstantiatedTyp
       };
 
       if (x_type) [[likely]] {
+        if (x_type->Flags() & semantic::SymbolFlags::kTemplate) {
+          const auto* tdecl = x_type->Declaration()->As<ast::nodes::TemplateDecl>();
+          x_type.sym = ResolveCallableReturnType(ast::utils::SourceFileOf(tdecl), tdecl).sym;
+        }
+
         // TODO: 1) maybe just abort early if !x_sym
         //       2) resolve alias only if really needed, it's done by MatchTypes otherwise
         x_type.sym = ResolvePotentiallyAliasedType(x_type.sym);
