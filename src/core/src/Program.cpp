@@ -373,12 +373,13 @@ void Program::Crossbind(SourceFile& sf, ExternallyResolvedGroup& ext_group) {
                                                                  .augmenting_locals = false,
                                                              });
 
+          module.scope->augmentation.push_back(&imported_table);
+
           // better to double check than capture mutex in register_transitive_dependency
           if (is_new_dependency ||
               std::ranges::all_of(module.dependencies[imported_module], [](const DependencyEntry& entry) {
                 return entry.augmenting_locals;
               })) {
-            module.scope->augmentation.push_back(&imported_table);
             if (via != nullptr) {
               register_transitive_dependency(module, via);
             }
