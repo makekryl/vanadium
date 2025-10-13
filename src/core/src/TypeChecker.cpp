@@ -1906,6 +1906,41 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
       return false;
     }
 
+    case ast::NodeKind::IfStmt: {
+      const auto* m = n->As<ast::nodes::IfStmt>();
+
+      const InstantiatedType expected_type{.sym = &builtins::kBoolean};
+      const auto cond_type = CheckType(m->cond, expected_type);
+      MatchTypes(m->cond->nrange, cond_type, expected_type);
+
+      Visit(m->consequent);
+      Visit(m->alternate);
+
+      return false;
+    }
+    case ast::NodeKind::WhileStmt: {
+      const auto* m = n->As<ast::nodes::WhileStmt>();
+
+      const InstantiatedType expected_type{.sym = &builtins::kBoolean};
+      const auto cond_type = CheckType(m->cond, expected_type);
+      MatchTypes(m->cond->nrange, cond_type, expected_type);
+
+      Visit(m->body);
+
+      return false;
+    }
+    case ast::NodeKind::DoWhileStmt: {
+      const auto* m = n->As<ast::nodes::WhileStmt>();
+
+      const InstantiatedType expected_type{.sym = &builtins::kBoolean};
+      const auto cond_type = CheckType(m->cond, expected_type);
+      MatchTypes(m->cond->nrange, cond_type, expected_type);
+
+      Visit(m->body);
+
+      return false;
+    }
+
     case ast::NodeKind::SelectStmt: {
       const auto* m = n->As<ast::nodes::SelectStmt>();
 
