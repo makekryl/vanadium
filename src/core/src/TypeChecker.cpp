@@ -955,7 +955,10 @@ InstantiatedType ResolveDeclarationType(const SourceFile* file, const ast::Node*
     case ast::NodeKind::TemplateDecl: {
       const auto* m = decl->As<ast::nodes::TemplateDecl>();
       const auto* declfile = ast::utils::SourceFileOf(m);
-      return {.sym = declfile->module->scope->ResolveDirect(declfile->Text(*m->name))};
+      return {
+          .sym = declfile->module->scope->ResolveDirect(declfile->Text(*m->name)),
+          .is_instance = true,
+      };
     }
     default: {
       return InstantiatedType::None();
