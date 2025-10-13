@@ -690,6 +690,9 @@ InstantiatedType DeduceExpectedType(const SourceFile* file, const semantic::Scop
       }
 
       const auto* decl = decl_sym->Declaration()->As<ast::nodes::Decl>();
+      if (!decl) [[unlikely]] {
+        break;
+      }
       const auto* decl_file = ast::utils::SourceFileOf(decl);
 
       return ResolveDeclarationType(decl_file, decl);
@@ -1412,9 +1415,11 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, InstantiatedTyp
           x_type.sym = ResolveCallableReturnType(ast::utils::SourceFileOf(tdecl), tdecl).sym;
         }
 
-        // TODO: 1) maybe just abort early if !x_sym
-        //       2) resolve alias only if really needed, it's done by MatchTypes otherwise
-        x_type.sym = ResolvePotentiallyAliasedType(x_type.sym);
+        if (x_type) {
+          // TODO: 1) maybe just abort early if !x_sym
+          //       2) resolve alias only if really needed, it's done by MatchTypes otherwise
+          x_type.sym = ResolvePotentiallyAliasedType(x_type.sym);
+        }
       }
 
       switch (m->op.kind) {
