@@ -1154,7 +1154,11 @@ nodes::FuncDecl* Parser::ParseExtFuncDecl() {
       d.modif = TokAlloc(Consume());
     }
     ParseName(d.name);
-    d.params = ParseFormalPars();
+    if (tok_ == TokenKind::LPAREN) [[likely]] {
+      d.params = ParseFormalPars();
+    } else {
+      EmitErrorExpected("parameters parens");
+    }
     if (tok_ == TokenKind::RUNS) {
       d.runs_on = ParseRunsOn();
     }
