@@ -1940,22 +1940,49 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
     case ast::NodeKind::WhileStmt: {
       const auto* m = n->As<ast::nodes::WhileStmt>();
 
-      const InstantiatedType expected_type{.sym = &builtins::kBoolean};
-      const auto cond_type = CheckType(m->cond, expected_type);
-      MatchTypes(m->cond->nrange, cond_type, expected_type);
+      if (m->cond) [[likely]] {
+        const InstantiatedType expected_type{.sym = &builtins::kBoolean};
+        const auto cond_type = CheckType(m->cond, expected_type);
+        MatchTypes(m->cond->nrange, cond_type, expected_type);
+      }
 
-      Visit(m->body);
+      if (m->body) [[likely]] {
+        Visit(m->body);
+      }
 
       return false;
     }
     case ast::NodeKind::DoWhileStmt: {
       const auto* m = n->As<ast::nodes::WhileStmt>();
 
+      if (m->cond) [[likely]] {
+        const InstantiatedType expected_type{.sym = &builtins::kBoolean};
+        const auto cond_type = CheckType(m->cond, expected_type);
+        MatchTypes(m->cond->nrange, cond_type, expected_type);
+      }
+
+      if (m->body) [[likely]] {
+        Visit(m->body);
+      }
+
+      return false;
+    }
+    case ast::NodeKind::ForStmt: {
+      const auto* m = n->As<ast::nodes::ForStmt>();
+
       const InstantiatedType expected_type{.sym = &builtins::kBoolean};
       const auto cond_type = CheckType(m->cond, expected_type);
       MatchTypes(m->cond->nrange, cond_type, expected_type);
 
-      Visit(m->body);
+      if (m->init) [[likely]] {
+        Visit(m->init);
+      }
+      if (m->post) [[likely]] {
+        Visit(m->post);
+      }
+      if (m->body) [[likely]] {
+        Visit(m->body);
+      }
 
       return false;
     }
