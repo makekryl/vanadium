@@ -329,15 +329,15 @@ class IndexExprResolver {
 
       if (!x_sym) {
         options_.check_index(ie->index);
-        ReportNonSubscriptableType(
-            [&] {
-              const auto* tgt_err_node = ie->x;
-              if (tgt_err_node->nkind == ast::NodeKind::SelectorExpr) {
-                tgt_err_node = tgt_err_node->As<ast::nodes::SelectorExpr>()->sel;
-              }
-              return tgt_err_node;
-            }(),
-            &symbols::kTypeError);
+        // ReportNonSubscriptableType(
+        //     [&] {
+        //       const auto* tgt_err_node = ie->x;
+        //       if (tgt_err_node->nkind == ast::NodeKind::SelectorExpr) {
+        //         tgt_err_node = tgt_err_node->As<ast::nodes::SelectorExpr>()->sel;
+        //       }
+        //       return tgt_err_node;
+        //     }(),
+        //     &symbols::kTypeError);
         return nullptr;
       }
 
