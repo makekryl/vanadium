@@ -2,33 +2,39 @@
 
 #include <utility>  // IWYU pragma: keep
 
-// https://stackoverflow.com/a/17771358
-
-#define ENUM_FLAGS_TRAITS(T)                                              \
-  inline constexpr T operator&(T x, T y) {                                \
-    return static_cast<T>(std::to_underlying(x) & std::to_underlying(y)); \
-  };                                                                      \
-  inline constexpr T operator|(T x, T y) {                                \
-    return static_cast<T>(std::to_underlying(x) | std::to_underlying(y)); \
-  };                                                                      \
-  inline constexpr T operator^(T x, T y) {                                \
-    return static_cast<T>(std::to_underlying(x) ^ std::to_underlying(y)); \
-  };                                                                      \
-  inline constexpr T operator~(T x) {                                     \
-    return static_cast<T>(~std::to_underlying(x));                        \
-  };                                                                      \
-  inline constexpr T& operator&=(T& x, T y) {                             \
-    x = x & y;                                                            \
-    return x;                                                             \
-  };                                                                      \
-  inline constexpr T& operator|=(T& x, T y) {                             \
-    x = x | y;                                                            \
-    return x;                                                             \
-  };                                                                      \
-  inline constexpr T& operator^=(T& x, T y) {                             \
-    x = x ^ y;                                                            \
-    return x;                                                             \
-  };                                                                      \
-  inline constexpr bool to_bool(T x) {                                    \
-    return std::to_underlying(x) != 0;                                    \
+template <typename E>
+struct EnumFlagsWrapper {
+  E value;
+  constexpr operator E() const {
+    return value;
   }
+  constexpr operator bool() const {
+    return std::to_underlying(value) != 0;
+  }
+};
+
+#define ENUM_FLAGS_TRAITS(E)                                                \
+  inline constexpr EnumFlagsWrapper<E> operator&(E x, E y) {                \
+    return {static_cast<E>(std::to_underlying(x) & std::to_underlying(y))}; \
+  };                                                                        \
+  inline constexpr E operator|(E x, E y) {                                  \
+    return static_cast<E>(std::to_underlying(x) | std::to_underlying(y));   \
+  };                                                                        \
+  inline constexpr E operator^(E x, E y) {                                  \
+    return static_cast<E>(std::to_underlying(x) ^ std::to_underlying(y));   \
+  };                                                                        \
+  inline constexpr E operator~(E x) {                                       \
+    return static_cast<E>(~std::to_underlying(x));                          \
+  };                                                                        \
+  inline constexpr E& operator&=(E& x, E y) {                               \
+    x = x & y;                                                              \
+    return x;                                                               \
+  };                                                                        \
+  inline constexpr E& operator|=(E& x, E y) {                               \
+    x = x | y;                                                              \
+    return x;                                                               \
+  };                                                                        \
+  inline constexpr E& operator^=(E& x, E y) {                               \
+    x = x ^ y;                                                              \
+    return x;                                                               \
+  };

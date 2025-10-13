@@ -1130,12 +1130,16 @@ void BasicTypeChecker::MatchTypes(const ast::Range& range, const InstantiatedTyp
     return;
   }
 
-  // !!! CHECK THE TODO BELOW ASAP !!!
-  const auto template_spec_providen = bool(actual->Flags() & semantic::SymbolFlags::kTemplateSpec);  // todo: ???
-  if ((expected.restriction == TemplateRestrictionKind::kNone) &&
-      (template_spec_providen || (actual.restriction != TemplateRestrictionKind::kNone))) {
-    if (!to_bool(expected.restriction & TemplateRestrictionKind::kOptionalField) ||
-        (actual.sym != &symbols::kTemplateOmitType)) [[likely]] {
+  const auto template_spec_providen = bool(actual->Flags() & semantic::SymbolFlags::kTemplateSpec);
+  const bool got_template_instead_of_value{
+      (expected.restriction == TemplateRestrictionKind::kNone) &&
+      (template_spec_providen || (actual.restriction != TemplateRestrictionKind::kNone))  //
+  };
+  if (got_template_instead_of_value) {
+    const bool is_legit{(actual.restriction == TemplateRestrictionKind::kOptionalField) ||
+                        ((expected.restriction & TemplateRestrictionKind::kOptionalField) &&
+                         (actual.sym == &symbols::kTemplateOmitType))};
+    if (!is_legit) {
       EmitError(TypeError{
           .range = range,
           .message = std::format("expected value, got template"),
