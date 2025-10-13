@@ -119,10 +119,8 @@ template <typename F>
 concept ErrorEmitterFn = std::invocable<F, TypeError&&>;
 
 template <typename F>
-concept ErrorEmitterProviderFn = requires(F&& with_error_emitter) {
-  // with_error_emitter([](ErrorEmitterFn auto emit_error) {});
-  true;
-};
+concept ErrorEmitterProviderFn =
+    requires(F&& with_error_emitter) { with_error_emitter([](ErrorEmitterFn auto emit_error) {}); };
 
 template <typename F>
 concept InstantiatedTypeResolverFn =
@@ -642,9 +640,11 @@ InstantiatedType DeduceCompositeLiteralType(const SourceFile* file, const semant
 
       return ResolveExprType(params_file, params_file->module->scope, param->type);
     }
-    case ast::NodeKind::Declarator:
-    case ast::NodeKind::TemplateDecl: {
+    case ast::NodeKind::Declarator: {
       return ResolveDeclarationType(file, n->parent);
+    }
+    case ast::NodeKind::TemplateDecl: {
+      return ResolveCallableReturnType(file, n->parent->As<ast::nodes::TemplateDecl>());
     }
     case ast::NodeKind::ReturnStmt: {
       const auto* rs = n->parent->As<ast::nodes::ReturnSpec>();
@@ -697,7 +697,7 @@ InstantiatedType DeduceExpectedType(const SourceFile* file, const semantic::Scop
         return ResolveExprType(file, scope, be->x);
       }
       /* (n == be->x) */
-      return ResolveExprType(file, scope, be->y);
+      return InstantiatedType::None();
     }
     case ast::NodeKind::ParenExpr: {
       const auto* pe = parent->As<ast::nodes::ParenExpr>();
