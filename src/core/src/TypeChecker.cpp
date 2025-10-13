@@ -434,13 +434,16 @@ InstantiatedType ResolveIndexExprType(const SourceFile* sf, const semantic::Scop
 
 const semantic::Symbol* ResolveAliasedType(const semantic::Symbol* sym) {
   const ast::Node* decl = sym->Declaration()->As<ast::nodes::SubTypeDecl>()->field->type;
-  while (decl && decl->nkind == ast::NodeKind::RefSpec) {
+  if (decl->nkind == ast::NodeKind::RefSpec) {
     const auto* file = ast::utils::SourceFileOf(decl);
     sym = ResolveExprSymbol(file, file->module->scope, decl->As<ast::nodes::RefSpec>()->x).sym;
     if (!sym) [[unlikely]] {
-      break;
+      return nullptr;
     }
     decl = sym->Declaration();
+    if (decl && decl->nkind == ast::NodeKind::SubTypeDecl) {
+      return ResolveAliasedType(sym);
+    }
   }
 
   return sym;
@@ -505,8 +508,12 @@ InstantiatedType ResolveAssignmentTarget(const SourceFile* file, const semantic:
     }
     case core::ast::NodeKind::CompositeLiteral: {
       const auto* m = n->parent->As<core::ast::nodes::CompositeLiteral>();
-      const auto cl_type = ext::DeduceCompositeLiteralType(file, scope, m);
-      if (!cl_type || !(cl_type->Flags() & semantic::SymbolFlags::kStructural)) {
+      auto cl_type = ext::DeduceCompositeLiteralType(file, scope, m);
+      if (!cl_type) {
+        return InstantiatedType::None();
+      }
+      cl_type.sym = ResolvePotentiallyAliasedType(cl_type.sym);
+      if (!(cl_type->Flags() & semantic::SymbolFlags::kStructural)) {
         return InstantiatedType::None();
       }
       return cl_type.Derive(cl_type->Members()->Lookup(property_name));
@@ -565,13 +572,21 @@ InstantiatedType DeduceCompositeLiteralType(const SourceFile* file, const semant
       switch (ae->parent->nkind) {
         case ast::NodeKind::CompositeLiteral: {
           const auto* cl = ae->parent->As<ast::nodes::CompositeLiteral>();
-          const auto cl_sym = parent_hint ? parent_hint : DeduceCompositeLiteralType(file, scope, cl);
+          auto cl_sym = parent_hint ? parent_hint : DeduceCompositeLiteralType(file, scope, cl);
           if (!cl_sym) {
             return InstantiatedType::None();
           }
 
+          if (cl_sym->Flags() & semantic::SymbolFlags::kSubtype) {
+            cl_sym.sym = ResolveAliasedType(cl_sym.sym);
+          }
+
           if (cl_sym->Flags() & semantic::SymbolFlags::kList) {
             return cl_sym.Derive(ResolveListElementType(cl_sym.sym));
+          }
+
+          if (!(cl_sym->Flags() & semantic::SymbolFlags::kStructural)) {
+            return InstantiatedType::None();
           }
 
           const auto* property_sym = cl_sym->Members()->Lookup(property_name);
@@ -634,10 +649,7 @@ InstantiatedType DeduceCompositeLiteralType(const SourceFile* file, const semant
     case ast::NodeKind::ReturnStmt: {
       const auto* rs = n->parent->As<ast::nodes::ReturnSpec>();
       const auto* decl = ast::utils::GetPredecessor<ast::nodes::FuncDecl>(rs);
-      if (!decl || !decl->ret) {
-        return InstantiatedType::None();
-      }
-      return ResolveExprType(file, scope, decl->ret->type);
+      return ResolveCallableReturnType(file, decl);
     }
     default:
       return InstantiatedType::None();
@@ -999,13 +1011,13 @@ InstantiatedType ResolveExprType(const SourceFile* file, const semantic::Scope* 
   const auto* decl_file = ast::utils::SourceFileOf(decl);
 
   if (expr->nkind == ast::NodeKind::CallExpr) {
-    const auto itype = ResolveCallableReturnType(decl_file, decl);
+    auto itype = ResolveCallableReturnType(decl_file, decl);
     if (itype.sym == &symbols::kInferType) {
       const auto* ce = expr->As<ast::nodes::CallExpr>();
       if (ce->args->list.empty()) {
         return InstantiatedType::None();
       }
-      return ResolveExprType(file, scope, ce->args->list.back());
+      itype.sym = ResolveExprType(file, scope, ce->args->list.back()).sym;
     }
     return itype;
   }
@@ -1039,7 +1051,7 @@ class BasicTypeChecker {
 
   void MatchTypes(const ast::Range& range, const InstantiatedType& actual, const InstantiatedType& expected);
 
-  InstantiatedType CheckType(const ast::Node* n, const InstantiatedType& desired_type = {});
+  InstantiatedType CheckType(const ast::Node* n, InstantiatedType desired_type = InstantiatedType::None());
   bool Inspect(const ast::Node*);
 
   void Introspect(const ast::Node* n) {
@@ -1087,7 +1099,7 @@ void BasicTypeChecker::MatchTypes(const ast::Range& range, const InstantiatedTyp
   InstantiatedType actual{actual_};  // TODO
   if (actual && actual->Flags() & semantic::SymbolFlags::kTemplate) {
     const auto* file = ast::utils::SourceFileOf(actual->Declaration());
-    actual = ResolveCallableReturnType(file, actual->Declaration()->As<ast::nodes::Decl>());
+    actual.sym = ResolveCallableReturnType(file, actual->Declaration()->As<ast::nodes::Decl>()).sym;
   }
   if (!actual) {
     // Seems like that is is too much as right side types that cannot be resolved
@@ -1179,7 +1191,7 @@ void BasicTypeChecker::CheckArguments(std::span<const ast::nodes::Expr* const> a
         };
       } else if constexpr (std::is_same_v<TParamDescriptorNode, ast::nodes::FormalPar>) {
         auto restype = ResolveDeclarationType(params_file, param);
-        if (restype.sym == &symbols::kInferType) [[unlikely]] {
+        if (restype.sym == &symbols::kInferType) {
           restype.sym = ResolveExprType(&sf_, scope_, args.back()).sym;
         }
         return restype;
@@ -1277,7 +1289,7 @@ void BasicTypeChecker::CheckArguments(std::span<const ast::nodes::Expr* const> a
   }
 }
 
-InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const InstantiatedType& desired_type) {
+InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, InstantiatedType desired_type) {
   InstantiatedType resulting_type{};
   switch (n->nkind) {
     case ast::NodeKind::CallExpr: {
@@ -1322,7 +1334,7 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const Instantia
       //
       if (resulting_type.sym == &symbols::kInferType && !m->args->list.empty()) {
         // do not call CheckType for it to avoid double error emitting
-        resulting_type = ResolveExprType(&sf_, scope_, m->args->list.back());
+        resulting_type.sym = ResolveExprType(&sf_, scope_, m->args->list.back()).sym;
       }
       //
 
@@ -1477,6 +1489,8 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, const Instantia
       //
       resulting_type = desired_type;
       //
+
+      desired_type.sym = ResolvePotentiallyAliasedType(desired_type.sym);
 
       if (desired_type.depth > 0) {
         for (const auto* arg : m->list) {
@@ -1870,7 +1884,7 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
         break;
       }
 
-      const auto expected_type = ResolveExprType(&sf_, sf_.module->scope, fdecl->ret->type);
+      const auto expected_type = ResolveCallableReturnType(&sf_, fdecl);
       const auto actual_type = CheckType(m->result, expected_type);
       MatchTypes(m->result->nrange, actual_type, expected_type);
 
