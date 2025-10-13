@@ -1914,7 +1914,9 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
       MatchTypes(m->cond->nrange, cond_type, expected_type);
 
       Visit(m->consequent);
-      Visit(m->alternate);
+      if (m->alternate) {
+        Visit(m->alternate);
+      }
 
       return false;
     }
