@@ -11,6 +11,7 @@
 #include <iostream>
 #include <memory>
 #include <optional>
+#include <print>
 #include <stacktrace>
 #include <string_view>
 #include <utility>
@@ -133,7 +134,7 @@ void Transparser::RewriteIdentName(Token& tok) {
         *mut_v.end() = '_';
         ++tok.range.end;
       };
-      if ("message" == tok.On(src_)) {
+      if ("message" == tok.On(src_) || "value" == tok.On(src_)) {
         insert_underscore_suffix();
         break;
       }
@@ -206,8 +207,8 @@ ttcn_ast::nodes::ImportDecl* Transparser::ParseImport() {
     ConsumeInvariant(TokenKind::FROM);
     ParseName(d.module);
     d.list = {
-        NewNode<ttcn_ast::nodes::DefKindExpr>([&](auto& dk) {
-          // TODO: check if this is sufficient
+        NewNode<ttcn_ast::nodes::DefKindExpr>([&](ttcn_ast::nodes::DefKindExpr& dk) {
+          dk.kind = {};
         }),
     };
   });
@@ -258,19 +259,14 @@ ttcn_ast::nodes::Definition* Transparser::ParseDefinition() {
               Expect(TokenKind::RBRACE);
             });
           case TokenKind::CLASS: {
-            return NewNode<ttcn_ast::nodes::StructTypeDecl>([&](ttcn_ast::nodes::StructTypeDecl& st) {
+            auto* stdecl = parse_struct_decl(core::ast::TokenKind::RECORD);
+            if (tok_ == TokenKind::WITH) {
               Consume();
-              st.kind = {.kind = ttcn_ast::TokenKind::RECORD, .range = {}};
-              std::construct_at(&st.name, std::move(name));  // todo: dirty
-              Expect(TokenKind::LBRACE);
-              SwallowBraceExprRemains();
-              if (tok_ == TokenKind::WITH) {
-                Consume();
-                Consume();  // SYNTAX, etc.
-                MaybeSwallowBraceExpr();
-              }
-            });
-            break;
+              Consume();  // SYNTAX, etc.
+              MaybeSwallowBraceExpr();
+              stdecl->nrange.end = last_consumed_pos_;
+            }
+            return stdecl;
           }
           default:
             return NewNode<ttcn_ast::nodes::SubTypeDecl>([&](ttcn_ast::nodes::SubTypeDecl& st) {
@@ -518,12 +514,24 @@ void Transparser::ParseFields(std::vector<ttcn_ast::nodes::Field*>& fields, Toke
 
 ttcn_ast::nodes::Field* Transparser::ParseField() {
   return NewNode<ttcn_ast::nodes::Field>([&](ttcn_ast::nodes::Field& f) {
-    ParseName(f.name);
-
-    if (tok_ == TokenKind::OBJECT) {
+    if (tok_ == TokenKind::REF) {
       Consume();
     }
-    f.type = ParseTypeSpec();
+    ParseName(f.name);
+
+    if (tok_ != TokenKind::COMMA && tok_ != TokenKind::OPTIONAL) [[likely]] {
+      if (tok_ == TokenKind::OBJECT) {
+        Consume();
+      }
+      f.type = ParseTypeSpec();
+      if (tok_ == TokenKind::UNIQUE) {
+        Consume();
+      }
+    } else {
+      f.type = NewNode<ttcn_ast::nodes::RefSpec>([&](ttcn_ast::nodes::RefSpec& rs) {
+        rs.x = NewNode<ttcn_ast::nodes::Ident>([&](ttcn_ast::nodes::Ident&) {});
+      });
+    }
 
     if (tok_ == TokenKind::LBRACE) {
       MaybeSwallowBraceExpr();
@@ -687,7 +695,8 @@ void Transparser::Grow(std::uint8_t n) {
 
   while (n > 0) {
     auto token = scanner_.Scan();
-    // std::println("CONSUME({}:{}) :: {}", token.range.begin, token.range.end, magic_enum::enum_name(token.kind));
+    // std::println(stderr, "{}:{} // '{}' ({})", token.range.begin, token.range.end, token.On(src_),
+    //              magic_enum::enum_name(token.kind));
     if (kShouldIgnore(token.kind)) {
       continue;
     }
@@ -720,7 +729,10 @@ Token Transparser::Expect(TokenKind expected) {
 
 void Transparser::EmitError(const ttcn_ast::Range& range, std::string&& message) {
   // TODO: remove after finishing xparser
-  std::cerr << std::quoted(src_.substr(0, 64)) << "\n---\n" << std::stacktrace::current() << std::endl << std::flush;
+  std::cerr << std::quoted(src_.substr(0, 256)) << "\n---\n"
+            << std::stacktrace::current() << std::endl
+            << "LAST CONSUMED POS: " << last_consumed_pos_ << std::endl
+            << std::flush;
   errors_.emplace_back(range, std::move(message));
   throw ParsingCancellationSignal{};
 }

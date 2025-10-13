@@ -80,6 +80,7 @@ enum class TokenKind : std::uint8_t {
   BOOLEAN,
 
   OBJECT,
+  UNIQUE,
 
   DEFAULT,
   OPTIONAL,
