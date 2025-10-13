@@ -19,6 +19,7 @@ StructSpec:
   kind: Token
   fields: Field*[]
 ListSpec:
+  kind: Token
   length: LengthExpr*?
   elemtype: TypeSpec*
 MapSpec:

@@ -391,13 +391,15 @@ nodes::Decl* Parser::ParseModulePar() {
       mpg.with = ParseWith();
     });
   }
-  return NewNode<nodes::ValueDecl>([&](auto& vd) {
+  auto* r = NewNode<nodes::ValueDecl>([&](auto& vd) {
     vd.kind = TokAlloc(std::move(modulepar_tok));
     vd.template_restriction = ParseRestrictionSpec();
     vd.type = ParseTypeRef();
     vd.decls = ParseDeclList();
     vd.with = ParseWith();
   });
+  r->nrange.begin = r->kind->range.begin;
+  return r;
 }
 
 nodes::ControlPart* Parser::ParseControlPart() {
@@ -970,7 +972,7 @@ nodes::EnumSpec* Parser::ParseEnumSpec() {
 
 nodes::ListSpec* Parser::ParseListSpec() {
   return NewNode<nodes::ListSpec>([&](auto& ls) {
-    Consume();  // KindTok
+    ls.kind = Consume();  // KindTok
     if (tok_ == TokenKind::LENGTH) {
       ls.length = ParseLengthExpr(nullptr);
     }

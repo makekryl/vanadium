@@ -1,3 +1,4 @@
+#include <format>
 #include <glaze/ext/jsonrpc.hpp>
 #include <glaze/json/write.hpp>
 #include <iterator>
@@ -18,62 +19,141 @@
 #include "magic_enum/magic_enum.hpp"
 #include "utils/ASTUtils.h"
 
-// TODO: rewriting this crap is in LSP maintenance top-10 priority
-
 namespace vanadium::ls {
 
 namespace {
-template <core::ast::IsNode TParamDescriptorNode>
-std::string BuildMarkdownParameterList(const core::ast::AST& ast, std::span<const TParamDescriptorNode* const> params) {
-  std::string buf;
-  buf.reserve(params.size() * 32);
+template <typename SubtitleWriterFn>  // todo: reorganize
+class MarkdownHoverCardBuilder {
+ public:
+  MarkdownHoverCardBuilder(SubtitleWriterFn write_subtitle) : write_subtitle_(std::move(write_subtitle)) {
+    buf_.reserve(512);  // TODO: check if this is sufficient, maybe pool the buffer
+  }
 
+  void WriteHeader(std::string_view typetype, std::string_view name, std::string_view suffix = "") {
+    std::format_to(std::back_inserter(buf_), "### {} `{}` {}\n", typetype, name, suffix);
+    write_subtitle_(*this);
+    WriteSeparator();
+  }
+
+  void WriteCodeBlock(std::string_view code) {
+    if (code.size() > 1024) {
+      return;
+    }
+    std::format_to(std::back_inserter(buf_), "```ttcn\n{}\n```\n", code);
+  }
+
+  void WriteText(std::string_view text) {
+    buf_ += text;
+    buf_ += "\n";
+  }
+
+  void WriteSeparator() {
+    buf_ += "\n---\n\n";
+  }
+
+  void WithWriter(auto f) {
+    f(std::back_inserter(buf_));
+    buf_ += "\n";
+  }
+
+  std::string&& Build() {
+    return std::move(buf_);
+  }
+
+ private:
+  SubtitleWriterFn write_subtitle_;
+  std::string buf_;
+};
+
+template <core::ast::IsNode TParamDescriptorNode>
+void WriteMarkdownParameterList(std::back_insert_iterator<std::string> w, const core::ast::AST& ast,
+                                std::span<const TParamDescriptorNode* const> params) {
   const auto last_idx = std::ssize(params) - 1;
   for (const auto& [idx, param] : params | std::views::enumerate) {
-    buf += "- `";
+    std::format_to(w, "- `");
 
     // TODO: cleanup builder from this
-    if constexpr (std::is_same_v<TParamDescriptorNode, core::ast::nodes::FormalPar>) {
-      if (param->direction) {
-        buf += ast.Text(param->direction);
-        buf += " ";
-      }
-      if (param->restriction) {
-        buf += ast.Text(param->restriction);
-        buf += " ";
-      }
-    }
-
-    buf += ast.Text(param->type);
-    buf += " ";
-    buf += ast.Text(*param->name);
-
     if constexpr (std::is_same_v<TParamDescriptorNode, core::ast::nodes::Field>) {
       if (param->optional) {
-        buf += " (optional)";
+        std::format_to(w, "(optional) ");
       }
     }
     if constexpr (std::is_same_v<TParamDescriptorNode, core::ast::nodes::FormalPar>) {
       if (param->value) {
-        buf += " (optional)";
+        std::format_to(w, "(optional) ");
       }
     }
 
-    buf += "`";
+    if constexpr (std::is_same_v<TParamDescriptorNode, core::ast::nodes::FormalPar>) {
+      if (param->direction) {
+        std::format_to(w, "{} ", ast.Text(param->direction));
+      }
+      if (param->restriction) {
+        std::format_to(w, "{} ", ast.Text(param->restriction));
+      }
+    }
+
+    std::format_to(w, "{} {}`", ast.Text(param->type), ast.Text(*param->name));
 
     if (idx != last_idx) [[likely]] {
-      buf += "\n";
+      std::format_to(w, "\n");
     }
   }
-
-  return buf;
 }
 
-std::string_view SafeExtractText(const core::SourceFile* file, const core::ast::Range& range) {
-  if (range.begin > range.end) [[unlikely]] {
-    return "";
+bool WriteAttachedComment(std::back_insert_iterator<std::string> w, const core::ast::AST& ast,
+                          const core::ast::Node* decl) {
+  const auto* tgt_decl = decl;
+  if (tgt_decl->nkind == core::ast::NodeKind::Declarator) {
+    tgt_decl = tgt_decl->parent;
   }
-  return file->Text(range);
+
+  const auto comment = core::ast::utils::ExtractAttachedComment(ast, tgt_decl);
+  if (!comment) {
+    return false;
+  }
+
+  bool is_inline_comment{false};
+  auto comment_sv = ast.Text(*comment);
+  if (comment_sv.starts_with("/**")) {
+    comment_sv.remove_prefix(3);
+  } else if (comment_sv.starts_with("/*")) {
+    comment_sv.remove_prefix(2);
+  } else if (comment_sv.starts_with("//")) {
+    is_inline_comment = true;
+    comment_sv.remove_prefix(2);
+  }
+  while (comment_sv.starts_with("\n") || comment_sv.starts_with(" ")) {
+    comment_sv.remove_prefix(1);
+  }
+  while (comment_sv.ends_with("\n") || comment_sv.ends_with(" ")) {
+    comment_sv.remove_suffix(1);
+  }
+  if (comment_sv.ends_with("**/")) {
+    comment_sv.remove_suffix(3);
+  } else if (comment_sv.ends_with("*/")) {
+    comment_sv.remove_suffix(2);
+  }
+  while (comment_sv.ends_with("\n") || comment_sv.ends_with(" ")) {
+    comment_sv.remove_suffix(1);
+  }
+
+  if (is_inline_comment) {
+    auto lines = std::views::split(comment_sv, "\n//");
+    auto it = lines.begin();
+    const auto end_it = lines.end();
+    for (; it != end_it; ++it) {
+      auto v = std::string_view{*it};
+      std::format_to(w, "{}", v);
+      if (std::next(it) != end_it) {
+        std::format_to(w, "\n");
+      }
+    }
+  } else {
+    std::format_to(w, "{}", comment_sv);
+  }
+
+  return true;
 }
 
 lsp::HoverResult ProvideHover(const lsp::HoverParams& params, const core::SourceFile& file, LsSessionRef d) {
@@ -81,7 +161,7 @@ lsp::HoverResult ProvideHover(const lsp::HoverParams& params, const core::Source
   if (!symres) {
     return nullptr;
   }
-  const auto* n = symres->node;
+  const auto* cursor_node = symres->node;
   const auto* sym = symres->type.sym;
 
   if (!sym) {
@@ -92,286 +172,227 @@ lsp::HoverResult ProvideHover(const lsp::HoverParams& params, const core::Source
     return nullptr;
   }
   const auto* provider_file = core::ast::utils::SourceFileOf(decl);
-  if (!provider_file) {
-    return nullptr;
+
+  MarkdownHoverCardBuilder builder([&](auto& bld) {
+    if (provider_file != &file) {
+      if (provider_file->module->name == "LanguageBuiltins") {
+        bld.WriteText("_TTCN-3 Standard Definition_");
+      } else {
+        const auto source_loc = conv::ToLSPPosition(provider_file->ast.lines.Translate(decl->nrange.begin));
+        bld.WithWriter([&](auto w) {
+          std::format_to(w, "[module {}]({}#L{}C{})", provider_file->module->name,
+                         PathToFileUri(d.solution, provider_file->path), source_loc.line + 1, source_loc.character);
+        });
+      }
+    }
+  });
+  if (decl) {
+    bool had_comment{false};
+    builder.WithWriter([&](auto w) {
+      had_comment = WriteAttachedComment(w, provider_file->ast, decl);
+    });
+    if (had_comment) {
+      builder.WriteSeparator();
+    }
   }
-
-  auto& content = *d.arena.Alloc<std::string>();
-  content.reserve(256);  // TODO: check if it is justified actually
-
   switch (decl->nkind) {
     case core::ast::NodeKind::FuncDecl: {
       const auto* m = decl->As<core::ast::nodes::FuncDecl>();
-      content += std::format(
-          R"(
-### {} `{}`
-
----
-
-→ `{}`
-{}
-
----
-
-```ttcn
-{}
-```
-)",
-          provider_file->Text(m->kind.range),  //
-          provider_file->Text(*m->name),       //
-          m->ret ? provider_file->ast.Text(m->ret->type) : "void",
-          m->params->list.empty()
-              ? ""
-              : std::format("\nArguments:\n{}", BuildMarkdownParameterList<core::ast::nodes::FormalPar>(
-                                                    provider_file->ast, m->params->list)),
-          provider_file->ast.Text(core::ast::Range{
-              .begin = m->nrange.begin,
-              .end = m->body ? m->body->nrange.begin : m->nrange.end,
-          }));
+      builder.WriteHeader(provider_file->Text(m->kind.range), provider_file->Text(*m->name));
+      builder.WithWriter([&](auto w) {
+        std::format_to(w, "→ `{}`", m->ret ? provider_file->ast.Text(m->ret->type) : "void");
+        if (m->params && !m->params->list.empty()) {
+          std::format_to(w, "\n\nArguments:\n");
+          WriteMarkdownParameterList<core::ast::nodes::FormalPar>(w, provider_file->ast, m->params->list);
+        }
+      });
+      builder.WriteSeparator();
+      builder.WriteCodeBlock(provider_file->ast.Text(core::ast::Range{
+          .begin = m->nrange.begin,
+          .end = m->body ? m->body->nrange.begin : m->nrange.end,
+      }));
       break;
     }
     case core::ast::NodeKind::TemplateDecl: {
       const auto* m = decl->As<core::ast::nodes::TemplateDecl>();
-      content += std::format(
-          R"(
-### template `{}`
-
----
-
-Parameters:
-{}
-
----
-
-```ttcn
-{}
-```
-)",
-          provider_file->ast.Text(*m->name),  //
-          m->params ? BuildMarkdownParameterList<core::ast::nodes::FormalPar>(provider_file->ast, m->params->list) : "",
-          provider_file->ast.Text(core::ast::Range{
-              .begin = decl->nrange.begin,
-              .end = m->value->nrange.begin,
-          }));
+      builder.WriteHeader("template", provider_file->Text(*m->name));
+      builder.WithWriter([&](auto w) {
+        if (m->params && !m->params->list.empty()) {
+          std::format_to(w, "Parameters:\n");
+          WriteMarkdownParameterList<core::ast::nodes::FormalPar>(w, provider_file->ast, m->params->list);
+        }
+      });
+      builder.WriteSeparator();
+      builder.WriteCodeBlock(provider_file->ast.Text(core::ast::Range{
+          .begin = decl->nrange.begin,
+          .end = m->value->nrange.begin,
+      }));
       break;
     }
     case core::ast::NodeKind::ConstructorDecl: {
       const auto* m = decl->As<core::ast::nodes::ConstructorDecl>();
-      content += std::format(
-          R"(
-### class `{}` constructor
-
----
-
-{}
-
----
-
-```ttcn
-{}
-```
-)",
-          provider_file->Text(*decl->parent->parent->As<core::ast::nodes::ClassTypeDecl>()->name),  //
-          m->params->list.empty()
-              ? ""
-              : std::format("\nArguments:\n{}", BuildMarkdownParameterList<core::ast::nodes::FormalPar>(
-                                                    provider_file->ast, m->params->list)),
-          SafeExtractText(provider_file, core::ast::Range{
-                                             .begin = m->nrange.begin,
-                                             .end = m->body ? m->body->nrange.begin : m->nrange.end,
-                                         }));
+      builder.WriteHeader("class",
+                          provider_file->Text(*decl->parent->parent->As<core::ast::nodes::ClassTypeDecl>()->name),
+                          "constructor");
+      builder.WithWriter([&](auto w) {
+        if (!m->params->list.empty()) {
+          std::format_to(w, "Arguments:\n");
+          WriteMarkdownParameterList<core::ast::nodes::FormalPar>(w, provider_file->ast, m->params->list);
+        }
+      });
+      builder.WriteSeparator();
+      builder.WriteCodeBlock(provider_file->ast.Text(core::ast::Range{
+          .begin = m->nrange.begin,
+          .end = m->body ? m->body->nrange.begin : m->nrange.end,
+      }));
       break;
     }
     case core::ast::NodeKind::StructTypeDecl: {
       const auto* m = decl->As<core::ast::nodes::StructTypeDecl>();
-      content += std::format(R"(
-### {} `{}`
----
-
-Fields:
-{}
-
----
-
-```ttcn
-{}
-```
-)",
-                             provider_file->Text(m->kind.range),  //
-                             provider_file->ast.Text(*m->name),
-                             BuildMarkdownParameterList<core::ast::nodes::Field>(provider_file->ast, m->fields),
-                             SafeExtractText(provider_file, core::ast::Range{
-                                                                .begin = m->nrange.begin,
-                                                                .end = m->name->nrange.end,
-                                                            }));
+      builder.WriteHeader(provider_file->Text(m->kind.range), provider_file->ast.Text(*m->name));
+      builder.WithWriter([&](auto w) {
+        if (!m->fields.empty()) {
+          std::format_to(w, "Fields:\n");
+          WriteMarkdownParameterList<core::ast::nodes::Field>(w, provider_file->ast, m->fields);
+        }
+      });
+      builder.WriteSeparator();
+      builder.WriteCodeBlock(provider_file->ast.Text(core::ast::Range{
+          .begin = m->nrange.begin,
+          .end = m->name->nrange.end,
+      }));
       break;
     }
-    case core::ast::NodeKind::ClassTypeDecl: {
-      const auto* m = decl->As<core::ast::nodes::ClassTypeDecl>();
-      content += std::format(R"(
-### class `{}`
----
-
-```ttcn
-{}
-```
-)",
-                             provider_file->ast.Text(*m->name),
-                             SafeExtractText(provider_file, core::ast::Range{
-                                                                .begin = m->nrange.begin,
-                                                                .end = m->name->nrange.end,
-                                                            }));
+    case core::ast::NodeKind::StructSpec: {
+      const auto* m = decl->As<core::ast::nodes::StructSpec>();
+      builder.WriteHeader(provider_file->Text(m->kind.range),
+                          provider_file->ast.Text(*m->parent->As<core::ast::nodes::Field>()->name), "[anonymous]");
+      builder.WithWriter([&](auto w) {
+        if (!m->fields.empty()) {
+          std::format_to(w, "Fields:\n");
+          WriteMarkdownParameterList<core::ast::nodes::Field>(w, provider_file->ast, m->fields);
+        }
+      });
+      builder.WriteSeparator();
+      builder.WriteCodeBlock(provider_file->ast.Text(m->parent));
+      break;
+    }
+    case core::ast::NodeKind::ListSpec: {
+      const auto* m = decl->As<core::ast::nodes::ListSpec>();
+      builder.WriteHeader(provider_file->Text(m->kind.range),
+                          provider_file->ast.Text(*m->parent->As<core::ast::nodes::Field>()->name), "[anonymous]");
+      builder.WriteSeparator();
+      builder.WriteCodeBlock(provider_file->ast.Text(m->parent));
+      break;
+    }
+    case core::ast::NodeKind::EnumSpec: {
+      const auto* m = decl->As<core::ast::nodes::EnumSpec>();
+      builder.WriteHeader("enum", provider_file->ast.Text(*m->parent->As<core::ast::nodes::Field>()->name),
+                          "[anonymous]");
+      builder.WithWriter([&](auto w) {
+        std::format_to(w, "Values:\n");
+        const auto last_idx = std::ssize(m->values) - 1;
+        for (const auto& [idx, v] : m->values | std::views::enumerate) {
+          std::format_to(w, "- `{}`", provider_file->Text(v));
+          if (idx != last_idx) [[likely]] {
+            std::format_to(w, "\n");
+          }
+        }
+      });
+      builder.WriteSeparator();
+      builder.WriteCodeBlock(provider_file->ast.Text(m->parent));
       break;
     }
     case core::ast::NodeKind::EnumTypeDecl: {
       const auto* m = decl->As<core::ast::nodes::EnumTypeDecl>();
-      content += std::format(
-          R"(
-### enum `{}`
----
-
-Values:
-{}
-
----
-
-```ttcn
-{}
-```
-)",
-          provider_file->ast.Text(*m->name),
-          [&] -> std::string {
-            std::string buf;
-            buf.reserve(m->values.size() * 32);
-
-            const auto last_idx = std::ssize(m->values) - 1;
-            for (const auto& [idx, v] : m->values | std::views::enumerate) {
-              buf += "- `";
-              buf += provider_file->Text(v);
-              buf += "`";
-              if (idx != last_idx) [[likely]] {
-                buf += "\n";
-              }
-            }
-
-            return buf;
-          }(),
-          SafeExtractText(provider_file, core::ast::Range{
-                                             .begin = m->nrange.begin,
-                                             .end = m->name->nrange.end,
-                                         }));
+      builder.WriteHeader("enum", provider_file->ast.Text(*m->name));
+      builder.WithWriter([&](auto w) {
+        std::format_to(w, "Values:\n");
+        const auto last_idx = std::ssize(m->values) - 1;
+        for (const auto& [idx, v] : m->values | std::views::enumerate) {
+          std::format_to(w, "- `{}`", provider_file->Text(v));
+          if (idx != last_idx) [[likely]] {
+            std::format_to(w, "\n");
+          }
+        }
+      });
+      builder.WriteSeparator();
+      builder.WriteCodeBlock(provider_file->ast.Text(core::ast::Range{
+          .begin = m->nrange.begin,
+          .end = m->name->nrange.end,
+      }));
+      break;
+    }
+    case core::ast::NodeKind::ClassTypeDecl: {
+      const auto* m = decl->As<core::ast::nodes::ClassTypeDecl>();
+      builder.WriteHeader("class", provider_file->ast.Text(*m->name));
+      builder.WriteCodeBlock(provider_file->ast.Text(core::ast::Range{
+          .begin = m->nrange.begin,
+          .end = m->name->nrange.end,
+      }));
       break;
     }
     case core::ast::NodeKind::SubTypeDecl: {
       const auto* m = decl->As<core::ast::nodes::SubTypeDecl>();
-      content += std::format(R"(
-### subtype `{}`
-
----
-
-```ttcn
-{}
-```
-)",
-                             provider_file->ast.Text(*m->field->name),
-                             SafeExtractText(provider_file, core::ast::Range{
-                                                                .begin = m->nrange.begin,
-                                                                .end = m->nrange.end,
-                                                            }));
+      builder.WriteHeader("subtype", provider_file->ast.Text(*m->field->name));
+      builder.WriteCodeBlock(provider_file->ast.Text(core::ast::Range{
+          .begin = m->nrange.begin,
+          .end = m->nrange.end,
+      }));
       break;
     }
     case core::ast::NodeKind::Declarator: {
       const auto* m = decl->As<core::ast::nodes::Declarator>();
       const auto* vd = m->parent->As<core::ast::nodes::ValueDecl>();
 
-      content += std::format(
-          R"(
-### {} `{}`
-
----
-
-Type: `{}`
-
----
-
-```ttcn
-{} {} {}
-```
-)",
-          provider_file->ast.Text(vd->kind->range),  //
-          provider_file->ast.Text(*m->name),         //
-          provider_file->ast.Text(vd->type),         //
-          SafeExtractText(provider_file,
-                          core::ast::Range{
-                              .begin = vd->kind->range.begin,
-                              .end = vd->type->nrange.end,
-                          }),
-          provider_file->ast.Text(*m->name),
-          (vd->kind->kind == core::ast::TokenKind::CONST && m->value)
-              ? SafeExtractText(provider_file,
-                                core::ast::Range{
-                                    .begin = m->name->nrange.end + 1,
-                                    .end = m->value->nrange.end,
-                                })
-              : "");
+      builder.WriteHeader(vd->kind ? provider_file->ast.Text(vd->kind->range) : "", provider_file->ast.Text(*m->name));
+      builder.WithWriter([&](auto w) {
+        std::format_to(w, "Type: `{}`", provider_file->ast.Text(vd->type));
+      });
+      builder.WriteSeparator();
+      builder.WriteCodeBlock(provider_file->ast.Text(core::ast::Range{
+          .begin = m->parent->nrange.begin,
+          .end = m->value ? m->value->nrange.end : m->name->nrange.end,
+      }));
       break;
     }
     case core::ast::NodeKind::FormalPar: {
       const auto* m = decl->As<core::ast::nodes::FormalPar>();
-      content += std::format(R"(
-### param `{}`
-
----
-
-Type: `{}`
-
----
-
-```ttcn
-{}
-```
-)",
-                             provider_file->ast.Text(*m->name),  //
-                             provider_file->ast.Text(m->type),   //
-                             provider_file->ast.Text(m),
-                             SafeExtractText(provider_file, core::ast::Range{
-                                                                .begin = m->nrange.begin,
-                                                                .end = m->name->nrange.end,
-                                                            }));
+      builder.WriteHeader("param", provider_file->ast.Text(*m->name));
+      builder.WithWriter([&](auto w) {
+        std::format_to(w, "Type: `{}`", provider_file->ast.Text(m->type));
+      });
+      builder.WriteSeparator();
+      builder.WriteCodeBlock(provider_file->ast.Text(core::ast::Range{
+          .begin = m->nrange.begin,
+          .end = m->name->nrange.end,
+      }));
       break;
     }
     case core::ast::NodeKind::Field: {
       const auto* m = decl->As<core::ast::nodes::Field>();
 
-      std::string prefix;
-      if (m->parent->nkind == core::ast::NodeKind::StructTypeDecl) {
-        prefix = std::format("{}::", provider_file->ast.Text(*m->parent->As<core::ast::nodes::StructTypeDecl>()->name));
-      }
-
-      content += std::format(
-          R"(
-### field `{}{}`
-
----
-
-Type: `{}`
-
----
-
-```ttcn
-{}
-```
-)",
-          prefix,
-          provider_file->ast.Text(*m->name),  //
-          provider_file->ast.Text(*m->type),  //
-          provider_file->ast.Text(m));
+      std::string fh;
+      builder.WriteHeader("field", [&] -> std::string_view {
+        if (m->parent->nkind == core::ast::NodeKind::StructTypeDecl) {
+          return fh = std::format("{}::{}",
+                                  provider_file->ast.Text(*m->parent->As<core::ast::nodes::StructTypeDecl>()->name),
+                                  provider_file->ast.Text(*m->name));
+        }
+        return provider_file->ast.Text(*m->name);
+      }());
+      builder.WithWriter([&](auto w) {
+        std::format_to(w, "Type: `{}`", provider_file->ast.Text(m->type));
+      });
+      builder.WriteSeparator();
+      builder.WriteCodeBlock(provider_file->ast.Text(m));
       break;
     }
     case core::ast::NodeKind::ImportDecl: {
       const auto* m = decl->As<core::ast::nodes::ImportDecl>();
-      if (n->parent->nkind == core::ast::NodeKind::ImportDecl) {
-        m = n->parent->As<core::ast::nodes::ImportDecl>();
+
+      if (cursor_node->parent->nkind == core::ast::NodeKind::ImportDecl) {
+        m = cursor_node->parent->As<core::ast::nodes::ImportDecl>();
       }
 
       const auto* module = file.program->GetModule(provider_file->ast.Text(*m->module));
@@ -379,59 +400,39 @@ Type: `{}`
         break;
       }
 
-      content += std::format("### module `{}`",
-                             provider_file->ast.Text(*m->module),  //
-                             provider_file->ast.Text(m));
+      builder.WriteHeader("module", provider_file->ast.Text(*m->module));
+      builder.WithWriter([&](auto w) {
+        std::format_to(w, "`{}`", module->sf->path);
+        if (!m->list.empty() && m->list[0]->kind.kind == core::ast::TokenKind::IMPORT) {
+          std::format_to(w, "\n");
+          builder.WriteSeparator();
 
-      if (!m->list.empty() && m->list[0]->kind.kind == core::ast::TokenKind::IMPORT) {
-        content += R"(
----
-
-Transitively imports modules:
-)";
-        for (const auto& [import, descriptor] : module->imports) {
-          if (descriptor.transit) {
-            content += std::format("- `{}`\n", import);
+          std::format_to(w, "Transitively imports modules:\n");
+          for (const auto& [import, descriptor] : module->imports) {
+            if (descriptor.transit) {
+              std::format_to(w, "- `{}`\n", import);
+            }
           }
         }
-        content += "\n---\n";
-      }
-
-      content += std::format("\n---\n`{}`", module->sf->path);
+      });
       break;
     }
     case core::ast::NodeKind::ComponentTypeDecl: {
       const auto* m = decl->As<core::ast::nodes::ComponentTypeDecl>();
-      content += std::format(R"(
-### component `{}`
----
-
-```ttcn
-{}
-```
-)",
-                             provider_file->ast.Text(*m->name),  //
-                             SafeExtractText(provider_file, core::ast::Range{
-                                                                .begin = m->nrange.begin,
-                                                                .end = m->name->nrange.end,
-                                                            }));
+      builder.WriteHeader("component", provider_file->ast.Text(*m->name));
+      builder.WriteCodeBlock(provider_file->ast.Text(core::ast::Range{
+          .begin = m->nrange.begin,
+          .end = m->nrange.end,
+      }));
       break;
     }
     case core::ast::NodeKind::PortTypeDecl: {
       const auto* m = decl->As<core::ast::nodes::PortTypeDecl>();
-      content += std::format(R"(
-### port `{}`
----
-
-```ttcn
-{}
-```
-)",
-                             provider_file->ast.Text(*m->name),  //
-                             SafeExtractText(provider_file, core::ast::Range{
-                                                                .begin = m->nrange.begin,
-                                                                .end = m->name->nrange.end,
-                                                            }));
+      builder.WriteHeader("port", provider_file->ast.Text(*m->name));
+      builder.WriteCodeBlock(provider_file->ast.Text(core::ast::Range{
+          .begin = m->nrange.begin,
+          .end = m->nrange.end,
+      }));
       break;
     }
     default:
@@ -465,82 +466,22 @@ Transitively imports modules:
           }
         }
 
-        content += std::format(R"(
-### enum value `{}::{}`
+        builder.WriteHeader("enum value", enum_name);
+        builder.WriteCodeBlock(provider_file->ast.Text(decl));
 
----
-
-```ttcn
-{}
-```
-)",
-                               enum_name,       //
-                               sym->GetName(),  //
-                               provider_file->ast.Text(decl));
         break;
       }
-      content += std::format("TODO: provide hover details for '{}'", magic_enum::enum_name(decl->nkind));
+      builder.WriteText(std::format("TODO: provide hover details for '{}'", magic_enum::enum_name(decl->nkind)));
       break;
-  }
-
-  if (provider_file != &file) {
-    const auto source_loc = conv::ToLSPPosition(provider_file->ast.lines.Translate(decl->nrange.begin));
-    content += std::format(R"(
----
-
-[module {}]({}#L{}C{}))",
-                           provider_file->module->name, PathToFileUri(d.solution, provider_file->path),
-                           source_loc.line + 1, source_loc.character);
-  }
-
-  if (decl) {
-    const auto* tgt_decl = decl;
-    if (tgt_decl->nkind == core::ast::NodeKind::Declarator) {
-      tgt_decl = tgt_decl->parent;
-    }
-    if (const auto comment = core::ast::utils::ExtractAttachedComment(provider_file->ast, tgt_decl); comment) {
-      auto comment_sv = provider_file->Text(*comment);
-      // shame.... todo...
-      bool inline_comment{false};
-      if (comment_sv.starts_with("/* ") || comment_sv.starts_with("/*\n")) {
-        comment_sv.remove_prefix(3);
-      } else if (comment_sv.starts_with("/** ") || comment_sv.starts_with("/**\n")) {
-        comment_sv.remove_prefix(4);
-      } else if (comment_sv.starts_with("//")) {
-        inline_comment = true;
-        comment_sv.remove_prefix(2);
-      }
-      if (comment_sv.ends_with("\n*/\n")) {
-        comment_sv.remove_suffix(4);
-      } else if (comment_sv.ends_with("\n*/")) {
-        comment_sv.remove_suffix(3);
-      } else if (comment_sv.ends_with("*/")) {
-        comment_sv.remove_suffix(2);
-      }
-
-      auto mut_s = std::string(comment_sv);
-      if (inline_comment) {
-        constexpr std::string_view kFrom = "\n//";
-        constexpr std::string_view kTo = " \n\n";  // left pad to avoid shifting
-        auto&& pos = mut_s.find(kFrom, std::string::size_type{});
-        while (pos != std::string::npos) {
-          mut_s.replace(pos, kFrom.length(), kTo);
-          pos = mut_s.find(kFrom, pos + kTo.length());
-        }
-      }
-
-      // TODO: get rid of string alloc
-      content = mut_s + "\n\n---\n\n" + content;
-    }
   }
 
   return lsp::Hover{
       .contents =
           lsp::MarkupContent{
               .kind = lsp::MarkupKind::kMarkdown,
-              .value = content,
+              .value = *d.arena.Alloc<std::string>(std::move(builder.Build())),
           },
-      .range = conv::ToLSPRange(n->nrange, file.ast),
+      .range = conv::ToLSPRange(cursor_node->nrange, file.ast),
   };
 }
 }  // namespace

@@ -123,6 +123,8 @@ std::optional<Range> ExtractAttachedComment(const AST& ast, const Node* n) {
   const auto anchor{n->nrange.begin};
 
   core::ast::Token preceding{};
+  pos_t preceding_end_line{};
+
   parser::Scanner scanner(ast.src);
   while (true) {
     const core::ast::Token tok = scanner.Scan();
@@ -130,13 +132,22 @@ std::optional<Range> ExtractAttachedComment(const AST& ast, const Node* n) {
       // EOF check can be avoided ig
       break;
     }
-    if (preceding.kind == TokenKind::COMMENT && tok.kind == TokenKind::COMMENT) {
-      continue;
+
+    const auto is_continuation_comment = [&] {
+      const auto tok_begin_line = ast.lines.LineOf(tok.range.begin);
+      return (preceding.kind == TokenKind::COMMENT && tok.kind == TokenKind::COMMENT) &&
+             (tok_begin_line - preceding_end_line) <= 1;
+    };
+
+    if (!is_continuation_comment()) {
+      preceding = tok;
     }
-    preceding = tok;
+    if (tok.kind == TokenKind::COMMENT) {
+      preceding_end_line = ast.lines.LineOf(tok.range.end);
+    }
   }
 
-  if (preceding.kind != TokenKind::COMMENT) {
+  if (preceding.kind != TokenKind::COMMENT || ((ast.lines.LineOf(n->nrange.begin) - preceding_end_line) > 1)) {
     return std::nullopt;
   }
   return Range{.begin = preceding.range.begin, .end = n->nrange.begin};

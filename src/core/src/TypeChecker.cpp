@@ -28,6 +28,9 @@ const semantic::Symbol kVoidType{"<void>", nullptr, semantic::SymbolFlags::kBuil
 const semantic::Symbol kInferType{
     "<infer>", nullptr,
     semantic::SymbolFlags::Value(semantic::SymbolFlags::kBuiltinType | semantic::SymbolFlags::kAnonymous)};
+const semantic::Symbol kVarargsType{
+    "<varargs>", nullptr,
+    semantic::SymbolFlags::Value(semantic::SymbolFlags::kBuiltinType | semantic::SymbolFlags::kAnonymous)};
 const semantic::Symbol kAltstepType{
     "<altstep>", nullptr,
     semantic::SymbolFlags::Value(semantic::SymbolFlags::kBuiltinType | semantic::SymbolFlags::kAnonymous)};
@@ -1321,7 +1324,6 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, InstantiatedTyp
 
       //
       resulting_type = ResolveCallableReturnType(callee_file, callee_decl);
-      // <-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
       //
 
       const ast::nodes::FormalPars* params = ast::utils::GetCallableDeclParams(callee_decl);
@@ -1337,6 +1339,11 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, InstantiatedTyp
         resulting_type.sym = ResolveExprType(&sf_, scope_, m->args->list.back()).sym;
       }
       //
+
+      if (params->list.size() == 1 && callee_file->Text(params->list.back()->type) == "__vargs_t") {
+        Visit(m->args);
+        break;
+      }
 
       CheckArguments<ast::nodes::FormalPar>(m->args->list, m->args->nrange, callee_file, callee_sym, params->list,
                                             [](const ast::nodes::FormalPar* param) {

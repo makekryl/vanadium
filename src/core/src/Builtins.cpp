@@ -44,8 +44,9 @@ const semantic::Symbol* ResolveBuiltinType(std::string_view name) {
 
       {"object", &kAnytype},  // TODO
 
-      // DO NOT USE OR YOU WILL BE FIRED! (c)
+      // SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED! (c)
       {"__infer_arg_t", &checker::symbols::kInferType},
+      {"__vargs_t", &checker::symbols::kVarargsType},
       {"__altstep_t", &checker::symbols::kAltstepType},
   });
   if (const auto sym_opt = kBuiltinsTable.get(name); sym_opt) {
@@ -130,8 +131,6 @@ const semantic::Scope* const kBuiltinsScope = [] {
           d->Accept(self);
         }
 
-        // todo switch based on name if timer then push to parent scope otherwise assign the symbol to a variable inside
-        // builtins and return it from GetSuperscope
         const auto name = sf.Text(*m->name);
         if (name == "Timer") {
           prev_scope->symbols.Add({

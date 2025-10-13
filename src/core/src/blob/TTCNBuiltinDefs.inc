@@ -25,7 +25,7 @@ type class ComponentSuperbase {
 }
 
 type class BuiltinTestcaseType {
-  external function stop(in charstring reason);
+  external function stop(in __vargs_t reason);
 }
 const BuiltinTestcaseType testcase_;
 
@@ -48,17 +48,7 @@ var ExampleType val = valueof(templateB); // runtime error: omit is not a value
 */
 external function valueof(in template anytype instance) return __infer_arg_t
 
-external function log(in anytype s,
-  in anytype s1 := none,
-  in anytype s2 := none,
-  in anytype s3 := none,
-  in anytype s4 := none,
-  in anytype s5 := none,
-  in anytype s6 := none,
-  in anytype s7 := none,
-  in anytype s8 := none,
-  in anytype s9 := none,
-)
+external function log(in __vargs_t s)
 
 /*
 The __int2char__ function converts an __integer__ value in the range of 0 to 127 (8-bit encoding) into a single-character-length

@@ -809,6 +809,7 @@ struct ListSpec : TypeSpec {
 
   ListSpec() : TypeSpec(NodeKind::ListSpec) {}
 
+  Token kind;
   LengthExpr* length{nullptr};
   TypeSpec* elemtype;
 

@@ -40,6 +40,7 @@ case NodeKind::StructSpec: {
 case NodeKind::ListSpec: {
   const auto* nn = n->As<nodes::ListSpec>();
   DumpGroup("ListSpec", [&] {
+    Dump("kind", nn->kind);
     Dump("length", nn->length);
     Dump("elemtype", nn->elemtype);
   });
