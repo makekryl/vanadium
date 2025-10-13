@@ -94,7 +94,6 @@ async function initializeLanguageServer(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(
     vscode.workspace.onDidSaveTextDocument((document) => {
-      logger.warn(document.fileName);
       if (!document.fileName.endsWith('.vanadiumrc.toml')) {
         return;
       }
