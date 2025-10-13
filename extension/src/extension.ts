@@ -45,6 +45,34 @@ export async function activate(context: vscode.ExtensionContext) {
   );
 
   if (config.get<boolean>('enable')) {
+    setTimeout(async () => {
+      for (const conflictingExtensionName of [
+        'nokia.ttcn3',
+        'nokia.ttcn3-yadro',
+        'eclipse-titan.titan',
+      ]) {
+        const conflictingExtension = vscode.extensions.getExtension(conflictingExtensionName);
+        if (!conflictingExtension || !conflictingExtension.isActive) {
+          continue;
+        }
+        await vscode.window
+          .showWarningMessage(
+            `You have both the vanadiumd extension and '${conflictingExtension.packageJSON.displayName}' (${conflictingExtension.id}) extension enabled. ` +
+              `Vanadium features conflict with this extension's clangd's code completion, diagnostics etc.`,
+            { modal: true },
+            'Disable the conflicting extension',
+            'Suppress'
+          )
+          .then(async (selection) => {
+            if (selection === 'Disable the conflicting extension') {
+              await vscode.commands.executeCommand('extension.open', conflictingExtension.id);
+            }
+          });
+      }
+    }, 7000);
+  }
+
+  if (config.get<boolean>('enable')) {
     await initializeLanguageServer(context);
   }
 }
