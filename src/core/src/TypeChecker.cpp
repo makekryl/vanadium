@@ -230,7 +230,7 @@ class SelectorExprResolver {
       assert(false);
       return nullptr;
     }();
-    if (!property_sym) {
+    if (!property_sym || (property_sym->Flags() & semantic::SymbolFlags::kThis)) {
       // TODO: remove file lookup from contract
       options_.on_unknown_property(se, x_sym);
       return nullptr;
@@ -942,7 +942,10 @@ InstantiatedType ResolveDeclarationType(const SourceFile* file, const ast::Node*
       // we could come here only via Resolve("this")->Declaration()
       // use direct module symbol table for speed up
       const auto* m = decl->As<ast::nodes::ClassTypeDecl>();
-      return {.sym = file->module->scope->ResolveDirect(file->Text(*m->name))};
+      return {
+          .sym = file->module->scope->ResolveDirect(file->Text(*m->name)),
+          .is_instance = true,
+      };
     }
     case ast::NodeKind::FuncDecl: {
       const auto* m = decl->As<ast::nodes::FuncDecl>();
