@@ -266,7 +266,7 @@ lsp::HoverResult ProvideHover(const lsp::HoverParams& params, const core::Source
     case core::ast::NodeKind::StructSpec: {
       const auto* m = decl->As<core::ast::nodes::StructSpec>();
       builder.WriteHeader(provider_file->Text(m->kind.range),
-                          provider_file->ast.Text(*m->parent->As<core::ast::nodes::Field>()->name), "[anonymous]");
+                          provider_file->ast.Text(*m->parent->As<core::ast::nodes::Field>()->name));
       builder.WithWriter([&](auto w) {
         if (!m->fields.empty()) {
           std::format_to(w, "Fields:\n");
@@ -280,15 +280,14 @@ lsp::HoverResult ProvideHover(const lsp::HoverParams& params, const core::Source
     case core::ast::NodeKind::ListSpec: {
       const auto* m = decl->As<core::ast::nodes::ListSpec>();
       builder.WriteHeader(provider_file->Text(m->kind.range),
-                          provider_file->ast.Text(*m->parent->As<core::ast::nodes::Field>()->name), "[anonymous]");
+                          provider_file->ast.Text(*m->parent->As<core::ast::nodes::Field>()->name));
       builder.WriteSeparator();
       builder.WriteCodeBlock(provider_file->ast.Text(m->parent));
       break;
     }
     case core::ast::NodeKind::EnumSpec: {
       const auto* m = decl->As<core::ast::nodes::EnumSpec>();
-      builder.WriteHeader("enum", provider_file->ast.Text(*m->parent->As<core::ast::nodes::Field>()->name),
-                          "[anonymous]");
+      builder.WriteHeader("enum", provider_file->ast.Text(*m->parent->As<core::ast::nodes::Field>()->name));
       builder.WithWriter([&](auto w) {
         std::format_to(w, "Values:\n");
         const auto last_idx = std::ssize(m->values) - 1;
