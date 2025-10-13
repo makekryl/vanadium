@@ -84,13 +84,21 @@ const semantic::Scope* const kBuiltinsScope = [] {
   static semantic::Scope root_scope{sf.ast.root};
   sf.module->scope = &root_scope;
 
+  const auto recover_name = [](std::string_view name) {
+    constexpr std::string_view kStripTrailing{"_"};
+    if (name.ends_with(kStripTrailing)) {
+      name.remove_suffix(kStripTrailing.size());
+    }
+    return name;
+  };
+
   semantic::Scope* scope{&root_scope};
   sf.ast.root->Accept([&](this auto&& self, const ast::Node* n) {
     switch (n->nkind) {
       case ast::NodeKind::FuncDecl: {
         const auto* m = n->As<ast::nodes::FuncDecl>();
         scope->symbols.Add({
-            sf.Text(*m->name),
+            recover_name(sf.Text(*m->name)),
             m,
             semantic::SymbolFlags::Value(semantic::SymbolFlags::kFunction | semantic::SymbolFlags::kBuiltin),
         });
@@ -99,13 +107,8 @@ const semantic::Scope* const kBuiltinsScope = [] {
       case ast::NodeKind::ValueDecl: {
         const auto* m = n->As<ast::nodes::ValueDecl>();
         for (const auto* d : m->decls) {
-          constexpr std::string_view kStripTrailing{"_"};
-          auto name = sf.Text(*d->name);
-          if (name.ends_with(kStripTrailing)) {
-            name.remove_suffix(kStripTrailing.size());
-          }
           scope->symbols.Add({
-              name,
+              recover_name(sf.Text(*d->name)),
               d,
               semantic::SymbolFlags::Value(semantic::SymbolFlags::kVariable | semantic::SymbolFlags::kBuiltin),
           });

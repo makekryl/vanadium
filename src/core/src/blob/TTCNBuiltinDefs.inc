@@ -5,23 +5,68 @@ module LanguageBuiltins {
 
 const charstring __SCOPE___;
 
+const anytype mtc_, system_;
+external function map_(in anytype a, in anytype b);
+external function unmap_(in anytype a, in anytype b);
+
 type class Timer {
   external function start(in float tmo);
-  const __builtin_actiontype stop;
-  const __builtin_actiontype timeout;
+  const __operation stop;
+  const __operation timeout;
   const boolean running;
 }
 
 type class PortSuperbase {
   external function send(in anytype msg);
   external function receive(in anytype msg);
-  const __builtin_actiontype trigger;
+  const __operation trigger;
 }
 
 type class ComponentSuperbase {
+  // The __create__ operation is used to create test components.
+  external function create_(in anytype par);
+
+  // The __start__ operation is used to associate a test behaviour to a test component, which is then being executed by that test component.
   external function start(in anytype exec);
-  const __builtin_actiontype kill;
-  const __builtin_actiontype done;
+
+  // The __stop__ test behaviour operation is used to stop the execution of a test component by itself or by another test component.
+  const __operation stop;
+
+  /*
+The __kill__ test component operation is used to destroy a component by itself or by another test component. Kill and
+stop on a non-alive component have the same results, while they differ for alive components: stopping an alive
+components stops the test behaviour only, the test component continues to exist. Killing a test component destroys the
+test component.
+  */
+  const __operation kill;
+
+  /*
+The __alive__ operation is a Boolean operation that checks whether a test component has been created and is ready to
+execute or is executing already a behaviour.
+  */
+  const boolean alive_;
+
+  /*
+The __running__ operation is a Boolean operation that checks whether a test component is already executing a behaviour.
+  */
+  const boolean running;
+
+/*
+The __done__ operation allows behaviour executing on a test component to ascertain whether the behaviour running on a
+different test component has completed. In addition, the done operation allows to retrieve the final local verdict of
+completed test components, i.e. the value of the local verdict at the time of test component completion.
+*/
+  const boolean done;
+
+/*
+The __killed__ operation allows to ascertain whether a different test component is alive or has been removed from the
+test system. In addition, the killed operation allows to retrieve the final local verdict of killed test components, i.e.
+the value of the local verdict at the time when the test component was killed.
+*/
+  const boolean killed;
+
+  // The __call__ operation is used start a test behaviour on a test component and wait until that behaviour has terminated.
+  external function call(in anytype behaviour);
 }
 
 type class BuiltinTestcaseType {

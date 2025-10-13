@@ -1352,6 +1352,7 @@ auto Parser::TryParseName(std::invocable auto parse, std::invocable auto failure
     case TokenKind::CREATE:
     case TokenKind::ADDRESS:
     case TokenKind::CONTROL:
+    case TokenKind::ALIVE:
     case TokenKind::CLASS:
       return parse();
     default:
