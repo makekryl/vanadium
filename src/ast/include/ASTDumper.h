@@ -67,6 +67,13 @@ class Dumper {
         DumpIdent(*n->As<nodes::Ident>());
         break;
       }
+      case NodeKind::CompositeIdent: {
+        DumpGroup("CompositeIdent", [&] {
+          Dump("tok1", n->As<nodes::CompositeIdent>()->tok1);
+          Dump("tok2", n->As<nodes::CompositeIdent>()->tok2);
+        });
+        break;
+      }
       case NodeKind::DeclStmt: {
         DumpGroup("DeclStmt", [&] {
           Dump("decl", n->As<nodes::DeclStmt>()->decl);
