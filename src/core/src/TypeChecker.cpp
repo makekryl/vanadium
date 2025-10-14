@@ -1594,7 +1594,9 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, InstantiatedTyp
 
       if (desired_type.depth > 0) {
         for (const auto* arg : m->list) {
-          if (arg->nkind == ast::NodeKind::AssignmentExpr) [[unlikely]] {
+          // TODO: unify with identical code for Ro chk below
+          if (arg->nkind == ast::NodeKind::AssignmentExpr &&
+              arg->As<ast::nodes::AssignmentExpr>()->property->nkind != ast::NodeKind::IndexExpr) [[unlikely]] {
             EmitError({.range = arg->nrange, .message = "list element expected"});
           }
           const InstantiatedType expected_arg_sym{
@@ -1640,7 +1642,8 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, InstantiatedTyp
 
         const auto* element_type_sym = ResolveListElementType(desired_type.sym);
         for (const auto* arg : m->list) {
-          if (arg->nkind == ast::NodeKind::AssignmentExpr) [[unlikely]] {
+          if (arg->nkind == ast::NodeKind::AssignmentExpr &&
+              arg->As<ast::nodes::AssignmentExpr>()->property->nkind != ast::NodeKind::IndexExpr) [[unlikely]] {
             EmitError({.range = arg->nrange, .message = "list element expected"});
           }
           const InstantiatedType expected_arg_sym{
