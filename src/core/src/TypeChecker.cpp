@@ -800,6 +800,14 @@ InstantiatedType DeduceExpectedType(const SourceFile* file, const semantic::Scop
       const core::semantic::Scope* scope = semantic::utils::FindScope(file->module->scope, parent);
       return ResolveExprType(file, scope, ss->tag);
     }
+    case ast::NodeKind::ReturnStmt: {
+      const auto* m = n->As<ast::nodes::ReturnStmt>();
+      const auto* fdecl = ast::utils::GetPredecessor<ast::nodes::FuncDecl>(m);
+      if (!fdecl || !fdecl->ret) {
+        return InstantiatedType::None();
+      }
+      return ResolveCallableReturnType(file, fdecl);
+    }
     default:
       break;
   }
@@ -2125,7 +2133,7 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
           }
           ScopedVisit(clause->body);
         }
-      } else if (tag_type->Flags() & semantic::SymbolFlags::kEnum) {
+      } else {
         for (const auto* clause : m->clauses) {
           for (const auto* cond : clause->cond) {
             MatchTypes(cond->nrange, CheckType(cond, tag_type), tag_type);

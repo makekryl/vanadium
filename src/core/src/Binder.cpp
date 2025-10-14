@@ -1023,10 +1023,16 @@ std::optional<Symbol> Binder::BindTypeSpec(std::string_view name, SymbolFlags::V
     case ast::NodeKind::StructSpec:
       return Symbol{name, spec, SymbolFlags::Value(flags | SymbolFlags::kStructuralType),
                     &BindFields(spec->As<ast::nodes::StructSpec>()->fields)};
-    case ast::NodeKind::EnumSpec:
-      Visit(spec);
+    case ast::NodeKind::EnumSpec: {
+      const auto* m = spec->As<ast::nodes::EnumSpec>();
+      for (const auto* val : m->values) {
+        if (val->nkind == ast::NodeKind::CallExpr) {
+          Visit(val->As<ast::nodes::CallExpr>()->args);
+        }
+      }
       return Symbol{name, spec, SymbolFlags::Value(flags | SymbolFlags::kEnumType),
                     &BindEnumMembers(spec->As<ast::nodes::EnumSpec>()->values)};
+    }
     case ast::NodeKind::ListSpec: {
       return BindListSpec(name, flags, spec->As<ast::nodes::ListSpec>());
     }
