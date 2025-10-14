@@ -353,6 +353,10 @@ class IndexExprResolver {
         options_.check_index(ie->index);
         return nullptr;
       }
+      if (x_sym == &symbols::kUncheckedType) [[unlikely]] {
+        options_.check_index(ie->index);
+        return &symbols::kUncheckedType;
+      }
 
       const bool is_inferrence_expr = "-" == sf_->Text(ie->index);
       if (!head_type_.is_instance) {
@@ -1198,7 +1202,7 @@ void BasicTypeChecker::MatchTypes(const ast::Range& range, InstantiatedType actu
   if (expected.sym == actual.sym) {
     return;
   }
-  if (actual.sym == &symbols::kUncheckedType) {
+  if ((expected.sym == &symbols::kUncheckedType) || (actual.sym == &symbols::kUncheckedType)) {
     return;
   }
 
@@ -1575,6 +1579,9 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, InstantiatedTyp
 
       if (desired_type.depth > 0) {
         for (const auto* arg : m->list) {
+          if (arg->nkind == ast::NodeKind::AssignmentExpr) [[unlikely]] {
+            EmitError({.range = arg->nrange, .message = "list element expected"});
+          }
           const InstantiatedType expected_arg_sym{
               .sym = desired_type.sym,
               .restriction = desired_type.restriction,
@@ -1590,6 +1597,7 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, InstantiatedTyp
       if (!(desired_type->Flags() & (semantic::SymbolFlags::kStructural | semantic::SymbolFlags::kList))) {
         //
         resulting_type = &symbols::kTypeError;
+        Introspect(m);
         //
         break;
       }
@@ -1617,6 +1625,9 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, InstantiatedTyp
 
         const auto* element_type_sym = ResolveListElementType(desired_type.sym);
         for (const auto* arg : m->list) {
+          if (arg->nkind == ast::NodeKind::AssignmentExpr) [[unlikely]] {
+            EmitError({.range = arg->nrange, .message = "list element expected"});
+          }
           const InstantiatedType expected_arg_sym{
               .sym = element_type_sym,
               .restriction = desired_type.restriction,
