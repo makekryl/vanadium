@@ -1074,6 +1074,30 @@ class BasicTypeChecker {
       Introspect(n);
     }
   }
+  void ScopedVisit(const ast::nodes::BlockStmt* n) {
+    // TODO: embed into existing ScopedVisitor somehow
+
+    const semantic::Scope* block_scope{nullptr};
+    for (const auto* child_scope : scope_->GetChildren()) {
+      if (child_scope->Container()->Contains(n)) {
+        block_scope = child_scope;
+      }
+    }
+
+    if (!block_scope) [[unlikely]] {
+      return;
+    }
+
+    semantic::InspectScope(
+        block_scope,
+        [&](const semantic::Scope* scope_under_inspection) {
+          scope_ = scope_under_inspection;
+        },
+        [&](const ast::Node* n) {
+          return Inspect(n);
+        },
+        scope_);
+  }
 
   void EnsureIsAType(const semantic::Symbol* sym, const ast::Node* n) {
     if (sym && sym != &symbols::kTypeError && !(sym->Flags() & semantic::SymbolFlags::kType)) {
@@ -1940,7 +1964,7 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
       const auto cond_type = CheckType(m->cond, expected_type);
       MatchTypes(m->cond->nrange, cond_type, expected_type);
 
-      Visit(m->consequent);
+      ScopedVisit(m->consequent);
       if (m->alternate) {
         Visit(m->alternate);
       }
@@ -1957,7 +1981,7 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
       }
 
       if (m->body) [[likely]] {
-        Visit(m->body);
+        ScopedVisit(m->body);
       }
 
       return false;
@@ -1972,7 +1996,7 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
       }
 
       if (m->body) [[likely]] {
-        Visit(m->body);
+        ScopedVisit(m->body);
       }
 
       return false;
@@ -1991,7 +2015,7 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
         Visit(m->post);
       }
       if (m->body) [[likely]] {
-        Visit(m->body);
+        ScopedVisit(m->body);
       }
 
       return false;
@@ -2025,14 +2049,14 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
               });
             }
           }
-          Visit(clause->body);
+          ScopedVisit(clause->body);
         }
       } else if (tag_type->Flags() & semantic::SymbolFlags::kEnum) {
         for (const auto* clause : m->clauses) {
           for (const auto* cond : clause->cond) {
             MatchTypes(cond->nrange, CheckType(cond, tag_type), tag_type);
           }
-          Visit(clause->body);
+          ScopedVisit(clause->body);
         }
       }
 
