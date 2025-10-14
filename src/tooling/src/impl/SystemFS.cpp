@@ -29,7 +29,7 @@ std::string SystemFS::Join(std::string_view base_path, std::string_view path) co
 }
 
 [[nodiscard]] std::string SystemFS::Relative(std::string_view path, std::string_view base_path) const {
-  return std::filesystem::relative(path, base_path).string();
+  return std::filesystem::path(path).lexically_relative(base_path).string();
 }
 
 bool SystemFS::Exists(const std::string &path) const {
@@ -87,7 +87,7 @@ void VisitDirectory(const std::filesystem::path &directory, lib::Consumer<const 
 void SystemFS::VisitFiles(const std::string &path, lib::Consumer<std::string> accept) const {
   const std::filesystem::path base_path(path);
   const auto accept_fwd = [&](const std::filesystem::path &fspath) {
-    accept(std::filesystem::relative(fspath, base_path).string());
+    accept(std::filesystem::path(fspath).lexically_relative(base_path));
   };
   VisitDirectory(base_path, accept_fwd);
 }
