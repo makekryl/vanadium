@@ -1215,12 +1215,19 @@ void BasicTypeChecker::MatchTypes(const ast::Range& range, InstantiatedType actu
 
   if ((real_expected_sym->Flags() & semantic::SymbolFlags::kList) &&
       (actual.sym->Flags() & semantic::SymbolFlags::kList)) {
-    const auto* expected_element_type = ResolveListElementType(real_expected_sym);
-    const auto* actual_element_type = ResolveListElementType(actual.sym);
-    if (actual_element_type == expected_element_type) {
+    const auto* actual_element_sym = ResolveListElementType(actual.sym);
+    const auto* expected_element_sym = ResolveListElementType(real_expected_sym);
+    if (actual_element_sym == expected_element_sym) {
       return;
     }
-    // TODO: deep check the full hierarchy
+    if (actual_element_sym && expected_element_sym) {
+      actual_element_sym = ResolvePotentiallyAliasedType(actual_element_sym);
+      expected_element_sym = ResolvePotentiallyAliasedType(expected_element_sym);
+      if (actual_element_sym == expected_element_sym) {
+        return;
+      }
+    }
+    // TODO: recursive deep check the full hierarchy
   }
 
   EmitError(TypeError{
