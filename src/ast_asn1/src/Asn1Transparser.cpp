@@ -46,8 +46,6 @@ std::pair<ttcn_ast::pos_t, ttcn_ast::pos_t> CalcVerSequenceRange(std::uint32_t N
   pos += (N - power) * (kVerPrefixSize + digits);
   pos += 1;
 
-  pos -= kVerPrefixSize + 1;  // "ver1" is not needed
-
   return std::make_pair(pos, kVerPrefixSize + digits);
 };
 }  // namespace
@@ -64,7 +62,7 @@ std::pair<ttcn_ast::RootNode*, std::string_view> Transparser::ParseRoot() {
     std::ranges::copy(src_, new_src.begin());
 
     auto insertion_point = new_src.begin() + source_len + 1;
-    for (std::uint32_t i = 2; i <= max_ver_; i++) {
+    for (std::uint32_t i = 1; i <= max_ver_; i++) {
       std::ranges::copy(kVerPrefix, insertion_point);
       insertion_point += kVerPrefixSize;
 
@@ -457,6 +455,7 @@ ttcn_ast::nodes::TypeSpec* Transparser::ParseTypeSpec() {
         Expect(TokenKind::OF);
 
         auto* ret = NewNode<ttcn_ast::nodes::ListSpec>([&](ttcn_ast::nodes::ListSpec& ls) {
+          ls.kind = {.kind = ttcn_ast::TokenKind::RECORD};
           ls.elemtype = ParseTypeSpec();
         });
 
