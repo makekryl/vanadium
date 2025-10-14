@@ -1209,7 +1209,7 @@ void BasicTypeChecker::MatchTypes(const ast::Range& range, InstantiatedType actu
   // TODO: read language spec and maybe make something more precise
   const auto* real_expected_sym = ResolvePotentiallyAliasedType(expected.sym);
   actual.sym = ResolvePotentiallyAliasedType(actual.sym);
-  if (real_expected_sym == actual.sym) {
+  if (real_expected_sym == actual.sym || !real_expected_sym || !actual.sym) {
     return;
   }
 
