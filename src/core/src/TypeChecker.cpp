@@ -1754,6 +1754,9 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, InstantiatedTyp
     case ast::NodeKind::FromExpr: {  // TODO: make this more suitable for the "permutation" builtin
       const auto* m = n->As<ast::nodes::FromExpr>();
       resulting_type = CheckType(m->x);
+      if (resulting_type->Flags() & semantic::SymbolFlags::kList) [[likely]] {
+        resulting_type.sym = ResolveListElementType(resulting_type.sym);
+      }
       break;
     }
 
