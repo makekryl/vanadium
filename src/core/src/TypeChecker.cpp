@@ -34,6 +34,9 @@ const semantic::Symbol kVarargsType{
 const semantic::Symbol kAltstepType{
     "<altstep>", nullptr,
     semantic::SymbolFlags::Value(semantic::SymbolFlags::kBuiltinType | semantic::SymbolFlags::kAnonymous)};
+const semantic::Symbol kUncheckedType{
+    "<unchecked>", nullptr,
+    semantic::SymbolFlags::Value(semantic::SymbolFlags::kBuiltinType | semantic::SymbolFlags::kAnonymous)};
 
 const semantic::Symbol kTemplateWildcardType{
     "<*>", nullptr,
@@ -194,6 +197,9 @@ class SelectorExprResolver {
     if (x_sym == &builtins::kAnytype) {
       // TODO: if we get anytype, resolve to any visible type
       return nullptr;
+    }
+    if (x_sym == &symbols::kUncheckedType) {
+      return &symbols::kUncheckedType;
     }
 
     if (x_sym->Flags() & semantic::SymbolFlags::kTemplate) {
@@ -1194,6 +1200,10 @@ void BasicTypeChecker::MatchTypes(const ast::Range& range, const InstantiatedTyp
   if (expected.sym == actual.sym) {
     return;
   }
+  if (actual.sym == &symbols::kUncheckedType) {
+    return;
+  }
+
   // TODO: read language spec and maybe make something more precise
   if (ResolvePotentiallyAliasedType(expected.sym) == ResolvePotentiallyAliasedType(actual.sym)) {
     return;

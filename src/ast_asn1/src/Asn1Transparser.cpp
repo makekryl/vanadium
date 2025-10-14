@@ -31,10 +31,12 @@ namespace parser {
 namespace {
 struct ParsingCancellationSignal {};
 
+constexpr std::string_view kTypeCheckSuppressionIntrinsic{"__unchecked_t"};
+
 constexpr std::string_view kVerPrefix{"ver"};
 constexpr ttcn_ast::pos_t kVerPrefixSize{kVerPrefix.size()};
 std::pair<ttcn_ast::pos_t, ttcn_ast::pos_t> CalcVerSequenceRange(std::uint32_t N) {
-  ttcn_ast::pos_t pos = 0;
+  ttcn_ast::pos_t pos = 1 + kTypeCheckSuppressionIntrinsic.size();
 
   std::uint32_t power = 1;
   std::uint32_t digits = 1;
@@ -44,7 +46,6 @@ std::pair<ttcn_ast::pos_t, ttcn_ast::pos_t> CalcVerSequenceRange(std::uint32_t N
     digits++;
   }
   pos += (N - power) * (kVerPrefixSize + digits);
-  pos += 1;
 
   return std::make_pair(pos, kVerPrefixSize + digits);
 };
@@ -57,11 +58,16 @@ std::pair<ttcn_ast::RootNode*, std::string_view> Transparser::ParseRoot() {
     auto* root = ParseRootInternal();
 
     const auto source_len = src_.length();
-    auto new_src = arena_->AllocStringBuffer(source_len + 1 + CalcVerSequenceRange(max_ver_ + 1).first);
+    auto new_src = arena_->AllocStringBuffer(source_len + 1 + kTypeCheckSuppressionIntrinsic.length() +
+                                             CalcVerSequenceRange(max_ver_ + 1).first);
     new_src[source_len] = 0;
     std::ranges::copy(src_, new_src.begin());
 
     auto insertion_point = new_src.begin() + source_len + 1;
+    //
+    std::ranges::copy(kTypeCheckSuppressionIntrinsic, insertion_point);
+    insertion_point += kTypeCheckSuppressionIntrinsic.size();
+    //
     for (std::uint32_t i = 1; i <= max_ver_; i++) {
       std::ranges::copy(kVerPrefix, insertion_point);
       insertion_point += kVerPrefixSize;
@@ -529,6 +535,10 @@ ttcn_ast::nodes::Field* Transparser::ParseField() {
     } else {
       f.type = NewNode<ttcn_ast::nodes::RefSpec>([&](ttcn_ast::nodes::RefSpec& rs) {
         rs.x = NewNode<ttcn_ast::nodes::Ident>([&](ttcn_ast::nodes::Ident&) {});
+        rs.x->nrange = {
+            .begin = static_cast<ttcn_ast::pos_t>(src_.size() + 1),
+            .end = static_cast<ttcn_ast::pos_t>(src_.size() + 1 + kTypeCheckSuppressionIntrinsic.size()),
+        };
       });
     }
 
