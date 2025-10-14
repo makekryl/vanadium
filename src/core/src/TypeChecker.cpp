@@ -178,7 +178,7 @@ class SelectorExprResolver {
       const auto type = options_.resolve_type(sf_, scope_, se->x);
       x_sym = type.sym;
       restriction_ = type.restriction;
-      mode_static_ = !type.is_instance && x_sym && !bool(x_sym->Flags() & semantic::SymbolFlags::kImportedModule);
+      mode_static_ = !type.is_instance;
 
       if (x_sym) {
         if (const auto* superbase = builtins::GetSuperbase(x_sym); superbase) {
@@ -236,7 +236,8 @@ class SelectorExprResolver {
       return nullptr;
     }
 
-    if (mode_static_ && !(property_sym->Flags() & semantic::SymbolFlags::kVisibilityStatic)) [[unlikely]] {
+    if (mode_static_ && !(x_sym->Flags() & semantic::SymbolFlags::kImportedModule) &&
+        !(property_sym->Flags() & semantic::SymbolFlags::kVisibilityStatic)) [[unlikely]] {
       if (x_sym->Flags() & semantic::SymbolFlags::kStructural) [[likely]] {
         // property_sym.Flags() & semantic::SymbolFlags::kField === true
         const auto* fnode = property_sym->Declaration()->As<ast::nodes::Field>();
@@ -819,16 +820,19 @@ const semantic::Symbol* TryResolveExprSymbolViaHierarchy(const SourceFile* file,
       return nullptr;
   }
 }
+
+const semantic::Symbol* ResolveStructTypeDeclSymbol(const SourceFile* file, const ast::nodes::StructTypeDecl* decl) {
+  if (!decl->name) [[unlikely]] {
+    return nullptr;
+  }
+  return file->module->scope->ResolveDirect(file->Text(*decl->name));
+}
 }  // namespace
 
 const semantic::Symbol* ResolveTypeSpecSymbol(const SourceFile* file, const ast::nodes::TypeSpec* spec) {
   switch (spec->nkind) {
     case ast::NodeKind::StructTypeDecl: {
-      const auto* m = spec->As<ast::nodes::StructTypeDecl>();
-      if (!m->name) [[unlikely]] {
-        return nullptr;
-      }
-      return file->module->scope->ResolveDirect(file->Text(*m->name));
+      return ResolveStructTypeDeclSymbol(file, spec->As<ast::nodes::StructTypeDecl>());
     }
     case ast::NodeKind::RefSpec: {
       const auto* m = spec->As<ast::nodes::RefSpec>();
@@ -939,6 +943,12 @@ InstantiatedType ResolveDeclarationType(const SourceFile* file, const ast::Node*
           .restriction = m->optional ? TemplateRestrictionKind::kOptionalField : TemplateRestrictionKind::kNone,
           .is_instance = true,
           .depth = static_cast<std::uint32_t>(m->arraydef.size()),
+      };
+    }
+    case ast::NodeKind::StructTypeDecl: {
+      return {
+          .sym = ResolveStructTypeDeclSymbol(file, decl->As<ast::nodes::StructTypeDecl>()),
+          .is_instance = false,
       };
     }
     case ast::NodeKind::ClassTypeDecl: {
