@@ -1424,6 +1424,14 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, InstantiatedTyp
       break;
     }
 
+    case ast::NodeKind::ParenExpr: {
+      const auto* m = n->As<ast::nodes::ParenExpr>();
+      if (m->list.size() == 1) [[likely]] {
+        resulting_type = CheckType(m->list.front(), desired_type);
+      }
+      break;
+    }
+
     case ast::NodeKind::UnaryExpr: {
       const auto* m = n->As<ast::nodes::UnaryExpr>();
 
