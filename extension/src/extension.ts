@@ -58,7 +58,7 @@ export async function activate(context: vscode.ExtensionContext) {
         await vscode.window
           .showWarningMessage(
             `You have both the vanadiumd extension and '${conflictingExtension.packageJSON.displayName}' (${conflictingExtension.id}) extension enabled. ` +
-              `Vanadium features conflict with this extension's clangd's code completion, diagnostics etc.`,
+              `Vanadium features conflict with this extension's code completion, diagnostics etc.`,
             { modal: true },
             'Disable the conflicting extension',
             'Suppress'
