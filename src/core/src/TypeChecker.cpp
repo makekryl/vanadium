@@ -695,6 +695,14 @@ InstantiatedType DeduceExpectedType(const SourceFile* file, const semantic::Scop
         break;
       }
 
+      if ((ae->property->nkind == ast::NodeKind::IndexExpr) && (ae->parent->nkind == ast::NodeKind::CompositeLiteral)) {
+        const auto cl_type = DeduceCompositeLiteralType(file, scope, ae->parent->As<ast::nodes::CompositeLiteral>());
+        if (!(cl_type->Flags() & semantic::SymbolFlags::kList)) {
+          return InstantiatedType::None();
+        }
+        return cl_type.Derive(ResolveListElementType(cl_type.sym));
+      }
+
       const auto decl_sym = ResolveAssignmentTarget(file, scope, ae);
       if (!decl_sym) {
         break;
@@ -1579,6 +1587,24 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, InstantiatedTyp
       break;
     }
 
+    case ast::NodeKind::AssignmentExpr: {
+      const auto* m = n->As<ast::nodes::AssignmentExpr>();
+
+      if (m->parent->nkind == ast::NodeKind::CompositeLiteral) {
+        if (m->property->nkind == ast::NodeKind::IndexExpr) {
+          MatchTypes(m->value->nrange, CheckType(m->value, desired_type), desired_type);
+        }
+        Visit(m->value);
+        break;
+      }
+
+      const auto expected_type = CheckType(m->property);
+      const auto actual_type = CheckType(m->value, expected_type);
+      MatchTypes(m->value->nrange, actual_type, expected_type);
+
+      break;
+    }
+
     case ast::NodeKind::CompositeLiteral: {
       const auto* m = n->As<ast::nodes::CompositeLiteral>();
       if (!desired_type) {
@@ -1793,7 +1819,7 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, InstantiatedTyp
     case ast::NodeKind::FromExpr: {  // TODO: make this more suitable for the "permutation" builtin
       const auto* m = n->As<ast::nodes::FromExpr>();
       resulting_type = CheckType(m->x);
-      if (resulting_type->Flags() & semantic::SymbolFlags::kList) [[likely]] {
+      if (resulting_type && (resulting_type->Flags() & semantic::SymbolFlags::kList)) [[likely]] {
         resulting_type.sym = ResolveListElementType(resulting_type.sym);
       }
       break;
@@ -1878,6 +1904,7 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
     case ast::NodeKind::SelectorExpr:
     case ast::NodeKind::IndexExpr:
     case ast::NodeKind::BinaryExpr:
+    case ast::NodeKind::AssignmentExpr:
     case ast::NodeKind::CallExpr: {
       CheckType(n);
       return false;
@@ -2000,21 +2027,6 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
       const auto expected_type = ResolveCallableReturnType(&sf_, fdecl);
       const auto actual_type = CheckType(m->result, expected_type);
       MatchTypes(m->result->nrange, actual_type, expected_type);
-
-      return false;
-    }
-
-    case ast::NodeKind::AssignmentExpr: {
-      const auto* m = n->As<ast::nodes::AssignmentExpr>();
-
-      if (m->parent->nkind == ast::NodeKind::CompositeLiteral) {
-        Visit(m->value);
-        return false;
-      }
-
-      const auto expected_type = CheckType(m->property);
-      const auto actual_type = CheckType(m->value, expected_type);
-      MatchTypes(m->value->nrange, actual_type, expected_type);
 
       return false;
     }
