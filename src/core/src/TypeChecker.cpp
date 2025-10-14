@@ -1077,7 +1077,7 @@ class BasicTypeChecker {
     sf_.type_errors.emplace_back(std::move(err));
   }
 
-  void MatchTypes(const ast::Range& range, const InstantiatedType& actual, const InstantiatedType& expected);
+  void MatchTypes(const ast::Range& range, InstantiatedType actual, const InstantiatedType& expected);
 
   InstantiatedType CheckType(const ast::Node* n, InstantiatedType desired_type = InstantiatedType::None());
   bool Inspect(const ast::Node*);
@@ -1142,13 +1142,11 @@ class BasicTypeChecker {
   const ast::NodeInspector inspector_;
 };
 
-void BasicTypeChecker::MatchTypes(const ast::Range& range, const InstantiatedType& actual_,
-                                  const InstantiatedType& expected) {
+void BasicTypeChecker::MatchTypes(const ast::Range& range, InstantiatedType actual, const InstantiatedType& expected) {
   if (!expected || expected.sym == &symbols::kTypeError || expected.sym == &builtins::kAnytype) {
     return;
   }
 
-  InstantiatedType actual{actual_};  // TODO
   if (actual && actual->Flags() & semantic::SymbolFlags::kTemplate) {
     const auto* file = ast::utils::SourceFileOf(actual->Declaration());
     actual.sym = ResolveCallableReturnType(file, actual->Declaration()->As<ast::nodes::Decl>()).sym;
@@ -1205,8 +1203,20 @@ void BasicTypeChecker::MatchTypes(const ast::Range& range, const InstantiatedTyp
   }
 
   // TODO: read language spec and maybe make something more precise
-  if (ResolvePotentiallyAliasedType(expected.sym) == ResolvePotentiallyAliasedType(actual.sym)) {
+  const auto* real_expected_sym = ResolvePotentiallyAliasedType(expected.sym);
+  actual.sym = ResolvePotentiallyAliasedType(actual.sym);
+  if (real_expected_sym == actual.sym) {
     return;
+  }
+
+  if ((real_expected_sym->Flags() & semantic::SymbolFlags::kList) &&
+      (actual.sym->Flags() & semantic::SymbolFlags::kList)) {
+    const auto* expected_element_type = ResolveListElementType(real_expected_sym);
+    const auto* actual_element_type = ResolveListElementType(actual.sym);
+    if (actual_element_type == expected_element_type) {
+      return;
+    }
+    // TODO: deep check the full hierarchy
   }
 
   EmitError(TypeError{
