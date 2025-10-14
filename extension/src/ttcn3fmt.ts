@@ -1,9 +1,12 @@
 import * as vscode from 'vscode';
 import * as os from 'os';
+import * as fs from 'fs';
 import { execSync, spawnSync } from 'child_process';
 import { logger } from './logger';
 
 const TTCN3FMT_BIN = 'ttcn3fmt';
+
+let ttcn3fmtInvocationCommand!: string;
 
 // https://github.com/prettier/prettier-vscode/blob/ba0c734448feeb7a27a8e48d8c282251141db7b0/src/PrettierEditService.ts#L372C1-L397C4
 function minimalEdit(document: vscode.TextDocument, string1: string) {
@@ -29,12 +32,21 @@ function minimalEdit(document: vscode.TextDocument, string1: string) {
   return vscode.TextEdit.replace(new vscode.Range(pos0, pos1), newText);
 }
 
-export const searchExecutable = (): string | null => {
+export const searchExecutable = (ctx: vscode.ExtensionContext): string | null => {
   if (os.platform() === 'win32') {
     return null;
   }
+
+  const builtinExecutable = `${ctx.extensionPath}/bin/ttcn3fmt`;
+  if (fs.existsSync(builtinExecutable)) {
+    ttcn3fmtInvocationCommand = `${builtinExecutable} -`;
+    return builtinExecutable;
+  }
+
   try {
-    return execSync(`which ${TTCN3FMT_BIN}`).toString().trim();
+    const executablePath = execSync(`which ${TTCN3FMT_BIN}`).toString().trim();
+    ttcn3fmtInvocationCommand = `cat | ${TTCN3FMT_BIN} /dev/stdin`;
+    return executablePath;
   } catch {
     return null;
   }
@@ -48,7 +60,7 @@ export const provideDocumentFormattingEdits = (
   const abortController = new AbortController();
   token.onCancellationRequested(() => abortController.abort());
 
-  const process = spawnSync(`cat | ${TTCN3FMT_BIN} /dev/stdin`, [], {
+  const process = spawnSync(ttcn3fmtInvocationCommand, [], {
     signal: abortController.signal,
     shell: true,
     input: document.getText(),

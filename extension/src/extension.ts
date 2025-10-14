@@ -10,7 +10,7 @@ let lsClient: LsClient | undefined;
 
 export async function activate(context: vscode.ExtensionContext) {
   if (config.get<string>('formattingEngine') === 'ttcn3fmt') {
-    const ttcn3fmtPath = ttcn3fmt.searchExecutable();
+    const ttcn3fmtPath = ttcn3fmt.searchExecutable(context);
     if (ttcn3fmtPath) {
       logger.info(`Using ttcn3fmt found at '${ttcn3fmtPath}'`);
       context.subscriptions.push(
