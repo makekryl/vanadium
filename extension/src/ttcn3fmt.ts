@@ -39,7 +39,7 @@ export const searchExecutable = (ctx: vscode.ExtensionContext): string | null =>
 
   const builtinExecutable = `${ctx.extensionPath}/bin/ttcn3fmt`;
   if (fs.existsSync(builtinExecutable)) {
-    ttcn3fmtInvocationCommand = `${builtinExecutable} -`;
+    ttcn3fmtInvocationCommand = `'${builtinExecutable}' -`;
     return builtinExecutable;
   }
 
