@@ -8,18 +8,34 @@ const charstring __SCOPE___;
 const anytype mtc_, system_;
 external function map_(in anytype a, in anytype b);
 external function unmap_(in anytype a, in anytype b);
+external function connect(in anytype a, in anytype b);
 
 type class Timer {
+  // The __start__ timer operation is used to indicate that a timer shall start running.
   external function start(in float tmo);
+
+  // The __stop__ operation is used to stop a running timer.
   const __operation stop;
-  const __operation timeout;
+
+  // The __read__ operation is used to retrieve the time that has elapsed since the specified timer was started.
+  const float read;
+
+  // The __running__ timer operation is used to check whether a timer is in the running-timer list.
   const boolean running;
+
+  // The __timeout__ operation allows to check the expiration of timers.
+  const __operation timeout;
 }
 
 type class PortSuperbase {
+  // The __send__ operation is used to place a message on an outgoing message port.
   external function send(in anytype msg);
+
+  // The __receive__ operation is used to receive a message from an incoming message port queue.
   external function receive(in anytype msg);
-  const __operation trigger;
+
+  // The __trigger__ operation is used to await a specific message on an incoming port queue.
+  external function trigger(in anytype msg);
 }
 
 type class ComponentSuperbase {
