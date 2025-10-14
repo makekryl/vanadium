@@ -1896,6 +1896,7 @@ nodes::Expr* Parser::ParsePostfixExpr() {
       pe.x = px;
       pe.op = Consume();
     });
+    x->nrange.begin = x->As<nodes::PostExpr>()->x->nrange.begin;
   }
 
   if (tok_ == TokenKind::LENGTH) {
@@ -1907,6 +1908,7 @@ nodes::Expr* Parser::ParsePostfixExpr() {
       ue.op = Consume();
       ue.x = px;
     });
+    x->nrange.begin = x->As<nodes::UnaryExpr>()->x->nrange.begin;
   }
 
   if (tok_ == TokenKind::TO || tok_ == TokenKind::FROM) {
@@ -1915,6 +1917,7 @@ nodes::Expr* Parser::ParsePostfixExpr() {
       be.op = Consume();
       be.y = ParseExpr();
     });
+    x->nrange.begin = x->As<nodes::BinaryExpr>()->x->nrange.begin;
   }
 
   if (tok_ == TokenKind::REDIR) {
@@ -1927,6 +1930,7 @@ nodes::Expr* Parser::ParsePostfixExpr() {
       Consume();
       ve.y = ParseExpr();
     });
+    x->nrange.begin = x->As<nodes::ValueExpr>()->x->nrange.begin;
   }
 
   if (tok_ == TokenKind::PARAM) {
@@ -1935,6 +1939,7 @@ nodes::Expr* Parser::ParsePostfixExpr() {
       Consume();
       pe.y = ParseParenExpr();
     });
+    x->nrange.begin = x->As<nodes::ParamExpr>()->x->nrange.begin;
   }
 
   if (tok_ == TokenKind::ALIVE) {
@@ -1942,6 +1947,7 @@ nodes::Expr* Parser::ParsePostfixExpr() {
       ue.op = Consume();
       ue.x = px;
     });
+    x->nrange.begin = x->As<nodes::UnaryExpr>()->x->nrange.begin;
   }
 
   return x;
@@ -1980,10 +1986,12 @@ nodes::Expr* Parser::ParseUnaryExpr() {
             break;
         }
       }
-      return NewNode<nodes::UnaryExpr>([&](auto& ue) {
+      auto* r = NewNode<nodes::UnaryExpr>([&](auto& ue) {
         ue.op = tok;
         ue.x = ParseUnaryExpr();
       });
+      r->nrange.begin = r->As<nodes::UnaryExpr>()->op.range.begin;
+      return r;
     }
 
     case TokenKind::COLONCOLON: {
