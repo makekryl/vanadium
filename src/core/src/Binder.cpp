@@ -22,7 +22,7 @@ namespace semantic {
 
 class ExternalsTracker {
  public:
-  ExternalsTracker() : active_(&primary_) {}
+  ExternalsTracker() : active_(&secondary_) {}
 
   ModuleExternals Build() {
     ModuleExternals result{
@@ -538,7 +538,10 @@ bool Binder::Inspect(const ast::Node* n) {
     case ast::NodeKind::StructTypeDecl: {
       const auto* m = n->As<ast::nodes::StructTypeDecl>();
 
-      auto& members = BindFields(m->fields);
+      SymbolTable* members;
+      externals_.With(externals_.Primary(), [&] {
+        members = &BindFields(m->fields);
+      });
 
       SymbolFlags::Value flags = SymbolFlags::kStructuralType;
       if (m->kind.kind == ast::TokenKind::UNION) {
@@ -550,7 +553,7 @@ bool Binder::Inspect(const ast::Node* n) {
             Lit(std::addressof(*m->name)),
             m,
             flags,
-            &members,
+            members,
         });
         // TODO
       }
@@ -561,7 +564,9 @@ bool Binder::Inspect(const ast::Node* n) {
     case ast::NodeKind::PortTypeDecl: {
       const auto* m = n->As<ast::nodes::PortTypeDecl>();
 
-      Visit(m->attrs);
+      externals_.With(externals_.Primary(), [&] {
+        Visit(m->attrs);
+      });
 
       if (m->name) {
         AddSymbol({
@@ -598,7 +603,9 @@ bool Binder::Inspect(const ast::Node* n) {
 
       auto* originated_scope = Scoped(m, [&] {
         const auto bindf = [&] {
-          MaybeVisit(m->params);
+          externals_.With(externals_.Primary(), [&] {
+            MaybeVisit(m->params);
+          });
           MaybeVisit(m->body);
         };
         if (m->runs_on) {
@@ -664,7 +671,9 @@ bool Binder::Inspect(const ast::Node* n) {
 
       Visit(m->type);
       auto* originated_scope = Scoped(m, [&] {
-        MaybeVisit(m->params);  // really maybe?
+        externals_.With(externals_.Primary(), [&] {
+          MaybeVisit(m->params);
+        });
         const auto process = [&] {
           Visit(m->value);
         };
@@ -737,7 +746,9 @@ bool Binder::Inspect(const ast::Node* n) {
       const auto* m = n->As<ast::nodes::SubTypeDecl>();
 
       const auto* field = m->field;
-      Visit(field->type);
+      externals_.With(externals_.Primary(), [&] {
+        Visit(field->type);
+      });
       Visit(field->arraydef);
       MaybeVisit(field->pars);
       MaybeVisit(field->value_constraint);
