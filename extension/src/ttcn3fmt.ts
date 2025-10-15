@@ -79,5 +79,11 @@ export const provideDocumentFormattingEdits = (
     return [];
   }
 
-  return [minimalEdit(document, process.stdout.toString())];
+  const formattedDocumentText = process.stdout.toString();
+  if (formattedDocumentText.length === 0) {
+    logger.warn('ttcn3fmt has produced empty result, ignoring it');
+    return [];
+  }
+
+  return [minimalEdit(document, formattedDocumentText)];
 };
