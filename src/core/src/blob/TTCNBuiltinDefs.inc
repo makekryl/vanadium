@@ -5,6 +5,8 @@ module LanguageBuiltins {
 
 const charstring __SCOPE___;
 
+const __unchecked_t NULL;
+
 const anytype mtc_, system_;
 external function map_(in anytype a, in anytype b);
 external function unmap_(in anytype a, in anytype b);
