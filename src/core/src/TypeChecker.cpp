@@ -1509,6 +1509,11 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, InstantiatedTyp
       }
 
       switch (m->op.kind) {
+        case ast::TokenKind::COLON: {  // Type:Value
+          match_both(x_type.sym);
+          resulting_type.restriction = desired_type.restriction;
+          break;
+        }
         case ast::TokenKind::EQ:
         case ast::TokenKind::NE: {
           match_both(x_type.sym);
