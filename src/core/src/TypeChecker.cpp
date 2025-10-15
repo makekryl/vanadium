@@ -654,7 +654,8 @@ InstantiatedType DeduceCompositeLiteralType(const SourceFile* file, const semant
 
       return ResolveExprType(params_file, params_file->module->scope, param->type);
     }
-    case ast::NodeKind::Declarator: {
+    case ast::NodeKind::Declarator:
+    case ast::NodeKind::FormalPar: {
       return ResolveDeclarationType(file, n->parent);
     }
     case ast::NodeKind::TemplateDecl: {
