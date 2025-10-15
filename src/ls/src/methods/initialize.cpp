@@ -105,7 +105,7 @@ rpc::ExpectedResult<lsp::InitializeResult> methods::initialize::operator()(LsCon
       .serverInfo =
           lsp::ServerInfo{
               .name = "vanadiumd",
-              .version = "0.0.0.5",
+              .version = "0.0.1.0",
           },
   };
 }
