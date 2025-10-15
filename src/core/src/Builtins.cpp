@@ -105,6 +105,16 @@ const semantic::Scope* const kBuiltinsScope = [] {
         });
         return false;
       }
+      case ast::NodeKind::ConstructorDecl: {
+        const auto* m = n->As<ast::nodes::ConstructorDecl>();
+        scope->symbols.Add({
+            "create",
+            m,
+            semantic::SymbolFlags::Value(semantic::SymbolFlags::kFunction | semantic::SymbolFlags::kVisibilityStatic |
+                                         semantic::SymbolFlags::kBuiltin),
+        });
+        return false;
+      }
       case ast::NodeKind::ValueDecl: {
         const auto* m = n->As<ast::nodes::ValueDecl>();
         for (const auto* d : m->decls) {
@@ -162,11 +172,6 @@ const semantic::Scope* const kBuiltinsScope = [] {
           if (name == "PortSuperbase") {
             superbases.kPort = sym;
           } else if (name == "ComponentSuperbase") {
-            scope->symbols.Add({
-                "create",
-                m,
-                semantic::SymbolFlags::kBuiltin,
-            });
             superbases.kComponent = sym;
           } else {
             std::println(stderr, "Builtin definitions module has unknown class: {}", name);

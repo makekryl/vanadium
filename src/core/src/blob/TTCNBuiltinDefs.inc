@@ -40,7 +40,7 @@ type class PortSuperbase {
 
 type class ComponentSuperbase {
   // The __create__ operation is used to create test components.
-  external function create_(in anytype par);
+  create(in anytype par) {}
 
   // The __start__ operation is used to associate a test behaviour to a test component, which is then being executed by that test component.
   external function start(in anytype exec);
