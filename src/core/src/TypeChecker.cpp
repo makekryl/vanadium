@@ -1282,7 +1282,9 @@ void BasicTypeChecker::CheckArguments(std::span<const ast::nodes::Expr* const> a
   const auto check_argument = [&](const TParamDescriptorNode* param, const ast::Node* n) {
     const auto expected_type = [&] -> InstantiatedType {
       if constexpr (std::is_same_v<TParamDescriptorNode, ast::nodes::Field>) {
-        return ResolveDeclarationType(params_file, param);
+        auto restype = ResolveDeclarationType(params_file, param);
+        restype.restriction |= inherited_restriction_kind;
+        return restype;
       } else if constexpr (std::is_same_v<TParamDescriptorNode, ast::nodes::FormalPar>) {
         auto restype = ResolveDeclarationType(params_file, param);
         if (restype.sym == &symbols::kInferType) {
