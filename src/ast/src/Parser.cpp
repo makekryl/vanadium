@@ -214,6 +214,10 @@ RootNode* Parser::ParseRoot() {
       root.nodes.push_back(node);
       if (tok_ != TokenKind::kEOF && !kTokTopLevel.contains(tok_)) {
         EmitError(Peek(1).range, std::format("unexpected '{}' token", magic_enum::enum_name(tok_)));
+        while (scanner_.Scan().kind != TokenKind::kEOF) {
+          // eat all tokens to calculate remaining line offsets
+          ;
+        }
         break;
       }
       if (tok_ == TokenKind::COMMA || tok_ == TokenKind::SEMICOLON) {
