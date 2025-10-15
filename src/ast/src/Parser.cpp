@@ -976,14 +976,19 @@ nodes::ListSpec* Parser::ParseListSpec() {
     if (tok_ == TokenKind::LENGTH) {
       ls.length = ParseLengthExpr(nullptr);
     }
-    Expect(TokenKind::OF);
-    ls.elemtype = ParseTypeSpec();
+    if (tok_ == TokenKind::OF) [[likely]] {
+      Expect(TokenKind::OF);
+      ls.elemtype = ParseTypeSpec();
+    } else {
+      Expect(TokenKind::OF);
+      ls.elemtype = NewErrorNode<nodes::TypeSpec>();
+    }
   });
 }
 
 nodes::BehaviourSpec* Parser::ParseBehaviourSpec() {
   return NewNode<nodes::BehaviourSpec>([&](auto& bs) {
-    Consume();  // KindTok
+    bs.kind = Consume();
     if (tok_ == TokenKind::LPAREN) [[likely]] {
       bs.params = ParseFormalPars();
     } else {
