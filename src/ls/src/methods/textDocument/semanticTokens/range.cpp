@@ -110,6 +110,9 @@ void HighlightIdent(const core::SourceFile* file, const core::semantic::Scope* s
       if (sym->Flags() & core::semantic::SymbolFlags::kType) {
         return {lsp::SemanticTokenTypes::kType, lsp::SemanticTokenModifiers::kUnset};
       }
+      if (sym->Flags() & core::semantic::SymbolFlags::kImportedModule) {
+        return {lsp::SemanticTokenTypes::kNamespace, lsp::SemanticTokenModifiers::kUnset};
+      }
 
       // regexp lol todo
       return {lsp::SemanticTokenTypes::kRegexp, lsp::SemanticTokenModifiers::kUnset};
@@ -158,10 +161,6 @@ lsp::SemanticTokens CollectSemanticTokens(const lsp::SemanticTokensRangeParams& 
       switch (n->nkind) {
         case core::ast::NodeKind::Ident: {
           HighlightIdent(&file, scope, n->As<core::ast::nodes::Ident>(), write_token);
-          return false;
-        }
-        case core::ast::NodeKind::SelectorExpr: {
-          core::ast::utils::TraverseSelectorExpressionStart(n->As<core::ast::nodes::SelectorExpr>())->Accept(self);
           return false;
         }
         default: {
