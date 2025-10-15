@@ -83,8 +83,13 @@ std::string_view Suborder(lib::Arena& arena, std::string_view s1, std::string_vi
 
 void CollectVisibleSymbols(CompletionContext& ctx, std::string_view order) {
   const auto bring_symbols = [&](const core::semantic::SymbolTable& symbols, std::string_view s_order,
+                                 core::semantic::SymbolFlags::Value blacklisted_symbols =  // todo(!!!): reorganize
+                                 core::semantic::SymbolFlags::kNone,
                                  std::optional<std::string_view> description = std::nullopt) {
     for (const auto& [name, sym] : symbols.Enumerate()) {
+      if (sym.Flags() & blacklisted_symbols) {
+        continue;
+      }
       ctx.items.emplace_back(lsp::CompletionItem{
           .label = name,
           .labelDetails =
@@ -118,7 +123,8 @@ void CollectVisibleSymbols(CompletionContext& ctx, std::string_view order) {
         }
       }
 
-      bring_symbols(*t, Suborder(ctx.arena, order, ks_order, std::to_string(i++)), description);
+      bring_symbols(*t, Suborder(ctx.arena, order, ks_order, std::to_string(i++)),
+                    core::semantic::SymbolFlags::kImportedModule, description);
     }
   };
 
@@ -200,6 +206,24 @@ lsp::CompletionList CollectCompletions(const lsp::CompletionParams& params, cons
       //             .newText = *d.arena.Alloc<std::string>(std::format("lengthof({})", file.Text(n))),
       //         },
       // });
+    } else if (sym->Flags() & core::semantic::SymbolFlags::kImportedModule) {
+      // TODO REWRITE THIS ALL
+      const auto* tgt_module = file.program->GetModule(sym->GetName());
+      if (tgt_module) {
+        for (const auto& [name, msym] : tgt_module->scope->symbols.Enumerate()) {
+          // TODO: unify, reduce code
+          if (msym.Flags() & core::semantic::SymbolFlags::kImportedModule) {
+            continue;
+          }
+          // TODO: show type
+          items.emplace_back(lsp::CompletionItem{
+              .label = name,
+              .kind = LspSymbolKind(msym),
+              .sortText = "0",
+              .insertText = name,
+          });
+        }
+      }
     }
     return completion_list;  // todo: extract filler to separate func
   }
@@ -235,7 +259,7 @@ lsp::CompletionList CollectCompletions(const lsp::CompletionParams& params, cons
               .label = mod.name,
               .kind = lsp::CompletionItemKind::kModule,
               .detail = mod.sf->path,
-              .sortText = "0",
+              .sortText = "7",
           });
         }
         return true;
@@ -326,7 +350,7 @@ lsp::CompletionList CollectCompletions(const lsp::CompletionParams& params, cons
           .label = sym.GetName(),
           .kind = LspSymbolKind(sym),
           .detail = module.name,
-          .sortText = "2",
+          .sortText = "4",
           // TODO: find a way to have strongly-typed 'data' on both ends (maybe modify lspgen to produce templates,
           // exposing internal payload structure to the higher levels does not sounds good though - and it will be
           // required to do in such case)
