@@ -326,6 +326,8 @@ external function oct2unichar(
 	in charstring string_encoding := "UTF-8"
 ) return universal charstring
 
+external function str2bit(in charstring invalue) return bistring
+
 /*
 The __str2int__ function converts a __charstring__ representing an __integer__ value to the equivalent integer.
 Error causes are:
@@ -917,6 +919,8 @@ function generate() return RoI {
 ```
 */
 external function permutation(in anytype v) return __infer_arg_t
+
+external function subset(in anytype v) return __infer_arg_t
 
 
 /*

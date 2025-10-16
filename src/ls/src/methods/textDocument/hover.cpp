@@ -438,6 +438,9 @@ lsp::HoverResult ProvideHover(const lsp::HoverParams& params, const core::Source
       if (sym->Flags() & core::semantic::SymbolFlags::kEnumMember) {
         std::string_view enum_name;
         const auto* parent = decl->parent;
+        if (parent->nkind == core::ast::NodeKind::CallExpr) {
+          parent = parent->parent;
+        }
         switch (parent->nkind) {
           case core::ast::NodeKind::EnumTypeDecl: {
             enum_name = provider_file->Text(*parent->As<core::ast::nodes::EnumTypeDecl>()->name);

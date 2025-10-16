@@ -138,7 +138,7 @@ void Transparser::RewriteIdentName(Token& tok) {
         *mut_v.end() = '_';
         ++tok.range.end;
       };
-      if ("message" == tok.On(src_) || "value" == tok.On(src_)) {
+      if ("message" == tok.On(src_) || "value" == tok.On(src_) || "infinity" == tok.On(src_) || "on" == tok.On(src_)) {
         insert_underscore_suffix();
         break;
       }
