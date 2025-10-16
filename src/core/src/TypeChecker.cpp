@@ -186,6 +186,8 @@ class SelectorExprResolver {
       if (x_sym) {
         if (const auto* superbase = builtins::GetSuperbase(x_sym); superbase) {
           x_sym = superbase;
+        } else {
+          x_sym = ResolvePotentiallyAliasedType(x_sym);
         }
       }
     }
@@ -656,15 +658,30 @@ InstantiatedType DeduceCompositeLiteralType(const SourceFile* file, const semant
     }
     case ast::NodeKind::Declarator:
     case ast::NodeKind::FormalPar: {
-      return ResolveDeclarationType(file, n->parent);
+      // TODO: remove duplication
+      auto restype = ResolveDeclarationType(file, n->parent);
+      if (restype && (restype->Flags() & semantic::SymbolFlags::kSubtype)) {
+        restype.sym = ResolveAliasedType(restype.sym);
+      }
+      return restype;
     }
     case ast::NodeKind::TemplateDecl: {
-      return ResolveCallableReturnType(file, n->parent->As<ast::nodes::TemplateDecl>());
+      // TODO: remove duplication
+      auto restype = ResolveCallableReturnType(file, n->parent->As<ast::nodes::TemplateDecl>());
+      if (restype && (restype->Flags() & semantic::SymbolFlags::kSubtype)) {
+        restype.sym = ResolveAliasedType(restype.sym);
+      }
+      return restype;
     }
     case ast::NodeKind::ReturnStmt: {
       const auto* rs = n->parent->As<ast::nodes::ReturnSpec>();
       const auto* decl = ast::utils::GetPredecessor<ast::nodes::FuncDecl>(rs);
-      return ResolveCallableReturnType(file, decl);
+      // TODO: remove duplication
+      auto restype = ResolveCallableReturnType(file, decl);
+      if (restype && (restype->Flags() & semantic::SymbolFlags::kSubtype)) {
+        restype.sym = ResolveAliasedType(restype.sym);
+      }
+      return restype;
     }
     default:
       return InstantiatedType::None();
