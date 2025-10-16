@@ -81,6 +81,10 @@ int main(int argc, char* argv[]) {
 
     const auto& program = project.program;
     for (const auto& [virtual_path, sf] : program.Files()) {
+      if (sf.path.ends_with(".asn")) {
+        continue;
+      }
+
       fmt::print(fmt::emphasis::underline | fmt::emphasis::bold, "{}\n", project.Directory().Join(sf.path));
       if (!sf.ast.errors.empty()) {
         fmt::println("\tFile has syntax errors");
