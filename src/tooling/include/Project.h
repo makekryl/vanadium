@@ -29,6 +29,7 @@ struct ProjectManifest {
     std::string name;
     std::optional<std::vector<std::string>> references;
     std::optional<std::vector<std::string>> subprojects;
+    std::optional<std::vector<std::string>> search_paths;
   } project;
 
   std::optional<std::unordered_map<std::string, ExternalProjectDescriptor>> external;

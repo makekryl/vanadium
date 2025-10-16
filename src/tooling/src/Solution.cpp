@@ -13,10 +13,10 @@ Solution::Solution(Project&& root_project) : root_project_(std::move(root_projec
 
 namespace {
 void InitSubproject(const Solution& solution, SolutionProject& subproject) {
-  const auto& dir = subproject.project.Directory();
-  if (!dir.Exists()) {
+  const auto& project_dir = subproject.project.Directory();
+  if (!project_dir.Exists()) {
     // TODO
-    std::println(stderr, "Project directory does not exist: '{}'", dir.base_path);
+    std::println(stderr, "Project directory does not exist: '{}'", project_dir.base_path);
     return;
   }
 
@@ -35,16 +35,27 @@ void InitSubproject(const Solution& solution, SolutionProject& subproject) {
   };
 
   subproject.program.Update([&](const core::Program::ProgramModifier& modify) {
-    dir.VisitFiles([&](const std::string& filepath) {
-      if (!filepath.ends_with(".ttcn") && !filepath.ends_with(".asn")) {
-        return;
+    const auto scan_dir = [&](const fs::Path& dir) {
+      dir.VisitFiles([&](const std::string& filepath) {
+        if (!filepath.ends_with(".ttcn") && !filepath.ends_with(".asn")) {
+          return;
+        }
+        if (filepath.contains("stubs")) {
+          // TODO: home hack
+          return;
+        }
+        modify.update(dir.fs->Relative(dir.Join(filepath), solution.Directory().base_path), read_file);
+      });
+    };
+    scan_dir(project_dir);
+    if (const auto& search_paths = subproject.project.Manifest().project.search_paths; search_paths) {
+      for (const auto& search_path : *search_paths) {
+        const auto additional_dir = project_dir.Resolve(search_path);
+        if (additional_dir.Exists()) {
+          scan_dir(additional_dir);
+        }
       }
-      if (filepath.contains("stubs")) {
-        // TODO: home hack
-        return;
-      }
-      modify.update(dir.fs->Relative(dir.Join(filepath), solution.Directory().base_path), read_file);
-    });
+    }
   });
 }
 }  // namespace
