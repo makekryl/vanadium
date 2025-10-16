@@ -6,11 +6,16 @@
 #include "LanguageServerContext.h"
 #include "LanguageServerLogger.h"
 #include "LanguageServerMethods.h"
+#include "LanguageServerTestFlags.h"
 #include "Program.h"
 #include "Solution.h"
 #include "impl/SystemFS.h"
 
 namespace vanadium::ls {
+
+namespace testflags {
+bool do_not_skip_full_analysis{false};
+}
 
 template <>
 rpc::ExpectedResult<lsp::InitializeResult> methods::initialize::operator()(LsContext& ctx,
@@ -28,6 +33,9 @@ rpc::ExpectedResult<lsp::InitializeResult> methods::initialize::operator()(LsCon
     const auto manifest_path = root_directory / tooling::Project::kManifestFilename;
     if (std::filesystem::exists(manifest_path)) {
       const auto precommit = [&](tooling::Solution& solution) {
+        if (testflags::do_not_skip_full_analysis) {
+          return;
+        }
         for (auto& proj : solution.Projects()) {
           for (const auto& file : proj.program.Files() | std::views::values) {
             const_cast<core::SourceFile&>(file).skip_analysis = true;

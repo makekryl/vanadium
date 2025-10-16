@@ -10,6 +10,7 @@
 #include "Bootstrap.h"
 #include "LSTransport.h"
 #include "LanguageServer.h"
+#include "LanguageServerTestFlags.h"
 
 class OutputCapturingTransport : public vanadium::lserver::Transport {
  public:
@@ -57,6 +58,7 @@ int main(int argc, char* argv[]) {
   //
   ap.add_argument("--wait-dbg").flag();
   ap.add_argument("--capture-output").flag();
+  ap.add_argument("--full-analysis").flag();
 
   /////////////////////////////////////////////
   try {
@@ -72,6 +74,11 @@ int main(int argc, char* argv[]) {
     constexpr auto kSecondsToWait{12};
     std::println(stderr, "\nWaiting {} seconds for debugger to attach...\n", kSecondsToWait);
     std::this_thread::sleep_for(std::chrono::seconds(kSecondsToWait));
+  }
+
+  if (ap.get<bool>("--full-analysis")) {
+    std::println(stderr, "\nWARN: Full analysis mode is enabled\n");
+    vanadium::ls::testflags::do_not_skip_full_analysis = true;
   }
 
   vanadium::lserver::StdioTransport::Setup();
