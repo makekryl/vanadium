@@ -67,10 +67,10 @@ export const provideDocumentFormattingEdits = (
     timeout: 5000,
   });
 
-  if (process.status !== 0) {
+  const errout = process.stderr.toString();
+  if (process.status !== 0 || errout.length !== 0) {
     logger.warn(
-      `Failed to format code using ttcn3fmt (${process.status}):\n${process.stderr
-        .toString()
+      `Failed to format code using ttcn3fmt (${process.status}):\n${errout
         .trim()
         .split('\n')
         .map((line) => ` [ttcn3fmt] ${line}`)
