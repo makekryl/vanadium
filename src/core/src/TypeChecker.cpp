@@ -1646,6 +1646,10 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, InstantiatedTyp
       //
 
       desired_type.sym = ResolvePotentiallyAliasedType(desired_type.sym);
+      if (!desired_type) {  // todo: this was a quick fix.
+        Introspect(m);
+        break;
+      }
 
       if (desired_type.depth > 0) {
         for (const auto* arg : m->list) {
