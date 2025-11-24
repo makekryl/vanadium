@@ -18,4 +18,4 @@ enable_testing()
 add_subdirectory(lib)
 add_subdirectory(src)
 add_subdirectory(bin)
-
+add_subdirectory(test)

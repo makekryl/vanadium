@@ -1,0 +1,11 @@
+module Scopes:
+  7:20: unresolved symbol 'a'
+  13:8: unresolved symbol 'c'
+  16:5: unresolved symbol 'b'
+  21:8: unresolved symbol 'b'
+  22:3: unresolved symbol 'b'
+  26:20: unresolved symbol 'i'
+  32:8: unresolved symbol 'c'
+  35:5: unresolved symbol 'j'
+  40:8: unresolved symbol 'j'
+  41:3: unresolved symbol 'j'

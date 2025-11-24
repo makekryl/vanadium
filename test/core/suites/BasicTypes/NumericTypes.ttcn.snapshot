@@ -1,0 +1,13 @@
+module NumericTypes:
+  7:21: expected value of type 'integer', got 'float'
+  8:19: expected value of type 'float', got 'integer'
+  24:12: expected value of type 'integer', got 'float'
+  25:12: expected value of type 'float', got 'integer'
+  27:12: expected value of type 'integer', got 'float'
+  28:12: expected value of type 'float', got 'integer'
+  30:12: expected value of type 'integer', got 'float'
+  31:12: expected value of type 'float', got 'integer'
+  33:12: expected value of type 'integer', got 'float'
+  34:12: expected value of type 'float', got 'integer'
+  38:8: expected value of type 'integer', got 'float'
+  39:8: expected value of type 'float', got 'integer'

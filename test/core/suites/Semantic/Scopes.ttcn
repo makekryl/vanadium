@@ -1,0 +1,44 @@
+module Scopes {
+
+const integer c_i := c_j;
+const integer c_j := c_i;
+
+function fn1() {
+  var integer x := a;
+  x := c_i;
+  x := c_j;
+
+  var integer a;
+  a := 1;
+  a := c;
+
+  {
+    b := a;
+    var integer b := a;
+    b := a;
+  }
+
+  a := b;
+  b := a;
+}
+
+function fn2() {
+  var integer x := i;
+  x := c_i;
+  x := c_j;
+
+  var integer i;
+  i := 1;
+  i := c;
+
+  {
+    j := i;
+    var integer j := i;
+    j := i;
+  }
+
+  i := j;
+  j := i;
+}
+
+}
