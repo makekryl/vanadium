@@ -93,10 +93,12 @@ int main(int argc, char* argv[]) {
         continue;
       }
 
-      const auto& test_name = test_file.path().filename().string();
-      if (!test_name.ends_with(".ttcn")) {
+      constexpr std::string_view kFilenameExtension{".ttcn"};
+      auto test_name = test_file.path().filename().string();
+      if (!test_name.ends_with(kFilenameExtension)) {
         continue;
       }
+      test_name = test_name.substr(0, test_name.length() - kFilenameExtension.length());
 
       vanadium::testing::gtest::RegisterSingleTest(
           suite_name.c_str(), test_name.c_str(), [suite_dir, test_file]() -> ::testing::Test* {

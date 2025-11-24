@@ -1,8 +1,22 @@
 module ListElementTypeInference:
   51:7: type 'record TheRecord' is not subscriptable
+      var TheRecord[-] cannotDoThatWithNonListType;  // EXPECT_ERROR
+          ~~~~~~~~~                                                 
   52:7: type 'record TheRecord' is not subscriptable
+      var RoTheRecord[-][-] cannotDoThatListIs1D;  // EXPECT_ERROR
+          ~~~~~~~~~~~~~~                                          
   54:56: property 'y' does not exist on type 'record TheRecord'
+      var RoTheRecord[-] badCompositeLiteralArguments := { y := 1 };  // EXPECT_ERROR
+                                                           ~                         
   55:32: property 'y' does not exist on type 'record TheRecord'
+      badCompositeLiteralArguments.y;  // EXPECT_ERROR
+                                   ~                  
   59:11: expected value of type 'record of TheRecord', got 'record TheRecord'
+      list := inferred;  // cannot assign T to T[]  // EXPECT_ERROR
+              ~~~~~~~~                                             
   60:15: expected value of type 'record TheRecord', got 'record of TheRecord'
+      inferred := list  // cannot assign T[] to T  // EXPECT_ERROR
+                  ~~~~                                            
   62:7: 'list' is not a type reference
+      var list[-] expectedTypeInsteadOfVariable;  // EXPECT_ERROR
+          ~~~~                                                   

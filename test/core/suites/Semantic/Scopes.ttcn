@@ -4,41 +4,41 @@ const integer c_i := c_j;
 const integer c_j := c_i;
 
 function fn1() {
-  var integer x := a;
+  var integer x := a;  // EXPECT_ERROR
   x := c_i;
   x := c_j;
 
   var integer a;
   a := 1;
-  a := c;
+  a := c;  // EXPECT_ERROR
 
   {
-    b := a;
+    b := a;  // EXPECT_ERROR
     var integer b := a;
     b := a;
   }
 
-  a := b;
-  b := a;
+  a := b;  // EXPECT_ERROR
+  b := a;  // EXPECT_ERROR
 }
 
 function fn2() {
-  var integer x := i;
+  var integer x := i;  // EXPECT_ERROR
   x := c_i;
   x := c_j;
 
   var integer i;
   i := 1;
-  i := c;
+  i := c;  // EXPECT_ERROR
 
   {
-    j := i;
+    j := i;  // EXPECT_ERROR
     var integer j := i;
     j := i;
   }
 
-  i := j;
-  j := i;
+  i := j;  // EXPECT_ERROR
+  j := i;  // EXPECT_ERROR
 }
 
 }

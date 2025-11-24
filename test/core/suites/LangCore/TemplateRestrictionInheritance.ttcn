@@ -109,14 +109,14 @@ function invalid() {
         b := {
           roc := {
             vC,
-            tC
+            tC  // EXPECT_ERROR
           }
         }
       }
     }
     roa[0].b.roc := {
       vC,
-      tC
+      tC  // EXPECT_ERROR
     };
   }
 
@@ -125,21 +125,21 @@ function invalid() {
     var RoA roa := {
       {
         b := {
-          roc := tRoC
+          roc := tRoC  // EXPECT_ERROR
         }
       }
     }
-    roa[0].b.roc := tRoC;
+    roa[0].b.roc := tRoC;  // EXPECT_ERROR
   }
 
   {
     var template B tB;
     var RoA roa := {
       {
-        b := tB
+        b := tB  // EXPECT_ERROR
       }
     }
-    roa[0].b := tB;
+    roa[0].b := tB;  // EXPECT_ERROR
   }
 
   {
@@ -147,7 +147,7 @@ function invalid() {
     var template A tA;
     var RoA roa := {
       vA,
-      tA
+      tA  // EXPECT_ERROR
     }
   }
 }

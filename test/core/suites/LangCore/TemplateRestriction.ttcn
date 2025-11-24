@@ -13,9 +13,9 @@ function correct() {
 function invalid() {
   var integer x;
 
-  x := omit;
-  x := *;
-  x := ?;
+  x := omit;  // EXPECT_ERROR
+  x := *;  // EXPECT_ERROR
+  x := ?;  // EXPECT_ERROR
 }
 
 }

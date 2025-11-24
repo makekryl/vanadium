@@ -1,8 +1,22 @@
 module TemplateRestrictionInheritance:
   112:13: expected value, got template
+                tC  // EXPECT_ERROR
+                ~~                 
   119:7: expected value, got template
+          tC  // EXPECT_ERROR
+          ~~                 
   128:18: expected value, got template
+              roc := tRoC  // EXPECT_ERROR
+                     ~~~~                 
   132:21: expected value, got template
+        roa[0].b.roc := tRoC;  // EXPECT_ERROR
+                        ~~~~                  
   139:14: expected value, got template
+            b := tB  // EXPECT_ERROR
+                 ~~                 
   142:17: expected value, got template
+        roa[0].b := tB;  // EXPECT_ERROR
+                    ~~                  
   150:7: expected value, got template
+          tA  // EXPECT_ERROR
+          ~~                 

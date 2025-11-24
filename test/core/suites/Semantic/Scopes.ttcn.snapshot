@@ -1,11 +1,31 @@
 module Scopes:
   7:20: unresolved symbol 'a'
+      var integer x := a;  // EXPECT_ERROR
+                       ~                  
   13:8: unresolved symbol 'c'
+      a := c;  // EXPECT_ERROR
+           ~                  
   16:5: unresolved symbol 'b'
+        b := a;  // EXPECT_ERROR
+        ~                       
   21:8: unresolved symbol 'b'
+      a := b;  // EXPECT_ERROR
+           ~                  
   22:3: unresolved symbol 'b'
+      b := a;  // EXPECT_ERROR
+      ~                       
   26:20: unresolved symbol 'i'
+      var integer x := i;  // EXPECT_ERROR
+                       ~                  
   32:8: unresolved symbol 'c'
+      i := c;  // EXPECT_ERROR
+           ~                  
   35:5: unresolved symbol 'j'
+        j := i;  // EXPECT_ERROR
+        ~                       
   40:8: unresolved symbol 'j'
+      i := j;  // EXPECT_ERROR
+           ~                  
   41:3: unresolved symbol 'j'
+      j := i;  // EXPECT_ERROR
+      ~                       

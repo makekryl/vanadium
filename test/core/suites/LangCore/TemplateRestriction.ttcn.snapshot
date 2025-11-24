@@ -1,4 +1,10 @@
 module TemplateRestriction:
   16:8: expected value, got template
+      x := omit;  // EXPECT_ERROR
+           ~~~~                  
   17:8: expected value, got template
+      x := *;  // EXPECT_ERROR
+           ~                  
   18:8: expected value, got template
+      x := ?;  // EXPECT_ERROR
+           ~                  

@@ -77,6 +77,19 @@ class LineMapping {
     return StartOf(loc.line) + loc.column;
   }
 
+  [[nodiscard]] Range RangeOf(pos_t line) const {
+    pos_t end;
+    if (line < line_starts_.size()) [[likely]] {
+      end = line_starts_[line + 1] - 1;
+    } else [[unlikely]] {
+      end = -1;
+    }
+    return {
+        .begin = StartOf(line),
+        .end = end,
+    };
+  }
+
   [[nodiscard]] std::size_t Count() const {
     return line_starts_.size();
   }

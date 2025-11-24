@@ -1,13 +1,43 @@
 module NumericTypes:
   7:21: expected value of type 'integer', got 'float'
+      var integer i2 := 0.0;  // EXPECT_ERROR
+                        ~~~                  
   8:19: expected value of type 'float', got 'integer'
-  24:12: expected value of type 'integer', got 'float'
-  25:12: expected value of type 'float', got 'integer'
+      var float f2 := 0;  // EXPECT_ERROR
+                      ~                  
+  10:21: expected value of type 'integer', got 'float'
+      var integer i3 := f;  // EXPECT_ERROR
+                        ~                  
+  11:19: expected value of type 'float', got 'integer'
+      var float f3 := i;  // EXPECT_ERROR
+                      ~                  
   27:12: expected value of type 'integer', got 'float'
+      i := i + 1.0;  // EXPECT_ERROR
+               ~~~                  
   28:12: expected value of type 'float', got 'integer'
+      f := f + 1;  // EXPECT_ERROR
+               ~                  
   30:12: expected value of type 'integer', got 'float'
+      i := i - 2.0;  // EXPECT_ERROR
+               ~~~                  
   31:12: expected value of type 'float', got 'integer'
+      f := f - 2;  // EXPECT_ERROR
+               ~                  
   33:12: expected value of type 'integer', got 'float'
+      i := i * 3.0;  // EXPECT_ERROR
+               ~~~                  
   34:12: expected value of type 'float', got 'integer'
-  38:8: expected value of type 'integer', got 'float'
-  39:8: expected value of type 'float', got 'integer'
+      f := f * 3;  // EXPECT_ERROR
+               ~                  
+  36:12: expected value of type 'integer', got 'float'
+      i := i / 3.0;  // EXPECT_ERROR
+               ~~~                  
+  37:12: expected value of type 'float', got 'integer'
+      f := f / 3;  // EXPECT_ERROR
+               ~                  
+  41:8: expected value of type 'integer', got 'float'
+      i := f;  // EXPECT_ERROR
+           ~                  
+  42:8: expected value of type 'float', got 'integer'
+      f := i;  // EXPECT_ERROR
+           ~                  

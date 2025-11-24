@@ -48,18 +48,18 @@ function correct() {
 }
 
 function invalid() {
-  var TheRecord[-] cannotDoThatWithNonListType;
-  var RoTheRecord[-][-] cannotDoThatListIs1D;
+  var TheRecord[-] cannotDoThatWithNonListType;  // EXPECT_ERROR
+  var RoTheRecord[-][-] cannotDoThatListIs1D;  // EXPECT_ERROR
 
-  var RoTheRecord[-] badCompositeLiteralArguments := { y := 1 };
-  badCompositeLiteralArguments.y;
+  var RoTheRecord[-] badCompositeLiteralArguments := { y := 1 };  // EXPECT_ERROR
+  badCompositeLiteralArguments.y;  // EXPECT_ERROR
 
   var RoTheRecord list;
   var RoTheRecord[-] inferred;
-  list := inferred;  // cannot assign T to T[]
-  inferred := list  // cannot assign T[] to T
+  list := inferred;  // cannot assign T to T[]  // EXPECT_ERROR
+  inferred := list  // cannot assign T[] to T  // EXPECT_ERROR
 
-  var list[-] expectedTypeInsteadOfVariable;
+  var list[-] expectedTypeInsteadOfVariable;  // EXPECT_ERROR
 }
 
 }

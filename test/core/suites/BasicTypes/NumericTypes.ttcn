@@ -4,8 +4,11 @@ function fn() {
   var integer i := 0;
   var float f := 0.0;
   //
-  var integer i2 := f;
-  var float f2 := i;
+  var integer i2 := 0.0;  // EXPECT_ERROR
+  var float f2 := 0;  // EXPECT_ERROR
+  //
+  var integer i3 := f;  // EXPECT_ERROR
+  var float f3 := i;  // EXPECT_ERROR
 
   i := i + 1;
   f := f + 1.0;
@@ -21,22 +24,22 @@ function fn() {
 
   //
 
-  i := i + 1.0;
-  f := f + 1;
+  i := i + 1.0;  // EXPECT_ERROR
+  f := f + 1;  // EXPECT_ERROR
   //
-  i := i - 2.0;
-  f := f - 2;
+  i := i - 2.0;  // EXPECT_ERROR
+  f := f - 2;  // EXPECT_ERROR
   //
-  i := i * 3.0;
-  f := f * 3;
+  i := i * 3.0;  // EXPECT_ERROR
+  f := f * 3;  // EXPECT_ERROR
   //
-  i := i / 3.0;
-  f := f / 3;
+  i := i / 3.0;  // EXPECT_ERROR
+  f := f / 3;  // EXPECT_ERROR
 
   //
 
-  i := f;
-  f := i;
+  i := f;  // EXPECT_ERROR
+  f := i;  // EXPECT_ERROR
 }
 
 }
