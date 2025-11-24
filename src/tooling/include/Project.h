@@ -43,6 +43,13 @@ class Project {
     return path_;
   }
 
+  [[nodiscard]] std::span<const fs::Path> SearchPaths() const noexcept {
+    return search_paths_;
+  }
+  void AddSearchPath(fs::Path path) {
+    search_paths_.emplace_back(std::move(path));
+  }
+
   [[nodiscard]] const std::string& Name() const noexcept {
     return manifest_.project.name;
   }
@@ -65,6 +72,7 @@ class Project {
 
  private:
   fs::Path path_;
+  std::vector<fs::Path> search_paths_;
 
   std::string manifest_contents_;
   ProjectManifest manifest_;

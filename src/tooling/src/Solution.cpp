@@ -52,6 +52,7 @@ void InitSubproject(const Solution& solution, SolutionProject& subproject) {
       for (const auto& search_path : *search_paths) {
         const auto additional_dir = project_dir.Resolve(search_path);
         if (additional_dir.Exists()) {
+          subproject.project.AddSearchPath(additional_dir);
           scan_dir(additional_dir);
         }
       }
@@ -151,6 +152,13 @@ const SolutionProject* Solution::ProjectOf(std::string_view path) const {
     if (path.starts_with(candidate.project.Directory().base_path)) {
       // TODO: support overlapping directories
       return &candidate;
+    }
+  }
+  for (const auto& candidate : projects_ | std::views::values) {
+    for (const auto& additional_dir : candidate.project.SearchPaths()) {
+      if (path.starts_with(additional_dir.base_path)) {
+        return &candidate;
+      }
     }
   }
   return nullptr;
