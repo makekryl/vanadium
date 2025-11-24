@@ -1,3 +1,5 @@
+#include <vanadium/version.h>
+
 #include <argparse/argparse.hpp>
 #include <chrono>
 #include <csignal>
@@ -69,6 +71,8 @@ int main(int argc, char* argv[]) {
     return 1;
   }
   /////////////////////////////////////////////
+
+  std::println(stderr, "vanadiumd version {}", vanadium::bin::kVersion);
 
   if (ap.get<bool>("--wait-dbg")) {
     constexpr auto kSecondsToWait{12};

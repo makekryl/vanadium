@@ -1,0 +1,3 @@
+#include "vanadium/version.h"
+
+const char* const vanadium::bin::kVersion{"@VANADIUM_GIT_VERSION@"};
