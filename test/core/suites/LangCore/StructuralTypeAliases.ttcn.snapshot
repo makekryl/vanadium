@@ -1,0 +1,4 @@
+./StructuralTypeAliases.ttcn:
+  16:16: property 'y' does not exist on type 'record A'
+      var D v := { y := 1 };  // EXPECT_ERROR
+                   ~                         
