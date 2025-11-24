@@ -26,7 +26,7 @@ void methods::textDocument::didChange::operator()(LsContext& ctx, const lsp::Did
       for (const auto& v : params.contentChanges) {
         assert(std::holds_alternative<lsp::TextDocumentContentChangePartial>(v));
 
-        const auto& change = std::get<lsp::TextDocumentContentChangePartial>(params.contentChanges.front());
+        const auto& change = std::get<lsp::TextDocumentContentChangePartial>(v);
 
         const auto range = conv::FromLSPRange(change.range, file.ast);
         srcbuf.replace(range.begin, range.Length(), change.text);
