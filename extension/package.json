@@ -7,6 +7,7 @@
   "publisher": "Mikhail Krylov",
   "version": "0.1.8",
   "private": true,
+  "repository": "https://github.com/makekryl/vanadiumd",
   "engines": {
     "vscode": "^1.100.0"
   },
