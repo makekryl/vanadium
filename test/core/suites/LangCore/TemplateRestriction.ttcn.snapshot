@@ -1,4 +1,4 @@
-module TemplateRestriction:
+./TemplateRestriction.ttcn:
   16:8: expected value, got template
       x := omit;  // EXPECT_ERROR
            ~~~~                  

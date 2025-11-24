@@ -1,4 +1,4 @@
-module ListElementTypeInference:
+./ListElementTypeInference.ttcn:
   51:7: type 'record TheRecord' is not subscriptable
       var TheRecord[-] cannotDoThatWithNonListType;  // EXPECT_ERROR
           ~~~~~~~~~                                                 

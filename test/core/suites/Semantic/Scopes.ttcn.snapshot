@@ -1,4 +1,4 @@
-module Scopes:
+./Scopes.ttcn:
   7:20: unresolved symbol 'a'
       var integer x := a;  // EXPECT_ERROR
                        ~                  

@@ -109,8 +109,8 @@ Snapshot TakeSnapshot(const vanadium::core::Program& program) {
   }
 
   for (const auto& [name, psf] : files) {
+    w.WriteLine(std::format("./{}:", name));
     if (!psf->ast.errors.empty()) {
-      w.WriteLine(std::format("./{}:", name));
       w.Indented([&] {
         w.WriteLine("Syntax errors:");
         w.Indented([&] {
@@ -124,7 +124,6 @@ Snapshot TakeSnapshot(const vanadium::core::Program& program) {
     if (!psf->module) {
       continue;
     }
-    w.WriteLine(std::format("module {}:", psf->module->name));
     w.Indented([&] {
       for (const auto& ident : psf->module->unresolved) {
         write_err(psf, ident->nrange, std::format("unresolved symbol '{}'", psf->Text(ident)));

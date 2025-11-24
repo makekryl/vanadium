@@ -1,4 +1,4 @@
-module NumericTypes:
+./NumericTypes.ttcn:
   7:21: expected value of type 'integer', got 'float'
       var integer i2 := 0.0;  // EXPECT_ERROR
                         ~~~                  

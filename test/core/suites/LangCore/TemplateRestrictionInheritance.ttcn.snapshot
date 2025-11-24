@@ -1,4 +1,4 @@
-module TemplateRestrictionInheritance:
+./TemplateRestrictionInheritance.ttcn:
   112:13: expected value, got template
                 tC  // EXPECT_ERROR
                 ~~                 
