@@ -1,0 +1,65 @@
+module ListElementTypeInference {
+
+type record TheRecord {
+  integer x
+}
+
+type record of TheRecord RoTheRecord;
+
+type record OuterRecord {
+  RoTheRecord inner
+}
+
+type record of OuterRecord RoOuterRecord;
+
+function prerequisites() {
+  var TheRecord tr := { x := 1 };
+  var RoTheRecord rtr := {
+    { x := 1 }
+  };
+
+  var integer x := tr.x;
+  x := rtr[0].x;
+
+  var OuterRecord.inner tr2 := {
+    { x := 1 }
+  };
+}
+
+function correct() {
+  {
+    var RoTheRecord[-] inferred := { x := 1 };
+    var integer x := inferred.x;
+
+    var TheRecord tr := inferred;
+
+    var RoTheRecord[-] anotherInferred := inferred;
+    var RoTheRecord[-].x fieldTypeInference := 1;
+  }
+  {
+    var OuterRecord.inner[-] inferred := { x := 1 };
+    var integer x := inferred.x;
+
+    var TheRecord tr := inferred;
+
+    var OuterRecord.inner[-] anotherInferred := inferred;
+    var OuterRecord.inner[-].x fieldTypeInference := 1;
+  }
+}
+
+function invalid() {
+  var TheRecord[-] cannotDoThatWithNonListType;
+  var RoTheRecord[-][-] cannotDoThatListIs1D;
+
+  var RoTheRecord[-] badCompositeLiteralArguments := { y := 1 };
+  badCompositeLiteralArguments.y;
+
+  var RoTheRecord list;
+  var RoTheRecord[-] inferred;
+  list := inferred;  // cannot assign T to T[]
+  inferred := list  // cannot assign T[] to T
+
+  var list[-] expectedTypeInsteadOfVariable;
+}
+
+}

@@ -1,0 +1,8 @@
+module TemplateRestrictionInheritance:
+  112:13: expected value, got template
+  119:7: expected value, got template
+  128:18: expected value, got template
+  132:21: expected value, got template
+  139:14: expected value, got template
+  142:17: expected value, got template
+  150:7: expected value, got template

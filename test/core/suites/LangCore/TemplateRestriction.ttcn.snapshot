@@ -1,0 +1,4 @@
+module TemplateRestriction:
+  16:8: expected value, got template
+  17:8: expected value, got template
+  18:8: expected value, got template

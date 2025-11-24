@@ -1,0 +1,155 @@
+module TemplateRestrictionInheritance {
+
+type record C {
+  integer i
+}
+
+type record of C RoC;
+
+type record B {
+  RoC roc
+}
+
+type record A {
+  B b
+}
+
+type record of A RoA;
+
+function prerequisites() {
+  var RoA roa := {
+    {
+      b := {
+        roc := {
+          { i := 1 }
+        }
+      }
+    }
+  }
+}
+
+function correct() {
+  {
+    var C vC;
+    var template C tC;
+    var template RoA roa := {
+      {
+        b := {
+          roc := {
+            vC,
+            tC
+          }
+        }
+      }
+    };
+    roa[0].b.roc := {
+      vC,
+      tC
+    };
+  }
+
+  {
+    var RoC vRoC;
+    var template RoA roa := {
+      {
+        b := {
+          roc := vRoC
+        }
+      }
+    }
+    roa[0].b.roc := vRoC;
+  }
+  {
+    var template RoC tRoC;
+    var template RoA roa := {
+      {
+        b := {
+          roc := tRoC
+        }
+      }
+    }
+    roa[0].b.roc := tRoC;
+  }
+
+  {
+    var B vB;
+    var template RoA roa := {
+      {
+        b := vB
+      }
+    }
+    roa[0].b := vB;
+  }
+  {
+    var template B tB;
+    var template RoA roa := {
+      {
+        b := tB
+      }
+    }
+    roa[0].b := tB;
+  }
+
+  {
+    var A vA;
+    var template A tA;
+    var template RoA roa := {
+      vA,
+      tA
+    }
+  }
+}
+
+function invalid() {
+  {
+    var C vC;
+    var template C tC;
+    var RoA roa := {
+      {
+        b := {
+          roc := {
+            vC,
+            tC
+          }
+        }
+      }
+    }
+    roa[0].b.roc := {
+      vC,
+      tC
+    };
+  }
+
+  {
+    var template RoC tRoC;
+    var RoA roa := {
+      {
+        b := {
+          roc := tRoC
+        }
+      }
+    }
+    roa[0].b.roc := tRoC;
+  }
+
+  {
+    var template B tB;
+    var RoA roa := {
+      {
+        b := tB
+      }
+    }
+    roa[0].b := tB;
+  }
+
+  {
+    var A vA;
+    var template A tA;
+    var RoA roa := {
+      vA,
+      tA
+    }
+  }
+}
+
+}

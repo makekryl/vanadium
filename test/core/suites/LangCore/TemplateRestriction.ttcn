@@ -1,0 +1,21 @@
+module TemplateRestriction {
+
+function correct() {
+  var template integer x;
+
+  x := 1;
+
+  x := omit;
+  x := *;
+  x := ?;
+}
+
+function invalid() {
+  var integer x;
+
+  x := omit;
+  x := *;
+  x := ?;
+}
+
+}

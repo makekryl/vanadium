@@ -1,0 +1,8 @@
+module ListElementTypeInference:
+  51:7: type 'record TheRecord' is not subscriptable
+  52:7: type 'record TheRecord' is not subscriptable
+  54:56: property 'y' does not exist on type 'record TheRecord'
+  55:32: property 'y' does not exist on type 'record TheRecord'
+  59:11: expected value of type 'record of TheRecord', got 'record TheRecord'
+  60:15: expected value of type 'record TheRecord', got 'record of TheRecord'
+  62:7: 'list' is not a type reference
