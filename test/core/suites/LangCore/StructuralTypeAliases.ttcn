@@ -10,10 +10,12 @@ type C D;
 
 function correct() {
   var D v := { x := 1 };
+  v.x;
 }
 
 function invalid() {
   var D v := { y := 1 };  // EXPECT_ERROR
+  v.y;  // EXPECT_ERROR
 }
 
 }
