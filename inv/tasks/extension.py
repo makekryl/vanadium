@@ -2,13 +2,16 @@ import errno
 import os
 from pathlib import Path
 
-from invoke import Context, call, task
+from invoke import Context, task
+
+from inv.config import get_build_dir
+from inv.params.build import with_build_options_params, with_build_params
 
 from . import build
-from ._common import get_build_dir
 
 
 @task
+@with_build_options_params
 def symlink_lsp(c: Context, config):
   dst = Path("extension/bin/vanadiumd")
   build_dir = get_build_dir(config)
@@ -25,11 +28,15 @@ def symlink_lsp(c: Context, config):
     _create_symlink()
 
 
-@task(call(build.build, config="release-static", target="vanadiumd"))
+@task
+@with_build_params
 def package(c: Context):
+  build.build(c, target="vanadiumd")
+
   c.run("rm -f 'extension/bin/vanadiumd'")
   c.run(
     f"cp '{str(get_build_dir('gcc-release-static'))}/bin/lsp/vanadiumd' 'extension/bin'"
   )
+
   with c.cd("extension"):
     c.run("npx vsce package")

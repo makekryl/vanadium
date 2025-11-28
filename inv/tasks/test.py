@@ -1,23 +1,29 @@
-from invoke import Context, call, task
+from invoke import Context, task
 
-from inv import build
+from inv.config import get_build_dir, get_preset
+from inv.params import override_params_defaults
+from inv.params.build import with_build_params
 
-from ._common import DEFAULT_TOOLCHAIN, get_build_dir, get_preset
+from . import build
 
 # TODO: unify UT/e2e test targets launch, filters
 
 
 @task(default=True)
-def test(c: Context, config: str, toolchain: str = DEFAULT_TOOLCHAIN):
-  dir = get_build_dir(get_preset(config, toolchain))
+@with_build_params
+def test(c: Context):
   c.run(f"ctest --output-on-failure --test-dir '{str(dir)}'")
 
 
-@task(call(build.build, config="debug-sanitizers", target="vanadium_e2e_core"))
+@task
+@override_params_defaults(sanitizers=True)
+@with_build_params
 def e2e(
   c: Context,
   overwrite_snapshots: bool = False,
 ):
+  build.build(c, target="vanadium_e2e_core")
+
   dir = get_build_dir(get_preset("debug-sanitizers"))
 
   args = [

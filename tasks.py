@@ -2,7 +2,7 @@ from invoke import Collection, Context, Task, UnexpectedExit, task
 from invoke.runners import Local as LocalRunner
 from invoke.runners import Result as RunResult
 
-from inv import build, check, extension, test
+from inv.tasks import build, check, extension, test
 
 
 @task
@@ -43,5 +43,6 @@ ns.configure(
     "runners": {
       "local": AlertingLocalRunner,
     },
+    "vanadium": {},  # vanadium tasks specific config
   },
 )
