@@ -10,7 +10,7 @@
 namespace vanadium::asn1 {
 namespace ast {
 
-namespace ttcn_ast = vanadium::core::ast;
+namespace ttcn_ast = vanadium::ast;
 
 // NOLINTBEGIN(readability-identifier-naming)
 enum class TokenKind : std::uint8_t {

@@ -46,18 +46,17 @@ class IndentedWriter {
 
 struct Snapshot {
   std::string text;
-  std::map<const vanadium::core::SourceFile*, std::vector<vanadium::core::ast::pos_t>> errlines;
+  std::map<const vanadium::core::SourceFile*, std::vector<vanadium::ast::pos_t>> errlines;
 };
 
 Snapshot TakeSnapshot(const vanadium::core::Program& program) {
   IndentedWriter w;
-  std::map<const vanadium::core::SourceFile*, std::vector<vanadium::core::ast::pos_t>> errlines;
+  std::map<const vanadium::core::SourceFile*, std::vector<vanadium::ast::pos_t>> errlines;
 
   std::string highlight_buf;
 
   const auto write_err = [&w, &errlines, &highlight_buf](const vanadium::core::SourceFile* psf,
-                                                         const vanadium::core::ast::Range& range,
-                                                         std::string_view text) {
+                                                         const vanadium::ast::Range& range, std::string_view text) {
     const auto& loc_begin = psf->ast.lines.Translate(range.begin);
     w.WriteLine(std::format("{}:{}: {}", loc_begin.line + 1, loc_begin.column + 1, text));
     errlines[psf].emplace_back(loc_begin.line);

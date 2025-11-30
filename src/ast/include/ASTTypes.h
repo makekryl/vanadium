@@ -9,8 +9,7 @@
 
 #include "FunctionRef.h"
 
-namespace vanadium::core {
-namespace ast {
+namespace vanadium::ast {
 
 using pos_t = std::uint32_t;
 
@@ -108,5 +107,4 @@ struct Node;
 using NodeInspector = lib::Predicate<const Node*>;
 void Inspect(const Node*, const NodeInspector&);
 
-}  // namespace ast
-};  // namespace vanadium::core
+};  // namespace vanadium::ast

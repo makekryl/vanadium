@@ -11,7 +11,7 @@ class NoEmpty final : public Rule {
  public:
   NoEmpty();
   void Register(const MatcherRegistrar& match) const final;
-  void Check(Context& ctx, const core::ast::Node* node) final;
+  void Check(Context& ctx, const ast::Node* node) final;
 };
 
 class NoUnusedImports final : public Rule {

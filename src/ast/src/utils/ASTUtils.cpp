@@ -4,7 +4,7 @@
 #include "ASTTypes.h"
 #include "Scanner.h"
 
-namespace vanadium::core::ast {
+namespace vanadium::ast {
 namespace utils {
 
 const Range& GetActualNameRange(const Node* n) {
@@ -122,12 +122,12 @@ const Node* GetNodeAt(const AST& ast, pos_t pos) {
 std::optional<Range> ExtractAttachedComment(const AST& ast, const Node* n) {
   const auto anchor{n->nrange.begin};
 
-  core::ast::Token preceding{};
+  ast::Token preceding{};
   pos_t preceding_end_line{};
 
   parser::Scanner scanner(ast.src);
   while (true) {
-    const core::ast::Token tok = scanner.Scan();
+    const ast::Token tok = scanner.Scan();
     if (tok.range.end > anchor) {
       // EOF check can be avoided ig
       break;
@@ -154,4 +154,4 @@ std::optional<Range> ExtractAttachedComment(const AST& ast, const Node* n) {
 }
 
 }  // namespace utils
-}  // namespace vanadium::core::ast
+}  // namespace vanadium::ast

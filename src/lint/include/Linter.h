@@ -27,7 +27,7 @@ class Linter {
  private:
   void BindRule(Rule& rule);
 
-  std::unordered_map<core::ast::NodeKind, std::vector<Rule*>> matching_;
+  std::unordered_map<ast::NodeKind, std::vector<Rule*>> matching_;
   std::vector<std::unique_ptr<Rule>> rules_;
 };
 

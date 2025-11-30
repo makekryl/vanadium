@@ -18,7 +18,7 @@ namespace vanadium::ls {
 namespace {
 lsp::RenameResult ProvideRename(const lsp::RenameParams& params, const core::SourceFile& file, LsSessionRef) {
   const auto symres = detail::FindSymbol(&file, params.position);
-  if (!symres || !symres->scope || symres->node->nkind != core::ast::NodeKind::Ident) {
+  if (!symres || !symres->scope || symres->node->nkind != ast::NodeKind::Ident) {
     return nullptr;
   }
 
@@ -35,8 +35,8 @@ lsp::RenameResult ProvideRename(const lsp::RenameParams& params, const core::Sou
   auto& changes = result.changes.emplace();
   auto& edits = changes[params.textDocument.uri];  // TODO: multifile support
 
-  scope->Container()->Accept([&](const core::ast::Node* vn) {
-    if (vn->nkind == core::ast::NodeKind::Ident && file.Text(vn) == sym_name) {
+  scope->Container()->Accept([&](const ast::Node* vn) {
+    if (vn->nkind == ast::NodeKind::Ident && file.Text(vn) == sym_name) {
       edits.emplace_back(lsp::TextEdit{
           .range = conv::ToLSPRange(vn->nrange, file.ast),
           .newText = params.newName,

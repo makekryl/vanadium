@@ -5,7 +5,7 @@
 
 #include "ASTNodes.h"
 
-namespace vanadium::core::ast {
+namespace vanadium::ast {
 namespace parser {
 
 class Scanner {
@@ -41,4 +41,4 @@ class Scanner {
 };
 
 }  // namespace parser
-}  // namespace vanadium::core::ast
+}  // namespace vanadium::ast

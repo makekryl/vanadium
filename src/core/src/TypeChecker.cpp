@@ -508,10 +508,10 @@ InstantiatedType ResolveAssignmentTarget(const SourceFile* file, const semantic:
   const auto property_name = file->Text(property);
 
   switch (n->parent->nkind) {
-    case core::ast::NodeKind::ParenExpr: {
-      const auto* m = n->parent->As<core::ast::nodes::ParenExpr>();
+    case ast::NodeKind::ParenExpr: {
+      const auto* m = n->parent->As<ast::nodes::ParenExpr>();
 
-      const auto* ce = m->parent->As<core::ast::nodes::CallExpr>();
+      const auto* ce = m->parent->As<ast::nodes::CallExpr>();
       const auto callee_sym = ResolveExprSymbol(file, scope, ce->fun);
       if (!callee_sym ||
           !(callee_sym->Flags() & (core::semantic::SymbolFlags::kFunction | semantic::SymbolFlags::kTemplate))) {
@@ -520,8 +520,8 @@ InstantiatedType ResolveAssignmentTarget(const SourceFile* file, const semantic:
 
       return {.sym = callee_sym->OriginatedScope()->ResolveDirect(property_name)};
     }
-    case core::ast::NodeKind::CompositeLiteral: {
-      const auto* m = n->parent->As<core::ast::nodes::CompositeLiteral>();
+    case ast::NodeKind::CompositeLiteral: {
+      const auto* m = n->parent->As<ast::nodes::CompositeLiteral>();
       auto cl_type = ext::DeduceCompositeLiteralType(file, scope, m);
       if (!cl_type) {
         return InstantiatedType::None();
@@ -559,7 +559,7 @@ InstantiatedType DeduceCompositeLiteralType(const SourceFile* file, const semant
       }
 
       const auto* decl = parent_type->Declaration();
-      if (decl->nkind != core::ast::NodeKind::StructTypeDecl && decl->nkind != ast::NodeKind::StructSpec) {
+      if (decl->nkind != ast::NodeKind::StructTypeDecl && decl->nkind != ast::NodeKind::StructSpec) {
         return InstantiatedType::None();
       }
 
@@ -571,7 +571,7 @@ InstantiatedType DeduceCompositeLiteralType(const SourceFile* file, const semant
       }
 
       const auto* field = fields[param_index];
-      const auto* decl_file = core::ast::utils::SourceFileOf(decl);
+      const auto* decl_file = ast::utils::SourceFileOf(decl);
 
       if (field->type->nkind != ast::NodeKind::RefSpec && field->name) {
         return parent_type.Derive(parent_type->Members()->LookupShadow(decl_file->Text(*field->name)));
@@ -805,15 +805,15 @@ InstantiatedType DeduceExpectedType(const SourceFile* file, const semantic::Scop
       return type.Derive(ResolveTypeSpecSymbol(fields_file, fields[idx]->type));
     }
     case ast::NodeKind::TemplateDecl: {
-      const auto* m = parent->As<core::ast::nodes::TemplateDecl>();
+      const auto* m = parent->As<ast::nodes::TemplateDecl>();
       if (n != m->value) {
         break;
       }
       return ResolveExprType(file, file->module->scope, m->type);
     }
     case ast::NodeKind::CaseClause: {
-      const auto* m = parent->As<core::ast::nodes::CaseClause>();
-      const auto* ss = m->parent->As<core::ast::nodes::SelectStmt>();
+      const auto* m = parent->As<ast::nodes::CaseClause>();
+      const auto* ss = m->parent->As<ast::nodes::SelectStmt>();
 
       const core::semantic::Scope* scope = semantic::utils::FindScope(file->module->scope, parent);
       return ResolveExprType(file, scope, ss->tag);
@@ -838,9 +838,9 @@ namespace {
 const semantic::Symbol* TryResolveExprSymbolViaHierarchy(const SourceFile* file, const semantic::Scope*,
                                                          const ast::nodes::Expr* expr) {
   switch (expr->parent->nkind) {
-    case core::ast::NodeKind::CaseClause: {
-      const auto* m = expr->parent->As<core::ast::nodes::CaseClause>();
-      const auto* ss = m->parent->As<core::ast::nodes::SelectStmt>();
+    case ast::NodeKind::CaseClause: {
+      const auto* m = expr->parent->As<ast::nodes::CaseClause>();
+      const auto* ss = m->parent->As<ast::nodes::SelectStmt>();
 
       const core::semantic::Scope* scope = semantic::utils::FindScope(file->module->scope, expr);
       const auto tag_sym = ResolveExprType(file, scope, ss->tag);
@@ -894,10 +894,10 @@ const semantic::Symbol* ResolveTypeSpecSymbol(const SourceFile* file, const ast:
         return ResolveListElementType(ls_sym);
       }
 
-      if (parent->nkind != core::ast::NodeKind::Field) [[unlikely]] {
+      if (parent->nkind != ast::NodeKind::Field) [[unlikely]] {
         return nullptr;
       }
-      const auto* owner = parent->As<core::ast::nodes::Field>();
+      const auto* owner = parent->As<ast::nodes::Field>();
       if (!owner->name) {
         return nullptr;
       }
@@ -1477,12 +1477,12 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, InstantiatedTyp
       const auto x_type = CheckType(m->x);
 
       switch (m->op.kind) {
-        case core::ast::TokenKind::INC:
-        case core::ast::TokenKind::ADD:
-        case core::ast::TokenKind::SUB:
-        case core::ast::TokenKind::DEC:
-        case core::ast::TokenKind::MUL:
-        case core::ast::TokenKind::DIV:
+        case ast::TokenKind::INC:
+        case ast::TokenKind::ADD:
+        case ast::TokenKind::SUB:
+        case ast::TokenKind::DEC:
+        case ast::TokenKind::MUL:
+        case ast::TokenKind::DIV:
           if (x_type && x_type.sym != &builtins::kInteger && x_type.sym != &builtins::kFloat) [[unlikely]] {
             EmitError(TypeError{
                 .range = m->x->nrange,

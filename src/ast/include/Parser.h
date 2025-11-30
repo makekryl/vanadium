@@ -10,7 +10,7 @@
 #include "Scanner.h"
 #include "StaticSet.h"
 
-namespace vanadium::core::ast {
+namespace vanadium::ast {
 namespace parser {
 
 class Parser {
@@ -213,4 +213,4 @@ inline AST Parse(lib::Arena& arena, std::string_view src) {
   };
 }
 
-}  // namespace vanadium::core::ast
+}  // namespace vanadium::ast

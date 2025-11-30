@@ -54,10 +54,10 @@ class SignatureInformationBuilder {
 };
 
 template <typename ContainerNode>
-  requires(std::is_same_v<ContainerNode, core::ast::nodes::ParenExpr> ||
-           std::is_same_v<ContainerNode, core::ast::nodes::CompositeLiteral>)
-std::optional<std::size_t> GetCurrentArgumentIndex(const ContainerNode* container, const core::ast::Node* n,
-                                                   core::ast::pos_t exact_pos) {
+  requires(std::is_same_v<ContainerNode, ast::nodes::ParenExpr> ||
+           std::is_same_v<ContainerNode, ast::nodes::CompositeLiteral>)
+std::optional<std::size_t> GetCurrentArgumentIndex(const ContainerNode* container, const ast::Node* n,
+                                                   ast::pos_t exact_pos) {
   if (n->nkind == ContainerNode::kKind) {
     for (const auto [idx, arg] : container->list | std::views::enumerate | std::views::reverse) {
       if (arg->nrange.end < exact_pos) {
@@ -77,16 +77,16 @@ lsp::SignatureHelpResult ProvideSignatureHelp(const lsp::SignatureHelpParams& pa
   }
 
   const auto pos = file.ast.lines.GetPosition(conv::FromLSPPosition(params.position));
-  const auto* n = core::ast::utils::GetNodeAt(file.ast, pos);
+  const auto* n = ast::utils::GetNodeAt(file.ast, pos);
 
   const auto* container = n;
-  if (n->nkind == core::ast::NodeKind::ErrorNode) {
+  if (n->nkind == ast::NodeKind::ErrorNode) {
     container = n->parent;
   }
 
   switch (container->nkind) {
-    case core::ast::NodeKind::ParenExpr: {
-      const auto* pe = container->As<core::ast::nodes::ParenExpr>();
+    case ast::NodeKind::ParenExpr: {
+      const auto* pe = container->As<ast::nodes::ParenExpr>();
 
       const core::semantic::Scope* scope = core::semantic::utils::FindScope(file.module->scope, pe);
 
@@ -94,16 +94,16 @@ lsp::SignatureHelpResult ProvideSignatureHelp(const lsp::SignatureHelpParams& pa
       if (!callable_params) {
         return nullptr;
       }
-      const core::ast::Node* callable_decl = callable_params->parent;
-      const auto* callable_file = core::ast::utils::SourceFileOf(callable_decl);
+      const ast::Node* callable_decl = callable_params->parent;
+      const auto* callable_file = ast::utils::SourceFileOf(callable_decl);
 
       auto& label = *d.arena.Alloc<std::string>();
       label.reserve(32 * (callable_params->list.size() + 2));
 
       std::string_view return_type_name;
       switch (callable_decl->nkind) {
-        case core::ast::NodeKind::FuncDecl: {
-          const auto* fdecl = callable_decl->As<core::ast::nodes::FuncDecl>();
+        case ast::NodeKind::FuncDecl: {
+          const auto* fdecl = callable_decl->As<ast::nodes::FuncDecl>();
           label += callable_file->Text(fdecl->kind.range);
           label += " ";
           label += callable_file->Text(*fdecl->name);
@@ -113,8 +113,8 @@ lsp::SignatureHelpResult ProvideSignatureHelp(const lsp::SignatureHelpParams& pa
           }
           break;
         }
-        case core::ast::NodeKind::TemplateDecl: {
-          const auto* tdecl = callable_decl->As<core::ast::nodes::TemplateDecl>();
+        case ast::NodeKind::TemplateDecl: {
+          const auto* tdecl = callable_decl->As<ast::nodes::TemplateDecl>();
           label += "template ";
           label += callable_file->Text(*tdecl->name);
 
@@ -147,7 +147,7 @@ lsp::SignatureHelpResult ProvideSignatureHelp(const lsp::SignatureHelpParams& pa
       const std::optional<std::uint32_t> active_idx =
           std::ranges::any_of(pe->list,
                               [](const auto* arg) {
-                                return arg->nkind == core::ast::NodeKind::AssignmentExpr;
+                                return arg->nkind == ast::NodeKind::AssignmentExpr;
                               })
               ? std::nullopt
               : GetCurrentArgumentIndex(pe, n, pos);
@@ -163,8 +163,8 @@ lsp::SignatureHelpResult ProvideSignatureHelp(const lsp::SignatureHelpParams& pa
           .activeParameter = active_idx,
       };
     }
-    case core::ast::NodeKind::CompositeLiteral: {
-      const auto* cl = container->As<core::ast::nodes::CompositeLiteral>();
+    case ast::NodeKind::CompositeLiteral: {
+      const auto* cl = container->As<ast::nodes::CompositeLiteral>();
 
       const core::semantic::Scope* scope = core::semantic::utils::FindScope(file.module->scope, cl);
 
@@ -174,14 +174,14 @@ lsp::SignatureHelpResult ProvideSignatureHelp(const lsp::SignatureHelpParams& pa
       }
 
       const auto* stdecl = type->Declaration();
-      const auto& stfields = *core::ast::utils::GetStructFields(stdecl);
-      const auto* stdecl_file = core::ast::utils::SourceFileOf(stdecl);
+      const auto& stfields = *ast::utils::GetStructFields(stdecl);
+      const auto* stdecl_file = ast::utils::SourceFileOf(stdecl);
 
       auto& label = *d.arena.Alloc<std::string>();
       label.reserve(32 * (stfields.size() + 2));
 
-      if (stdecl->nkind == core::ast::NodeKind::StructTypeDecl) {
-        label += stdecl_file->Text(*stdecl->As<core::ast::nodes::StructTypeDecl>()->name);
+      if (stdecl->nkind == ast::NodeKind::StructTypeDecl) {
+        label += stdecl_file->Text(*stdecl->As<ast::nodes::StructTypeDecl>()->name);
       }
       label += "{";
       //
@@ -199,7 +199,7 @@ lsp::SignatureHelpResult ProvideSignatureHelp(const lsp::SignatureHelpParams& pa
       const std::optional<std::uint32_t> active_idx =
           std::ranges::any_of(cl->list,
                               [](const auto* arg) {
-                                return arg->nkind == core::ast::NodeKind::AssignmentExpr;
+                                return arg->nkind == ast::NodeKind::AssignmentExpr;
                               })
               ? std::nullopt
               : GetCurrentArgumentIndex(cl, n, pos);

@@ -31,7 +31,7 @@ const core::ImportDescriptor& FindImport(const core::ModuleDescriptor& module, s
 NoUnusedImports::NoUnusedImports() : Rule("no-unused-imports") {}
 
 void NoUnusedImports::Exit(Context& ctx) {
-  const auto report_import = [&](const core::ast::nodes::ImportDecl* decl, std::string&& message) {
+  const auto report_import = [&](const ast::nodes::ImportDecl* decl, std::string&& message) {
     ctx.Report(this, decl->nrange, std::move(message), Autofix::Removal(ctx.GetFile(), decl->parent->nrange));
   };
 

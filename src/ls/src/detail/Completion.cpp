@@ -112,13 +112,13 @@ void CollectVisibleSymbols(CompletionContext& ctx, std::string_view order) {
         const auto it = r.begin();
         if (it != r.end()) {
           const auto* decl = it->second.Declaration();
-          if (decl->parent->nkind == core::ast::NodeKind::ValueDecl) {
+          if (decl->parent->nkind == ast::NodeKind::ValueDecl) {
             decl = decl->parent;
           }
-          if (decl->parent->nkind == core::ast::NodeKind::Definition &&
-              decl->parent->parent->nkind == core::ast::NodeKind::ComponentTypeDecl) {
-            description = core::ast::utils::SourceFileOf(decl)->Text(
-                *decl->parent->parent->As<core::ast::nodes::ComponentTypeDecl>()->name);
+          if (decl->parent->nkind == ast::NodeKind::Definition &&
+              decl->parent->parent->nkind == ast::NodeKind::ComponentTypeDecl) {
+            description =
+                ast::utils::SourceFileOf(decl)->Text(*decl->parent->parent->As<ast::nodes::ComponentTypeDecl>()->name);
           }
         }
       }
@@ -167,13 +167,13 @@ lsp::CompletionList CollectCompletions(const lsp::CompletionParams& params, cons
   const auto mask = file.Text(n);
   VLS_WARN("    compl:: mask: '{}'", mask);
 
-  if (n->nkind == core::ast::NodeKind::Ident && n->parent->nkind == core::ast::NodeKind::SelectorExpr) {
+  if (n->nkind == ast::NodeKind::Ident && n->parent->nkind == ast::NodeKind::SelectorExpr) {
     n = n->parent;
   }
 
-  if (n->nkind == core::ast::NodeKind::SelectorExpr) {
-    n = n->As<core::ast::nodes::SelectorExpr>()->x;
-    const auto sym = core::checker::ResolveExprType(&file, scope, n->As<core::ast::nodes::Expr>());
+  if (n->nkind == ast::NodeKind::SelectorExpr) {
+    n = n->As<ast::nodes::SelectorExpr>()->x;
+    const auto sym = core::checker::ResolveExprType(&file, scope, n->As<ast::nodes::Expr>());
     if (!sym) {
       return completion_list;  // todo: extract filler to separate func
     }
@@ -249,10 +249,10 @@ lsp::CompletionList CollectCompletions(const lsp::CompletionParams& params, cons
 
   const auto* parent = n->parent;
   switch (parent->nkind) {
-    case core::ast::NodeKind::Definition: {
+    case ast::NodeKind::Definition: {
       return completion_list;  // todo: extract filler to separate func
     }
-    case core::ast::NodeKind::ImportDecl: {
+    case ast::NodeKind::ImportDecl: {
       file.program->VisitAccessibleModules([&](const core::ModuleDescriptor& mod) {
         if (mod.name.contains(mask) && !file.module->imports.contains(mod.name)) {
           items.emplace_back(lsp::CompletionItem{
@@ -266,18 +266,17 @@ lsp::CompletionList CollectCompletions(const lsp::CompletionParams& params, cons
       });
       break;
     }
-    case core::ast::NodeKind::CompositeLiteral:
+    case ast::NodeKind::CompositeLiteral:
       complete_props(
-          core::checker::ext::DeduceCompositeLiteralType(&file, scope, parent->As<core::ast::nodes::CompositeLiteral>())
-              .sym);
+          core::checker::ext::DeduceCompositeLiteralType(&file, scope, parent->As<ast::nodes::CompositeLiteral>()).sym);
       break;
-    case core::ast::NodeKind::ParenExpr: {
-      const auto* pe = parent->As<core::ast::nodes::ParenExpr>();
-      const auto* ce = pe->parent->As<core::ast::nodes::CallExpr>();
+    case ast::NodeKind::ParenExpr: {
+      const auto* pe = parent->As<ast::nodes::ParenExpr>();
+      const auto* ce = pe->parent->As<ast::nodes::CallExpr>();
       const auto sym = core::checker::ResolveExprType(&file, scope, ce->fun);
       if (sym && (sym->Flags() & (core::semantic::SymbolFlags::kFunction | core::semantic::SymbolFlags::kTemplate))) {
-        const auto* params = core::ast::utils::GetCallableDeclParams(sym->Declaration()->As<core::ast::nodes::Decl>());
-        const auto* params_file = core::ast::utils::SourceFileOf(params);
+        const auto* params = ast::utils::GetCallableDeclParams(sym->Declaration()->As<ast::nodes::Decl>());
+        const auto* params_file = ast::utils::SourceFileOf(params);
         for (const auto* param : params->list) {
           // TODO: detail, doc
           const auto name = params_file->Text(*param->name);
@@ -291,13 +290,13 @@ lsp::CompletionList CollectCompletions(const lsp::CompletionParams& params, cons
       }
       break;
     }
-    case core::ast::NodeKind::AssignmentExpr: {
-      const auto* ae = parent->As<core::ast::nodes::AssignmentExpr>();
-      if ((n == ae->property) && (ae->parent->nkind == core::ast::NodeKind::CompositeLiteral/* ||
-                                    ae->parent->nkind == core::ast::NodeKind::ParenExpr*/)) {
-        complete_props(core::checker::ext::DeduceCompositeLiteralType(
-                           &file, scope, ae->parent->As<core::ast::nodes::CompositeLiteral>())
-                           .sym);
+    case ast::NodeKind::AssignmentExpr: {
+      const auto* ae = parent->As<ast::nodes::AssignmentExpr>();
+      if ((n == ae->property) && (ae->parent->nkind == ast::NodeKind::CompositeLiteral/* ||
+                                    ae->parent->nkind == ast::NodeKind::ParenExpr*/)) {
+        complete_props(
+            core::checker::ext::DeduceCompositeLiteralType(&file, scope, ae->parent->As<ast::nodes::CompositeLiteral>())
+                .sym);
         return completion_list;  // todo: extract filler to separate func
       }
 
@@ -330,8 +329,8 @@ lsp::CompletionList CollectCompletions(const lsp::CompletionParams& params, cons
         continue;
       }
       if ((sym.Flags() & core::semantic::SymbolFlags::kFunction) == core::semantic::SymbolFlags::kFunction) {
-        const auto* funcdecl = sym.Declaration()->As<core::ast::nodes::FuncDecl>();
-        if (funcdecl->kind.kind == core::ast::TokenKind::TESTCASE) {
+        const auto* funcdecl = sym.Declaration()->As<ast::nodes::FuncDecl>();
+        if (funcdecl->kind.kind == ast::TokenKind::TESTCASE) {
           continue;
         }
       }
@@ -341,8 +340,8 @@ lsp::CompletionList CollectCompletions(const lsp::CompletionParams& params, cons
 
       const core::semantic::Symbol* actual_type =
           (sym.Flags() & (core::semantic::SymbolFlags::kFunction | core::semantic::SymbolFlags::kTemplate))
-              ? core::checker::ResolveCallableReturnType(module.sf, sym.Declaration()->As<core::ast::nodes::Decl>()).sym
-              : core::checker::ResolveDeclarationType(module.sf, sym.Declaration()->As<core::ast::nodes::Decl>()).sym;
+              ? core::checker::ResolveCallableReturnType(module.sf, sym.Declaration()->As<ast::nodes::Decl>()).sym
+              : core::checker::ResolveDeclarationType(module.sf, sym.Declaration()->As<ast::nodes::Decl>()).sym;
       if (expected_type_opt && expected_type_opt.sym != actual_type) {
         continue;
       }
@@ -393,8 +392,8 @@ std::optional<lsp::CompletionItem> ResolveCompletionItem(const lsp::CompletionIt
               // module is already imported
               return;
             }
-            const core::ast::pos_t last_import_pos = FindPositionAfterLastImport(file->ast);
-            if (last_import_pos == core::ast::pos_t(-1)) {
+            const ast::pos_t last_import_pos = FindPositionAfterLastImport(file->ast);
+            if (last_import_pos == ast::pos_t(-1)) {
               return;
             }
             const auto loc = file->ast.lines.Translate(last_import_pos);

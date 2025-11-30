@@ -10,11 +10,11 @@
 namespace vanadium::ls::detail {
 
 void VisitLocalReferences(const core::SourceFile* file, lsp::Position pos, bool include_decl,
-                          lib::Consumer<const core::ast::nodes::Ident*> accept) {
+                          lib::Consumer<const ast::nodes::Ident*> accept) {
   const auto symres = detail::FindSymbol(file, pos);
-  if (!symres || !symres->scope || symres->node->nkind != core::ast::NodeKind::Ident ||
+  if (!symres || !symres->scope || symres->node->nkind != ast::NodeKind::Ident ||
       !(symres->type->Flags() & (core::semantic::SymbolFlags::kVariable | core::semantic::SymbolFlags::kArgument)) ||
-      core::ast::utils::SourceFileOf(symres->node) != file) {
+      ast::utils::SourceFileOf(symres->node) != file) {
     return;
   }
 
@@ -22,42 +22,41 @@ void VisitLocalReferences(const core::SourceFile* file, lsp::Position pos, bool 
 
   const auto* decl = symres->type->Declaration();
   switch (decl->nkind) {
-    case core::ast::NodeKind::Declarator: {
-      decl = std::addressof(*decl->As<core::ast::nodes::Declarator>()->name);
+    case ast::NodeKind::Declarator: {
+      decl = std::addressof(*decl->As<ast::nodes::Declarator>()->name);
       break;
     }
-    case core::ast::NodeKind::FormalPar: {
-      decl = std::addressof(*decl->As<core::ast::nodes::FormalPar>()->name);
+    case ast::NodeKind::FormalPar: {
+      decl = std::addressof(*decl->As<ast::nodes::FormalPar>()->name);
       break;
     }
     default:
       break;
   }
-  if (include_decl && decl->nkind == core::ast::NodeKind::Ident) {
-    accept(decl->As<core::ast::nodes::Ident>());
+  if (include_decl && decl->nkind == ast::NodeKind::Ident) {
+    accept(decl->As<ast::nodes::Ident>());
   }
 
   const auto* scope = symres->scope;
-  scope->Container()->Accept([&](this auto&& self, const core::ast::Node* n) {
-    if (n->nkind == core::ast::NodeKind::AssignmentExpr) {
-      const auto* ae = n->As<core::ast::nodes::AssignmentExpr>();
-      if (ae->parent->nkind == core::ast::NodeKind::CompositeLiteral ||
-          ae->parent->nkind == core::ast::NodeKind::ParenExpr) {
-        core::ast::Inspect(ae->value, self);
+  scope->Container()->Accept([&](this auto&& self, const ast::Node* n) {
+    if (n->nkind == ast::NodeKind::AssignmentExpr) {
+      const auto* ae = n->As<ast::nodes::AssignmentExpr>();
+      if (ae->parent->nkind == ast::NodeKind::CompositeLiteral || ae->parent->nkind == ast::NodeKind::ParenExpr) {
+        ast::Inspect(ae->value, self);
         return false;
       }
       return true;
     }
 
-    if (n->nkind == core::ast::NodeKind::SelectorExpr) {
-      n = core::ast::utils::TraverseSelectorExpressionStart(n->As<core::ast::nodes::SelectorExpr>());
+    if (n->nkind == ast::NodeKind::SelectorExpr) {
+      n = ast::utils::TraverseSelectorExpressionStart(n->As<ast::nodes::SelectorExpr>());
     }
-    if (n->nkind != core::ast::NodeKind::Ident) {
+    if (n->nkind != ast::NodeKind::Ident) {
       return true;
     }
 
     if (n != decl && file->Text(n) == name) {
-      accept(n->As<core::ast::nodes::Ident>());
+      accept(n->As<ast::nodes::Ident>());
     }
 
     return true;

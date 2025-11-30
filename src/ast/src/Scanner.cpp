@@ -7,7 +7,7 @@
 #include "ASTTypes.h"
 #include "StaticMap.h"
 
-namespace vanadium::core::ast {
+namespace vanadium::ast {
 namespace parser {
 
 constexpr auto kKeywordLookup = lib::MakeStaticMap<std::string_view, TokenKind>({
@@ -522,4 +522,4 @@ std::vector<pos_t>&& Scanner::ExtractLineMapping() noexcept {
 }
 
 }  // namespace parser
-}  // namespace vanadium::core::ast
+}  // namespace vanadium::ast

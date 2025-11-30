@@ -65,26 +65,26 @@ class MarkdownHoverCardBuilder {
   std::string buf_;
 };
 
-template <core::ast::IsNode TParamDescriptorNode>
-void WriteMarkdownParameterList(std::back_insert_iterator<std::string> w, const core::ast::AST& ast,
+template <ast::IsNode TParamDescriptorNode>
+void WriteMarkdownParameterList(std::back_insert_iterator<std::string> w, const ast::AST& ast,
                                 std::span<const TParamDescriptorNode* const> params) {
   const auto last_idx = std::ssize(params) - 1;
   for (const auto& [idx, param] : params | std::views::enumerate) {
     std::format_to(w, "- `");
 
     // TODO: cleanup builder from this
-    if constexpr (std::is_same_v<TParamDescriptorNode, core::ast::nodes::Field>) {
+    if constexpr (std::is_same_v<TParamDescriptorNode, ast::nodes::Field>) {
       if (param->optional) {
         std::format_to(w, "(optional) ");
       }
     }
-    if constexpr (std::is_same_v<TParamDescriptorNode, core::ast::nodes::FormalPar>) {
+    if constexpr (std::is_same_v<TParamDescriptorNode, ast::nodes::FormalPar>) {
       if (param->value) {
         std::format_to(w, "(optional) ");
       }
     }
 
-    if constexpr (std::is_same_v<TParamDescriptorNode, core::ast::nodes::FormalPar>) {
+    if constexpr (std::is_same_v<TParamDescriptorNode, ast::nodes::FormalPar>) {
       if (param->direction) {
         std::format_to(w, "{} ", ast.Text(param->direction));
       }
@@ -101,14 +101,13 @@ void WriteMarkdownParameterList(std::back_insert_iterator<std::string> w, const 
   }
 }
 
-bool WriteAttachedComment(std::back_insert_iterator<std::string> w, const core::ast::AST& ast,
-                          const core::ast::Node* decl) {
+bool WriteAttachedComment(std::back_insert_iterator<std::string> w, const ast::AST& ast, const ast::Node* decl) {
   const auto* tgt_decl = decl;
-  if (tgt_decl->nkind == core::ast::NodeKind::Declarator) {
+  if (tgt_decl->nkind == ast::NodeKind::Declarator) {
     tgt_decl = tgt_decl->parent;
   }
 
-  const auto comment = core::ast::utils::ExtractAttachedComment(ast, tgt_decl);
+  const auto comment = ast::utils::ExtractAttachedComment(ast, tgt_decl);
   if (!comment) {
     return false;
   }
@@ -171,7 +170,7 @@ lsp::HoverResult ProvideHover(const lsp::HoverParams& params, const core::Source
   if (!decl) {
     return nullptr;
   }
-  const auto* provider_file = core::ast::utils::SourceFileOf(decl);
+  const auto* provider_file = ast::utils::SourceFileOf(decl);
 
   MarkdownHoverCardBuilder builder([&](auto& bld) {
     if (provider_file != &file) {
@@ -196,98 +195,97 @@ lsp::HoverResult ProvideHover(const lsp::HoverParams& params, const core::Source
     }
   }
   switch (decl->nkind) {
-    case core::ast::NodeKind::FuncDecl: {
-      const auto* m = decl->As<core::ast::nodes::FuncDecl>();
+    case ast::NodeKind::FuncDecl: {
+      const auto* m = decl->As<ast::nodes::FuncDecl>();
       builder.WriteHeader(provider_file->Text(m->kind.range), provider_file->Text(*m->name));
       builder.WithWriter([&](auto w) {
         std::format_to(w, "→ `{}`", m->ret ? provider_file->ast.Text(m->ret->type) : "void");
         if (m->params && !m->params->list.empty()) {
           std::format_to(w, "\n\nArguments:\n");
-          WriteMarkdownParameterList<core::ast::nodes::FormalPar>(w, provider_file->ast, m->params->list);
+          WriteMarkdownParameterList<ast::nodes::FormalPar>(w, provider_file->ast, m->params->list);
         }
       });
       builder.WriteSeparator();
-      builder.WriteCodeBlock(provider_file->ast.Text(core::ast::Range{
+      builder.WriteCodeBlock(provider_file->ast.Text(ast::Range{
           .begin = m->nrange.begin,
           .end = m->body ? m->body->nrange.begin : m->nrange.end,
       }));
       break;
     }
-    case core::ast::NodeKind::TemplateDecl: {
-      const auto* m = decl->As<core::ast::nodes::TemplateDecl>();
+    case ast::NodeKind::TemplateDecl: {
+      const auto* m = decl->As<ast::nodes::TemplateDecl>();
       builder.WriteHeader("template", provider_file->Text(*m->name));
       builder.WithWriter([&](auto w) {
         if (m->params && !m->params->list.empty()) {
           std::format_to(w, "Parameters:\n");
-          WriteMarkdownParameterList<core::ast::nodes::FormalPar>(w, provider_file->ast, m->params->list);
+          WriteMarkdownParameterList<ast::nodes::FormalPar>(w, provider_file->ast, m->params->list);
         }
       });
       builder.WriteSeparator();
-      builder.WriteCodeBlock(provider_file->ast.Text(core::ast::Range{
+      builder.WriteCodeBlock(provider_file->ast.Text(ast::Range{
           .begin = decl->nrange.begin,
           .end = m->value->nrange.begin,
       }));
       break;
     }
-    case core::ast::NodeKind::ConstructorDecl: {
-      const auto* m = decl->As<core::ast::nodes::ConstructorDecl>();
-      builder.WriteHeader("class",
-                          provider_file->Text(*decl->parent->parent->As<core::ast::nodes::ClassTypeDecl>()->name),
+    case ast::NodeKind::ConstructorDecl: {
+      const auto* m = decl->As<ast::nodes::ConstructorDecl>();
+      builder.WriteHeader("class", provider_file->Text(*decl->parent->parent->As<ast::nodes::ClassTypeDecl>()->name),
                           "constructor");
       builder.WithWriter([&](auto w) {
         if (!m->params->list.empty()) {
           std::format_to(w, "Arguments:\n");
-          WriteMarkdownParameterList<core::ast::nodes::FormalPar>(w, provider_file->ast, m->params->list);
+          WriteMarkdownParameterList<ast::nodes::FormalPar>(w, provider_file->ast, m->params->list);
         }
       });
       builder.WriteSeparator();
-      builder.WriteCodeBlock(provider_file->ast.Text(core::ast::Range{
+      builder.WriteCodeBlock(provider_file->ast.Text(ast::Range{
           .begin = m->nrange.begin,
           .end = m->body ? m->body->nrange.begin : m->nrange.end,
       }));
       break;
     }
-    case core::ast::NodeKind::StructTypeDecl: {
-      const auto* m = decl->As<core::ast::nodes::StructTypeDecl>();
+    case ast::NodeKind::StructTypeDecl: {
+      const auto* m = decl->As<ast::nodes::StructTypeDecl>();
       builder.WriteHeader(provider_file->Text(m->kind.range), provider_file->ast.Text(*m->name));
       builder.WithWriter([&](auto w) {
         if (!m->fields.empty()) {
           std::format_to(w, "Fields:\n");
-          WriteMarkdownParameterList<core::ast::nodes::Field>(w, provider_file->ast, m->fields);
+          WriteMarkdownParameterList<ast::nodes::Field>(w, provider_file->ast, m->fields);
         }
       });
       builder.WriteSeparator();
-      builder.WriteCodeBlock(provider_file->ast.Text(core::ast::Range{
+      builder.WriteCodeBlock(provider_file->ast.Text(ast::Range{
           .begin = m->nrange.begin,
           .end = m->name->nrange.end,
       }));
       break;
     }
-    case core::ast::NodeKind::StructSpec: {
-      const auto* m = decl->As<core::ast::nodes::StructSpec>();
+    case ast::NodeKind::StructSpec: {
+      const auto* m = decl->As<ast::nodes::StructSpec>();
       builder.WriteHeader(provider_file->Text(m->kind.range),
-                          provider_file->ast.Text(*m->parent->As<core::ast::nodes::Field>()->name));
+                          provider_file->ast.Text(*m->parent->As<ast::nodes::Field>()->name));
       builder.WithWriter([&](auto w) {
         if (!m->fields.empty()) {
           std::format_to(w, "Fields:\n");
-          WriteMarkdownParameterList<core::ast::nodes::Field>(w, provider_file->ast, m->fields);
+          WriteMarkdownParameterList<ast::nodes::Field>(w, provider_file->ast, m->fields);
         }
       });
       builder.WriteSeparator();
       builder.WriteCodeBlock(provider_file->ast.Text(m->parent));
       break;
     }
-    case core::ast::NodeKind::ListSpec: {
-      const auto* m = decl->As<core::ast::nodes::ListSpec>();
+    case ast::NodeKind::ListSpec: {
+      const auto* m = decl->As<ast::nodes::ListSpec>();
       builder.WriteHeader(provider_file->Text(m->kind.range),
-                          provider_file->ast.Text(*m->parent->As<core::ast::nodes::Field>()->name));
+                          provider_file->ast.Text(*m->parent->As<ast::nodes::Field>()->name));
       builder.WriteSeparator();
       builder.WriteCodeBlock(provider_file->ast.Text(m->parent));
       break;
     }
-    case core::ast::NodeKind::EnumSpec: {
-      const auto* m = decl->As<core::ast::nodes::EnumSpec>();
-      builder.WriteHeader("enum", provider_file->ast.Text(*m->parent->As<core::ast::nodes::Field>()->name));
+    case ast::NodeKind::EnumSpec: {
+      const auto* m = decl->As<ast::nodes::EnumSpec>();
+      builder.WriteHeader("enum", provider_file->ast.Text(*m->parent->As<ast::nodes::Field>()->name));
       builder.WithWriter([&](auto w) {
         std::format_to(w, "Values:\n");
         const auto last_idx = std::ssize(m->values) - 1;
@@ -302,8 +300,8 @@ lsp::HoverResult ProvideHover(const lsp::HoverParams& params, const core::Source
       builder.WriteCodeBlock(provider_file->ast.Text(m->parent));
       break;
     }
-    case core::ast::NodeKind::EnumTypeDecl: {
-      const auto* m = decl->As<core::ast::nodes::EnumTypeDecl>();
+    case ast::NodeKind::EnumTypeDecl: {
+      const auto* m = decl->As<ast::nodes::EnumTypeDecl>();
       builder.WriteHeader("enum", provider_file->ast.Text(*m->name));
       builder.WithWriter([&](auto w) {
         std::format_to(w, "Values:\n");
@@ -316,66 +314,65 @@ lsp::HoverResult ProvideHover(const lsp::HoverParams& params, const core::Source
         }
       });
       builder.WriteSeparator();
-      builder.WriteCodeBlock(provider_file->ast.Text(core::ast::Range{
+      builder.WriteCodeBlock(provider_file->ast.Text(ast::Range{
           .begin = m->nrange.begin,
           .end = m->name->nrange.end,
       }));
       break;
     }
-    case core::ast::NodeKind::ClassTypeDecl: {
-      const auto* m = decl->As<core::ast::nodes::ClassTypeDecl>();
+    case ast::NodeKind::ClassTypeDecl: {
+      const auto* m = decl->As<ast::nodes::ClassTypeDecl>();
       builder.WriteHeader("class", provider_file->ast.Text(*m->name));
-      builder.WriteCodeBlock(provider_file->ast.Text(core::ast::Range{
+      builder.WriteCodeBlock(provider_file->ast.Text(ast::Range{
           .begin = m->nrange.begin,
           .end = m->name->nrange.end,
       }));
       break;
     }
-    case core::ast::NodeKind::SubTypeDecl: {
-      const auto* m = decl->As<core::ast::nodes::SubTypeDecl>();
+    case ast::NodeKind::SubTypeDecl: {
+      const auto* m = decl->As<ast::nodes::SubTypeDecl>();
       builder.WriteHeader("subtype", provider_file->ast.Text(*m->field->name));
-      builder.WriteCodeBlock(provider_file->ast.Text(core::ast::Range{
+      builder.WriteCodeBlock(provider_file->ast.Text(ast::Range{
           .begin = m->nrange.begin,
           .end = m->nrange.end,
       }));
       break;
     }
-    case core::ast::NodeKind::Declarator: {
-      const auto* m = decl->As<core::ast::nodes::Declarator>();
-      const auto* vd = m->parent->As<core::ast::nodes::ValueDecl>();
+    case ast::NodeKind::Declarator: {
+      const auto* m = decl->As<ast::nodes::Declarator>();
+      const auto* vd = m->parent->As<ast::nodes::ValueDecl>();
 
       builder.WriteHeader(vd->kind ? provider_file->ast.Text(vd->kind->range) : "", provider_file->ast.Text(*m->name));
       builder.WithWriter([&](auto w) {
         std::format_to(w, "Type: `{}`", provider_file->ast.Text(vd->type));
       });
       builder.WriteSeparator();
-      builder.WriteCodeBlock(provider_file->ast.Text(core::ast::Range{
+      builder.WriteCodeBlock(provider_file->ast.Text(ast::Range{
           .begin = m->parent->nrange.begin,
           .end = m->value ? m->value->nrange.end : m->name->nrange.end,
       }));
       break;
     }
-    case core::ast::NodeKind::FormalPar: {
-      const auto* m = decl->As<core::ast::nodes::FormalPar>();
+    case ast::NodeKind::FormalPar: {
+      const auto* m = decl->As<ast::nodes::FormalPar>();
       builder.WriteHeader("param", provider_file->ast.Text(*m->name));
       builder.WithWriter([&](auto w) {
         std::format_to(w, "Type: `{}`", provider_file->ast.Text(m->type));
       });
       builder.WriteSeparator();
-      builder.WriteCodeBlock(provider_file->ast.Text(core::ast::Range{
+      builder.WriteCodeBlock(provider_file->ast.Text(ast::Range{
           .begin = m->nrange.begin,
           .end = m->name->nrange.end,
       }));
       break;
     }
-    case core::ast::NodeKind::Field: {
-      const auto* m = decl->As<core::ast::nodes::Field>();
+    case ast::NodeKind::Field: {
+      const auto* m = decl->As<ast::nodes::Field>();
 
       std::string fh;
       builder.WriteHeader("field", [&] -> std::string_view {
-        if (m->parent->nkind == core::ast::NodeKind::StructTypeDecl) {
-          return fh = std::format("{}::{}",
-                                  provider_file->ast.Text(*m->parent->As<core::ast::nodes::StructTypeDecl>()->name),
+        if (m->parent->nkind == ast::NodeKind::StructTypeDecl) {
+          return fh = std::format("{}::{}", provider_file->ast.Text(*m->parent->As<ast::nodes::StructTypeDecl>()->name),
                                   provider_file->ast.Text(*m->name));
         }
         return provider_file->ast.Text(*m->name);
@@ -387,11 +384,11 @@ lsp::HoverResult ProvideHover(const lsp::HoverParams& params, const core::Source
       builder.WriteCodeBlock(provider_file->ast.Text(m));
       break;
     }
-    case core::ast::NodeKind::ImportDecl: {
-      const auto* m = decl->As<core::ast::nodes::ImportDecl>();
+    case ast::NodeKind::ImportDecl: {
+      const auto* m = decl->As<ast::nodes::ImportDecl>();
 
-      if (cursor_node->parent->nkind == core::ast::NodeKind::ImportDecl) {
-        m = cursor_node->parent->As<core::ast::nodes::ImportDecl>();
+      if (cursor_node->parent->nkind == ast::NodeKind::ImportDecl) {
+        m = cursor_node->parent->As<ast::nodes::ImportDecl>();
       }
 
       const auto* module = file.program->GetModule(provider_file->ast.Text(*m->module));
@@ -402,7 +399,7 @@ lsp::HoverResult ProvideHover(const lsp::HoverParams& params, const core::Source
       builder.WriteHeader("module", provider_file->ast.Text(*m->module));
       builder.WithWriter([&](auto w) {
         std::format_to(w, "`{}`", module->sf->path);
-        if (!m->list.empty() && m->list[0]->kind.kind == core::ast::TokenKind::IMPORT) {
+        if (!m->list.empty() && m->list[0]->kind.kind == ast::TokenKind::IMPORT) {
           std::format_to(w, "\n");
           builder.WriteSeparator();
 
@@ -416,19 +413,19 @@ lsp::HoverResult ProvideHover(const lsp::HoverParams& params, const core::Source
       });
       break;
     }
-    case core::ast::NodeKind::ComponentTypeDecl: {
-      const auto* m = decl->As<core::ast::nodes::ComponentTypeDecl>();
+    case ast::NodeKind::ComponentTypeDecl: {
+      const auto* m = decl->As<ast::nodes::ComponentTypeDecl>();
       builder.WriteHeader("component", provider_file->ast.Text(*m->name));
-      builder.WriteCodeBlock(provider_file->ast.Text(core::ast::Range{
+      builder.WriteCodeBlock(provider_file->ast.Text(ast::Range{
           .begin = m->nrange.begin,
           .end = m->nrange.end,
       }));
       break;
     }
-    case core::ast::NodeKind::PortTypeDecl: {
-      const auto* m = decl->As<core::ast::nodes::PortTypeDecl>();
+    case ast::NodeKind::PortTypeDecl: {
+      const auto* m = decl->As<ast::nodes::PortTypeDecl>();
       builder.WriteHeader("port", provider_file->ast.Text(*m->name));
-      builder.WriteCodeBlock(provider_file->ast.Text(core::ast::Range{
+      builder.WriteCodeBlock(provider_file->ast.Text(ast::Range{
           .begin = m->nrange.begin,
           .end = m->nrange.end,
       }));
@@ -438,22 +435,22 @@ lsp::HoverResult ProvideHover(const lsp::HoverParams& params, const core::Source
       if (sym->Flags() & core::semantic::SymbolFlags::kEnumMember) {
         std::string_view enum_name;
         const auto* parent = decl->parent;
-        if (parent->nkind == core::ast::NodeKind::CallExpr) {
+        if (parent->nkind == ast::NodeKind::CallExpr) {
           parent = parent->parent;
         }
         switch (parent->nkind) {
-          case core::ast::NodeKind::EnumTypeDecl: {
-            enum_name = provider_file->Text(*parent->As<core::ast::nodes::EnumTypeDecl>()->name);
+          case ast::NodeKind::EnumTypeDecl: {
+            enum_name = provider_file->Text(*parent->As<ast::nodes::EnumTypeDecl>()->name);
             break;
           }
-          case core::ast::NodeKind::EnumSpec: {
+          case ast::NodeKind::EnumSpec: {
             auto& buf = *d.arena.Alloc<std::string>();
-            for (const auto* pn = parent->parent; pn->nkind == core::ast::NodeKind::Field;) {
-              buf = std::format("{}.{}", provider_file->Text(*pn->As<core::ast::nodes::Field>()->name), buf);
+            for (const auto* pn = parent->parent; pn->nkind == ast::NodeKind::Field;) {
+              buf = std::format("{}.{}", provider_file->Text(*pn->As<ast::nodes::Field>()->name), buf);
 
-              if (pn->parent->nkind == core::ast::NodeKind::StructTypeDecl) {
-                buf = std::format("{}.{}",
-                                  provider_file->Text(*pn->parent->As<core::ast::nodes::StructTypeDecl>()->name), buf);
+              if (pn->parent->nkind == ast::NodeKind::StructTypeDecl) {
+                buf =
+                    std::format("{}.{}", provider_file->Text(*pn->parent->As<ast::nodes::StructTypeDecl>()->name), buf);
               }
 
               pn = pn->parent->parent;

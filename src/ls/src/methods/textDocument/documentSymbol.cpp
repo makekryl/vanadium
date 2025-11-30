@@ -19,7 +19,7 @@
 namespace vanadium::ls {
 
 namespace {
-void DumpParams(const core::SourceFile& file, const core::ast::nodes::FormalPars* params, std::string& buf) {
+void DumpParams(const core::SourceFile& file, const ast::nodes::FormalPars* params, std::string& buf) {
   if (!params || params->list.empty()) {
     return;
   }
@@ -51,13 +51,13 @@ void DumpParams(const core::SourceFile& file, const core::ast::nodes::FormalPars
 }
 
 lsp::DocumentSybmolResult GatherResult(const lsp::DocumentSymbolParams&, const core::SourceFile& file, LsSessionRef d) {
-  const auto lit = [&](const std::optional<core::ast::nodes::Ident>& ident) -> std::string_view {
+  const auto lit = [&](const std::optional<ast::nodes::Ident>& ident) -> std::string_view {
     if (!ident) {
       return "<empty>";
     }
     return file.Text(*ident);
   };
-  const auto nlit = [&](const core::ast::Node* n) -> std::string_view {
+  const auto nlit = [&](const ast::Node* n) -> std::string_view {
     return file.Text(n);
   };
 
@@ -81,10 +81,10 @@ lsp::DocumentSybmolResult GatherResult(const lsp::DocumentSymbolParams&, const c
   };
 
   bool inside_class{false};
-  file.ast.root->Accept([&](this auto& self, const core::ast::Node* n) {
+  file.ast.root->Accept([&](this auto& self, const ast::Node* n) {
     switch (n->nkind) {
-      case core::ast::NodeKind::Module: {
-        const auto* m = n->As<core::ast::nodes::Module>();
+      case ast::NodeKind::Module: {
+        const auto* m = n->As<ast::nodes::Module>();
         subtree(
             lsp::DocumentSymbol{
                 .name = lit(m->name),
@@ -96,15 +96,15 @@ lsp::DocumentSybmolResult GatherResult(const lsp::DocumentSymbolParams&, const c
             });
         return false;
       }
-      case core::ast::NodeKind::FuncDecl: {
-        const auto* m = n->As<core::ast::nodes::FuncDecl>();
+      case ast::NodeKind::FuncDecl: {
+        const auto* m = n->As<ast::nodes::FuncDecl>();
 
         auto& detail = *d.arena.Alloc<std::string>();
         if (m->params) {
           detail.reserve(32 * m->params->list.size());
         }
 
-        if (m->kind.kind != core::ast::TokenKind::FUNCTION) {
+        if (m->kind.kind != ast::TokenKind::FUNCTION) {
           detail += file.Text(m->kind.range);
         } else if (m->ret) {
           detail += nlit(m->ret);
@@ -142,8 +142,8 @@ lsp::DocumentSybmolResult GatherResult(const lsp::DocumentSymbolParams&, const c
 
         return false;
       }
-      case core::ast::NodeKind::TemplateDecl: {
-        const auto* m = n->As<core::ast::nodes::TemplateDecl>();
+      case ast::NodeKind::TemplateDecl: {
+        const auto* m = n->As<ast::nodes::TemplateDecl>();
 
         auto& detail = *d.arena.Alloc<std::string>();
         if (m->params) {
@@ -176,8 +176,8 @@ lsp::DocumentSybmolResult GatherResult(const lsp::DocumentSymbolParams&, const c
 
         return false;
       }
-      case core::ast::NodeKind::StructTypeDecl: {
-        const auto* m = n->As<core::ast::nodes::StructTypeDecl>();
+      case ast::NodeKind::StructTypeDecl: {
+        const auto* m = n->As<ast::nodes::StructTypeDecl>();
 
         subtree(
             lsp::DocumentSymbol{
@@ -199,8 +199,8 @@ lsp::DocumentSybmolResult GatherResult(const lsp::DocumentSymbolParams&, const c
 
         return false;
       }
-      case core::ast::NodeKind::EnumTypeDecl: {
-        const auto* m = n->As<core::ast::nodes::EnumTypeDecl>();
+      case ast::NodeKind::EnumTypeDecl: {
+        const auto* m = n->As<ast::nodes::EnumTypeDecl>();
 
         subtree(
             lsp::DocumentSymbol{
@@ -220,8 +220,8 @@ lsp::DocumentSybmolResult GatherResult(const lsp::DocumentSymbolParams&, const c
 
         return false;
       }
-      case core::ast::NodeKind::SubTypeDecl: {
-        const auto* m = n->As<core::ast::nodes::SubTypeDecl>();
+      case ast::NodeKind::SubTypeDecl: {
+        const auto* m = n->As<ast::nodes::SubTypeDecl>();
 
         push(lsp::DocumentSymbol{
             .name = lit(m->field->name),
@@ -232,8 +232,8 @@ lsp::DocumentSybmolResult GatherResult(const lsp::DocumentSymbolParams&, const c
 
         return false;
       }
-      case core::ast::NodeKind::ValueDecl: {
-        const auto* m = n->As<core::ast::nodes::ValueDecl>();
+      case ast::NodeKind::ValueDecl: {
+        const auto* m = n->As<ast::nodes::ValueDecl>();
 
         auto& detail = *d.arena.Alloc<std::string>();
         if (m->kind) {
@@ -251,11 +251,11 @@ lsp::DocumentSybmolResult GatherResult(const lsp::DocumentSymbolParams&, const c
                   return lsp::SymbolKind::kEvent;
                 }
                 switch (m->kind->kind) {
-                  case core::ast::TokenKind::PORT:
+                  case ast::TokenKind::PORT:
                     return lsp::SymbolKind::kInterface;
-                  case core::ast::TokenKind::CONST:
-                  case core::ast::TokenKind::TEMPLATE:
-                  case core::ast::TokenKind::MODULEPAR:
+                  case ast::TokenKind::CONST:
+                  case ast::TokenKind::TEMPLATE:
+                  case ast::TokenKind::MODULEPAR:
                     return lsp::SymbolKind::kConstant;
                   default:
                     return lsp::SymbolKind::kVariable;
@@ -267,8 +267,8 @@ lsp::DocumentSybmolResult GatherResult(const lsp::DocumentSymbolParams&, const c
 
         return false;
       }
-      case core::ast::NodeKind::ClassTypeDecl: {
-        const auto* m = n->As<core::ast::nodes::ClassTypeDecl>();
+      case ast::NodeKind::ClassTypeDecl: {
+        const auto* m = n->As<ast::nodes::ClassTypeDecl>();
         subtree(
             lsp::DocumentSymbol{
                 .name = lit(m->name),
@@ -306,8 +306,8 @@ lsp::DocumentSybmolResult GatherResult(const lsp::DocumentSymbolParams&, const c
             });
         return false;
       }
-      case core::ast::NodeKind::ConstructorDecl: {
-        const auto* m = n->As<core::ast::nodes::ConstructorDecl>();
+      case ast::NodeKind::ConstructorDecl: {
+        const auto* m = n->As<ast::nodes::ConstructorDecl>();
 
         std::string_view detail = "constructor";
         if (m->params) {
@@ -327,7 +327,7 @@ lsp::DocumentSybmolResult GatherResult(const lsp::DocumentSymbolParams&, const c
 
         return false;
       }
-      case core::ast::NodeKind::BlockStmt: {
+      case ast::NodeKind::BlockStmt: {
         return false;
       }
       default: {

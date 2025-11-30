@@ -6,16 +6,18 @@
 #include "ASTNodes.h"
 #include "ASTTypes.h"
 
-namespace vanadium::core {
+namespace vanadium {
 
+namespace core {
 struct SourceFile;
+}
 
 namespace ast {
 
 struct RootNode : Node {
   RootNode() : Node(NodeKind::RootNode) {}
 
-  SourceFile* file{nullptr};
+  core::SourceFile* file{nullptr};
   std::vector<Node*> nodes;
 
   void Accept(const NodeInspector& inspector) const {
@@ -49,4 +51,4 @@ struct AST {
 };
 
 }  // namespace ast
-};  // namespace vanadium::core
+};  // namespace vanadium

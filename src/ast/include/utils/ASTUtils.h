@@ -6,7 +6,7 @@
 #include "ASTNodes.h"
 #include "ASTTypes.h"
 
-namespace vanadium::core::ast {
+namespace vanadium::ast {
 namespace utils {
 
 const Range& GetActualNameRange(const Node* n);
@@ -104,14 +104,14 @@ inline const Node* TraverseSelectorExpressionStart(const nodes::SelectorExpr* se
   return se->x;
 }
 
-inline SourceFile* SourceFileOf(const Node* n) {
+inline core::SourceFile* SourceFileOf(const Node* n) {
   while (n->nkind != NodeKind::RootNode) {
     n = n->parent;
   }
   return n->As<RootNode>()->file;
 }
 
-inline bool IsInHierarchyOf(const core::ast::Node* node, const core::ast::Node* root) {
+inline bool IsInHierarchyOf(const ast::Node* node, const ast::Node* root) {
   for (const auto* par = node->parent; par != nullptr; par = par->parent) {
     if (par == root) {
       return true;
@@ -125,4 +125,4 @@ const Node* GetNodeAt(const AST& ast, pos_t pos);
 std::optional<Range> ExtractAttachedComment(const AST&, const Node*);
 
 }  // namespace utils
-}  // namespace vanadium::core::ast
+}  // namespace vanadium::ast

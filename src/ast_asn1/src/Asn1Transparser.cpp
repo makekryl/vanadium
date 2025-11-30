@@ -263,7 +263,7 @@ ttcn_ast::nodes::Definition* Transparser::ParseDefinition() {
               Expect(TokenKind::RBRACE);
             });
           case TokenKind::CLASS: {
-            auto* stdecl = parse_struct_decl(core::ast::TokenKind::RECORD);
+            auto* stdecl = parse_struct_decl(ttcn_ast::TokenKind::RECORD);
             if (tok_ == TokenKind::WITH) {
               Consume();
               Consume();  // SYNTAX, etc.

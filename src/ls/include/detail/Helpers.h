@@ -6,8 +6,8 @@
 namespace vanadium::ls {
 namespace detail {
 
-[[nodiscard]] core::ast::pos_t FindModuleBodyStart(const core::ast::AST&, const core::ast::nodes::Module*);
-[[nodiscard]] core::ast::pos_t FindPositionAfterLastImport(const core::ast::AST&);
+[[nodiscard]] ast::pos_t FindModuleBodyStart(const ast::AST&, const ast::nodes::Module*);
+[[nodiscard]] ast::pos_t FindPositionAfterLastImport(const ast::AST&);
 
 }  // namespace detail
 }  // namespace vanadium::ls

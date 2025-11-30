@@ -13,12 +13,12 @@ namespace vanadium::lint {
 namespace rules {
 
 namespace {
-core::ast::Range GetVariableNameRange(const core::ast::Node* decl) {
+ast::Range GetVariableNameRange(const ast::Node* decl) {
   switch (decl->nkind) {
-    case core::ast::NodeKind::Declarator:
-      return decl->As<core::ast::nodes::Declarator>()->name->nrange;
-    case core::ast::NodeKind::FormalPar:
-      return decl->As<core::ast::nodes::FormalPar>()->name->nrange;
+    case ast::NodeKind::Declarator:
+      return decl->As<ast::nodes::Declarator>()->name->nrange;
+    case ast::NodeKind::FormalPar:
+      return decl->As<ast::nodes::FormalPar>()->name->nrange;
     default:
       return {};
   }
@@ -33,33 +33,32 @@ void CheckScope(const std::pair<NoUnusedVars*, Context&> rule_ctx, const core::s
     CheckScope(rule_ctx, child, &used_vars);
   }
 
-  const auto inspector = [&](this auto&& self, const core::ast::Node* n) -> bool {
+  const auto inspector = [&](this auto&& self, const ast::Node* n) -> bool {
     switch (n->nkind) {
-      case core::ast::NodeKind::FormalPars: {
+      case ast::NodeKind::FormalPars: {
         return false;
       }
-      case core::ast::NodeKind::SelectorExpr: {
-        const auto* se = n->As<core::ast::nodes::SelectorExpr>();
-        core::ast::Inspect(core::ast::utils::TraverseSelectorExpressionStart(se), self);
+      case ast::NodeKind::SelectorExpr: {
+        const auto* se = n->As<ast::nodes::SelectorExpr>();
+        ast::Inspect(ast::utils::TraverseSelectorExpressionStart(se), self);
         return false;
       }
-      case core::ast::NodeKind::Declarator: {
-        auto* val = n->As<core::ast::nodes::Declarator>()->value;
+      case ast::NodeKind::Declarator: {
+        auto* val = n->As<ast::nodes::Declarator>()->value;
         if (val != nullptr) {
-          core::ast::Inspect(val, self);
+          ast::Inspect(val, self);
         }
         return false;
       }
-      case core::ast::NodeKind::AssignmentExpr: {
-        const auto* ae = n->As<core::ast::nodes::AssignmentExpr>();
-        if (ae->parent->nkind == core::ast::NodeKind::CompositeLiteral ||
-            ae->parent->nkind == core::ast::NodeKind::ParenExpr) {
-          core::ast::Inspect(ae->value, self);
+      case ast::NodeKind::AssignmentExpr: {
+        const auto* ae = n->As<ast::nodes::AssignmentExpr>();
+        if (ae->parent->nkind == ast::NodeKind::CompositeLiteral || ae->parent->nkind == ast::NodeKind::ParenExpr) {
+          ast::Inspect(ae->value, self);
           return false;
         }
         return true;
       }
-      case core::ast::NodeKind::Ident: {
+      case ast::NodeKind::Ident: {
         used_vars.emplace(ctx.GetFile().Text(n));
         return false;
       }
@@ -103,7 +102,7 @@ void NoUnusedVars::Exit(Context& ctx) {
       CheckScope({this, ctx}, sym.OriginatedScope(), nullptr);
     };
     if (sym.Flags() & core::semantic::SymbolFlags::kFunction) {
-      const auto* funcdecl = sym.Declaration()->As<core::ast::nodes::FuncDecl>();
+      const auto* funcdecl = sym.Declaration()->As<ast::nodes::FuncDecl>();
       if (!funcdecl->external) [[likely]] {
         perform_check();
       }

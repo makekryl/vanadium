@@ -8,6 +8,6 @@
 namespace vanadium::ls::detail {
 
 void VisitLocalReferences(const core::SourceFile*, lsp::Position, bool include_decl,
-                          lib::Consumer<const core::ast::nodes::Ident*>);
+                          lib::Consumer<const ast::nodes::Ident*>);
 
 }

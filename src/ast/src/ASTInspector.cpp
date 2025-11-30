@@ -4,7 +4,7 @@
 #include "ASTNodes.h"
 #include "ASTTypes.h"
 
-namespace vanadium::core::ast {
+namespace vanadium::ast {
 
 void Node::Accept(const NodeInspector& inspector) const {
 #define FORWARD_ACCEPT(type)       \
@@ -31,4 +31,4 @@ void Node::Accept(const NodeInspector& inspector) const {
 #undef FORWARD_ACCEPT
 }
 
-}  // namespace vanadium::core::ast
+}  // namespace vanadium::ast

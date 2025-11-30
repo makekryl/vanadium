@@ -18,9 +18,9 @@ lsp::DocumentHighlightResults ProvideHighlight(const lsp::DocumentHighlightParam
                                                LsSessionRef) {
   std::vector<lsp::DocumentHighlight> hls;
 
-  detail::VisitLocalReferences(&file, params.position, true, [&](const core::ast::nodes::Ident* ident) {
-    const bool is_write = ident->parent->nkind == core::ast::NodeKind::AssignmentExpr &&
-                          ident->parent->As<core::ast::nodes::AssignmentExpr>()->property == ident;
+  detail::VisitLocalReferences(&file, params.position, true, [&](const ast::nodes::Ident* ident) {
+    const bool is_write = ident->parent->nkind == ast::NodeKind::AssignmentExpr &&
+                          ident->parent->As<ast::nodes::AssignmentExpr>()->property == ident;
     hls.emplace_back(lsp::DocumentHighlight{
         .range = conv::ToLSPRange(ident->nrange, file.ast),
         .kind = is_write ? lsp::DocumentHighlightKind::kWrite : lsp::DocumentHighlightKind::kRead,

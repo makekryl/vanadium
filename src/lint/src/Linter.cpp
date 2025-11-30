@@ -10,7 +10,7 @@
 namespace vanadium::lint {
 
 void Linter::BindRule(Rule& rule) {
-  rule.Register([&](vanadium::core::ast::NodeKind kind) {
+  rule.Register([&](vanadium::ast::NodeKind kind) {
     matching_[kind].push_back(&rule);
   });
 }
@@ -29,7 +29,7 @@ ProblemSet Linter::Lint(const core::SourceFile& sf) const {
 
   Context ctx(sf);
 
-  sf.ast.root->Accept([&](const vanadium::core::ast::Node* n) {
+  sf.ast.root->Accept([&](const vanadium::ast::Node* n) {
     const auto it = matching_.find(n->nkind);
     if (it != matching_.end()) {
       for (auto* rule : it->second) {

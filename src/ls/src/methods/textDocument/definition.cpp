@@ -36,7 +36,7 @@ lsp::DefinitionResult ProvideDefinition(const lsp::DefinitionParams& params, con
   }
 
   const auto* decl = sym->Declaration();
-  const auto* provider_file = core::ast::utils::SourceFileOf(decl);
+  const auto* provider_file = ast::utils::SourceFileOf(decl);
 
   const auto& uri = *d.arena.Alloc<std::string>(PathToFileUri(d.solution, provider_file->path));
   return lsp::Location{

@@ -33,7 +33,7 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
-  const auto parse_fn = filename.ends_with(".asn") ? vanadium::asn1::ast::Parse : vanadium::core::ast::Parse;
+  const auto parse_fn = filename.ends_with(".asn") ? vanadium::asn1::ast::Parse : vanadium::ast::Parse;
 
   vanadium::lib::Arena arena;
   auto ast = parse_fn(arena, *src);

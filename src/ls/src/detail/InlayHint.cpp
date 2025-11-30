@@ -27,8 +27,8 @@
 // TODO: maybe track file version
 struct InlayHintPayload {
   std::string path;
-  vanadium::core::ast::pos_t anchor_pos;
-  vanadium::core::ast::NodeKind node_kind;
+  vanadium::ast::pos_t anchor_pos;
+  vanadium::ast::NodeKind node_kind;
 
   static glz::json_t AsJson(InlayHintPayload&& payload) {
     // TODO: find a way to have strongly-typed 'data' on both ends (maybe modify lspgen to produce templates,
@@ -55,25 +55,24 @@ namespace vanadium::ls::detail {
 namespace {
 template <typename DeduceCompositeLiteralTypeFn = decltype(&core::checker::ext::DeduceCompositeLiteralType)>
   requires std::is_invocable_r_v<core::checker::InstantiatedType, DeduceCompositeLiteralTypeFn, const core::SourceFile*,
-                                 const core::semantic::Scope*, const core::ast::nodes::CompositeLiteral*>
+                                 const core::semantic::Scope*, const ast::nodes::CompositeLiteral*>
 struct InlayHintTargetLocatorOptions {
   DeduceCompositeLiteralTypeFn deduceCompositeLiteralType;
 };
 constexpr auto kNonCachingInlayHintTargetLocatorOptions = InlayHintTargetLocatorOptions{
     .deduceCompositeLiteralType =
         [](const core::SourceFile* _file, const core::semantic::Scope* _scope,
-           const core::ast::nodes::CompositeLiteral* _cl) {
+           const ast::nodes::CompositeLiteral* _cl) {
           return core::checker::ext::DeduceCompositeLiteralType(_file, _scope, _cl);
         },
 };
 
 template <typename Options>
-[[nodiscard]] const core::ast::Node* LocateInlayHintTarget(const core::SourceFile& file,
-                                                           const core::semantic::Scope* scope, const core::ast::Node* n,
-                                                           Options options) {
+[[nodiscard]] const ast::Node* LocateInlayHintTarget(const core::SourceFile& file, const core::semantic::Scope* scope,
+                                                     const ast::Node* n, Options options) {
   switch (n->nkind) {
-    case core::ast::NodeKind::CallExpr: {
-      const auto* m = n->As<core::ast::nodes::CallExpr>();
+    case ast::NodeKind::CallExpr: {
+      const auto* m = n->As<ast::nodes::CallExpr>();
 
       // ResolveCallableParams is not used because we need to filter out builtin functions
       // return core::checker::utils::ResolveCallableParams(file, scope, m->args);  // -> FormalPars
@@ -84,11 +83,10 @@ template <typename Options>
         return nullptr;
       }
 
-      return core::ast::utils::GetCallableDeclParams(
-          fun_sym->Declaration()->As<core::ast::nodes::Decl>());  // -> FormalPars
+      return ast::utils::GetCallableDeclParams(fun_sym->Declaration()->As<ast::nodes::Decl>());  // -> FormalPars
     }
-    case core::ast::NodeKind::CompositeLiteral: {
-      const auto* m = n->As<core::ast::nodes::CompositeLiteral>();
+    case ast::NodeKind::CompositeLiteral: {
+      const auto* m = n->As<ast::nodes::CompositeLiteral>();
       const auto sym = options.deduceCompositeLiteralType(&file, scope, m);
       if (!sym || (sym->Flags() & core::semantic::SymbolFlags::kBuiltin)) {
         return nullptr;
@@ -105,15 +103,15 @@ template <typename Options>
 }
 
 template <typename InlayHintTargetLocatorOptions>
-void ComputeInlayHint(const core::SourceFile& file, const core::semantic::Scope* scope, const core::ast::Node* n,
+void ComputeInlayHint(const core::SourceFile& file, const core::semantic::Scope* scope, const ast::Node* n,
                       lib::Arena& arena, std::vector<lsp::InlayHint>& out,
                       InlayHintTargetLocatorOptions inlayHintTargetLocatorOptions) {
-  const core::ast::Node* tgt = LocateInlayHintTarget(file, scope, n, inlayHintTargetLocatorOptions);
+  const ast::Node* tgt = LocateInlayHintTarget(file, scope, n, inlayHintTargetLocatorOptions);
   if (!tgt) {
     return;
   }
 
-  const auto add_parameter_inlay_hint = [&](const core::ast::pos_t pos, std::string_view name) {
+  const auto add_parameter_inlay_hint = [&](const ast::pos_t pos, std::string_view name) {
     out.emplace_back(lsp::InlayHint{
         .position = conv::ToLSPPosition(file.ast.lines.Translate(pos)),
         .label = *arena.Alloc<std::string>(std::format("{} := ", name)),
@@ -127,11 +125,11 @@ void ComputeInlayHint(const core::SourceFile& file, const core::semantic::Scope*
   };
 
   switch (n->nkind) {
-    case core::ast::NodeKind::CallExpr: {
-      const auto* m = n->As<core::ast::nodes::CallExpr>();
+    case ast::NodeKind::CallExpr: {
+      const auto* m = n->As<ast::nodes::CallExpr>();
 
-      const auto* params = tgt->As<core::ast::nodes::FormalPars>();
-      const auto* params_file = core::ast::utils::SourceFileOf(params);
+      const auto* params = tgt->As<ast::nodes::FormalPars>();
+      const auto* params_file = ast::utils::SourceFileOf(params);
 
       for (const auto& [idx, arg] : m->args->list | std::views::enumerate) {
         if (idx >= std::ssize(params->list)) {
@@ -139,8 +137,8 @@ void ComputeInlayHint(const core::SourceFile& file, const core::semantic::Scope*
         }
 
         const auto* param = params->list[idx];
-        if (param->direction && (param->direction->kind == core::ast::TokenKind::OUT ||
-                                 param->direction->kind == core::ast::TokenKind::INOUT)) {
+        if (param->direction &&
+            (param->direction->kind == ast::TokenKind::OUT || param->direction->kind == ast::TokenKind::INOUT)) {
           out.emplace_back(lsp::InlayHint{
               .position = conv::ToLSPPosition(file.ast.lines.Translate(arg->nrange.begin)),
               .label = "&",
@@ -148,7 +146,7 @@ void ComputeInlayHint(const core::SourceFile& file, const core::semantic::Scope*
           });
         }
 
-        if (arg->nkind != core::ast::NodeKind::AssignmentExpr) {
+        if (arg->nkind != ast::NodeKind::AssignmentExpr) {
           const auto& param_name_opt = param->name;
           if (!param_name_opt) [[unlikely]] {
             break;
@@ -165,22 +163,22 @@ void ComputeInlayHint(const core::SourceFile& file, const core::semantic::Scope*
 
       break;
     }
-    case core::ast::NodeKind::CompositeLiteral: {
-      const auto* m = n->As<core::ast::nodes::CompositeLiteral>();
+    case ast::NodeKind::CompositeLiteral: {
+      const auto* m = n->As<ast::nodes::CompositeLiteral>();
 
-      const auto* stfields_ptr = core::ast::utils::GetStructFields(tgt);
+      const auto* stfields_ptr = ast::utils::GetStructFields(tgt);
       if (!stfields_ptr) [[unlikely]] {
         break;
       }
       const auto& stfields = *stfields_ptr;
 
-      const auto* stdecl_file = core::ast::utils::SourceFileOf(tgt);
+      const auto* stdecl_file = ast::utils::SourceFileOf(tgt);
 
       for (const auto& [idx, arg] : m->list | std::views::enumerate) {
         if (idx >= std::ssize(stfields)) {
           break;
         }
-        if (arg->nkind == core::ast::NodeKind::AssignmentExpr) {
+        if (arg->nkind == ast::NodeKind::AssignmentExpr) {
           break;
         }
 
@@ -219,12 +217,12 @@ std::vector<lsp::InlayHint> CollectInlayHints(const lsp::InlayHintParams& params
   std::stack<core::checker::InstantiatedType> cl_type_cache;
   cl_type_cache.emplace(nullptr);
   //
-  const auto memoizing_visitor = [&](this auto&& self, const core::ast::Node* n) {
+  const auto memoizing_visitor = [&](this auto&& self, const ast::Node* n) {
     ComputeInlayHint(file, scope, n, d.arena, hints,
                      InlayHintTargetLocatorOptions{
                          .deduceCompositeLiteralType =
                              [&](const core::SourceFile* _file, const core::semantic::Scope* _scope,
-                                 const core::ast::nodes::CompositeLiteral* _cl) {
+                                 const ast::nodes::CompositeLiteral* _cl) {
                                const auto res = core::checker::ext::DeduceCompositeLiteralType(_file, _scope, _cl,
                                                                                                cl_type_cache.top());
                                cl_type_cache.emplace(res);
@@ -232,13 +230,13 @@ std::vector<lsp::InlayHint> CollectInlayHints(const lsp::InlayHintParams& params
                              },
                      });
     n->Accept(self);
-    if (n->nkind == core::ast::NodeKind::CompositeLiteral) {
+    if (n->nkind == ast::NodeKind::CompositeLiteral) {
       cl_type_cache.pop();
     }
     return false;
   };
 
-  const auto overlaps = [](const core::ast::Range& a, const core::ast::Range& b) {
+  const auto overlaps = [](const ast::Range& a, const ast::Range& b) {
     return std::max(a.begin, b.begin) <= std::min(a.end, b.end);
   };
   core::semantic::InspectScope(
@@ -246,9 +244,9 @@ std::vector<lsp::InlayHint> CollectInlayHints(const lsp::InlayHintParams& params
       [&](const core::semantic::Scope* scope_under_inspection) {
         scope = scope_under_inspection;
       },
-      [&](const core::ast::Node* n) -> bool {
+      [&](const ast::Node* n) -> bool {
         if (overlaps(requested_range, n->nrange)) {
-          if (n->nkind == core::ast::NodeKind::CompositeLiteral) {
+          if (n->nkind == ast::NodeKind::CompositeLiteral) {
             memoizing_visitor(n);
             return false;
           }
@@ -281,8 +279,8 @@ std::optional<lsp::InlayHint> ResolveInlayHint(const lsp::InlayHint& original_hi
     return std::nullopt;
   }
 
-  const core::ast::Node* container_node = core::ast::utils::GetNodeAt(file->ast, payload->anchor_pos);
-  while (container_node->nkind != static_cast<core::ast::NodeKind>(payload->node_kind)) {
+  const ast::Node* container_node = ast::utils::GetNodeAt(file->ast, payload->anchor_pos);
+  while (container_node->nkind != static_cast<ast::NodeKind>(payload->node_kind)) {
     container_node = container_node->parent;
     if (!container_node) [[unlikely]] {
       return std::nullopt;
@@ -295,7 +293,7 @@ std::optional<lsp::InlayHint> ResolveInlayHint(const lsp::InlayHint& original_hi
     return std::nullopt;
   }
 
-  const auto render = [&](const core::SourceFile* tgt_file, const core::ast::Range& range) -> lsp::InlayHint {
+  const auto render = [&](const core::SourceFile* tgt_file, const ast::Range& range) -> lsp::InlayHint {
     lsp::InlayHint rendition{original_hint};
 
     if (std::holds_alternative<std::string_view>(original_hint.label)) {
@@ -322,10 +320,10 @@ std::optional<lsp::InlayHint> ResolveInlayHint(const lsp::InlayHint& original_hi
   };
 
   switch (container_node->nkind) {
-    case core::ast::NodeKind::CallExpr: {
-      const auto* m = container_node->As<core::ast::nodes::CallExpr>();
+    case ast::NodeKind::CallExpr: {
+      const auto* m = container_node->As<ast::nodes::CallExpr>();
 
-      const auto* params = tgt->As<core::ast::nodes::FormalPars>();
+      const auto* params = tgt->As<ast::nodes::FormalPars>();
 
       while (n && n->parent != m->args) {
         n = n->parent;
@@ -345,14 +343,14 @@ std::optional<lsp::InlayHint> ResolveInlayHint(const lsp::InlayHint& original_hi
       if (!param->name) {
         return std::nullopt;
       }
-      const auto* param_file = core::ast::utils::SourceFileOf(param);
+      const auto* param_file = ast::utils::SourceFileOf(param);
 
       return render(param_file, param->name->nrange);
     }
-    case core::ast::NodeKind::CompositeLiteral: {
-      const auto* m = container_node->As<core::ast::nodes::CompositeLiteral>();
+    case ast::NodeKind::CompositeLiteral: {
+      const auto* m = container_node->As<ast::nodes::CompositeLiteral>();
 
-      const auto* stfields_ptr = core::ast::utils::GetStructFields(tgt);
+      const auto* stfields_ptr = ast::utils::GetStructFields(tgt);
       if (!stfields_ptr) [[unlikely]] {
         break;
       }
@@ -376,7 +374,7 @@ std::optional<lsp::InlayHint> ResolveInlayHint(const lsp::InlayHint& original_hi
       if (!field->name) {
         return std::nullopt;
       }
-      const auto* field_file = core::ast::utils::SourceFileOf(tgt);
+      const auto* field_file = ast::utils::SourceFileOf(tgt);
 
       return render(field_file, field->name->nrange);
     }

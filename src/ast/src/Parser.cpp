@@ -11,7 +11,7 @@
 #include "Scanner.h"
 #include "StaticSet.h"
 
-namespace vanadium::core::ast {
+namespace vanadium::ast {
 namespace parser {
 
 // clang-format off
@@ -2704,4 +2704,4 @@ ConcreteNode* Parser::NewErrorNode(const Token& from) {
 }
 
 }  // namespace parser
-}  // namespace vanadium::core::ast
+}  // namespace vanadium::ast

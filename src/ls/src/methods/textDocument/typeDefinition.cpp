@@ -30,8 +30,8 @@ lsp::TypeDefinitionResult ProvideTypeDefinition(const lsp::TypeDefinitionParams&
   if (!sym || (sym->Flags() & core::semantic::SymbolFlags::kBuiltin)) {
     return nullptr;
   }
-  const auto* decl = sym->Declaration()->As<core::ast::nodes::Decl>();
-  const auto* provider_file = core::ast::utils::SourceFileOf(decl);
+  const auto* decl = sym->Declaration()->As<ast::nodes::Decl>();
+  const auto* provider_file = ast::utils::SourceFileOf(decl);
 
   const auto* type_sym = core::checker::ResolveDeclarationType(provider_file, decl).sym;
   if (!type_sym) {
@@ -39,7 +39,7 @@ lsp::TypeDefinitionResult ProvideTypeDefinition(const lsp::TypeDefinitionParams&
   }
 
   const auto* type_decl = detail::GetReadableDefinition(type_sym->Declaration());
-  const auto* type_file = core::ast::utils::SourceFileOf(type_decl);
+  const auto* type_file = ast::utils::SourceFileOf(type_decl);
 
   return lsp::Location{
       .uri = *d.arena.Alloc<std::string>(PathToFileUri(d.solution, type_file->path)),

@@ -15,7 +15,7 @@
 
 class TextASTDumper {
  private:
-  TextASTDumper(vanadium::core::ast::AST& ast, std::ostream& out) : ast_(ast), out_(out) {}
+  TextASTDumper(vanadium::ast::AST& ast, std::ostream& out) : ast_(ast), out_(out) {}
 
   void WriteIndent() {
     out_ << "\e[38;5;255m";
@@ -25,7 +25,7 @@ class TextASTDumper {
     out_ << "\e[0m";
   }
 
-  void WriteName(std::string_view name, std::optional<vanadium::core::ast::Range> range = std::nullopt) {
+  void WriteName(std::string_view name, std::optional<vanadium::ast::Range> range = std::nullopt) {
     out_ << "\n";
 
     std::size_t padding{16};
@@ -59,11 +59,11 @@ class TextASTDumper {
 
   std::size_t indent_{0};
 
-  vanadium::core::ast::AST& ast_;
+  vanadium::ast::AST& ast_;
   std::ostream& out_;
 
-  friend class vanadium::core::ast::Dumper<TextASTDumper>;
-  vanadium::core::ast::Dumper<TextASTDumper>* dumper_;
+  friend class vanadium::ast::Dumper<TextASTDumper>;
+  vanadium::ast::Dumper<TextASTDumper>* dumper_;
 
  public:
   void Dump() {
@@ -71,33 +71,32 @@ class TextASTDumper {
     out_ << '\n';
   }
 
-  static vanadium::core::ast::Dumper<TextASTDumper> Create(vanadium::core::ast::AST& ast, std::ostream& out) {
+  static vanadium::ast::Dumper<TextASTDumper> Create(vanadium::ast::AST& ast, std::ostream& out) {
     return {TextASTDumper{ast, out}};
   }
 };
 
 template <>
-inline void vanadium::core::ast::Dumper<TextASTDumper>::Dump(std::string_view name,
-                                                             const vanadium::core::ast::Token& tok) {
+inline void vanadium::ast::Dumper<TextASTDumper>::Dump(std::string_view name, const vanadium::ast::Token& tok) {
   impl_.WriteName(name, tok.range);
   impl_.WriteValue(tok.On(impl_.ast_.src));
 }
 
 template <>
-inline void vanadium::core::ast::Dumper<TextASTDumper>::DumpIdent(const vanadium::core::ast::nodes::Ident& ident) {
+inline void vanadium::ast::Dumper<TextASTDumper>::DumpIdent(const vanadium::ast::nodes::Ident& ident) {
   impl_.WriteValue(ident.On(impl_.ast_.src));
 }
 
 template <>
-inline void vanadium::core::ast::Dumper<TextASTDumper>::Dump(std::string_view name,
-                                                             const vanadium::core::ast::nodes::Ident& ident) {
+inline void vanadium::ast::Dumper<TextASTDumper>::Dump(std::string_view name,
+                                                       const vanadium::ast::nodes::Ident& ident) {
   impl_.WriteName(name, ident.nrange);
   DumpIdent(ident);
 }
 
 template <>
 template <typename T>
-inline void vanadium::core::ast::Dumper<TextASTDumper>::Dump(std::string_view name, const std::vector<T>& v) {
+inline void vanadium::ast::Dumper<TextASTDumper>::Dump(std::string_view name, const std::vector<T>& v) {
   if (v.empty()) {
     return;
   }
@@ -112,19 +111,19 @@ inline void vanadium::core::ast::Dumper<TextASTDumper>::Dump(std::string_view na
 }
 
 template <>
-inline void vanadium::core::ast::Dumper<TextASTDumper>::DumpPresence(std::string_view name) {
+inline void vanadium::ast::Dumper<TextASTDumper>::DumpPresence(std::string_view name) {
   impl_.WriteName(name);
   impl_.WriteValue("true");
 }
 
 template <>
-inline void vanadium::core::ast::Dumper<TextASTDumper>::DumpKey(std::string_view name, const Range& range) {
+inline void vanadium::ast::Dumper<TextASTDumper>::DumpKey(std::string_view name, const Range& range) {
   impl_.WriteName(name, range);
 }
 
 template <>
 template <typename F>
-inline void vanadium::core::ast::Dumper<TextASTDumper>::DumpGroup(std::string_view name, F f) {
+inline void vanadium::ast::Dumper<TextASTDumper>::DumpGroup(std::string_view name, F f) {
   impl_.out_ << name;
   impl_.Indented([&] {
     f();

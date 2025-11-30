@@ -6,8 +6,7 @@
 
 #include "ASTTypes.h"
 
-namespace vanadium::core {
-namespace ast {
+namespace vanadium::ast {
 
 // NOLINTBEGIN(readability-identifier-naming)
 enum class TokenKind : std::uint8_t {
@@ -436,5 +435,4 @@ inline void Inspect(const Node* node, const NodeInspector& inspector) {
   }
 }
 
-}  // namespace ast
-}  // namespace vanadium::core
+}  // namespace vanadium::ast

@@ -7,8 +7,7 @@
 #include "ASTNodes.h"
 #include "ASTTypes.h"
 
-namespace vanadium::core {
-namespace ast {
+namespace vanadium::ast {
 
 // NOLINTBEGIN(misc-no-recursion)
 template <class Impl>
@@ -16,10 +15,10 @@ class Dumper {
  private:
   Dumper(Impl impl) : impl_(std::move(impl)) {}
 
-  void Dump(std::string_view name, const vanadium::core::ast::Token& tok);
+  void Dump(std::string_view name, const vanadium::ast::Token& tok);
 
-  void DumpIdent(const vanadium::core::ast::nodes::Ident&) {}
-  void Dump(std::string_view, const vanadium::core::ast::nodes::Ident&) {}
+  void DumpIdent(const vanadium::ast::nodes::Ident&) {}
+  void Dump(std::string_view, const vanadium::ast::nodes::Ident&) {}
 
   template <typename T>
   void Dump(std::string_view name, const std::vector<T>& v);
@@ -37,7 +36,7 @@ class Dumper {
       Dump(name, *opt);
     }
   }
-  void Dump(std::string_view name, const vanadium::core::ast::Token* tok) {
+  void Dump(std::string_view name, const vanadium::ast::Token* tok) {
     if (tok != nullptr) {
       Dump(name, *tok);
     }
@@ -48,14 +47,14 @@ class Dumper {
     }
   }
 
-  void Dump(std::string_view name, const vanadium::core::ast::Node* n) {
+  void Dump(std::string_view name, const vanadium::ast::Node* n) {
     if (n == nullptr) {
       return;
     }
 
     DumpKey(name, n->nrange);
 
-    using namespace vanadium::core::ast;
+    using namespace vanadium::ast;
     switch (n->nkind) {
       case NodeKind::RootNode: {
         DumpGroup("RootNode", [&] {
@@ -113,5 +112,4 @@ class Dumper {
 };
 // NOLINTEND(misc-no-recursion)
 
-}  // namespace ast
-}  // namespace vanadium::core
+}  // namespace vanadium::ast

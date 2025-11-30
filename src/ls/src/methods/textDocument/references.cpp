@@ -25,7 +25,7 @@ rpc::ExpectedResult<lsp::ReferencesResult> methods::textDocument::references::in
       params, [&](const auto&, const core::SourceFile& file, LsSessionRef) -> lsp::ReferencesResult {
         std::vector<lsp::Location> refs;
         detail::VisitLocalReferences(&file, params.position, params.context.includeDeclaration,
-                                     [&](const core::ast::nodes::Ident* ident) {
+                                     [&](const ast::nodes::Ident* ident) {
                                        refs.emplace_back(lsp::Location{
                                            .uri = params.textDocument.uri,
                                            .range = conv::ToLSPRange(ident->nrange, file.ast),

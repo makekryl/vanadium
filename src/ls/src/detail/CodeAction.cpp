@@ -28,10 +28,10 @@ lsp::CodeActionResult ProvideCodeActions(const lsp::CodeActionParams& params, co
     const auto& data = *diag.data;
     VLS_DEBUG("CA data='{}'", data.dump().value());
     if (data.contains(codeAction::kPayloadKeyUnresolved)) {  // TODO: extract to shared constant
-      const auto* n = core::ast::utils::GetNodeAt(file.ast, file.ast.lines.GetPosition(core::ast::Location{
-                                                                .line = diag.range.start.line,
-                                                                .column = diag.range.start.character + 1,
-                                                            }));
+      const auto* n = ast::utils::GetNodeAt(file.ast, file.ast.lines.GetPosition(ast::Location{
+                                                          .line = diag.range.start.line,
+                                                          .column = diag.range.start.character + 1,
+                                                      }));
       const auto text = n->On(file.ast.src);
 
       file.program->VisitAccessibleModules([&](const core::ModuleDescriptor& module) {
@@ -42,8 +42,8 @@ lsp::CodeActionResult ProvideCodeActions(const lsp::CodeActionParams& params, co
 
         const auto& replacement = *d.arena.Alloc<std::string>(std::format("\nimport from {} all;", module.name));
 
-        const core::ast::pos_t last_import_pos = detail::FindPositionAfterLastImport(file.ast);
-        if (last_import_pos == core::ast::pos_t(-1)) {
+        const ast::pos_t last_import_pos = detail::FindPositionAfterLastImport(file.ast);
+        if (last_import_pos == ast::pos_t(-1)) {
           return false;
         }
         const auto loc = file.ast.lines.Translate(last_import_pos);

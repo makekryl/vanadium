@@ -25,16 +25,16 @@ inline SemanticTokenModifiers operator|(SemanticTokenModifiers lhs, SemanticToke
 namespace vanadium::ls {
 // TODO: refactor
 struct SemanticTokenW {
-  const core::ast::nodes::Ident* ident;
+  const ast::nodes::Ident* ident;
   lsp::SemanticTokenTypes type;
   lsp::SemanticTokenModifiers modifiers;
 };
 
-void HighlightIdent(const core::SourceFile* file, const core::semantic::Scope* scope,
-                    const core::ast::nodes::Ident* ident, std::invocable<SemanticTokenW&&> auto write_token) {
-  if (ident->parent->nkind == core::ast::NodeKind::AssignmentExpr) {
-    const auto* ae = ident->parent->As<core::ast::nodes::AssignmentExpr>();
-    if (ident == ae->property && ae->parent->nkind == core::ast::NodeKind::CompositeLiteral) {
+void HighlightIdent(const core::SourceFile* file, const core::semantic::Scope* scope, const ast::nodes::Ident* ident,
+                    std::invocable<SemanticTokenW&&> auto write_token) {
+  if (ident->parent->nkind == ast::NodeKind::AssignmentExpr) {
+    const auto* ae = ident->parent->As<ast::nodes::AssignmentExpr>();
+    if (ident == ae->property && ae->parent->nkind == ast::NodeKind::CompositeLiteral) {
       write_token(SemanticTokenW{
           .ident = ident,
           .type = lsp::SemanticTokenTypes::kProperty,
@@ -43,9 +43,9 @@ void HighlightIdent(const core::SourceFile* file, const core::semantic::Scope* s
       return;
     }
   }
-  if (ident->parent->nkind == core::ast::NodeKind::EnumTypeDecl ||
-      (ident->parent->nkind == core::ast::NodeKind::CallExpr &&
-       ident->parent->parent->nkind == core::ast::NodeKind::EnumTypeDecl)) {
+  if (ident->parent->nkind == ast::NodeKind::EnumTypeDecl ||
+      (ident->parent->nkind == ast::NodeKind::CallExpr &&
+       ident->parent->parent->nkind == ast::NodeKind::EnumTypeDecl)) {
     write_token(SemanticTokenW{
         .ident = ident,
         .type = lsp::SemanticTokenTypes::kEnummember,
@@ -59,21 +59,21 @@ void HighlightIdent(const core::SourceFile* file, const core::semantic::Scope* s
     std::tie(w.type, w.modifiers) = [&] -> Fu {
       if (sym->Flags() & core::semantic::SymbolFlags::kTemplate) {
         return {lsp::SemanticTokenTypes::kVariable,
-                (ident->parent->nkind == core::ast::NodeKind::FuncDecl ? lsp::SemanticTokenModifiers::kDeclaration
-                                                                       : lsp::SemanticTokenModifiers::kUnset) |
+                (ident->parent->nkind == ast::NodeKind::FuncDecl ? lsp::SemanticTokenModifiers::kDeclaration
+                                                                 : lsp::SemanticTokenModifiers::kUnset) |
                     lsp::SemanticTokenModifiers::kReadonly};
       }
       if (sym->Flags() & core::semantic::SymbolFlags::kFunction) {
         return {lsp::SemanticTokenTypes::kFunction,
-                (ident->parent->nkind == core::ast::NodeKind::FuncDecl ? lsp::SemanticTokenModifiers::kDeclaration
-                                                                       : lsp::SemanticTokenModifiers::kUnset)};
+                (ident->parent->nkind == ast::NodeKind::FuncDecl ? lsp::SemanticTokenModifiers::kDeclaration
+                                                                 : lsp::SemanticTokenModifiers::kUnset)};
       }
       if (sym->Flags() & core::semantic::SymbolFlags::kVariable) {
         const auto* decl = sym->Declaration();
-        if (decl->nkind == core::ast::NodeKind::Declarator) {
-          const auto* dd = decl->As<core::ast::nodes::Declarator>();
-          const auto* vd = dd->parent->As<core::ast::nodes::ValueDecl>();
-          if (vd->kind && vd->kind->kind != core::ast::TokenKind::VAR) {  // modulepar+const, todo: refactor
+        if (decl->nkind == ast::NodeKind::Declarator) {
+          const auto* dd = decl->As<ast::nodes::Declarator>();
+          const auto* vd = dd->parent->As<ast::nodes::ValueDecl>();
+          if (vd->kind && vd->kind->kind != ast::TokenKind::VAR) {  // modulepar+const, todo: refactor
             return {lsp::SemanticTokenTypes::kVariable,
                     lsp::SemanticTokenModifiers::kDefinition | lsp::SemanticTokenModifiers::kReadonly};
           }
@@ -83,8 +83,8 @@ void HighlightIdent(const core::SourceFile* file, const core::semantic::Scope* s
       }
       if (sym->Flags() & core::semantic::SymbolFlags::kArgument) {
         return {lsp::SemanticTokenTypes::kParameter,
-                (ident->parent->nkind == core::ast::NodeKind::FormalPar ? lsp::SemanticTokenModifiers::kDeclaration
-                                                                        : lsp::SemanticTokenModifiers::kUnset)};
+                (ident->parent->nkind == ast::NodeKind::FormalPar ? lsp::SemanticTokenModifiers::kDeclaration
+                                                                  : lsp::SemanticTokenModifiers::kUnset)};
       }
       if (sym->Flags() & (core::semantic::SymbolFlags::kComponent | core::semantic::SymbolFlags::kClass)) {
         return {lsp::SemanticTokenTypes::kClass, lsp::SemanticTokenModifiers::kUnset};
@@ -151,16 +151,16 @@ lsp::SemanticTokens CollectSemanticTokens(const lsp::SemanticTokensRangeParams& 
   };
 
   const auto requested_range = conv::FromLSPRange(params.range, file.ast);
-  const auto overlaps = [](const core::ast::Range& a, const core::ast::Range& b) {
+  const auto overlaps = [](const ast::Range& a, const ast::Range& b) {
     return std::max(a.begin, b.begin) <= std::min(a.end, b.end);
   };
 
   const core::semantic::Scope* scope{nullptr};
-  const auto inspector = [&](this auto&& self, const core::ast::Node* n) -> bool {
+  const auto inspector = [&](this auto&& self, const ast::Node* n) -> bool {
     if (overlaps(requested_range, n->nrange)) {
       switch (n->nkind) {
-        case core::ast::NodeKind::Ident: {
-          HighlightIdent(&file, scope, n->As<core::ast::nodes::Ident>(), write_token);
+        case ast::NodeKind::Ident: {
+          HighlightIdent(&file, scope, n->As<ast::nodes::Ident>(), write_token);
           return false;
         }
         default: {

@@ -7,7 +7,7 @@
 namespace vanadium::ls {
 namespace conv {
 
-[[nodiscard]] inline lsp::Position ToLSPPosition(const core::ast::Location& loc) {
+[[nodiscard]] inline lsp::Position ToLSPPosition(const ast::Location& loc) {
   // TODO: UTF-16
   return lsp::Position{
       .line = loc.line,
@@ -15,23 +15,23 @@ namespace conv {
   };
 }
 
-[[nodiscard]] inline lsp::Range ToLSPRange(const core::ast::Range& range, const core::ast::AST& ast) {
+[[nodiscard]] inline lsp::Range ToLSPRange(const ast::Range& range, const ast::AST& ast) {
   return lsp::Range{
       .start = ToLSPPosition(ast.lines.Translate(range.begin)),
       .end = ToLSPPosition(ast.lines.Translate(range.end)),
   };
 }
 
-[[nodiscard]] inline core::ast::Location FromLSPPosition(const lsp::Position& pos) {
+[[nodiscard]] inline ast::Location FromLSPPosition(const lsp::Position& pos) {
   // TODO: UTF-16
-  return core::ast::Location{
+  return ast::Location{
       .line = pos.line,
       .column = pos.character,
   };
 }
 
-[[nodiscard]] inline core::ast::Range FromLSPRange(const lsp::Range& range, const core::ast::AST& ast) {
-  return core::ast::Range{
+[[nodiscard]] inline ast::Range FromLSPRange(const lsp::Range& range, const ast::AST& ast) {
+  return ast::Range{
       .begin = ast.lines.GetPosition(FromLSPPosition(range.start)),
       .end = ast.lines.GetPosition(FromLSPPosition(range.end)),
   };

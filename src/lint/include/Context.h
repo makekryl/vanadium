@@ -10,14 +10,14 @@
 namespace vanadium::lint {
 
 struct Autofix {
-  core::ast::Range range;
+  ast::Range range;
   std::string replacement;
 
   [[nodiscard]] auto operator<=>(const Autofix& other) const {
     return range <=> other.range;
   }
 
-  static Autofix Removal(const core::SourceFile& file, const core::ast::Range& range) {
+  static Autofix Removal(const core::SourceFile& file, const ast::Range& range) {
     return {
         .range =
             {
@@ -30,7 +30,7 @@ struct Autofix {
 };
 
 struct Problem {
-  core::ast::Range range;
+  ast::Range range;
   std::string description;
   std::string_view reporter;
   std::optional<Autofix> autofix;
@@ -46,7 +46,7 @@ class Context {
  public:
   Context(const core::SourceFile& sf) : sf_(&sf) {}
 
-  void Report(const Rule* reporter, const core::ast::Range& range, std::string&& message,
+  void Report(const Rule* reporter, const ast::Range& range, std::string&& message,
               std::optional<Autofix>&& autofix = std::nullopt) {
     problems_.emplace(range, std::move(message), reporter->GetName(), std::move(autofix));
   }
