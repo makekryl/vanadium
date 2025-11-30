@@ -2,7 +2,7 @@
 
 #include <vanadium/lib/jsonrpc/Common.h>
 
-namespace vanadium::lserver {
+namespace vanadium::lserver {  // todo: change namespace
 
 namespace rpc {
 
