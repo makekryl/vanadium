@@ -132,7 +132,7 @@ struct SourceFile {
 
 class Program {
  public:
-  using FileReadFn = lib::FunctionRef<void(const std::string&, std::string&)>;
+  using FileReadFn = lib::FunctionRef<void(const std::string& /* path */, std::string& /* buf */)>;
 
   Program() = default;
 
@@ -155,8 +155,8 @@ class Program {
   }
 
   struct ProgramModifier {
-    lib::Consumer<const std::string&, const FileReadFn&> update;
-    lib::Consumer<const std::string&> drop;
+    lib::Consumer<const std::string& /* path */, const FileReadFn&> update;
+    lib::Consumer<const std::string& /* path */> drop;
   };
 
   void Update(const lib::Consumer<const ProgramModifier&>& modify);

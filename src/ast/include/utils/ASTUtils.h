@@ -111,6 +111,15 @@ inline SourceFile* SourceFileOf(const Node* n) {
   return n->As<RootNode>()->file;
 }
 
+inline bool IsInHierarchyOf(const core::ast::Node* node, const core::ast::Node* root) {
+  for (const auto* par = node->parent; par != nullptr; par = par->parent) {
+    if (par == root) {
+      return true;
+    }
+  }
+  return false;
+}
+
 const Node* GetNodeAt(const AST& ast, pos_t pos);
 
 std::optional<Range> ExtractAttachedComment(const AST&, const Node*);

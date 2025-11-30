@@ -14,7 +14,12 @@ from . import build
 def test(c: Context, label: str):
   build_dir = build.build(c, target=f"build_{label}_tests")
 
+  if c.config.vanadium.test.only_build:
+    return
+
   args = []
+  if c.config.vanadium.test.filter:
+    args.append(f"-R '{c.config.vanadium.test.filter}'")
   if c.config.vanadium.test.jobs:
     args.append(f"-j {c.config.vanadium.test.jobs}")
 

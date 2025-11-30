@@ -1,11 +1,18 @@
 #pragma once
 
 #include <iostream>
+#include <magic_enum/magic_enum.hpp>
 #include <vector>
 
 #include "ASTTypes.h"
 #include "Semantic.h"
-#include "magic_enum/magic_enum.hpp"
+
+// TODO: move to the testing lib
+#define DEFINE_NAMED_TEST_PARAM_PRINTER(TPARAM, MEMBER)          \
+  std::ostream& operator<<(std::ostream& out, const TPARAM& p) { \
+    out << p.MEMBER;                                             \
+    return out;                                                  \
+  }
 
 namespace vanadium {
 namespace core {
