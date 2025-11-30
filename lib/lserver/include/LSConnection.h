@@ -18,7 +18,7 @@
 // NOLINTBEGIN(readability-identifier-naming)
 namespace glz::rpc {
 template <class Params>
-struct notification_t {
+struct notification_t {  // todo: reimplement on top of internal jsonrpc server lib
   std::string_view method;
   Params params{};
   std::string_view version{rpc::supported_version};
