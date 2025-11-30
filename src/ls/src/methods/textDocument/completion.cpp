@@ -7,7 +7,7 @@
 
 namespace vanadium::ls {
 template <>
-rpc::ExpectedResult<lsp::CompletionResult> methods::textDocument::completion::operator()(
+rpc::ExpectedResult<lsp::CompletionResult> methods::textDocument::completion::invoke(
     LsContext& ctx, const lsp::CompletionParams& params) {
   return ctx->WithFile<lsp::CompletionResult>(params, detail::CollectCompletions).value_or(nullptr);
 }

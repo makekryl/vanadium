@@ -17,12 +17,12 @@ using namespace lserver::rpc;
 
 template <glz::string_literal Name, typename Params, typename Result>
 struct Request : Method<Name, Params, Result> {
-  ExpectedResult<Result> operator()(LsContext&, const Params&);
+  static ExpectedResult<Result> invoke(LsContext&, const Params&);
 };
 
 template <glz::string_literal Name, typename Params, typename Result = rpc::Empty>
 struct Notification : Method<Name, Params, Result> {
-  void operator()(LsContext&, const Params&);
+  static void invoke(LsContext&, const Params&);
 };
 
 }  // namespace rpc

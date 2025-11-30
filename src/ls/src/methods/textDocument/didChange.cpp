@@ -11,7 +11,7 @@
 
 namespace vanadium::ls {
 template <>
-void methods::textDocument::didChange::operator()(LsContext& ctx, const lsp::DidChangeTextDocumentParams& params) {
+void methods::textDocument::didChange::invoke(LsContext& ctx, const lsp::DidChangeTextDocumentParams& params) {
   ctx->WithFile(params, [&](const auto&, const core::SourceFile& file, LsSessionRef d) {
     ctx->file_versions[file.path] = params.textDocument.version;
 

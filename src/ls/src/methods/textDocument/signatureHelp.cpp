@@ -225,7 +225,7 @@ lsp::SignatureHelpResult ProvideSignatureHelp(const lsp::SignatureHelpParams& pa
 }  // namespace
 
 template <>
-rpc::ExpectedResult<lsp::SignatureHelpResult> methods::textDocument::signatureHelp::operator()(
+rpc::ExpectedResult<lsp::SignatureHelpResult> methods::textDocument::signatureHelp::invoke(
     LsContext& ctx, const lsp::SignatureHelpParams& params) {
   return ctx->WithFile<lsp::SignatureHelpResult>(params, ProvideSignatureHelp).value_or(nullptr);
 }

@@ -8,8 +8,8 @@
 namespace vanadium::ls {
 
 template <>
-rpc::ExpectedResult<lsp::InlayHintResult> methods::textDocument::inlayHint::operator()(
-    LsContext& ctx, const lsp::InlayHintParams& params) {
+rpc::ExpectedResult<lsp::InlayHintResult> methods::textDocument::inlayHint::invoke(LsContext& ctx,
+                                                                                   const lsp::InlayHintParams& params) {
   return ctx->WithFile<lsp::InlayHintResult>(params, detail::CollectInlayHints).value_or(nullptr);
 }
 }  // namespace vanadium::ls

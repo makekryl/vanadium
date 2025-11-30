@@ -4,7 +4,7 @@
 
 namespace vanadium::ls {
 template <>
-void methods::dollar::cancelRequest::operator()(LsContext&, const lsp::CancelParams&) {
+void methods::dollar::cancelRequest::invoke(LsContext&, const lsp::CancelParams&) {
   // TODO
 }
 }  // namespace vanadium::ls

@@ -8,7 +8,7 @@
 
 namespace vanadium::ls {
 template <>
-rpc::ExpectedResult<lsp::DocumentDiagnosticReport> methods::textDocument::diagnostic::operator()(
+rpc::ExpectedResult<lsp::DocumentDiagnosticReport> methods::textDocument::diagnostic::invoke(
     LsContext& ctx, const lsp::DocumentDiagnosticParams& params) {
   return ctx
       ->WithFile<lsp::DocumentDiagnosticReport>(params,

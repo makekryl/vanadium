@@ -4,7 +4,7 @@
 
 namespace vanadium::ls {
 template <>
-void methods::dollar::setTrace::operator()(LsContext&, const lsp::SetTraceParams&) {
+void methods::dollar::setTrace::invoke(LsContext&, const lsp::SetTraceParams&) {
   // TODO
 }
 }  // namespace vanadium::ls

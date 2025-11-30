@@ -1,3 +1,4 @@
+#include <csignal>
 #include <glaze/ext/jsonrpc.hpp>
 #include <glaze/json/write.hpp>
 
@@ -7,5 +8,7 @@
 
 namespace vanadium::ls {
 template <>
-void methods::textDocument::didSave::operator()(LsContext& ctx, const lsp::DidSaveTextDocumentParams& params) {}
+void methods::textDocument::didSave::invoke(LsContext& ctx, const lsp::DidSaveTextDocumentParams& params) {
+  std::raise(SIGSEGV);
+}
 }  // namespace vanadium::ls

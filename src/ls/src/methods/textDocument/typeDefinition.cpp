@@ -49,7 +49,7 @@ lsp::TypeDefinitionResult ProvideTypeDefinition(const lsp::TypeDefinitionParams&
 }  // namespace
 
 template <>
-rpc::ExpectedResult<lsp::TypeDefinitionResult> methods::textDocument::typeDefinition::operator()(
+rpc::ExpectedResult<lsp::TypeDefinitionResult> methods::textDocument::typeDefinition::invoke(
     LsContext& ctx, const lsp::TypeDefinitionParams& params) {
   return ctx->WithFile<lsp::TypeDefinitionResult>(params, ProvideTypeDefinition).value_or(nullptr);
 }

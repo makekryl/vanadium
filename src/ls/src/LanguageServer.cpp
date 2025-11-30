@@ -1,9 +1,10 @@
 #include "LanguageServer.h"
 
+#include <vanadium/lib/jsonrpc/Server.h>
+
 #include <chrono>
 #include <cstdlib>
 #include <glaze/core/reflect.hpp>
-#include <glaze/ext/jsonrpc.hpp>
 #include <glaze/json/write.hpp>
 #include <glaze/util/expected.hpp>
 #include <glaze/util/string_literal.hpp>
@@ -50,14 +51,8 @@ using ServerMethods = mp::Typelist<methods::initialize,   //
                                    methods::inlayHint::resolve  //
                                    >;                           //
 
-template <class... Methods>
-using JsonRpcServer = glz::rpc::server<typename Methods::RpcMethod...>;
-
-template <typename Methods>
-using VanadiumRpcServer = typename mp::Apply<JsonRpcServer, Methods>::type;
-
 void Serve(lserver::Transport& transport, std::size_t concurrency, std::size_t jobs) {
-  VanadiumRpcServer<ServerMethods> rpc_server;
+  lib::jsonrpc::Server<VanadiumLsConnection::Context> rpc_server;
 
   const auto handle_message = [&rpc_server](LsContext& ctx, lserver::PooledMessageToken&& token) {
     VLS_INFO("  |---> {}", *glz::get_as_json<std::string_view, "/method">(token->buf));
@@ -65,17 +60,7 @@ void Serve(lserver::Transport& transport, std::size_t concurrency, std::size_t j
 
     auto res_token = ctx.AcquireToken();
     ctx->task_arena.execute([&] {
-      const auto results = rpc_server.call<decltype(rpc_server)::raw_call_return_t>(token->buf);
-      if (results.empty()) {
-        return;
-      }
-      assert(results.size() == 1);
-      const auto& result = results.front();
-
-      const auto ec = glz::write_json(result, res_token->buf);
-      if (ec) {
-        // TODO: report error
-      }
+      rpc_server.Call(ctx, res_token->buf, token->buf);
     });
 
     if (!res_token->buf.empty()) {
@@ -93,14 +78,7 @@ void Serve(lserver::Transport& transport, std::size_t concurrency, std::size_t j
 
   {
     ServerMethods::Apply([&]<typename P>() {
-      rpc_server.on<P::kMethodName>([&](const auto& params) -> glz::expected<typename P::TResult, glz::rpc::error> {
-        if constexpr (std::is_same_v<typename P::TResult, rpc::Empty>) {
-          P{}(ctx, params);
-          return rpc::Empty{};
-        } else {
-          return P{}(ctx, params);
-        }
-      });
+      rpc_server.Bind<P::invoke>(P::kMethodName);
     });
   }
 
