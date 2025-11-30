@@ -13,4 +13,4 @@ target_link_libraries(vanadium_lib_lserver PUBLIC
   TBB::tbb
 )
 
-add_test_executable(vanadium_lib_lserver)
+add_gtest_executable(vanadium_lib_lserver)

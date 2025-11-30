@@ -11,7 +11,7 @@ include(sanitizers)
 include(python)
 include(externals)
 include(diagnostics)
-include(functions)
+include(testing)
 
 enable_testing()
 
@@ -19,3 +19,5 @@ add_subdirectory(lib)
 add_subdirectory(src)
 add_subdirectory(bin)
 add_subdirectory(test)
+
+add_tests_build_target()

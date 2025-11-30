@@ -22,7 +22,7 @@ target_link_libraries(vanadium_core PRIVATE
   magic_enum
 )
 
-add_test_executable(vanadium_core)
+add_gtest_executable(vanadium_core)
 target_link_libraries(vanadium_core_test PUBLIC
   magic_enum
 )

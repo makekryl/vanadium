@@ -28,4 +28,4 @@ target_link_libraries(vanadium_ls PRIVATE
   magic_enum
 )
 
-add_test_executable(vanadium_ls)
+add_gtest_executable(vanadium_ls)

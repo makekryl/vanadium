@@ -11,4 +11,4 @@ target_link_libraries(vanadium_format PUBLIC
   vanadium_ast
 )
 
-add_test_executable(vanadium_format)
+add_gtest_executable(vanadium_format)

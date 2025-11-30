@@ -17,7 +17,7 @@ target_link_libraries(vanadium_ast PRIVATE
   magic_enum
 )
 
-add_test_executable(vanadium_ast)
+add_gtest_executable(vanadium_ast)
 
 
 set(VANADIUM_AST_ASTGEN_EXEC "${CMAKE_CURRENT_SOURCE_DIR}/tools/nodegen.py")

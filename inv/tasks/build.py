@@ -9,13 +9,21 @@ from inv.config import (
 from inv.params.build import with_build_params
 
 
-def _get_config_name(c: Context):
-  return "-".join(
-    (
-      "release" if c.config.vanadium.build.release else "debug",
-      *(("sanitizers",) if c.config.vanadium.build.sanitizers else ()),
-    )
+def _get_cmake_params(c: Context):
+  def opt(name: str, cond: bool):
+    return (name,) if cond else ()
+
+  preset = get_preset(
+    config="-".join(
+      (
+        "release" if c.config.vanadium.build.release else "debug",
+        *opt("sanitizers", c.config.vanadium.build.sanitizers),
+      )
+    ),
+    toolchain=c.config.vanadium.build.toolchain,
   )
+  build_dir = get_build_dir(preset)
+  return preset, build_dir
 
 
 @task
@@ -23,13 +31,9 @@ def _get_config_name(c: Context):
 def configure(
   c: Context,
 ):
-  preset = get_preset(
-    config=_get_config_name(c),
-    toolchain=c.config.vanadium.build.toolchain,
-  )
-  build_dir = get_build_dir(preset)
+  preset, build_dir = _get_cmake_params(c)
   c.run(
-    f"cmake --preset '{preset}' -B '{build_dir}'",
+    f"cmake -DCMAKE_GENERATOR=Ninja --preset '{preset}' -B '{build_dir}'",
     env={
       "CMAKE_COLOR_DIAGNOSTICS": "ON",
     },
@@ -42,29 +46,18 @@ def build(
   c: Context,
   target: str | None = None,
 ):
-  preset = get_preset(
-    config=_get_config_name(c),
-    toolchain=c.config.vanadium.build.toolchain,
-  )
-  build_dir = get_build_dir(preset)
+  _, build_dir = _get_cmake_params(c)
 
   if c.config.vanadium.build.reconfigure or not build_dir.exists():
     configure(c)
-    c.run(
-      f"cmake -DCMAKE_GENERATOR=Ninja --preset '{preset}' -B '{build_dir}'",
-      env={
-        "CMAKE_COLOR_DIAGNOSTICS": "ON",
-      },
-    )
 
-  build_args = []
-  #
+  args = []
   if target:
-    build_args.append(f"--target {target}")
-  if c.config.vanadium.build.cmake_jobs:
-    build_args.append(f"-j {c.config.vanadium.build.cmake_jobs}")
-  #
-  c.run(f"cmake --build '{build_dir}' {' '.join(build_args)}")
+    args.append(f"--target {target}")
+  if c.config.vanadium.build.jobs:
+    args.append(f"-j {c.config.vanadium.build.jobs}")
+
+  c.run(f"cmake --build '{build_dir}' {' '.join(args)}")
 
   return build_dir
 

@@ -18,7 +18,7 @@ target_link_libraries(vanadium_ast_asn1 PRIVATE
   stdc++exp # TODO: remove
 )
 
-add_test_executable(vanadium_ast_asn1)
+add_gtest_executable(vanadium_ast_asn1)
 target_link_libraries(vanadium_ast_asn1_test PUBLIC
   magic_enum
 )

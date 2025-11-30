@@ -1,8 +1,8 @@
 from invoke import Context, task
 
-from inv.config import get_build_dir, get_preset
 from inv.params import override_params_defaults
 from inv.params.build import with_build_params
+from inv.params.test import with_test_params
 
 from . import build
 
@@ -10,25 +10,35 @@ from . import build
 
 
 @task(default=True)
+@override_params_defaults(sanitizers=True)
 @with_build_params
-def test(c: Context):
-  c.run(f"ctest --output-on-failure --test-dir '{str(dir)}'")
+@with_test_params
+def test(c: Context, label: str):
+  build_dir = build.build(c, target=f"build_{label}_tests")
+
+  args = []
+  if c.config.vanadium.test.jobs:
+    args.append(f"-j {c.config.vanadium.test.jobs}")
+
+  c.run(
+    f"ctest -L '{label}' --output-on-failure --test-dir '{str(build_dir)}' {' '.join(args)}"
+  )
 
 
 @task
 @override_params_defaults(sanitizers=True)
 @with_build_params
+@with_test_params
+def unit(c: Context):
+  test(c, label="unit")
+
+
+@task
+@override_params_defaults(sanitizers=True)
+@with_build_params
+@with_test_params
 def e2e(
   c: Context,
   overwrite_snapshots: bool = False,
 ):
-  build.build(c, target="vanadium_e2e_core")
-
-  dir = get_build_dir(get_preset("debug-sanitizers"))
-
-  args = [
-    '--vanadium_testsuites_dir="test/core/suites"',
-    *(["--vanadium_overwrite_snapshots"] if overwrite_snapshots else []),
-  ]
-
-  c.run(f"{dir}/test/core/runner/vanadium_e2e_core {' '.join(args)}")
+  test(c, label="e2e")

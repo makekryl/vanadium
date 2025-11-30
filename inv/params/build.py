@@ -52,7 +52,7 @@ def with_cmake_params(tfunc: Callable):
     cfg = cast(Config, c.config.vanadium.build)
 
     cfg.reconfigure = reconfigure
-    cfg.cmake_jobs = cmake_jobs
+    cfg.jobs = cmake_jobs
 
   return inject_task_params(
     tfunc,

@@ -1,4 +1,3 @@
-
 file(GLOB_RECURSE TEST_SOURCE_FILES CONFIGURE_DEPENDS src/tests/*.cpp)
 
 add_executable(vanadium_e2e_core
@@ -17,7 +16,7 @@ target_link_libraries(vanadium_e2e_core PRIVATE
   magic_enum
 )
 
-# add_test_executable(vanadium_e2e_core) # TODO: extract unit-testable parts into lib
+# add_gtest_executable(vanadium_e2e_core) # TODO: extract unit-testable parts into lib
 
 add_test(
   NAME vanadium_e2e_core

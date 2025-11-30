@@ -8,4 +8,4 @@ target_link_libraries(vanadium_lib_lsprotocol INTERFACE
   glaze::glaze
 )
 
-add_test_executable(vanadium_lib_lsprotocol)
+add_gtest_executable(vanadium_lib_lsprotocol)

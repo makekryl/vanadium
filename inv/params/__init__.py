@@ -2,7 +2,7 @@ import inspect
 from dataclasses import dataclass
 from functools import wraps
 from inspect import Parameter, Signature, _empty, signature
-from typing import Any, Callable
+from typing import Callable
 
 from invoke import Context
 
@@ -10,7 +10,7 @@ from invoke import Context
 @dataclass(frozen=True, slots=True)
 class InjectableParam:
   name: str
-  default: str | bool | None | type[_empty] = _empty
+  default: str | int | bool | None | type[_empty] = _empty
   description: str | None = None
 
 

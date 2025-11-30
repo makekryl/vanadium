@@ -8,4 +8,4 @@ target_link_libraries(vanadium_lib_jsonrpc INTERFACE
   glaze::glaze
 )
 
-add_test_executable(vanadium_lib_jsonrpc)
+add_gtest_executable(vanadium_lib_jsonrpc)

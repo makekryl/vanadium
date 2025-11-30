@@ -12,9 +12,9 @@ from . import build
 
 @task
 @with_build_options_params
-def symlink_lsp(c: Context, config):
+def symlink_lsp(c: Context):
   dst = Path("extension/bin/vanadiumd")
-  build_dir = get_build_dir(config)
+  _, build_dir = build._get_cmake_params(c)
 
   def _create_symlink():
     return os.symlink((build_dir / "bin/lsp/vanadiumd").absolute(), dst)

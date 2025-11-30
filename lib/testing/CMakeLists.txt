@@ -10,4 +10,4 @@ target_link_libraries(vanadium_lib_testing PUBLIC
   GTest::gtest
 )
 
-add_test_executable(vanadium_lib_testing)
+add_gtest_executable(vanadium_lib_testing)

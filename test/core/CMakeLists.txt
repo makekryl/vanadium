@@ -1,1 +1,2 @@
 add_subdirectory(runner)
+register_e2e_test_target(vanadium_e2e_core)

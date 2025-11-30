@@ -18,4 +18,4 @@ target_link_libraries(vanadium_tooling PUBLIC
   reflectcpp
 )
 
-add_test_executable(vanadium_tooling)
+add_gtest_executable(vanadium_tooling)
