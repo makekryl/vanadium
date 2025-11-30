@@ -6,8 +6,6 @@ from inv.params.test import with_test_params
 
 from . import build
 
-# TODO: unify UT/e2e test targets launch, filters
-
 
 @task(default=True)
 @override_params_defaults(sanitizers=True)

@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-TOOLCHAINS = ("gcc", "clang")
+TOOLCHAINS = ("clang", "gcc")
 CMAKE_PRESETS: list[str] = [
   preset["name"]
   for preset in json.loads(Path("CMakePresets.json").read_text())["configurePresets"]
