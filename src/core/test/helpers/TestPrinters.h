@@ -15,7 +15,6 @@
   }
 
 namespace vanadium {
-namespace core {
 
 namespace ast {
 inline std::ostream& operator<<(std::ostream& out, const SyntaxError& e) {
@@ -31,6 +30,7 @@ inline std::ostream& operator<<(std::ostream& out, const std::vector<SyntaxError
 }
 }  // namespace ast
 
+namespace core {
 namespace semantic {
 inline std::ostream& operator<<(std::ostream& out, const SemanticError& e) {
   out << e.range.begin << ".." << e.range.end << ": " << magic_enum::enum_name(e.type);
