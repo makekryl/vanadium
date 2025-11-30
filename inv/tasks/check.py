@@ -7,6 +7,6 @@ def style(c: Context, fix: bool = False):
     # (check, fix)
     ("ruff check --select I", "ruff check --select I --fix"),
     ("ruff format --check", "ruff format"),
-    ("npm run format:check", "npm run format"),
+    ("npx prettier --check extension/", "npx prettier --write extension/"),
   ):
     c.run(checker[1 if fix else 0], warn=True)
