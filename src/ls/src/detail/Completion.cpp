@@ -1,9 +1,7 @@
 #include "detail/Completion.h"
 
 #include <algorithm>
-#include <glaze/core/read.hpp>
-#include <glaze/json/write.hpp>
-#include <print>
+#include <glaze/json.hpp>
 #include <string_view>
 #include <variant>
 

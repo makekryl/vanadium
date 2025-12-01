@@ -1,8 +1,5 @@
 #include "detail/References.h"
 
-#include <glaze/ext/jsonrpc.hpp>
-#include <glaze/json/write.hpp>
-
 #include "ASTNodes.h"
 #include "LSProtocol.h"
 #include "LSProtocolEx.h"

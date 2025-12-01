@@ -4,10 +4,7 @@
 
 #include <chrono>
 #include <cstdlib>
-#include <glaze/core/reflect.hpp>
-#include <glaze/json/write.hpp>
-#include <glaze/util/expected.hpp>
-#include <glaze/util/string_literal.hpp>
+#include <glaze/json.hpp>
 
 #include "BuiltinRules.h"
 #include "LSConnection.h"

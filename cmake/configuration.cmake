@@ -5,3 +5,5 @@ endif()
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
   add_compile_options(-g1)
 endif()
+
+add_compile_options(-ftime-trace)

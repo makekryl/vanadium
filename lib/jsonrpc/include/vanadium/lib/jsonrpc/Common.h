@@ -112,6 +112,28 @@ using GenericRequest = Request<glz::raw_json_view>;
 
 //
 
+template <class Params>
+struct Notification {
+  std::string_view method;
+  Params params;
+  std::string_view version{kJsonRpcVersion};
+
+  // NOLINTBEGIN(readability-identifier-naming)
+  struct glaze {
+    static constexpr auto value = glz::object("jsonrpc", &Notification::version,  //
+                                              &Notification::method,              //
+                                              &Notification::params);
+  };
+  // NOLINTEND(readability-identifier-naming)
+};
+
+template <class Params>
+Notification(std::string_view, Params&&) -> Notification<std::decay_t<Params>>;
+
+using GenericNotification = Notification<glz::raw_json_view>;
+
+//
+
 template <class Result>
 struct Response {
   id_t id;

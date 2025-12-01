@@ -35,7 +35,7 @@ def _build_header(spec: model.LSPModel, reg: TypesRegistry):
   buf.write("#pragma once")
   buf.newline()
   buf.write("#include <cstdint>")
-  buf.write("#include <glaze/glaze.hpp>")
+  buf.write("#include <glaze/json.hpp>")
   buf.write("#include <optional>")
   buf.write("#include <string_view>")
   buf.write("#include <tuple>")

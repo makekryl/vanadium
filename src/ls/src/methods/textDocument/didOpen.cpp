@@ -1,5 +1,3 @@
-#include <glaze/ext/jsonrpc.hpp>
-#include <glaze/json/write.hpp>
 #include <utility>
 
 #include "LSProtocol.h"

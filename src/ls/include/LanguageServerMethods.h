@@ -1,8 +1,7 @@
 #pragma once
 
 #include <cstddef>
-#include <glaze/ext/jsonrpc.hpp>
-#include <glaze/util/expected.hpp>
+#include <glaze/util/string_literal.hpp>
 
 #include "LSMethod.h"
 #include "LSProtocol.h"

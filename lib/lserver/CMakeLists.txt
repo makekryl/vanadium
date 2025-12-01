@@ -9,6 +9,7 @@ target_include_directories(vanadium_lib_lserver PUBLIC
 
 target_link_libraries(vanadium_lib_lserver PUBLIC
   vanadium_lib_lsprotocol
+  vanadium_lib_jsonrpc
   glaze::glaze
   TBB::tbb
 )

@@ -6,7 +6,7 @@
 #pragma once
 
 #include <cstdint>
-#include <glaze/glaze.hpp>
+#include <glaze/json.hpp>
 #include <optional>
 #include <string_view>
 #include <tuple>

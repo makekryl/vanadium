@@ -1,8 +1,5 @@
 #include "detail/CodeAction.h"
 
-#include <glaze/core/read.hpp>
-#include <glaze/json/write.hpp>
-
 #include "AST.h"
 #include "ASTNodes.h"
 #include "ASTTypes.h"

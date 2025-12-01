@@ -1,7 +1,7 @@
 #include "detail/InlayHint.h"
 
 #include <algorithm>
-#include <concepts>
+#include <glaze/json.hpp>
 #include <stack>
 #include <string_view>
 #include <type_traits>
@@ -20,7 +20,6 @@
 #include "Solution.h"
 #include "TypeChecker.h"
 #include "detail/Definition.h"
-#include "magic_enum/magic_enum.hpp"
 #include "utils/ASTUtils.h"
 #include "utils/SemanticUtils.h"
 

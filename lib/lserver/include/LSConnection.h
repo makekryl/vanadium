@@ -3,35 +3,15 @@
 #include <oneapi/tbb/concurrent_unordered_map.h>
 #include <oneapi/tbb/task_arena.h>
 #include <oneapi/tbb/task_group.h>
+#include <vanadium/lib/jsonrpc/Common.h>
 
 #include <condition_variable>
 #include <cstddef>
-#include <glaze/core/reflect.hpp>
-#include <glaze/ext/jsonrpc.hpp>
-#include <glaze/glaze.hpp>
-#include <glaze/util/expected.hpp>
+#include <glaze/json.hpp>
 
 #include "LSChannel.h"
 #include "LSMessageToken.h"
 #include "LSTransport.h"
-
-// NOLINTBEGIN(readability-identifier-naming)
-namespace glz::rpc {
-template <class Params>
-struct notification_t {  // todo: reimplement on top of internal jsonrpc server lib
-  std::string_view method;
-  Params params{};
-  std::string_view version{rpc::supported_version};
-
-  struct glaze {
-    using T = notification_t;
-    static constexpr auto value = glz::object("jsonrpc", &T::version,  //
-                                              &T::method,              //
-                                              &T::params);
-  };
-};
-}  // namespace glz::rpc
-// NOLINTEND(readability-identifier-naming)
 
 namespace vanadium::lserver {
 
@@ -52,7 +32,7 @@ class ConnectionContext {
   [[nodiscard]] std::size_t GetConnectionConcurrency() const;
 
   template <glz::string_literal Method, typename Result, typename Params>
-  glz::expected<Result, glz::rpc::error> Request(Params&& params);
+  std::expected<Result, lib::jsonrpc::Error> Request(Params&& params);
 
   template <glz::string_literal Method, typename Params>
   void Notify(Params&& params);
@@ -161,9 +141,9 @@ class Connection {
   }
 
   template <glz::string_literal Method, typename Result, typename Params>
-  glz::expected<Result, glz::rpc::error> Request(Params&& params) {
+  std::expected<Result, lib::jsonrpc::Error> Request(Params&& params) {
     const auto id = outbound_id_++;
-    glz::rpc::request_t<Params> req{
+    lib::jsonrpc::Request<Params> req{
         .id = id,
         .method = Method,
         .params = std::forward<Params>(params),
@@ -173,32 +153,34 @@ class Connection {
     {
       auto req_token = ctx_.AcquireToken();
       if (auto err = glz::write_json(req, req_token->buf)) [[unlikely]] {
-        return glz::unexpected(glz::rpc::error{
-            glz::rpc::error_e::invalid_params,
-            glz::format_error(err, req_token->buf),
+        return glz::unexpected(lib::jsonrpc::Error{
+            .code = lib::jsonrpc::ErrorCode::kInvalidParams,
+            .data = glz::format_error(err, req_token->buf),
         });
       }
 
       res_token = RawRequest(id, std::move(req_token));
     }
 
-    glz::rpc::response_t<Result> res;
+    lib::jsonrpc::Response<Result> res;
     if (auto err = glz::read_json<>(res, res_token->buf)) [[unlikely]] {
-      return glz::unexpected(glz::rpc::error{
-          glz::rpc::error_e::parse_error,
-          glz::format_error(err, res_token->buf),
+      return std::unexpected(lib::jsonrpc::Error{
+          .code = lib::jsonrpc::ErrorCode::kParseError,
+          .data = glz::format_error(err, res_token->buf),
       });
     }
 
-    if (res.result.has_value()) [[likely]] {
-      return res.result.value();
+    if (!res.result.has_value()) [[unlikely]] {
+      return std::unexpected(res.error.value());
     }
-    return glz::unexpected(res.error.value());
+
+    return res.result.value();
   }
 
   template <glz::string_literal Method, typename Params>
   void Notify(Params&& params) {
-    glz::rpc::notification_t<Params> req{
+    lib::jsonrpc::Request<Params> req{
+        .id = nullptr,
         .method = Method,
         .params = std::forward<Params>(params),
     };
@@ -211,6 +193,7 @@ class Connection {
   }
 
  private:
+  // TODO: according to the jsonrpc spec, id can also be a string
   using rpc_id_t = std::uint32_t;
 
   PooledMessageToken RawRequest(rpc_id_t id, PooledMessageToken&& token) {
@@ -259,7 +242,6 @@ class Connection {
   }
 
   struct WaitToken {
-    // TODO: according to the jsonrpc spec, id can also be a string
     rpc_id_t awaited_id;
     std::optional<PooledMessageToken> response{std::nullopt};
     std::atomic<bool> satisfied;
@@ -302,7 +284,7 @@ std::size_t ConnectionContext<Payload>::GetConnectionConcurrency() const {
 
 template <typename Payload>
 template <glz::string_literal Method, typename Result, typename Params>
-glz::expected<Result, glz::rpc::error> ConnectionContext<Payload>::Request(Params&& params) {
+std::expected<Result, lib::jsonrpc::Error> ConnectionContext<Payload>::Request(Params&& params) {
   return connection_->template Request<Method, Result, Params>(std::forward<Params>(params));
 }
 

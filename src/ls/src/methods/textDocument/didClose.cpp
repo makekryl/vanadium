@@ -1,6 +1,3 @@
-#include <glaze/ext/jsonrpc.hpp>
-#include <glaze/json/write.hpp>
-
 #include "LSProtocol.h"
 #include "LanguageServerContext.h"
 #include "LanguageServerMethods.h"
