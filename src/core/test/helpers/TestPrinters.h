@@ -1,4 +1,5 @@
 #pragma once
+// IWYU pragma: always_keep
 
 #include <iostream>
 #include <magic_enum/magic_enum.hpp>
@@ -6,13 +7,6 @@
 
 #include "ASTTypes.h"
 #include "Semantic.h"
-
-// TODO: move to the testing lib
-#define DEFINE_NAMED_TEST_PARAM_PRINTER(TPARAM, MEMBER)          \
-  std::ostream& operator<<(std::ostream& out, const TPARAM& p) { \
-    out << p.MEMBER;                                             \
-    return out;                                                  \
-  }
 
 namespace vanadium {
 
@@ -24,7 +18,7 @@ inline std::ostream& operator<<(std::ostream& out, const SyntaxError& e) {
 inline std::ostream& operator<<(std::ostream& out, const std::vector<SyntaxError>& v) {
   out << "Syntax errors:\n";
   for (const auto& e : v) {
-    out << e << "\n";
+    out << " - " << e << "\n";
   }
   return out;
 }
@@ -39,7 +33,7 @@ inline std::ostream& operator<<(std::ostream& out, const SemanticError& e) {
 inline std::ostream& operator<<(std::ostream& out, const std::vector<SemanticError>& v) {
   out << "Semantic errors:\n";
   for (const auto& e : v) {
-    out << e << "\n";
+    out << " - " << e << "\n";
   }
   return out;
 }

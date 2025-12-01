@@ -25,4 +25,5 @@ target_link_libraries(vanadium_core PRIVATE
 add_gtest_executable(vanadium_core)
 target_link_libraries(vanadium_core_test PUBLIC
   magic_enum
+  vanadium_lib_testing
 )

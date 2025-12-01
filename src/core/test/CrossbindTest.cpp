@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <vanadium/testing/macro.h>
 
 #include <initializer_list>
 #include <ranges>
@@ -12,8 +13,6 @@
 
 using namespace vanadium;
 using namespace vanadium::core;
-
-using FileMapping = std::pair<std::string, std::string_view>;
 
 struct ProgramTest : public ::testing::Test {
   template <bool HasSemanticErrors = false>
