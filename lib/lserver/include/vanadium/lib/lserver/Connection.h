@@ -9,7 +9,6 @@
 #include <cstddef>
 #include <expected>
 #include <glaze/json.hpp>
-#include <type_traits>
 
 #include "vanadium/lib/lserver/Channel.h"
 #include "vanadium/lib/lserver/MessageToken.h"
@@ -66,14 +65,11 @@ class Connection {
 
   template <glz::string_literal Method, typename Result, typename Params>
   std::expected<Result, lib::jsonrpc::Error> Request(Params&& params) {
-    const auto id = SendRequest<Method>(std::move(params));
+    const auto id = SendRequest<Method>(std::forward<Params>(params));
     if (!id.has_value()) [[unlikely]] {
       return std::unexpected{id.error()};
     }
 
-    if constexpr (std::is_same_v<Result, lib::jsonrpc::Empty>) {
-      return Result{};
-    }
     auto res_token = AwaitRpcResponse(*id);
 
     lib::jsonrpc::Response<Result> res;
