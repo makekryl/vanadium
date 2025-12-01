@@ -13,6 +13,7 @@ FetchContent_Declare(
 )
 
 set(TBB_TEST OFF)
+set(TBB_DISABLE_HWLOC_AUTOMATIC_SEARCH ON)
 #
 if(VANADIUM_STATIC_BUILD)
   set(BUILD_SHARED_LIBS OFF)
@@ -29,7 +30,7 @@ endif()
 
 if(VANADIUM_USE_ASAN)
   # https://github.com/uxlfoundation/oneTBB/issues/1726
-  message(WARNING "TBB assertions are incompatible with ASAN")
+  message(NOTICE "TBB assertions are incompatible with ASAN")
   target_compile_definitions(tbb PUBLIC
     TBB_USE_ASSERT=0
   )
