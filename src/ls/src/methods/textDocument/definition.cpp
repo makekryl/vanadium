@@ -49,6 +49,6 @@ lsp::DefinitionResult ProvideDefinition(const lsp::DefinitionParams& params, con
 template <>
 rpc::ExpectedResult<lsp::DefinitionResult> methods::textDocument::definition::invoke(
     LsContext& ctx, const lsp::DefinitionParams& params) {
-  return ctx->WithFile<lsp::DefinitionResult>(params, ProvideDefinition).value_or(nullptr);
+  return ctx.WithFile<lsp::DefinitionResult>(params, ProvideDefinition).value_or(nullptr);
 }
 }  // namespace vanadium::ls

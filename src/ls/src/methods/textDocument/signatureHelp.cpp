@@ -227,6 +227,6 @@ lsp::SignatureHelpResult ProvideSignatureHelp(const lsp::SignatureHelpParams& pa
 template <>
 rpc::ExpectedResult<lsp::SignatureHelpResult> methods::textDocument::signatureHelp::invoke(
     LsContext& ctx, const lsp::SignatureHelpParams& params) {
-  return ctx->WithFile<lsp::SignatureHelpResult>(params, ProvideSignatureHelp).value_or(nullptr);
+  return ctx.WithFile<lsp::SignatureHelpResult>(params, ProvideSignatureHelp).value_or(nullptr);
 }
 }  // namespace vanadium::ls

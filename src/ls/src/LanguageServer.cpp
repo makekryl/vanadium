@@ -1,13 +1,13 @@
 #include "LanguageServer.h"
 
 #include <vanadium/lib/jsonrpc/Server.h>
+#include <vanadium/lib/lserver/Connection.h>
 
 #include <chrono>
 #include <cstdlib>
 #include <glaze/json.hpp>
 
 #include "BuiltinRules.h"
-#include "LSConnection.h"
 #include "LanguageServerContext.h"
 #include "LanguageServerLogger.h"
 #include "LanguageServerMethods.h"
@@ -49,9 +49,10 @@ using ServerMethods = mp::Typelist<methods::initialize,   //
                                    >;                           //
 
 void Serve(lserver::Transport& transport, std::size_t concurrency, std::size_t jobs) {
-  lib::jsonrpc::Server<VanadiumLsConnection::Context> rpc_server;
+  lib::jsonrpc::Server<LsContext> rpc_server;
+  std::optional<LsContext> ctx;
 
-  const auto handle_message = [&rpc_server](LsContext& ctx, lserver::PooledMessageToken&& token) {
+  const auto handle_message = [&rpc_server, &ctx](lserver::Connection& conn, lserver::PooledMessageToken&& token) {
     const auto method = glz::get_as_json<std::string_view, "/method">(token->buf);
     if (!method) [[unlikely]] {
       VLS_WARN("  |---> Malformed message or message with unset method has been received");
@@ -62,13 +63,13 @@ void Serve(lserver::Transport& transport, std::size_t concurrency, std::size_t j
     VLS_INFO("  |---> {}", *method);
     const auto begin_ts = std::chrono::steady_clock::now();
 
-    auto res_token = ctx.AcquireToken();
+    auto res_token = conn.AcquireToken();
     ctx->task_arena.execute([&] {
-      rpc_server.Call(ctx, res_token->buf, token->buf);
+      rpc_server.Call(*ctx, res_token->buf, token->buf);
     });
 
     if (!res_token->buf.empty()) {
-      ctx.Send(std::move(res_token));
+      conn.Send(std::move(res_token));
     }
 
     ctx->TemporaryArena().Reset();
@@ -77,8 +78,8 @@ void Serve(lserver::Transport& transport, std::size_t concurrency, std::size_t j
     VLS_INFO("   <--- ({} ms)", std::chrono::duration_cast<std::chrono::milliseconds>(end_ts - begin_ts).count());
   };
 
-  VanadiumLsConnection connection(handle_message, transport, concurrency, kServerBacklog);
-  auto& ctx = connection.GetContext();
+  lserver::Connection connection(handle_message, transport, concurrency, kServerBacklog);
+  ctx.emplace(connection);
 
   {
     ServerMethods::Apply([&]<typename P>() {

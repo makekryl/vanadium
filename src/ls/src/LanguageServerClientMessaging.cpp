@@ -8,11 +8,11 @@ lsp::ShowMessageRequestResult ShowMessage(LsContext& ctx, lsp::ShowMessageReques
   if (params.actions->empty()) {
     // TODO: remove this special case, the problem is that we cannot receive the response before
     // initialization request is completed, causing a deadlock
-    ctx.Notify<"window/showMessage">(std::move(params));
+    ctx.connection->Notify<"window/showMessage">(std::move(params));
     return nullptr;
   }
 
-  auto res = ctx.Request<"window/showMessage", lsp::ShowMessageRequestResult>(std::move(params));
+  auto res = ctx.connection->Request<"window/showMessage", lsp::ShowMessageRequestResult>(std::move(params));
   if (res.error()) [[unlikely]] {
     // points for consideration:
     // - those errors can be only json (de)serialization errors

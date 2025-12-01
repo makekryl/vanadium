@@ -12,8 +12,8 @@
 namespace vanadium::ls {
 template <>
 void methods::textDocument::didChange::invoke(LsContext& ctx, const lsp::DidChangeTextDocumentParams& params) {
-  ctx->WithFile(params, [&](const auto&, const core::SourceFile& file, LsSessionRef d) {
-    ctx->file_versions[file.path] = params.textDocument.version;
+  ctx.WithFile(params, [&](const auto&, const core::SourceFile& file, LsSessionRef d) {
+    ctx.file_versions[file.path] = params.textDocument.version;
 
     const auto read_file = [&](std::string_view, std::string& srcbuf) -> void {
       if (params.contentChanges.size() == 1 &&
@@ -36,7 +36,7 @@ void methods::textDocument::didChange::invoke(LsContext& ctx, const lsp::DidChan
       modify.update(file.path, read_file);
     });
 
-    ctx.Notify<"textDocument/publishDiagnostics">(lsp::PublishDiagnosticsParams{
+    ctx.connection->Notify<"textDocument/publishDiagnostics">(lsp::PublishDiagnosticsParams{
         .uri = params.textDocument.uri,
         .version = params.textDocument.version,
         .diagnostics = detail::CollectDiagnostics(file, d),

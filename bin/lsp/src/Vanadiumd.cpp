@@ -1,3 +1,4 @@
+#include <vanadium/lib/lserver/Transport.h>
 #include <vanadium/version.h>
 
 #include <argparse/argparse.hpp>
@@ -10,7 +11,6 @@
 #include <thread>
 
 #include "Bootstrap.h"
-#include "LSTransport.h"
 #include "LanguageServer.h"
 #include "LanguageServerTestFlags.h"
 

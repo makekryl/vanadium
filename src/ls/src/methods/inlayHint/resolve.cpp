@@ -7,7 +7,7 @@
 namespace vanadium::ls {
 template <>
 rpc::ExpectedResult<lsp::InlayHint> methods::inlayHint::resolve::invoke(LsContext& ctx, const lsp::InlayHint& hint) {
-  return ctx->LockData([&](LsSessionRef d) {
+  return ctx.LockData([&](LsSessionRef d) {
     return detail::ResolveInlayHint(hint, std::move(d)).value_or(hint);
   });
 }

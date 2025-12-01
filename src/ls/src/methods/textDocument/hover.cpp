@@ -486,6 +486,6 @@ lsp::HoverResult ProvideHover(const lsp::HoverParams& params, const core::Source
 template <>
 rpc::ExpectedResult<lsp::HoverResult> methods::textDocument::hover::invoke(LsContext& ctx,
                                                                            const lsp::HoverParams& params) {
-  return ctx->WithFile<lsp::HoverResult>(params, ProvideHover).value_or(nullptr);
+  return ctx.WithFile<lsp::HoverResult>(params, ProvideHover).value_or(nullptr);
 }
 }  // namespace vanadium::ls

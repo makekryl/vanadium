@@ -1,8 +1,9 @@
+#include "vanadium/lib/lserver/Channel.h"
+
 #include <charconv>
 #include <string_view>
 
-#include "LSChannel.h"
-#include "LSMessageToken.h"
+#include "vanadium/lib/lserver/MessageToken.h"
 
 namespace vanadium::lserver {
 

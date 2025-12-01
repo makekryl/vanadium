@@ -49,6 +49,6 @@ lsp::RenameResult ProvideRename(const lsp::RenameParams& params, const core::Sou
 template <>
 rpc::ExpectedResult<lsp::RenameResult> methods::textDocument::rename::invoke(LsContext& ctx,
                                                                              const lsp::RenameParams& params) {
-  return ctx->WithFile<lsp::RenameResult>(params, ProvideRename).value_or(nullptr);
+  return ctx.WithFile<lsp::RenameResult>(params, ProvideRename).value_or(nullptr);
 }
 }  // namespace vanadium::ls

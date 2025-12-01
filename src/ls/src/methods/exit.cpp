@@ -3,7 +3,7 @@
 
 namespace vanadium::ls {
 template <>
-void methods::exit::invoke(LsContext&, const rpc::Empty&) {
+void methods::exit::invoke(LsContext&, const lib::jsonrpc::Empty&) {
   // TODO: exit gracefully
   std::exit(0);
 }

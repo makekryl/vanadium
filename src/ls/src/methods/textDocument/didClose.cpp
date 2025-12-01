@@ -7,7 +7,7 @@
 namespace vanadium::ls {
 template <>
 void methods::textDocument::didClose::invoke(LsContext& ctx, const lsp::DidCloseTextDocumentParams& params) {
-  ctx->WithFile(params, [&](const lsp::DidCloseTextDocumentParams&, const core::SourceFile& file, LsSessionRef) {
+  ctx.WithFile(params, [&](const lsp::DidCloseTextDocumentParams&, const core::SourceFile& file, LsSessionRef) {
     const_cast<core::SourceFile&>(file).skip_analysis = true;
   });
 }

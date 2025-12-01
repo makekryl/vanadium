@@ -4,7 +4,7 @@
 #include <span>
 #include <string_view>
 
-#include "LSTransport.h"
+#include "vanadium/lib/lserver/Transport.h"
 
 namespace vanadium::lserver {
 

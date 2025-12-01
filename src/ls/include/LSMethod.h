@@ -16,8 +16,6 @@ struct Method {
   using TResult = Result;
 };
 
-struct Empty {};
-
 }  // namespace rpc
 
 }  // namespace vanadium::lserver

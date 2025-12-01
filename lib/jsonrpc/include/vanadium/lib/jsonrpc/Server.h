@@ -145,4 +145,5 @@ class Server {
   );
   std::unordered_map<std::string_view, InternalHandlerFn> handlers_;
 };
+
 };  // namespace vanadium::lib::jsonrpc

@@ -11,13 +11,13 @@ template <>
 rpc::ExpectedResult<lsp::DocumentDiagnosticReport> methods::textDocument::diagnostic::invoke(
     LsContext& ctx, const lsp::DocumentDiagnosticParams& params) {
   return ctx
-      ->WithFile<lsp::DocumentDiagnosticReport>(params,
-                                                [&](const auto&, const core::SourceFile& file, LsSessionRef d) {
-                                                  return lsp::RelatedFullDocumentDiagnosticReport{
-                                                      .kind = "full",
-                                                      .items = detail::CollectDiagnostics(file, d),
-                                                  };
-                                                })
+      .WithFile<lsp::DocumentDiagnosticReport>(params,
+                                               [&](const auto&, const core::SourceFile& file, LsSessionRef d) {
+                                                 return lsp::RelatedFullDocumentDiagnosticReport{
+                                                     .kind = "full",
+                                                     .items = detail::CollectDiagnostics(file, d),
+                                                 };
+                                               })
       .value_or(lsp::RelatedFullDocumentDiagnosticReport{.kind = "full"});
 }
 }  // namespace vanadium::ls

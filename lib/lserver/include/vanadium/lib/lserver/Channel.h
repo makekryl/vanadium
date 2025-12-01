@@ -2,8 +2,8 @@
 
 #include <oneapi/tbb/concurrent_queue.h>
 
-#include "LSMessageToken.h"
-#include "LSTransport.h"
+#include "vanadium/lib/lserver/MessageToken.h"
+#include "vanadium/lib/lserver/Transport.h"
 
 namespace vanadium::lserver {
 

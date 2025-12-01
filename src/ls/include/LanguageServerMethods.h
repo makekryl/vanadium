@@ -19,7 +19,7 @@ struct Request : Method<Name, Params, Result> {
   static ExpectedResult<Result> invoke(LsContext&, const Params&);
 };
 
-template <glz::string_literal Name, typename Params, typename Result = rpc::Empty>
+template <glz::string_literal Name, typename Params, typename Result = lib::jsonrpc::Empty>
 struct Notification : Method<Name, Params, Result> {
   static void invoke(LsContext&, const Params&);
 };
@@ -40,18 +40,18 @@ struct Notification : Method<Name, Params, Result> {
 #define DECL_REQUEST_1(W0, NAME, PARAMS, RESULT) DECL_METHOD_1(W0, NAME, Request, PARAMS, RESULT)
 #define DECL_REQUEST_2(W0, W1, NAME, PARAMS, RESULT) DECL_METHOD_2(W0, W1, NAME, Request, PARAMS, RESULT)
 
-#define DECL_NOTIFIC_0(NAME, PARAMS) DECL_METHOD_0(NAME, Notification, PARAMS, rpc::Empty)
-#define DECL_NOTIFIC_1(W0, NAME, PARAMS) DECL_METHOD_1(W0, NAME, Notification, PARAMS, rpc::Empty)
-#define DECL_NOTIFIC_2(W0, W1, NAME, PARAMS) DECL_METHOD_2(W0, W1, NAME, Notification, PARAMS, rpc::Empty)
+#define DECL_NOTIFIC_0(NAME, PARAMS) DECL_METHOD_0(NAME, Notification, PARAMS, lib::jsonrpc::Empty)
+#define DECL_NOTIFIC_1(W0, NAME, PARAMS) DECL_METHOD_1(W0, NAME, Notification, PARAMS, lib::jsonrpc::Empty)
+#define DECL_NOTIFIC_2(W0, W1, NAME, PARAMS) DECL_METHOD_2(W0, W1, NAME, Notification, PARAMS, lib::jsonrpc::Empty)
 
 // NOLINTBEGIN(readability-identifier-naming)
 
 namespace methods {
 
 DECL_REQUEST_0(initialize, lsp::InitializeParams, lsp::InitializeResult);
-DECL_NOTIFIC_0(initialized, rpc::Empty);
-DECL_REQUEST_0(shutdown, rpc::Empty, std::nullptr_t);
-DECL_NOTIFIC_0(exit, rpc::Empty);
+DECL_NOTIFIC_0(initialized, lib::jsonrpc::Empty);
+DECL_REQUEST_0(shutdown, lib::jsonrpc::Empty, std::nullptr_t);
+DECL_NOTIFIC_0(exit, lib::jsonrpc::Empty);
 
 namespace dollar {
 using cancelRequest = rpc::Notification<"$/cancelRequest", lsp::CancelParams>;

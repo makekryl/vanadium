@@ -20,8 +20,8 @@ bool do_not_skip_full_analysis{false};
 template <>
 rpc::ExpectedResult<lsp::InitializeResult> methods::initialize::invoke(LsContext& ctx,
                                                                        const lsp::InitializeParams& params) {
-  VLS_INFO("Initializing... (jobs={}, concurrency={})", ctx->task_arena.max_concurrency(),
-           ctx.GetConnectionConcurrency());
+  VLS_INFO("Initializing... (jobs={}, concurrency={})", ctx.task_arena.max_concurrency(),
+           ctx.connection->GetConcurrency());
 
   if (params.workspaceFolders) {
     const auto& folders = *params.workspaceFolders;
@@ -45,21 +45,21 @@ rpc::ExpectedResult<lsp::InitializeResult> methods::initialize::invoke(LsContext
       auto result =
           tooling::Solution::Load(tooling::fs::Root<tooling::fs::SystemFS>(root_directory.string()), precommit);
       if (result.has_value()) {
-        ctx->solution = std::move(*result);
+        ctx.solution = std::move(*result);
       } else {
         const auto& err_message = result.error().String();
         VLS_ERROR("Failed to load solution: {}", err_message);
         clientMessaging::ShowMessage(
             ctx, lsp::ShowMessageRequestParams{
                      .type = lsp::MessageType::kError,
-                     .message = ctx->Temp<std::string>(std::format("Solution initialization failed:\n{}", err_message)),
+                     .message = ctx.Temp<std::string>(std::format("Solution initialization failed:\n{}", err_message)),
                  });
       }
     }
   }
 
-  if (ctx->solution.has_value()) {
-    const auto& solution = *ctx->solution;
+  if (ctx.solution.has_value()) {
+    const auto& solution = *ctx.solution;
     VLS_INFO("Loaded solution with {} projects", solution.Projects().size());
     std::size_t total_units{0};
     for (const auto& project : solution.Projects()) {

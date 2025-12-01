@@ -2,6 +2,7 @@
 
 #include <tbb/enumerable_thread_specific.h>
 #include <tbb/task_arena.h>
+#include <vanadium/lib/lserver/Connection.h>
 
 #include <string>
 #include <type_traits>
@@ -9,7 +10,6 @@
 #include <utility>
 
 #include "Arena.h"
-#include "LSConnection.h"
 #include "LanguageServerSession.h"
 #include "LanguageServerSolution.h"
 #include "Linter.h"
@@ -26,13 +26,21 @@ concept IsDocumentBoundParams = requires(Params params) {
   { params.textDocument.uri } -> std::convertible_to<std::string_view>;
 };
 
-struct LsState {
+struct LsContext {
+  lserver::Connection* const connection;
+
   tbb::task_arena task_arena;
 
   std::optional<tooling::Solution> solution;
   std::unordered_map<std::string, std::int32_t> file_versions;
 
   lint::Linter linter;
+
+  //
+
+  LsContext(lserver::Connection& conn) : connection(&conn) {}
+
+  //
 
   lib::Arena& TemporaryArena() {
     return temporary_arena_.local();
@@ -91,8 +99,5 @@ struct LsState {
  private:
   tbb::enumerable_thread_specific<lib::Arena> temporary_arena_;
 };
-
-using LsContext = lserver::ConnectionContext<LsState>;
-using VanadiumLsConnection = lserver::Connection<LsState>;
 
 }  // namespace vanadium::ls

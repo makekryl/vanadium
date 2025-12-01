@@ -31,6 +31,6 @@ lsp::DocumentHighlightResults ProvideHighlight(const lsp::DocumentHighlightParam
 template <>
 rpc::ExpectedResult<lsp::DocumentHighlightResults> methods::textDocument::documentHighlight::invoke(
     LsContext& ctx, const lsp::DocumentHighlightParams& params) {
-  return ctx->WithFile<lsp::DocumentHighlightResults>(params, ProvideHighlight).value_or(nullptr);
+  return ctx.WithFile<lsp::DocumentHighlightResults>(params, ProvideHighlight).value_or(nullptr);
 }
 }  // namespace vanadium::ls

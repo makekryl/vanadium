@@ -1,5 +1,6 @@
 add_library(vanadium_lib_lserver STATIC
   src/Channel.cpp
+  src/Connection.cpp
   src/StdioTransport.cpp
 )
 

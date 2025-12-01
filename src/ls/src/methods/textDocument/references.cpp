@@ -18,7 +18,7 @@ namespace vanadium::ls {
 template <>
 rpc::ExpectedResult<lsp::ReferencesResult> methods::textDocument::references::invoke(
     LsContext& ctx, const lsp::ReferenceParams& params) {
-  auto res = ctx->WithFile<lsp::ReferencesResult>(
+  auto res = ctx.WithFile<lsp::ReferencesResult>(
       params, [&](const auto&, const core::SourceFile& file, LsSessionRef) -> lsp::ReferencesResult {
         std::vector<lsp::Location> refs;
         detail::VisitLocalReferences(&file, params.position, params.context.includeDeclaration,

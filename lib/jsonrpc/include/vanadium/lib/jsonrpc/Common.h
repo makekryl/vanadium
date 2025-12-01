@@ -153,4 +153,8 @@ struct Response {
 
 using GenericResponse = Response<glz::raw_json_view>;
 
+//
+
+struct Empty {};
+
 };  // namespace vanadium::lib::jsonrpc
