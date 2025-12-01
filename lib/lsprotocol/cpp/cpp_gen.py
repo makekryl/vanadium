@@ -46,7 +46,7 @@ def _build_header(spec: model.LSPModel, reg: TypesRegistry):
   buf.newline()
   buf.write("namespace lsp {")
   buf.newline()
-  buf.write("using LSPAny = glz::json_t;")
+  buf.write("using LSPAny = glz::generic;")
   buf.write("using LSPArray = std::vector<LSPAny>;")
   buf.write("using LSPObject = std::map<std::string_view, LSPAny>;")
   buf.write("struct LiteralStub {};  // TODO")

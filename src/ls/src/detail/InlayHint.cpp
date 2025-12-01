@@ -30,7 +30,7 @@ struct InlayHintPayload {
   vanadium::ast::pos_t anchor_pos;
   vanadium::ast::NodeKind node_kind;
 
-  static glz::json_t AsJson(InlayHintPayload&& payload) {
+  static glz::generic AsJson(InlayHintPayload&& payload) {
     // TODO: find a way to have strongly-typed 'data' on both ends (maybe modify lspgen to produce templates,
     // exposing internal payload structure to the higher levels does not sounds good though - and it will be
     // required to do in such case)

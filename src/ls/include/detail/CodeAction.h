@@ -12,7 +12,7 @@ namespace detail {
 
 namespace codeAction {
 const char* const kPayloadKeyUnresolved = "f";
-const char* const kPayloadKeyAutofix = "a";  // TODO: glz::json_t wrapper
+const char* const kPayloadKeyAutofix = "a";  // TODO: glz::generic wrapper
 }  // namespace codeAction
 
 [[nodiscard]] lsp::CodeActionResult ProvideCodeActions(const lsp::CodeActionParams&, const core::SourceFile&,

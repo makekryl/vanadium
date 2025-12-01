@@ -58,7 +58,7 @@ void CollectModuleDiagnostics(const core::SourceFile& file, std::vector<lsp::Dia
         .tags = std::vector<lsp::DiagnosticTag>{lsp::DiagnosticTag::kUnnecessary},  // TODO
     });
     if (problem.autofix) {
-      diags.back().data = glz::json_t{
+      diags.back().data = glz::generic{
           {
               codeAction::kPayloadKeyAutofix,
               {

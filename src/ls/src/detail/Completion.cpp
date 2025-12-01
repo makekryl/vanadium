@@ -27,7 +27,7 @@
 
 namespace vanadium::ls::detail {
 
-// seems like it is unreliable to read string_view from json_t,
+// seems like it is unreliable to read string_view from generic,
 // so we have to stick with extra allocations
 struct CompletionItemPayload {
   struct ExternalDefinition {
@@ -353,11 +353,11 @@ lsp::CompletionList CollectCompletions(const lsp::CompletionParams& params, cons
           // TODO: find a way to have strongly-typed 'data' on both ends (maybe modify lspgen to produce templates,
           // exposing internal payload structure to the higher levels does not sounds good though - and it will be
           // required to do in such case)
-          .data = glz::json_t{{"path", file.path},
-                              {"details",
-                               {
-                                   {"module", module.name},
-                               }}},
+          .data = glz::generic{{"path", file.path},
+                               {"details",
+                                {
+                                    {"module", module.name},
+                                }}},
       });
       if (items.size() >= kMaxCompletionItems) {
         return false;

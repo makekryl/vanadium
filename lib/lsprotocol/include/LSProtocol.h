@@ -17,7 +17,7 @@
 
 namespace lsp {
 
-using LSPAny = glz::json_t;
+using LSPAny = glz::generic;
 using LSPArray = std::vector<LSPAny>;
 using LSPObject = std::map<std::string_view, LSPAny>;
 struct LiteralStub {};  // TODO

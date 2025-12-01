@@ -12,7 +12,7 @@ namespace vanadium::lib::jsonrpc {
 
 constexpr std::string_view kJsonRpcVersion{"2.0"};
 
-using id_t = std::variant<glz::json_t::null_t, std::string_view, std::int64_t>;
+using id_t = std::variant<glz::generic::null_t, std::string_view, std::int64_t>;
 
 //
 
