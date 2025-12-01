@@ -61,7 +61,7 @@ void Program::UpdateFile(const std::string& path, const FileReadFn& read) {
   decltype(files_)::iterator it;
   bool inserted;
   {
-    tbb::speculative_spin_mutex::scoped_lock lock(files_mutex_);
+    std::lock_guard lock(files_mutex_);
     std::tie(it, inserted) = files_.try_emplace(std::move(path));
   }
 
@@ -99,7 +99,7 @@ void Program::AttachFile(SourceFile& sf) {
   }
 
   {
-    tbb::speculative_spin_mutex::scoped_lock lock(files_mutex_);
+    std::lock_guard lock(files_mutex_);
     modules_[sf.module->name] = std::addressof(*sf.module);
   }
 }
@@ -112,13 +112,13 @@ void Program::DetachFile(SourceFile& sf) {
   auto& module = *sf.module;
 
   for (auto& [dependency, entries] : module.dependencies) {
-    tbb::speculative_spin_mutex::scoped_lock lock(dependency->crossbind_mutex_);
+    std::lock_guard lock(dependency->crossbind_mutex_);
 
     dependency->dependents.erase(&module);
   }
 
   for (auto* dependent : module.dependents) {
-    tbb::speculative_spin_mutex::scoped_lock lock(dependent->crossbind_mutex_);
+    std::lock_guard lock(dependent->crossbind_mutex_);
 
     auto it = dependent->dependencies.find(&module);
     if (it != dependent->dependencies.end()) {
@@ -149,7 +149,7 @@ void Program::DetachFile(SourceFile& sf) {
   }
 
   {
-    tbb::speculative_spin_mutex::scoped_lock lock(files_mutex_);
+    std::lock_guard lock(files_mutex_);
     modules_.erase(module.name);
   }
 }
@@ -227,7 +227,7 @@ void Program::Crossbind(SourceFile& sf, ExternallyResolvedGroup& ext_group) {
     const auto& [it, inserted] = module.dependencies.try_emplace(imported_module);
     it->second.emplace_back(dependency);
     {
-      tbb::speculative_spin_mutex::scoped_lock lock(imported_module->crossbind_mutex_);
+      std::lock_guard lock(imported_module->crossbind_mutex_);
       imported_module->dependents.insert(&module);
     }
     return inserted;
@@ -235,7 +235,7 @@ void Program::Crossbind(SourceFile& sf, ExternallyResolvedGroup& ext_group) {
   const auto register_transitive_dependency = [&](ModuleDescriptor& module, ModuleDescriptor* transit_module) {
     module.transitive_dependency_providers.insert(transit_module);
     {
-      tbb::speculative_spin_mutex::scoped_lock lock(transit_module->crossbind_mutex_);
+      std::lock_guard lock(transit_module->crossbind_mutex_);
       transit_module->dependents.insert(&module);
     }
   };

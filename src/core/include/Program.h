@@ -215,7 +215,6 @@ class Program {
   tbb::speculative_spin_mutex files_mutex_;
 
   std::unordered_map<std::string_view, ModuleDescriptor*> modules_;
-  tbb::speculative_spin_mutex modules_mutex_;
 
   std::unordered_set<Program*> explicit_references_;
   std::unordered_set<Program*> references_;
