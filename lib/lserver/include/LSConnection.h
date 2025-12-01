@@ -179,8 +179,7 @@ class Connection {
 
   template <glz::string_literal Method, typename Params>
   void Notify(Params&& params) {
-    lib::jsonrpc::Request<Params> req{
-        .id = nullptr,
+    lib::jsonrpc::Notification<Params> req{
         .method = Method,
         .params = std::forward<Params>(params),
     };
