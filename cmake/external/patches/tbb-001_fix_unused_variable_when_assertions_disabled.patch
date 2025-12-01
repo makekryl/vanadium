@@ -1,0 +1,13 @@
+diff --git a/include/oneapi/tbb/concurrent_vector.h b/include/oneapi/tbb/concurrent_vector.h
+index 27cdc473..105daca1 100644
+--- a/include/oneapi/tbb/concurrent_vector.h
++++ b/include/oneapi/tbb/concurrent_vector.h
+@@ -891,7 +891,7 @@ private:
+         }
+
+     #if TBB_USE_DEBUG
+-        size_type cap = capacity();
++        size_type cap = capacity(); (void)cap;
+         __TBB_ASSERT( cap >= new_size, nullptr);
+     #endif
+         return iterator(*this, size());

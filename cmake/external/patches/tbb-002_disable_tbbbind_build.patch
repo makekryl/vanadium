@@ -1,0 +1,13 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 12273b3e..6537b6e9 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -284,7 +284,7 @@ else()
+     if (NOT BUILD_SHARED_LIBS)
+         message(STATUS "TBBBind build targets are disabled due to unsupported environment")
+     else()
+-        add_subdirectory(src/tbbbind)
++        # add_subdirectory(src/tbbbind)
+     endif()
+     if (TBB_INSTALL)
+         # -------------------------------------------------------------------

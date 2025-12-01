@@ -1,0 +1,13 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 3383da6..0222bb8 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -195,7 +195,7 @@ if (REFLECTCPP_TOML)
+         src/reflectcpp_toml.cpp
+     )
+     if (NOT TARGET tomlplusplus)
+-      find_package(tomlplusplus)
++      find_package(tomlplusplus QUIET)
+     endif()
+     target_link_libraries(reflectcpp PUBLIC tomlplusplus::tomlplusplus)
+ endif()

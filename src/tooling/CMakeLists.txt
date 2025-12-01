@@ -14,7 +14,6 @@ target_link_libraries(vanadium_tooling PRIVATE
 )
 target_link_libraries(vanadium_tooling PUBLIC
   vanadium_core
-  tomlplusplus::tomlplusplus
   reflectcpp
 )
 
