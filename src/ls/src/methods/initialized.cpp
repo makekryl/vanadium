@@ -25,7 +25,7 @@ template <typename T>
 namespace vanadium::ls {
 template <>
 void methods::initialized::invoke(LsContext& ctx, const lib::jsonrpc::Empty&) {
-  ctx.connection->Request<"client/registerCapability", lib::jsonrpc::Empty>(lsp::RegistrationParams{
+  ctx.connection->Request<"client/registerCapability", std::nullptr_t>(lsp::RegistrationParams{
       .registrations =
           {
               lsp::Registration{
