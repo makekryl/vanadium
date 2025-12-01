@@ -8,6 +8,7 @@ lsp::ShowMessageRequestResult ShowMessage(LsContext& ctx, lsp::ShowMessageReques
   if (params.actions->empty()) {
     // TODO: remove this special case, the problem is that we cannot receive the response before
     // initialization request is completed, causing a deadlock
+    // (on the other hand, if there's no params.actions, we don't response at all, why wait?)
     ctx.connection->Notify<"window/showMessage">(std::move(params));
     return nullptr;
   }
