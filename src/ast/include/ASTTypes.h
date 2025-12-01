@@ -33,12 +33,14 @@ struct Range {
     return src.substr(begin, end - begin);
   }
 
-  [[nodiscard]] auto operator<=>(const Range&) const noexcept = default;
+  constexpr auto operator<=>(const Range&) const noexcept = default;
 };
 
 struct Location {
   pos_t line;
   pos_t column;
+
+  constexpr bool operator==(const Location&) const noexcept = default;
 };
 
 class LineMapping {
@@ -78,7 +80,7 @@ class LineMapping {
 
   [[nodiscard]] Range RangeOf(pos_t line) const {
     pos_t end;
-    if (line < line_starts_.size()) [[likely]] {
+    if (line != (line_starts_.size() - 1)) [[likely]] {
       end = line_starts_[line + 1] - 1;
     } else [[unlikely]] {
       end = -1;

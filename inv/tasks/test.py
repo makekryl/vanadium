@@ -22,6 +22,8 @@ def test(c: Context, label: str):
     args.append(f"-R '{c.config.vanadium.test.filter}'")
   if c.config.vanadium.test.jobs:
     args.append(f"-j {c.config.vanadium.test.jobs}")
+  if c.config.vanadium.test.ctest_args:
+    args.append(c.config.vanadium.test.ctest_args)
 
   c.run(
     f"ctest -L '{label}' --output-on-failure --test-dir '{str(build_dir)}' {' '.join(args)}"

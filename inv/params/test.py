@@ -11,6 +11,7 @@ def with_test_params(tfunc: Callable):
     jobs: int | None = None,
     filter: str | None = None,
     only_build: bool = False,
+    ctest_args: str | None = None,
   ) -> None:
     if "test" not in c.config.vanadium:
       c.config.vanadium.test = {}  # c.config is an invoke.DataProxy
@@ -19,6 +20,7 @@ def with_test_params(tfunc: Callable):
     cfg.jobs = jobs
     cfg.filter = filter
     cfg.only_build = only_build
+    cfg.ctest_args = ctest_args
 
   return inject_task_params(
     tfunc,
@@ -34,6 +36,10 @@ def with_test_params(tfunc: Callable):
       InjectableParam(
         "only_build",
         False,
+      ),
+      InjectableParam(
+        "ctest_args",
+        None,
       ),
     ],
     accept,
