@@ -52,7 +52,14 @@ void Serve(lserver::Transport& transport, std::size_t concurrency, std::size_t j
   lib::jsonrpc::Server<VanadiumLsConnection::Context> rpc_server;
 
   const auto handle_message = [&rpc_server](LsContext& ctx, lserver::PooledMessageToken&& token) {
-    VLS_INFO("  |---> {}", *glz::get_as_json<std::string_view, "/method">(token->buf));
+    const auto method = glz::get_as_json<std::string_view, "/method">(token->buf);
+    if (!method) [[unlikely]] {
+      VLS_WARN("  |---> Malformed message or message with unset method has been received");
+      VLS_DEBUG("       {}", glz::format_error(method.error(), token->buf));
+      return;
+    }
+
+    VLS_INFO("  |---> {}", *method);
     const auto begin_ts = std::chrono::steady_clock::now();
 
     auto res_token = ctx.AcquireToken();
