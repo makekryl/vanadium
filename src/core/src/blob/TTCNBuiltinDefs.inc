@@ -929,17 +929,7 @@ It returns a template that matches any value that does NOT match any of the temp
 
 In terms of set theory, it is the logical NOT operation for template matching - the complement of the universal set.
 */
-external function complement(in anytype v,
-  in anytype v1 := none,
-  in anytype v2 := none,
-  in anytype v3 := none,
-  in anytype v4 := none,
-  in anytype v5 := none,
-  in anytype v6 := none,
-  in anytype v7 := none,
-  in anytype v8 := none,
-  in anytype v9 := none,
-) return __infer_arg_t
+external function complement(in __vargs_t v) return __infer_arg_t
 
 }
 )"
