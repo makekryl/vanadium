@@ -19,6 +19,3 @@ target_link_libraries(vanadium_ast_asn1 PRIVATE
 )
 
 add_gtest_executable(vanadium_ast_asn1)
-target_link_libraries(vanadium_ast_asn1_test PUBLIC
-  magic_enum
-)
