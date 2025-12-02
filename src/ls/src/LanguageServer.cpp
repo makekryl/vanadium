@@ -43,6 +43,8 @@ using ServerMethods = mp::Typelist<methods::initialize,   //
                                    methods::textDocument::signatureHelp,          //
                                    methods::textDocument::semanticTokens::range,  //
                                    //
+                                   methods::workspace::didChangeWatchedFiles,  //
+                                   //
                                    methods::completionItem::resolve,  //
                                    //
                                    methods::inlayHint::resolve  //
@@ -57,6 +59,11 @@ void Serve(lserver::Transport& transport, std::size_t concurrency, std::size_t j
     if (!method) [[unlikely]] {
       VLS_WARN("  |---> Malformed message or message with unset method has been received");
       VLS_DEBUG("       {}", glz::format_error(method.error(), token->buf));
+      return;
+    }
+
+    if (!rpc_server.IsBound(*method)) [[unlikely]] {
+      VLS_WARN("  |---> Method '{}' is not supported", *method);
       return;
     }
 

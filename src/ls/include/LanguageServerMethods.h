@@ -77,6 +77,9 @@ DECL_REQUEST_1(textDocument, documentSymbol, lsp::DocumentSymbolParams, lsp::Doc
 DECL_REQUEST_1(textDocument, signatureHelp, lsp::SignatureHelpParams, lsp::SignatureHelpResult);
 DECL_REQUEST_2(textDocument, semanticTokens, range, lsp::SemanticTokensRangeParams, lsp::SemanticTokensRangeResult);
 
+// workspace
+DECL_NOTIFIC_1(workspace, didChangeWatchedFiles, lsp::DidChangeWatchedFilesParams);
+
 // completionItem
 DECL_REQUEST_1(completionItem, resolve, lsp::CompletionItem, lsp::CompletionItem);
 
