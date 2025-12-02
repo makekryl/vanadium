@@ -1,6 +1,5 @@
 #include <glaze/json/generic.hpp>
 
-#include "LSMethod.h"
 #include "LSProtocol.h"
 #include "LanguageServerContext.h"
 #include "LanguageServerMethods.h"
@@ -32,11 +31,18 @@ void methods::initialized::invoke(LsContext& ctx, const lib::jsonrpc::Empty&) {
                   .id = kRegistrationId,
                   .method = "workspace/didChangeWatchedFiles",
                   .registerOptions = generify(lsp::DidChangeWatchedFilesRegistrationOptions{
-                      .watchers =
-                          {
-                              lsp::FileSystemWatcher{.globPattern = "**/*.ttcn"},
-                              lsp::FileSystemWatcher{.globPattern = "**/.vanadiumrc"},
-                          },
+                      .watchers = ([&] -> std::vector<lsp::FileSystemWatcher> {
+                        std::vector<lsp::FileSystemWatcher> watchers = {
+                            lsp::FileSystemWatcher{.globPattern = "**/*.ttcn"},
+                            lsp::FileSystemWatcher{.globPattern = "**/.vanadiumrc"},
+                        };
+                        for (const auto& sproj : ctx.solution->Projects()) {
+                          for (const auto& search_path : sproj.project.SearchPaths()) {
+                            watchers.emplace_back(std::format("{}/**/*.ttcn", search_path.base_path));
+                          }
+                        }
+                        return watchers;
+                      })(),
                   }),
               },
           },

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <oneapi/tbb/concurrent_unordered_map.h>
+#include <oneapi/tbb/spin_rw_mutex.h>
 #include <oneapi/tbb/task_arena.h>
 #include <oneapi/tbb/task_group.h>
 #include <vanadium/lib/jsonrpc/Common.h>
@@ -9,6 +10,7 @@
 #include <cstddef>
 #include <expected>
 #include <glaze/json.hpp>
+#include <type_traits>
 
 #include "vanadium/lib/lserver/Channel.h"
 #include "vanadium/lib/lserver/MessageToken.h"
@@ -65,34 +67,68 @@ class Connection {
 
   template <glz::string_literal Method, typename Result, typename Params>
   std::expected<Result, lib::jsonrpc::Error> Request(Params&& params) {
-    const auto id = SendRequest<Method>(std::forward<Params>(params));
-    if (!id.has_value()) [[unlikely]] {
-      return std::unexpected{id.error()};
+    const auto assign_wait_token = [&](WaitToken* tokenptr) {
+      std::unique_lock l(channel_read_mutex_);
+      pending_outbound_requests_[tbb::this_task_arena::current_thread_index()] = tokenptr;
+    };
+    const auto free_wait_token = [&] {
+      assign_wait_token(nullptr);
+    };
+
+    //
+
+    const auto id = outbound_id_++;
+
+    WaitToken wait_token{.awaited_id = id};
+    assign_wait_token(&wait_token);
+
+    if (auto err = SendRequest<Method>(id, std::forward<Params>(params)); err) [[unlikely]] {
+      free_wait_token();
+      return std::unexpected{*err};
     }
 
-    auto res_token = AwaitRpcResponse(*id);
+    {
+      std::unique_lock lock(pending_outbound_requests_mutex_);
+      pending_outbound_requests_cv_.wait(lock, [&] {
+        return wait_token.satisfied.load(std::memory_order_acquire);
+      });
+    }
+    free_wait_token();
+
+    auto res_token = std::move(*wait_token.response);
 
     lib::jsonrpc::Response<Result> res;
     if (glz::error_ctx err = glz::read_json<>(res, res_token->buf)) [[unlikely]] {
+      // TODO: it does not seem correct to return jsonrpc::Error from the point of the client
+      //       as it would think it was sent by the server and not produced internally
       return std::unexpected{lib::jsonrpc::Error{
           .code = lib::jsonrpc::ErrorCode::kParseError,
           .data = glz::format_error(err, res_token->buf),
       }};
     }
 
-    if (!res.result.has_value()) [[unlikely]] {
-      return std::unexpected{res.error.value()};
+    if (res.error.has_value()) [[unlikely]] {
+      return std::unexpected{*res.error};
     }
 
-    return res.result.value();
+    if constexpr (std::is_same_v<Result, std::nullptr_t>) {
+      return nullptr;
+    } else {
+      if (!res.result.has_value()) [[unlikely]] {
+        return std::unexpected{lib::jsonrpc::Error{
+            .code = lib::jsonrpc::ErrorCode::kParseError,
+            .data = "result is missing from response",
+        }};
+      }
+      return *res.result;
+    }
   }
 
  private:
   using rpc_id_t = std::uint32_t;
 
   template <glz::string_literal Method, typename Params>
-  std::expected<rpc_id_t, lib::jsonrpc::Error> SendRequest(Params&& params) {
-    const auto id = outbound_id_++;
+  std::optional<lib::jsonrpc::Error> SendRequest(rpc_id_t id, Params&& params) {
     const lib::jsonrpc::Request<Params> req{
         .id = id,
         .method = Method,
@@ -101,18 +137,18 @@ class Connection {
 
     auto req_token = AcquireToken();
     if (auto err = glz::write_json(req, req_token->buf)) [[unlikely]] {
-      return std::unexpected{lib::jsonrpc::Error{
+      return lib::jsonrpc::Error{
           .code = lib::jsonrpc::ErrorCode::kInvalidParams,
           .data = glz::format_error(err, req_token->buf),
-      }};
+      };
     }
     Send(std::move(req_token));
 
-    return id;
+    return std::nullopt;
   }
 
-  PooledMessageToken AwaitRpcResponse(rpc_id_t id);
-  std::optional<PooledMessageToken> MaybeRouteOutboundRequestResponse(PooledMessageToken&& token);
+  [[nodiscard]] bool AwaitsResponse() const noexcept;
+  [[nodiscard]] std::optional<PooledMessageToken> MaybeRouteOutboundRequestResponse(PooledMessageToken&& token);
 
   struct WaitToken {
     rpc_id_t awaited_id;
@@ -131,10 +167,13 @@ class Connection {
 
   std::atomic<bool> is_running_;
 
+  // It suspends incoming message routing during initiating a Server->Client request
+  tbb::speculative_spin_rw_mutex channel_read_mutex_;
+
   tbb::concurrent_bounded_queue<PooledMessageToken> inbound_requests_queue_;
 
   std::atomic<rpc_id_t> outbound_id_{1};
-  std::vector<WaitToken*> pending_outbound_requests_;
+  std::vector<WaitToken*> pending_outbound_requests_;  // <-- should be protected by exclusive channel_read_mutex_
   std::mutex pending_outbound_requests_mutex_;
   std::condition_variable pending_outbound_requests_cv_;
 
