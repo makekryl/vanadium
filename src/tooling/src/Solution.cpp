@@ -25,7 +25,7 @@ void InitSubproject(const Solution& solution, SolutionProject& subproject) {
       srcbuf.resize(size);
       return srcbuf.data();
     });
-    if (!res) {
+    if (!res) [[unlikely]] {
       // TODO
       std::println(stderr, "Failed to read file '{}' during project '{}' initialization: {}", path, subproject.Name(),
                    res.error().String());
