@@ -36,7 +36,6 @@ void methods::initialized::invoke(LsContext& ctx, const lib::jsonrpc::Empty&) {
                           .watchers = ([&] -> std::vector<lsp::FileSystemWatcher> {
                             std::vector<lsp::FileSystemWatcher> watchers = {
                                 lsp::FileSystemWatcher{.globPattern = "**/*.ttcn"},
-                                lsp::FileSystemWatcher{.globPattern = "**/.vanadiumrc"},
                             };
                             for (const auto& sproj : ctx.solution->Projects()) {
                               for (const auto& search_path : sproj.project.SearchPaths()) {
