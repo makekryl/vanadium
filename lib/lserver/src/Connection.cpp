@@ -12,7 +12,7 @@ namespace vanadium::lserver {
 
 Connection::Connection(HandlerFn handler, Transport& transport, std::size_t concurrency, std::size_t backlog)
     : handler_(std::move(handler)),
-      channel_(transport, concurrency * 2),
+      channel_(transport, concurrency * backlog * 2),
       backlog_(backlog),
       task_arena_(kServiceWorkerThreads + concurrency),
       pending_outbound_requests_(concurrency, nullptr),
