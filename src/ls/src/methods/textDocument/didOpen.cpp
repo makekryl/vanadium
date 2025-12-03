@@ -22,10 +22,10 @@ void methods::textDocument::didOpen::invoke(LsContext& ctx, const lsp::DidOpenTe
     VLS_DEBUG("didOpen({})", path);
 
     const auto [it, inserted] = ctx.file_versions.try_emplace(path, params.textDocument.version);
-    if (inserted || it->second == params.textDocument.version) {
+    if (inserted || it->second != params.textDocument.version) {
       if (const auto* sf = project.program.GetFile(path); sf) {
-        VLS_DEBUG("didOpen({}): analysis={:b}, skipped={}", path, std::to_underlying(sf->analysis_state),
-                  sf->skip_analysis);
+        VLS_DEBUG("didOpen({}): analysis={:b}, skipped={}, ver={}->{}", path, std::to_underlying(sf->analysis_state),
+                  sf->skip_analysis, it->second, params.textDocument.version);
       }
 
       it->second = params.textDocument.version;
@@ -36,10 +36,10 @@ void methods::textDocument::didOpen::invoke(LsContext& ctx, const lsp::DidOpenTe
       project.program.Update([&](auto& modify) {
         modify.update(path, read_file);
       });
-    }
 
-    const_cast<core::SourceFile*>(project.program.GetFile(path))->skip_analysis = false;
-    project.program.Commit([](auto&) {});
+      const_cast<core::SourceFile*>(project.program.GetFile(path))->skip_analysis = false;
+      project.program.Commit([](auto&) {});
+    }
 
     ctx.connection->Notify<"textDocument/publishDiagnostics">(lsp::PublishDiagnosticsParams{
         .uri = params.textDocument.uri,
