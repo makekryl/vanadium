@@ -15,7 +15,7 @@
 
 namespace vanadium::ls {
 
-constexpr std::size_t kServerBacklog = 2;
+constexpr std::size_t kServerBacklog = 8;
 
 using ServerMethods = mp::Typelist<methods::initialize,   //
                                    methods::initialized,  //
