@@ -15,7 +15,8 @@
 
 namespace vanadium::ls {
 
-constexpr std::size_t kServerBacklog = 8;
+// todo: fix deadlock & decrease
+constexpr std::size_t kServerBacklog = 12;
 
 using ServerMethods = mp::Typelist<methods::initialize,   //
                                    methods::initialized,  //
