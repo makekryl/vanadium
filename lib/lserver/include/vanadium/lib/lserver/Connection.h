@@ -18,9 +18,13 @@
 
 namespace vanadium::lserver {
 
+// template <typename T>
+struct NoAwaitResponse {};
+
 class Connection {
  public:
   using HandlerFn = std::function<void(Connection&, PooledMessageToken&&)>;
+  using rpc_id_t = std::uint32_t;
 
   Connection(HandlerFn handler, Transport& transport, std::size_t concurrency, std::size_t backlog);
 
@@ -78,11 +82,21 @@ class Connection {
     //
 
     const auto id = outbound_id_++;
+    const auto send_req = [&] {
+      return SendRequest<Method>(id, std::forward<Params>(params));
+    };
+
+    if constexpr (std::is_same_v<Result, NoAwaitResponse>) {
+      if (auto err = send_req(); err) [[unlikely]] {
+        return std::unexpected{*err};
+      }
+      return {};
+    }
 
     WaitToken wait_token{.awaited_id = id};
     assign_wait_token(&wait_token);
 
-    if (auto err = SendRequest<Method>(id, std::forward<Params>(params)); err) [[unlikely]] {
+    if (auto err = send_req(); err) [[unlikely]] {
       free_wait_token();
       return std::unexpected{*err};
     }
@@ -125,8 +139,6 @@ class Connection {
   }
 
  private:
-  using rpc_id_t = std::uint32_t;
-
   template <glz::string_literal Method, typename Params>
   std::optional<lib::jsonrpc::Error> SendRequest(rpc_id_t id, Params&& params) {
     const lib::jsonrpc::Request<Params> req{

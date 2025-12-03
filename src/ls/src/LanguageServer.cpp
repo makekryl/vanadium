@@ -55,6 +55,17 @@ void Serve(lserver::Transport& transport, std::size_t concurrency, std::size_t j
   std::optional<LsContext> ctx;
 
   const auto handle_message = [&rpc_server, &ctx](lserver::Connection& conn, lserver::PooledMessageToken&& token) {
+    if (const auto result_field = glz::get_as_json<glz::raw_json_view, "/result">(token->buf); result_field)
+        [[unlikely]] {
+      const auto id = glz::get_as_json<lserver::Connection::rpc_id_t, "/id">(token->buf);
+      if (!id) [[unlikely]] {
+        VLS_WARN("Received the result with missing ID for previously sent request");
+      } else {
+        VLS_INFO("Received the result for previously sent request with ID {}", *id);
+      }
+      return;
+    }
+
     const auto method = glz::get_as_json<std::string_view, "/method">(token->buf);
     if (!method) [[unlikely]] {
       VLS_WARN("  |---> Malformed message or message with unset method has been received");
