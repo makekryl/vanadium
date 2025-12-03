@@ -6,7 +6,5 @@
 
 namespace vanadium::ls {
 template <>
-void methods::textDocument::didSave::invoke(LsContext& ctx, const lsp::DidSaveTextDocumentParams& params) {
-  std::raise(SIGSEGV);
-}
+void methods::textDocument::didSave::invoke(LsContext& ctx, const lsp::DidSaveTextDocumentParams& params) {}
 }  // namespace vanadium::ls
