@@ -559,6 +559,9 @@ InstantiatedType DeduceCompositeLiteralType(const SourceFile* file, const semant
       }
 
       const auto* decl = parent_type->Declaration();
+      if (!decl) [[unlikely]] {  // anytype, etc.
+        return InstantiatedType::None();
+      }
       if (decl->nkind != ast::NodeKind::StructTypeDecl && decl->nkind != ast::NodeKind::StructSpec) {
         return InstantiatedType::None();
       }
