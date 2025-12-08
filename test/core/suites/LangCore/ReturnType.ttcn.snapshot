@@ -1,0 +1,10 @@
+./ReturnType.ttcn:
+  4:10: void function should not return a value
+      return 1;  // EXPECT_ERROR
+             ~                  
+  8:10: expected value of type 'integer', got 'float'
+      return 1.0;  // EXPECT_ERROR
+             ~~~                  
+  13:10: expected value, got template
+      return i;  // EXPECT_ERROR
+             ~                  

@@ -1,0 +1,20 @@
+module ReturnType {
+
+function missingReturnDecl() {
+  return 1;  // EXPECT_ERROR
+}
+
+function typeMismatch() return integer {
+  return 1.0;  // EXPECT_ERROR
+}
+
+function templateRestrictionMismatch() return integer {
+  var template integer i;
+  return i;  // EXPECT_ERROR
+}
+
+function missingReturnStatement() return integer {  // EXPECT_ERROR
+
+}
+
+}
