@@ -615,7 +615,7 @@ bool Binder::Inspect(const ast::Node* n) {
         }
       });
 
-      if (m->name) {
+      if (m->name) [[likely]] {
         AddSymbol({
             Lit(std::addressof(*m->name)),
             m,

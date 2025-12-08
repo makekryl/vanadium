@@ -663,7 +663,7 @@ struct WhileStmt : Stmt {
     if (cond != nullptr) {
       Inspect(cond, inspector);
     }
-    if (body != nullptr) {
+    if (body != nullptr) [[likely]] {
       Inspect(body, inspector);
     }
   }
@@ -678,7 +678,7 @@ struct DoWhileStmt : Stmt {
   Expr* cond{nullptr};
 
   void Accept(const NodeInspector& inspector) const {
-    if (body != nullptr) {
+    if (body != nullptr) [[likely]] {
       Inspect(body, inspector);
     }
     if (cond != nullptr) {
@@ -736,7 +736,7 @@ struct CommClause : Stmt {
       Inspect(x, inspector);
     }
     Inspect(comm, inspector);
-    if (body != nullptr) {
+    if (body != nullptr) [[likely]] {
       Inspect(body, inspector);
     }
   }
@@ -1167,7 +1167,7 @@ struct FuncDecl : Decl {
     if (ret != nullptr) {
       Inspect(ret, inspector);
     }
-    if (body != nullptr) {
+    if (body != nullptr) [[likely]] {
       Inspect(body, inspector);
     }
     if (with != nullptr) {
@@ -1188,7 +1188,7 @@ struct ConstructorDecl : Decl {
     if (params != nullptr) [[likely]] {
       Inspect(params, inspector);
     }
-    if (body != nullptr) {
+    if (body != nullptr) [[likely]] {
       Inspect(body, inspector);
     }
   }
