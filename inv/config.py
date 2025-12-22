@@ -12,6 +12,9 @@ CMAKE_PRESETS: list[str] = [
 DEFAULT_TOOLCHAIN: str = TOOLCHAINS[0]
 
 
+OUTPUT_DIR = Path("out")
+
+
 def get_preset(config: str, toolchain: str = DEFAULT_TOOLCHAIN):
   preset = f"{toolchain}-{config}"
   assert preset in CMAKE_PRESETS, f"Preset '{preset}' does not exist"
@@ -19,4 +22,4 @@ def get_preset(config: str, toolchain: str = DEFAULT_TOOLCHAIN):
 
 
 def get_build_dir(preset: str) -> Path:
-  return Path("out") / "build" / preset
+  return OUTPUT_DIR / "build" / preset
