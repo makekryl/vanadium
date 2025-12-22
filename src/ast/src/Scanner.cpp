@@ -124,6 +124,10 @@ constexpr auto kKeywordLookup = lib::MakeStaticMap<std::string_view, TokenKind>(
     {"with", TokenKind::WITH},
 });
 
+bool IsKeyword(std::string_view s) {
+  return kKeywordLookup.get(s) != std::nullopt;
+}
+
 Scanner::Scanner(std::string_view src, pos_t start_pos) : src_(src), pos_(start_pos), lines_({0}) {}
 
 Token Scanner::Scan() {

@@ -40,5 +40,7 @@ class Scanner {
   std::vector<ast::pos_t> lines_;
 };
 
+[[nodiscard]] bool IsKeyword(std::string_view);
+
 }  // namespace parser
 }  // namespace vanadium::ast

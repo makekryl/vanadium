@@ -21,6 +21,7 @@
 #include "ASTTypes.h"
 #include "Asn1AST.h"
 #include "Asn1Scanner.h"
+#include "Scanner.h"
 #include "magic_enum/magic_enum.hpp"
 
 // TODO: hardening (missing kEOF checks, etc.)
@@ -133,13 +134,9 @@ void Transparser::RewriteIdentName(Token& tok) {
       rewrite_to("string");
       break;
     default:
-      // for reserved TTCN-3 keywords
-      const auto insert_underscore_suffix = [&]() {
+      if (ttcn_ast::parser::IsKeyword(tok.On(src_))) {
         *mut_v.end() = '_';
         ++tok.range.end;
-      };
-      if ("message" == tok.On(src_) || "value" == tok.On(src_) || "infinity" == tok.On(src_) || "on" == tok.On(src_)) {
-        insert_underscore_suffix();
         break;
       }
       std::ranges::replace(mut_v, '-', '_');
