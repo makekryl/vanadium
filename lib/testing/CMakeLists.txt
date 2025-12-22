@@ -1,5 +1,6 @@
 add_library(vanadium_lib_testing STATIC
   src/gtest_helpers.cpp
+  src/Multifile.cpp
 )
 
 target_include_directories(vanadium_lib_testing PUBLIC
