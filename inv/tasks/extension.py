@@ -31,8 +31,7 @@ def symlink_lsp(c: Context):
 @task
 @with_build_params
 def package(c: Context):
-  build.build(c, target="vanadiumd")
-  _, build_dir = build._get_cmake_params(c)
+  build_dir = build.build(c, target="vanadiumd")
 
   c.run("rm -f 'extension/bin/vanadiumd'")
   c.run(f"cp '{build_dir / '/bin/lsp/vanadiumd'}' 'extension/bin'")

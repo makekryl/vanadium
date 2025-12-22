@@ -2,7 +2,7 @@ import inspect
 from dataclasses import dataclass
 from functools import wraps
 from inspect import Parameter, Signature, _empty, signature
-from typing import Callable
+from typing import Callable, ParamSpec, TypeVar
 
 from invoke import Context
 
@@ -17,11 +17,14 @@ class InjectableParam:
 _injected_params = set[str]()
 
 
+TaskCallable = TypeVar("TaskCallable", bound=Callable)
+
+
 def inject_task_params(
-  tfunc: Callable,
+  tfunc: TaskCallable,
   params: list[InjectableParam],
   accept: Callable[..., None],
-):
+) -> TaskCallable:
   params_group = inspect.stack()[1].function
 
   @wraps(tfunc)

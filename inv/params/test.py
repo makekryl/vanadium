@@ -1,11 +1,11 @@
-from typing import Callable, cast
+from typing import cast
 
 from invoke import Config, Context
 
-from inv.params import InjectableParam, inject_task_params
+from inv.params import InjectableParam, TaskCallable, inject_task_params
 
 
-def with_test_params(tfunc: Callable):
+def with_test_params(tfunc: TaskCallable) -> TaskCallable:
   def accept(
     c: Context,
     jobs: int | None = None,

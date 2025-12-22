@@ -1,12 +1,12 @@
-from typing import Callable, cast
+from typing import cast
 
 from invoke import Config, Context
 
 from inv.config import DEFAULT_TOOLCHAIN
-from inv.params import InjectableParam, inject_task_params
+from inv.params import InjectableParam, TaskCallable, inject_task_params
 
 
-def with_build_options_params(tfunc: Callable):
+def with_build_options_params(tfunc: TaskCallable) -> TaskCallable:
   def accept(
     c: Context,
     toolchain: str,
@@ -47,7 +47,7 @@ def with_build_options_params(tfunc: Callable):
   )
 
 
-def with_cmake_params(tfunc: Callable):
+def with_cmake_params(tfunc: TaskCallable) -> TaskCallable:
   def accept(
     c: Context,
     reconfigure: bool,
@@ -76,5 +76,5 @@ def with_cmake_params(tfunc: Callable):
   )
 
 
-def with_build_params(tfunc: Callable):
+def with_build_params(tfunc: TaskCallable) -> TaskCallable:
   return with_build_options_params(with_cmake_params(tfunc))
