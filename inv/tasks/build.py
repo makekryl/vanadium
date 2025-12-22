@@ -18,6 +18,7 @@ def _get_cmake_params(c: Context):
       (
         "release" if c.config.vanadium.build.release else "debug",
         *opt("sanitizers", c.config.vanadium.build.sanitizers),
+        *opt("static", c.config.vanadium.build.static),
       )
     ),
     toolchain=c.config.vanadium.build.toolchain,

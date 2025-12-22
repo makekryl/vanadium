@@ -12,6 +12,7 @@ def with_build_options_params(tfunc: Callable):
     toolchain: str,
     sanitizers: bool,
     release: bool,
+    static: bool,
   ):
     if "build" not in c.config.vanadium:
       c.config.vanadium.build = {}  # c.config is an invoke.DataProxy
@@ -20,6 +21,7 @@ def with_build_options_params(tfunc: Callable):
     cfg.toolchain = toolchain
     cfg.sanitizers = sanitizers
     cfg.release = release
+    cfg.static = static
 
   return inject_task_params(
     tfunc,
@@ -34,6 +36,10 @@ def with_build_options_params(tfunc: Callable):
       ),
       InjectableParam(
         "release",
+        False,
+      ),
+      InjectableParam(
+        "static",
         False,
       ),
     ],

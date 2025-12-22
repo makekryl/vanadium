@@ -32,11 +32,10 @@ def symlink_lsp(c: Context):
 @with_build_params
 def package(c: Context):
   build.build(c, target="vanadiumd")
+  _, build_dir = build._get_cmake_params(c)
 
   c.run("rm -f 'extension/bin/vanadiumd'")
-  c.run(
-    f"cp '{str(get_build_dir('gcc-release-static'))}/bin/lsp/vanadiumd' 'extension/bin'"
-  )
+  c.run(f"cp '{build_dir / '/bin/lsp/vanadiumd'}' 'extension/bin'")
 
   with c.cd("extension"):
     c.run("npx vsce package")

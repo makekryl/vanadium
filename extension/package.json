@@ -5,7 +5,7 @@
   "icon": "icon.png",
   "author": "makekryl",
   "publisher": "Mikhail Krylov",
-  "version": "0.1.8",
+  "version": "0.1.20",
   "private": true,
   "repository": "https://github.com/makekryl/vanadiumd",
   "engines": {
