@@ -1,3 +1,9 @@
+%option reentrant
+%option prefix="asn1p_"
+%option noyywrap
+%option yylineno
+%option bison-bridge
+
 %{
 
 #include <string.h>
@@ -5,20 +11,21 @@
 #include <assert.h>
 
 #include "asn1parser.h"
+
+#define YYSTYPE ASN1P_STYPE
 #include "asn1p_y.h"
 
-int asn1p_lex(void);
-void asn1p_lexer_hack_push_opaque_state(void);		/* Used in .y */
-void asn1p_lexer_hack_enable_with_syntax(void);		/* Used in .y */
-void asn1p_lexer_hack_push_encoding_control(void);	/* Used in .y */
+void asn1p_lexer_hack_push_opaque_state(yyscan_t);		/* Used in .y */
+void asn1p_lexer_hack_enable_with_syntax(yyscan_t);		/* Used in .y */
+void asn1p_lexer_hack_push_encoding_control(yyscan_t);	/* Used in .y */
 
-#define	YY_FATAL_ERROR(msg)	do {			\
-		fprintf(stderr,				\
-			"lexer error at line %d, "	\
-			"text \"%s\"\n",		\
-			yylineno, yytext);		\
-		exit(1);				\
-	} while(0)
+//#define	YY_FATAL_ERROR(msg)	do {			\
+//		fprintf(stderr,				\
+//			"lexer error at line %d, "	\
+//			"text \"%s\"\n",		\
+//			yylineno, yytext);		\
+//		exit(1);				\
+//	} while(0)
 
 int asn1p_lexer_pedantic_1990 = 0;
 int asn1p_lexer_types_year = 0;
@@ -27,8 +34,8 @@ int asn1p_lexer_extended_values = 0;
 
 int asn1p_as_pointer;
 
-static asn1c_integer_t _lex_atoi(const char *ptr);
-static double          _lex_atod(const char *ptr);
+static asn1c_integer_t _lex_atoi(const char *ptr, yyscan_t);
+static double          _lex_atod(const char *ptr, yyscan_t);
 
 /*
  * Check that the type is defined in the year of the standard choosen.
@@ -51,8 +58,8 @@ static double          _lex_atod(const char *ptr);
  * Append quoted string.
  */
 #define	QAPPEND(text, tlen)	do {				\
-		char *prev_text = asn1p_lval.tv_opaque.buf;	\
-		int prev_len = asn1p_lval.tv_opaque.len;	\
+		char *prev_text = yylval_param->tv_opaque.buf;	\
+		int prev_len = yylval_param->tv_opaque.len;	\
 		char *p;					\
 								\
 		p = malloc((tlen) + prev_len + 1);		\
@@ -62,20 +69,18 @@ static double          _lex_atod(const char *ptr);
 		memcpy(p + prev_len, text, tlen);		\
 		p[prev_len + (tlen)] = '\0';			\
 								\
-		free(asn1p_lval.tv_opaque.buf);			\
-		asn1p_lval.tv_opaque.buf = p;			\
-		asn1p_lval.tv_opaque.len = (tlen) + prev_len;	\
+		free(yylval_param->tv_opaque.buf);			\
+		yylval_param->tv_opaque.buf = p;			\
+		yylval_param->tv_opaque.len = (tlen) + prev_len;	\
 	} while(0)
 
 %}
 
 %option	never-interactive
-%option	noinput 
+%option	noinput
 %option	noyywrap stack
 /* Performance penalty is OK */
-%option yylineno	
-/* Controlled from within application */
-%option debug		
+%option yylineno
 
 %pointer
 
@@ -98,34 +103,34 @@ WSP	[\t\r\v\f\n ]
 <INITIAL>"\xef\xbb\xbf"		return UTF8_BOM;
 
 -{3,}/[\r\n]	/* Immediately terminated long comment */
--{3,}/[^-\r\n]	yy_push_state(idash_comment);	/* Incorrect, but acceptable */
+-{3,}/[^-\r\n]	yy_push_state(idash_comment, yyscanner);	/* Incorrect, but acceptable */
 <idash_comment>{
-	-{3,}	yy_pop_state(); /* Acceptable end of comment */
+	-{3,}	yy_pop_state(yyscanner); /* Acceptable end of comment */
 }
 
 --<[ \t]*ASN1C.RepresentAsPointer[ \t]*>--	asn1p_as_pointer = 1;
 
 <extended_values>{
     "#BIT STRING"    {
-        yy_pop_state();
+        yy_pop_state(yyscanner);
         return TOK_ExtValue_BIT_STRING;
     }
 }
 
-<INITIAL,with_syntax>--		yy_push_state(dash_comment);
+<INITIAL,with_syntax>--		yy_push_state(dash_comment, yyscanner);
 <dash_comment,idash_comment>{
 
-	{NL}	yy_pop_state();
+	{NL}	yy_pop_state(yyscanner);
 
-	--	yy_pop_state();	/* End of comment */
+	--	yy_pop_state(yyscanner);	/* End of comment */
 	-	/* Eat single dash */
 	[^\r\v\f\n-]+	/* Eat */
 }
 
-<INITIAL,cpp_comment,with_syntax>"/*"		yy_push_state(cpp_comment);
+<INITIAL,cpp_comment,with_syntax>"/*"		yy_push_state(cpp_comment, yyscanner);
 <cpp_comment>{
 	[^*/<]	/* Eat */
-	"*/"	yy_pop_state();
+	"*/"	yy_pop_state(yyscanner);
 	.	/* Eat */
 }
 
@@ -139,22 +144,22 @@ WSP	[\t\r\v\f\n ]
 <opaque>{
 
 	"{"	{
-			yy_push_state(opaque);
-			asn1p_lval.tv_opaque.buf = strdup(yytext);
-			asn1p_lval.tv_opaque.len = yyleng;
+			yy_push_state(opaque, yyscanner);
+			yylval_param->tv_opaque.buf = strdup(yytext);
+			yylval_param->tv_opaque.len = yyleng;
 			return TOK_opaque;
 		}
 
 	"}"	{
-			yy_pop_state();
-			asn1p_lval.tv_opaque.buf = strdup(yytext);
-			asn1p_lval.tv_opaque.len = yyleng;
+			yy_pop_state(yyscanner);
+			yylval_param->tv_opaque.buf = strdup(yytext);
+			yylval_param->tv_opaque.len = yyleng;
 			return TOK_opaque;
 		}
 
 	[^{}:=]+	{
-			asn1p_lval.tv_opaque.buf = strdup(yytext);
-			asn1p_lval.tv_opaque.len = yyleng;
+			yylval_param->tv_opaque.buf = strdup(yytext);
+			yylval_param->tv_opaque.len = yyleng;
 			return TOK_opaque;
 		}
 
@@ -168,18 +173,18 @@ WSP	[\t\r\v\f\n ]
 		}
 
 	[:=]	{
-			asn1p_lval.tv_opaque.buf = strdup(yytext);
-			asn1p_lval.tv_opaque.len = yyleng;
+			yylval_param->tv_opaque.buf = strdup(yytext);
+			yylval_param->tv_opaque.len = yyleng;
 			return TOK_opaque;
 		}
 
 	}
 
 \"[^\"]*		{
-			asn1p_lval.tv_opaque.buf = 0;
-			asn1p_lval.tv_opaque.len = 0;
+			yylval_param->tv_opaque.buf = 0;
+			yylval_param->tv_opaque.len = 0;
 			QAPPEND(yytext+1, yyleng-1);
-			yy_push_state(quoted);
+			yy_push_state(quoted, yyscanner);
 		}
 <quoted>{
 
@@ -187,7 +192,7 @@ WSP	[\t\r\v\f\n ]
 	[^\"]+	{ QAPPEND(yytext, yyleng); }
 
 	\"	{
-			yy_pop_state();
+			yy_pop_state(yyscanner);
 			/* Do not append last quote:
 			// QAPPEND(yytext, yyleng); */
 
@@ -195,7 +200,7 @@ WSP	[\t\r\v\f\n ]
 			&& strchr(yytext, '\n')) {
 				fprintf(stderr, "%s: "
 				"Newlines are prohibited by ASN.1:1990\n",
-				asn1p_lval.tv_opaque.buf);
+				yylval_param->tv_opaque.buf);
 				return -1;
 			}
 
@@ -209,9 +214,9 @@ WSP	[\t\r\v\f\n ]
 			const char *s = "ENCODING-CONTROL";
 			const char *p = s + sizeof("ENCODING-CONTROL") - 2;
 			for(; p >= s; p--) unput(*p);
-			yy_pop_state();
+			yy_pop_state(yyscanner);
 		}
-	END	unput('D'); unput('N'); unput('E'); yy_pop_state();
+	END	unput('D'); unput('N'); unput('E'); yy_pop_state(yyscanner);
 	[^{} \t\r\v\f\n]+
 	[[:alnum:]]+
 	.	/* Eat everything else */
@@ -220,40 +225,40 @@ WSP	[\t\r\v\f\n ]
 
 '[0-9A-F \t\r\v\f\n]+'H {
 		/* " \t\r\n" weren't allowed in ASN.1:1990. */
-		asn1p_lval.tv_str = strdup(yytext);
+		yylval_param->tv_str = strdup(yytext);
 		return TOK_hstring;
 	}
 
 '[01 \t\r\v\f\n]+'B	{
 		/* " \t\r\n" weren't allowed in ASN.1:1990. */
-		asn1p_lval.tv_str = strdup(yytext);
+		yylval_param->tv_str = strdup(yytext);
 		return TOK_bstring;
 	}
 
 
 -[1-9][0-9]*	{
-		asn1p_lval.a_int = _lex_atoi(yytext);
+		yylval_param->a_int = _lex_atoi(yytext, yyscanner);
 		if(errno == ERANGE)
 			return -1;
 		return TOK_number_negative;
 	}
 
 [1-9][0-9]*	{
-		asn1p_lval.a_int = _lex_atoi(yytext);
+		yylval_param->a_int = _lex_atoi(yytext, yyscanner);
 		if(errno == ERANGE)
 			return -1;
 		return TOK_number;
 	}
 
 "0"	{
-		asn1p_lval.a_int = _lex_atoi(yytext);
+		yylval_param->a_int = _lex_atoi(yytext, yyscanner);
 		if(errno == ERANGE)
 			return -1;
 		return TOK_number;
 	}
 
 [-+]?[0-9]+[.]?([eE][-+]?)?[0-9]+ {
-		asn1p_lval.a_dbl = _lex_atod(yytext);
+		yylval_param->a_dbl = _lex_atod(yytext, yyscanner);
 		if(errno == ERANGE)
 			return -1;
 		return TOK_realnumber;
@@ -264,7 +269,7 @@ ALL			return TOK_ALL;
 ANY			{
 				/* Appeared in 1990, removed in 1997 */
 				if(TYPE_LIFETIME(1990, 1997))
-					return TOK_ANY;	
+					return TOK_ANY;
 				fprintf(stderr, "Keyword \"%s\" at line %d "
 					"is obsolete\n", yytext, yylineno);
 				REJECT;
@@ -273,7 +278,7 @@ APPLICATION		return TOK_APPLICATION;
 AUTOMATIC		return TOK_AUTOMATIC;
 BEGIN			{
         if(asn1p_lexer_extended_values) {
-            yy_push_state(extended_values);
+            yy_push_state(extended_values, yyscanner);
         }
         return TOK_BEGIN;
     }
@@ -308,7 +313,7 @@ ENCODED			return TOK_ENCODED;
 ENCODING-CONTROL	return TOK_ENCODING_CONTROL;
 END			{
 		    if(YYSTATE == extended_values) {
-                yy_pop_state();
+                yy_pop_state(yyscanner);
             }
             return TOK_END;
         }
@@ -381,18 +386,18 @@ WITH			return TOK_WITH;
 
 
 <INITIAL,with_syntax>&[A-Z][A-Za-z0-9]*([-][A-Za-z0-9]+)*	{
-		asn1p_lval.tv_str = strdup(yytext);
+		yylval_param->tv_str = strdup(yytext);
 		return TOK_typefieldreference;
 	}
 
 <INITIAL,with_syntax>&[a-z][a-zA-Z0-9]*([-][a-zA-Z0-9]+)*	{
-		asn1p_lval.tv_str = strdup(yytext);
+		yylval_param->tv_str = strdup(yytext);
 		return TOK_valuefieldreference;
 	}
 
 
 [a-z][a-zA-Z0-9]*([-][a-zA-Z0-9]+)*	{
-		asn1p_lval.tv_str = strdup(yytext);
+		yylval_param->tv_str = strdup(yytext);
 		return TOK_identifier;
 	}
 
@@ -400,7 +405,7 @@ WITH			return TOK_WITH;
 	 * objectclassreference
 	 */
 <INITIAL,extended_values>[A-Z][A-Z0-9]*([-][A-Z0-9]+)*	{
-		asn1p_lval.tv_str = strdup(yytext);
+		yylval_param->tv_str = strdup(yytext);
 		return TOK_capitalreference;
 	}
 
@@ -410,7 +415,7 @@ WITH			return TOK_WITH;
 	 * with this token to produce true typereference.
 	 */
 [A-Z][A-Za-z0-9]*([-][A-Za-z0-9]+)*	{
-		asn1p_lval.tv_str = strdup(yytext);
+		yylval_param->tv_str = strdup(yytext);
 		return TOK_typereference;
 	}
 
@@ -422,18 +427,18 @@ WITH			return TOK_WITH;
 <with_syntax>{
 
 	[A-Z][A-Za-z0-9]*([-][A-Za-z0-9]+)*	{
-				asn1p_lval.tv_str = strdup(yytext);
+				yylval_param->tv_str = strdup(yytext);
 				return TOK_Literal;
 			}
 
 	","		{
-				asn1p_lval.tv_str = strdup(yytext);
+				yylval_param->tv_str = strdup(yytext);
 				return TOK_Literal;
 			}
 
 	"{"		{
-				yy_push_state(with_syntax);
-				asn1p_lval.tv_str = strdup(yytext);
+				yy_push_state(with_syntax, yyscanner);
+				yylval_param->tv_str = strdup(yytext);
 				return TOK_Literal;
 			}
 
@@ -441,15 +446,15 @@ WITH			return TOK_WITH;
 	"]"		return ']';
 
 	{WSP}+		{
-			asn1p_lval.tv_opaque.buf = strdup(yytext);
-			asn1p_lval.tv_opaque.len = yyleng;
+			yylval_param->tv_opaque.buf = strdup(yytext);
+			yylval_param->tv_opaque.len = yyleng;
 			return TOK_whitespace;
 			}
 
 	"}"		{
-				yy_pop_state();
+				yy_pop_state(yyscanner);
 				if(YYSTATE == with_syntax) {
-					asn1p_lval.tv_str = strdup(yytext);
+					yylval_param->tv_str = strdup(yytext);
 					return TOK_Literal;
 				} else {
 					return '}';
@@ -467,10 +472,10 @@ WITH			return TOK_WITH;
 		char *p;
 		for(p = yytext; *p; p++)
 			if(*p >= '0' && *p <= '9')
-			{ v1 = _lex_atoi(p); break; }
+			{ v1 = _lex_atoi(p, yyscanner); break; }
 		while(*p >= '0' && *p <= '9') p++;	/* Skip digits */
 		for(; *p; p++) if(*p >= '0' && *p <= '9')
-			{ v2 = _lex_atoi(p); break; }
+			{ v2 = _lex_atoi(p, yyscanner); break; }
 		if(v1 < 0 || v1 > 7) {
 			fprintf(stderr, "%s at line %d: X.680:2003, #37.14 "
 				"mandates 0..7 range for Tuple's TableColumn\n",
@@ -483,7 +488,7 @@ WITH			return TOK_WITH;
 				yytext, yylineno);
 			return -1;
 		}
-		asn1p_lval.a_int = (v1 << 4) + v2;
+		yylval_param->a_int = (v1 << 4) + v2;
 		return TOK_tuple;
 	}
 
@@ -492,16 +497,16 @@ WITH			return TOK_WITH;
 		char *p;
 		for(p = yytext; *p; p++)
 			if(*p >= '0' && *p <= '9')
-			{ v1 = _lex_atoi(p); break; }
+			{ v1 = _lex_atoi(p, yyscanner); break; }
 		while(*p >= '0' && *p <= '9') p++;	/* Skip digits */
 		for(; *p; p++) if(*p >= '0' && *p <= '9')
-			{ v2 = _lex_atoi(p); break; }
+			{ v2 = _lex_atoi(p, yyscanner); break; }
 		while(*p >= '0' && *p <= '9') p++;
 		for(; *p; p++) if(*p >= '0' && *p <= '9')
-			{ v3 = _lex_atoi(p); break; }
+			{ v3 = _lex_atoi(p, yyscanner); break; }
 		while(*p >= '0' && *p <= '9') p++;
 		for(; *p; p++) if(*p >= '0' && *p <= '9')
-			{ v4 = _lex_atoi(p); break; }
+			{ v4 = _lex_atoi(p, yyscanner); break; }
 		if(v1 < 0 || v1 > 127) {
 			fprintf(stderr, "%s at line %d: X.680:2003, #37.12 "
 				"mandates 0..127 range for Quadruple's Group\n",
@@ -526,7 +531,7 @@ WITH			return TOK_WITH;
 				yytext, yylineno);
 			return -1;
 		}
-		asn1p_lval.a_int = (v1 << 24) | (v2 << 16) | (v3 << 8) | v4;
+		yylval_param->a_int = (v1 << 24) | (v2 << 16) | (v3 << 8) | v4;
 		return TOK_quadruple;
 	}
 
@@ -552,17 +557,17 @@ WITH			return TOK_WITH;
 			"Unexpected token at line %d: \"%s\"\n",
 			yylineno, yytext);
 		while(YYSTATE != INITIAL)
-			yy_pop_state();
+			yy_pop_state(yyscanner);
 		if(0) {
-			yy_top_state();	/* Just to use this function. */
-			yy_fatal_error("Parse error");
+			yy_top_state(yyscanner);	/* Just to use this function. */
+			YY_FATAL_ERROR("Parse error");
 		}
 		return -1;
 }
 
 <*><<EOF>>      {
 		while(YYSTATE != INITIAL)
-			yy_pop_state();
+			yy_pop_state(yyscanner);
 		yyterminate();
 	}
 
@@ -572,33 +577,33 @@ WITH			return TOK_WITH;
 /*
  * Very dirty but wonderful hack allowing to rule states from within .y file.
  */
-void asn1p_lexer_hack_push_opaque_state() { yy_push_state(opaque); }
+void asn1p_lexer_hack_push_opaque_state(yyscan_t yyscanner) { yy_push_state(opaque, yyscanner); }
 
 /*
  * Another hack which disables recognizing some tokens when inside WITH SYNTAX.
  */
-void asn1p_lexer_hack_enable_with_syntax() { yy_push_state(with_syntax); }
+void asn1p_lexer_hack_enable_with_syntax(yyscan_t yyscanner) { yy_push_state(with_syntax, yyscanner); }
 
 /* Yet another */
-void asn1p_lexer_hack_push_encoding_control() {
-	yy_push_state(encoding_control);
+void asn1p_lexer_hack_push_encoding_control(yyscan_t yyscanner) {
+	yy_push_state(encoding_control, yyscanner);
 }
 
 static asn1c_integer_t
-_lex_atoi(const char *ptr) {
+_lex_atoi(const char *ptr, yyscan_t yyscanner) {
 	asn1c_integer_t value;
 	if(asn1p_atoi(ptr, &value)) {
 		fprintf(stderr,
 			"Value \"%s\" at line %d is too large "
 			"for this compiler! Please contact the asn1c author.\n",
-			ptr, yylineno);
+			ptr, yyget_lineno(yyscanner));
 		errno = ERANGE;
 	}
 	return value;
 }
 
 static double
-_lex_atod(const char *ptr) {
+_lex_atod(const char *ptr, yyscan_t yyscanner) {
 	double value;
 	errno = 0;
 	value = strtod(ptr, 0);
@@ -606,7 +611,7 @@ _lex_atod(const char *ptr) {
 		fprintf(stderr,
 			"Value \"%s\" at line %d is outside of `double` range "
 			"in this compiler! Please contact the asn1c author.\n",
-			ptr, yylineno);
+			ptr, yyget_lineno(yyscanner));
 		errno = ERANGE;
 	}
 	return value;

@@ -45,13 +45,9 @@ enum asn1p_flags {
  * Perform low-level parsing of ASN.1 module[s]
  * and return a list of module trees.
  */
-asn1p_t	*asn1p_parse_file(const char *filename,
-	enum asn1p_flags);
 asn1p_t	*asn1p_parse_buffer(const char *buffer, int size /* = -1 */,
 	const char *debug_filename, int initial_lineno,
 	enum asn1p_flags);
-
-extern const char *asn1p_parse_debug_filename;
 
 int asn1p_lex_destroy();
 

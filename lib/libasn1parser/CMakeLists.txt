@@ -32,4 +32,3 @@ target_compile_options(asn1c_libasn1parser PRIVATE
 )
 
 # flex/bison output is pregenerated and checked in VCS just as in asn1c
-# I also do not think we may need to modify it

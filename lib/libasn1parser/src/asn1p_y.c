@@ -1,14 +1,14 @@
-/* A Bison parser, made by GNU Bison 2.3.  */
+/* A Bison parser, made by GNU Bison 3.8.2.  */
 
-/* Skeleton implementation for Bison's Yacc-like parsers in C
+/* Bison implementation for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
-   Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2021 Free Software Foundation,
+   Inc.
 
-   This program is free software; you can redistribute it and/or modify
+   This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2, or (at your option)
-   any later version.
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -16,9 +16,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street, Fifth Floor,
-   Boston, MA 02110-1301, USA.  */
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -36,6 +34,10 @@
 /* C LALR(1) parser skeleton written by Richard Stallman, by
    simplifying the original so-called "semantic" parser.  */
 
+/* DO NOT RELY ON FEATURES THAT ARE NOT DOCUMENTED in the manual,
+   especially those whose name start with YY_ or yy_.  They are
+   private implementation details that can be changed or removed.  */
+
 /* All symbols defined below should begin with yy or YY, to avoid
    infringing on user name space.  This should be done even for local
    variables, as they might otherwise be expanded by user macros.
@@ -43,260 +45,35 @@
    define necessary library symbols; they are noted "INFRINGES ON
    USER NAME SPACE" below.  */
 
-/* Identify Bison output.  */
-#define YYBISON 1
+/* Identify Bison output, and Bison version.  */
+#define YYBISON 30802
 
-/* Bison version.  */
-#define YYBISON_VERSION "2.3"
+/* Bison version string.  */
+#define YYBISON_VERSION "3.8.2"
 
 /* Skeleton name.  */
 #define YYSKELETON_NAME "yacc.c"
 
 /* Pure parsers.  */
-#define YYPURE 0
+#define YYPURE 2
 
-/* Using locations.  */
-#define YYLSP_NEEDED 0
+/* Push parsers.  */
+#define YYPUSH 0
 
+/* Pull parsers.  */
+#define YYPULL 1
+
+/* Substitute the type names.  */
+#define YYSTYPE         ASN1P_STYPE
 /* Substitute the variable and function names.  */
-#define yyparse asn1p_parse
-#define yylex   asn1p_lex
-#define yyerror asn1p_error
-#define yylval  asn1p_lval
-#define yychar  asn1p_char
-#define yydebug asn1p_debug
-#define yynerrs asn1p_nerrs
+#define yyparse         asn1p_parse
+#define yylex           asn1p_lex
+#define yyerror         asn1p_error
+#define yydebug         asn1p_debug
+#define yynerrs         asn1p_nerrs
 
-
-/* Tokens.  */
-#ifndef YYTOKENTYPE
-# define YYTOKENTYPE
-   /* Put the tokens into the symbol table, so that GDB and other debuggers
-      know about them.  */
-   enum yytokentype {
-     TOK_PPEQ = 258,
-     TOK_VBracketLeft = 259,
-     TOK_VBracketRight = 260,
-     TOK_whitespace = 261,
-     TOK_opaque = 262,
-     TOK_bstring = 263,
-     TOK_cstring = 264,
-     TOK_hstring = 265,
-     TOK_identifier = 266,
-     TOK_number = 267,
-     TOK_number_negative = 268,
-     TOK_realnumber = 269,
-     TOK_tuple = 270,
-     TOK_quadruple = 271,
-     TOK_typereference = 272,
-     TOK_capitalreference = 273,
-     TOK_typefieldreference = 274,
-     TOK_valuefieldreference = 275,
-     TOK_Literal = 276,
-     TOK_ExtValue_BIT_STRING = 277,
-     TOK_ABSENT = 278,
-     TOK_ABSTRACT_SYNTAX = 279,
-     TOK_ALL = 280,
-     TOK_ANY = 281,
-     TOK_APPLICATION = 282,
-     TOK_AUTOMATIC = 283,
-     TOK_BEGIN = 284,
-     TOK_BIT = 285,
-     TOK_BMPString = 286,
-     TOK_BOOLEAN = 287,
-     TOK_BY = 288,
-     TOK_CHARACTER = 289,
-     TOK_CHOICE = 290,
-     TOK_CLASS = 291,
-     TOK_COMPONENT = 292,
-     TOK_COMPONENTS = 293,
-     TOK_CONSTRAINED = 294,
-     TOK_CONTAINING = 295,
-     TOK_DEFAULT = 296,
-     TOK_DEFINITIONS = 297,
-     TOK_DEFINED = 298,
-     TOK_EMBEDDED = 299,
-     TOK_ENCODED = 300,
-     TOK_ENCODING_CONTROL = 301,
-     TOK_END = 302,
-     TOK_ENUMERATED = 303,
-     TOK_EXPLICIT = 304,
-     TOK_EXPORTS = 305,
-     TOK_EXTENSIBILITY = 306,
-     TOK_EXTERNAL = 307,
-     TOK_FALSE = 308,
-     TOK_FROM = 309,
-     TOK_GeneralizedTime = 310,
-     TOK_GeneralString = 311,
-     TOK_GraphicString = 312,
-     TOK_IA5String = 313,
-     TOK_IDENTIFIER = 314,
-     TOK_IMPLICIT = 315,
-     TOK_IMPLIED = 316,
-     TOK_IMPORTS = 317,
-     TOK_INCLUDES = 318,
-     TOK_INSTANCE = 319,
-     TOK_INSTRUCTIONS = 320,
-     TOK_INTEGER = 321,
-     TOK_ISO646String = 322,
-     TOK_MAX = 323,
-     TOK_MIN = 324,
-     TOK_MINUS_INFINITY = 325,
-     TOK_NULL = 326,
-     TOK_NumericString = 327,
-     TOK_OBJECT = 328,
-     TOK_ObjectDescriptor = 329,
-     TOK_OCTET = 330,
-     TOK_OF = 331,
-     TOK_OPTIONAL = 332,
-     TOK_PATTERN = 333,
-     TOK_PDV = 334,
-     TOK_PLUS_INFINITY = 335,
-     TOK_PRESENT = 336,
-     TOK_PrintableString = 337,
-     TOK_PRIVATE = 338,
-     TOK_REAL = 339,
-     TOK_RELATIVE_OID = 340,
-     TOK_SEQUENCE = 341,
-     TOK_SET = 342,
-     TOK_SIZE = 343,
-     TOK_STRING = 344,
-     TOK_SYNTAX = 345,
-     TOK_T61String = 346,
-     TOK_TAGS = 347,
-     TOK_TeletexString = 348,
-     TOK_TRUE = 349,
-     TOK_TYPE_IDENTIFIER = 350,
-     TOK_UNIQUE = 351,
-     TOK_UNIVERSAL = 352,
-     TOK_UniversalString = 353,
-     TOK_UTCTime = 354,
-     TOK_UTF8String = 355,
-     TOK_VideotexString = 356,
-     TOK_VisibleString = 357,
-     TOK_WITH = 358,
-     UTF8_BOM = 359,
-     TOK_EXCEPT = 360,
-     TOK_INTERSECTION = 361,
-     TOK_UNION = 362,
-     TOK_TwoDots = 363,
-     TOK_ThreeDots = 364
-   };
-#endif
-/* Tokens.  */
-#define TOK_PPEQ 258
-#define TOK_VBracketLeft 259
-#define TOK_VBracketRight 260
-#define TOK_whitespace 261
-#define TOK_opaque 262
-#define TOK_bstring 263
-#define TOK_cstring 264
-#define TOK_hstring 265
-#define TOK_identifier 266
-#define TOK_number 267
-#define TOK_number_negative 268
-#define TOK_realnumber 269
-#define TOK_tuple 270
-#define TOK_quadruple 271
-#define TOK_typereference 272
-#define TOK_capitalreference 273
-#define TOK_typefieldreference 274
-#define TOK_valuefieldreference 275
-#define TOK_Literal 276
-#define TOK_ExtValue_BIT_STRING 277
-#define TOK_ABSENT 278
-#define TOK_ABSTRACT_SYNTAX 279
-#define TOK_ALL 280
-#define TOK_ANY 281
-#define TOK_APPLICATION 282
-#define TOK_AUTOMATIC 283
-#define TOK_BEGIN 284
-#define TOK_BIT 285
-#define TOK_BMPString 286
-#define TOK_BOOLEAN 287
-#define TOK_BY 288
-#define TOK_CHARACTER 289
-#define TOK_CHOICE 290
-#define TOK_CLASS 291
-#define TOK_COMPONENT 292
-#define TOK_COMPONENTS 293
-#define TOK_CONSTRAINED 294
-#define TOK_CONTAINING 295
-#define TOK_DEFAULT 296
-#define TOK_DEFINITIONS 297
-#define TOK_DEFINED 298
-#define TOK_EMBEDDED 299
-#define TOK_ENCODED 300
-#define TOK_ENCODING_CONTROL 301
-#define TOK_END 302
-#define TOK_ENUMERATED 303
-#define TOK_EXPLICIT 304
-#define TOK_EXPORTS 305
-#define TOK_EXTENSIBILITY 306
-#define TOK_EXTERNAL 307
-#define TOK_FALSE 308
-#define TOK_FROM 309
-#define TOK_GeneralizedTime 310
-#define TOK_GeneralString 311
-#define TOK_GraphicString 312
-#define TOK_IA5String 313
-#define TOK_IDENTIFIER 314
-#define TOK_IMPLICIT 315
-#define TOK_IMPLIED 316
-#define TOK_IMPORTS 317
-#define TOK_INCLUDES 318
-#define TOK_INSTANCE 319
-#define TOK_INSTRUCTIONS 320
-#define TOK_INTEGER 321
-#define TOK_ISO646String 322
-#define TOK_MAX 323
-#define TOK_MIN 324
-#define TOK_MINUS_INFINITY 325
-#define TOK_NULL 326
-#define TOK_NumericString 327
-#define TOK_OBJECT 328
-#define TOK_ObjectDescriptor 329
-#define TOK_OCTET 330
-#define TOK_OF 331
-#define TOK_OPTIONAL 332
-#define TOK_PATTERN 333
-#define TOK_PDV 334
-#define TOK_PLUS_INFINITY 335
-#define TOK_PRESENT 336
-#define TOK_PrintableString 337
-#define TOK_PRIVATE 338
-#define TOK_REAL 339
-#define TOK_RELATIVE_OID 340
-#define TOK_SEQUENCE 341
-#define TOK_SET 342
-#define TOK_SIZE 343
-#define TOK_STRING 344
-#define TOK_SYNTAX 345
-#define TOK_T61String 346
-#define TOK_TAGS 347
-#define TOK_TeletexString 348
-#define TOK_TRUE 349
-#define TOK_TYPE_IDENTIFIER 350
-#define TOK_UNIQUE 351
-#define TOK_UNIVERSAL 352
-#define TOK_UniversalString 353
-#define TOK_UTCTime 354
-#define TOK_UTF8String 355
-#define TOK_VideotexString 356
-#define TOK_VisibleString 357
-#define TOK_WITH 358
-#define UTF8_BOM 359
-#define TOK_EXCEPT 360
-#define TOK_INTERSECTION 361
-#define TOK_UNION 362
-#define TOK_TwoDots 363
-#define TOK_ThreeDots 364
-
-
-
-
-/* Copy the first part of user declarations.  */
-#line 1 "asn1p_y.y"
+/* First part of user prologue.  */
+#line 12 "asn1p_y.y"
 
 
 #include <stdlib.h>
@@ -308,9 +85,9 @@
 
 #include "asn1parser.h"
 
-#define YYPARSE_PARAM	param
-#define YYPARSE_PARAM_TYPE	void **
-#define YYERROR_VERBOSE
+#include "asn1p_y.h"
+#include "asn1p_l.h"
+
 #define YYDEBUG 1
 #define YYFPRINTF   prefixed_fprintf
 
@@ -336,19 +113,12 @@ prefixed_fprintf(FILE *f, const char *fmt, ...) {
     return ret;
 }
 
-int yylex(void);
-static int yyerror(const char *msg);
+static int yyerror(void **param, yyscan_t scanner, const char *msg);
 
-#ifdef	YYBYACC
-int yyparse(void **param);	/* byacc does not produce a prototype */
-#endif
-void asn1p_lexer_hack_push_opaque_state(void);
-void asn1p_lexer_hack_enable_with_syntax(void);
-void asn1p_lexer_hack_push_encoding_control(void);
-#define	yylineno	asn1p_lineno
-extern int asn1p_lineno;
-const char *asn1p_parse_debug_filename;
-#define ASN_FILENAME asn1p_parse_debug_filename
+void asn1p_lexer_hack_push_opaque_state(yyscan_t);
+void asn1p_lexer_hack_enable_with_syntax(yyscan_t);
+void asn1p_lexer_hack_push_encoding_control(yyscan_t);
+#define ASN_FILENAME "TODO(asn1p_parse_debug_filename)"
 
 /*
  * Process directives as <ASN1C:RepresentAsPointer>
@@ -362,20 +132,20 @@ extern int asn1p_as_pointer;
 static struct AssignedIdentifier *saved_aid;
 
 static asn1p_value_t *_convert_bitstring2binary(char *str, int base);
-static void _fixup_anonymous_identifier(asn1p_expr_t *expr);
+static void _fixup_anonymous_identifier(asn1p_expr_t *expr, yyscan_t);
 
 static asn1p_module_t *currentModule;
-#define	NEW_EXPR()	(asn1p_expr_new(yylineno, currentModule))
+#define	NEW_EXPR()	(asn1p_expr_new(asn1p_get_lineno(yyscanner), currentModule))
 
 #define	checkmem(ptr)	do {						\
 		if(!(ptr))						\
-		return yyerror("Memory failure");			\
+		return yyerror(param, yyscanner, "Memory failure");			\
 	} while(0)
 
 #define	CONSTRAINT_INSERT(root, constr_type, arg1, arg2) do {		\
 		if(arg1->type != constr_type) {				\
 			int __ret;					\
-			root = asn1p_constraint_new(yylineno, currentModule);	\
+			root = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);	\
 			checkmem(root);					\
 			root->type = constr_type;			\
 			__ret = asn1p_constraint_insert(root,		\
@@ -404,107 +174,398 @@ static asn1p_module_t *currentModule;
     } while(0)
 
 
+#line 178 "asn1p_y.c"
 
-/* Enabling traces.  */
-#ifndef YYDEBUG
-# define YYDEBUG 0
-#endif
+# ifndef YY_CAST
+#  ifdef __cplusplus
+#   define YY_CAST(Type, Val) static_cast<Type> (Val)
+#   define YY_REINTERPRET_CAST(Type, Val) reinterpret_cast<Type> (Val)
+#  else
+#   define YY_CAST(Type, Val) ((Type) (Val))
+#   define YY_REINTERPRET_CAST(Type, Val) ((Type) (Val))
+#  endif
+# endif
+# ifndef YY_NULLPTR
+#  if defined __cplusplus
+#   if 201103L <= __cplusplus
+#    define YY_NULLPTR nullptr
+#   else
+#    define YY_NULLPTR 0
+#   endif
+#  else
+#   define YY_NULLPTR ((void*)0)
+#  endif
+# endif
 
-/* Enabling verbose error messages.  */
-#ifdef YYERROR_VERBOSE
-# undef YYERROR_VERBOSE
-# define YYERROR_VERBOSE 1
-#else
-# define YYERROR_VERBOSE 0
-#endif
-
-/* Enabling the token table.  */
-#ifndef YYTOKEN_TABLE
-# define YYTOKEN_TABLE 0
-#endif
-
-#if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-typedef union YYSTYPE
-#line 115 "asn1p_y.y"
+#include "asn1p_y.h"
+/* Symbol kind.  */
+enum yysymbol_kind_t
 {
-	asn1p_t			*a_grammar;
-	asn1p_module_flags_e	 a_module_flags;
-	asn1p_module_t		*a_module;
-	asn1p_expr_type_e	 a_type;	/* ASN.1 Type */
-	asn1p_expr_t		*a_expr;	/* Constructed collection */
-	asn1p_constraint_t	*a_constr;	/* Constraint */
-	enum asn1p_constraint_type_e	a_ctype;/* Constraint type */
-	asn1p_xports_t		*a_xports;	/* IMports/EXports */
-	struct AssignedIdentifier a_aid;	/* Assigned Identifier */
-	asn1p_oid_t		*a_oid;		/* Object Identifier */
-	asn1p_oid_arc_t		 a_oid_arc;	/* Single OID's arc */
-	struct asn1p_type_tag_s	 a_tag;		/* A tag */
-	asn1p_ref_t		*a_ref;		/* Reference to custom type */
-	asn1p_wsyntx_t		*a_wsynt;	/* WITH SYNTAX contents */
-	asn1p_wsyntx_chunk_t	*a_wchunk;	/* WITH SYNTAX chunk */
-	struct asn1p_ref_component_s a_refcomp;	/* Component of a reference */
-	asn1p_value_t		*a_value;	/* Number, DefinedValue, etc */
-	struct asn1p_param_s	 a_parg;	/* A parameter argument */
-	asn1p_paramlist_t	*a_plist;	/* A pargs list */
-	struct asn1p_expr_marker_s a_marker;	/* OPTIONAL/DEFAULT */
-	enum asn1p_constr_pres_e a_pres;	/* PRESENT/ABSENT/OPTIONAL */
-	asn1c_integer_t		 a_int;
-	double			 a_dbl;
-	char	*tv_str;
-	struct {
-		char *buf;
-		int len;
-	}	tv_opaque;
-	struct {
-		char *name;
-		struct asn1p_type_tag_s tag;
-	} tv_nametag;
-}
-/* Line 193 of yacc.c.  */
-#line 465 "asn1p_y.c"
-	YYSTYPE;
-# define yystype YYSTYPE /* obsolescent; will be withdrawn */
-# define YYSTYPE_IS_DECLARED 1
-# define YYSTYPE_IS_TRIVIAL 1
-#endif
+  YYSYMBOL_YYEMPTY = -2,
+  YYSYMBOL_YYEOF = 0,                      /* "end of file"  */
+  YYSYMBOL_YYerror = 1,                    /* error  */
+  YYSYMBOL_YYUNDEF = 2,                    /* "invalid token"  */
+  YYSYMBOL_TOK_PPEQ = 3,                   /* TOK_PPEQ  */
+  YYSYMBOL_TOK_VBracketLeft = 4,           /* TOK_VBracketLeft  */
+  YYSYMBOL_TOK_VBracketRight = 5,          /* TOK_VBracketRight  */
+  YYSYMBOL_TOK_whitespace = 6,             /* TOK_whitespace  */
+  YYSYMBOL_TOK_opaque = 7,                 /* TOK_opaque  */
+  YYSYMBOL_TOK_bstring = 8,                /* TOK_bstring  */
+  YYSYMBOL_TOK_cstring = 9,                /* TOK_cstring  */
+  YYSYMBOL_TOK_hstring = 10,               /* TOK_hstring  */
+  YYSYMBOL_TOK_identifier = 11,            /* "identifier"  */
+  YYSYMBOL_TOK_number = 12,                /* "number"  */
+  YYSYMBOL_TOK_number_negative = 13,       /* "negative number"  */
+  YYSYMBOL_TOK_realnumber = 14,            /* TOK_realnumber  */
+  YYSYMBOL_TOK_tuple = 15,                 /* TOK_tuple  */
+  YYSYMBOL_TOK_quadruple = 16,             /* TOK_quadruple  */
+  YYSYMBOL_TOK_typereference = 17,         /* TOK_typereference  */
+  YYSYMBOL_TOK_capitalreference = 18,      /* TOK_capitalreference  */
+  YYSYMBOL_TOK_typefieldreference = 19,    /* TOK_typefieldreference  */
+  YYSYMBOL_TOK_valuefieldreference = 20,   /* TOK_valuefieldreference  */
+  YYSYMBOL_TOK_Literal = 21,               /* TOK_Literal  */
+  YYSYMBOL_TOK_ExtValue_BIT_STRING = 22,   /* TOK_ExtValue_BIT_STRING  */
+  YYSYMBOL_TOK_ABSENT = 23,                /* TOK_ABSENT  */
+  YYSYMBOL_TOK_ABSTRACT_SYNTAX = 24,       /* TOK_ABSTRACT_SYNTAX  */
+  YYSYMBOL_TOK_ALL = 25,                   /* TOK_ALL  */
+  YYSYMBOL_TOK_ANY = 26,                   /* TOK_ANY  */
+  YYSYMBOL_TOK_APPLICATION = 27,           /* TOK_APPLICATION  */
+  YYSYMBOL_TOK_AUTOMATIC = 28,             /* TOK_AUTOMATIC  */
+  YYSYMBOL_TOK_BEGIN = 29,                 /* TOK_BEGIN  */
+  YYSYMBOL_TOK_BIT = 30,                   /* TOK_BIT  */
+  YYSYMBOL_TOK_BMPString = 31,             /* TOK_BMPString  */
+  YYSYMBOL_TOK_BOOLEAN = 32,               /* TOK_BOOLEAN  */
+  YYSYMBOL_TOK_BY = 33,                    /* TOK_BY  */
+  YYSYMBOL_TOK_CHARACTER = 34,             /* TOK_CHARACTER  */
+  YYSYMBOL_TOK_CHOICE = 35,                /* TOK_CHOICE  */
+  YYSYMBOL_TOK_CLASS = 36,                 /* TOK_CLASS  */
+  YYSYMBOL_TOK_COMPONENT = 37,             /* TOK_COMPONENT  */
+  YYSYMBOL_TOK_COMPONENTS = 38,            /* TOK_COMPONENTS  */
+  YYSYMBOL_TOK_CONSTRAINED = 39,           /* TOK_CONSTRAINED  */
+  YYSYMBOL_TOK_CONTAINING = 40,            /* TOK_CONTAINING  */
+  YYSYMBOL_TOK_DEFAULT = 41,               /* TOK_DEFAULT  */
+  YYSYMBOL_TOK_DEFINITIONS = 42,           /* TOK_DEFINITIONS  */
+  YYSYMBOL_TOK_DEFINED = 43,               /* TOK_DEFINED  */
+  YYSYMBOL_TOK_EMBEDDED = 44,              /* TOK_EMBEDDED  */
+  YYSYMBOL_TOK_ENCODED = 45,               /* TOK_ENCODED  */
+  YYSYMBOL_TOK_ENCODING_CONTROL = 46,      /* TOK_ENCODING_CONTROL  */
+  YYSYMBOL_TOK_END = 47,                   /* TOK_END  */
+  YYSYMBOL_TOK_ENUMERATED = 48,            /* TOK_ENUMERATED  */
+  YYSYMBOL_TOK_EXPLICIT = 49,              /* TOK_EXPLICIT  */
+  YYSYMBOL_TOK_EXPORTS = 50,               /* TOK_EXPORTS  */
+  YYSYMBOL_TOK_EXTENSIBILITY = 51,         /* TOK_EXTENSIBILITY  */
+  YYSYMBOL_TOK_EXTERNAL = 52,              /* TOK_EXTERNAL  */
+  YYSYMBOL_TOK_FALSE = 53,                 /* TOK_FALSE  */
+  YYSYMBOL_TOK_FROM = 54,                  /* TOK_FROM  */
+  YYSYMBOL_TOK_GeneralizedTime = 55,       /* TOK_GeneralizedTime  */
+  YYSYMBOL_TOK_GeneralString = 56,         /* TOK_GeneralString  */
+  YYSYMBOL_TOK_GraphicString = 57,         /* TOK_GraphicString  */
+  YYSYMBOL_TOK_IA5String = 58,             /* TOK_IA5String  */
+  YYSYMBOL_TOK_IDENTIFIER = 59,            /* TOK_IDENTIFIER  */
+  YYSYMBOL_TOK_IMPLICIT = 60,              /* TOK_IMPLICIT  */
+  YYSYMBOL_TOK_IMPLIED = 61,               /* TOK_IMPLIED  */
+  YYSYMBOL_TOK_IMPORTS = 62,               /* TOK_IMPORTS  */
+  YYSYMBOL_TOK_INCLUDES = 63,              /* TOK_INCLUDES  */
+  YYSYMBOL_TOK_INSTANCE = 64,              /* TOK_INSTANCE  */
+  YYSYMBOL_TOK_INSTRUCTIONS = 65,          /* TOK_INSTRUCTIONS  */
+  YYSYMBOL_TOK_INTEGER = 66,               /* TOK_INTEGER  */
+  YYSYMBOL_TOK_ISO646String = 67,          /* TOK_ISO646String  */
+  YYSYMBOL_TOK_MAX = 68,                   /* TOK_MAX  */
+  YYSYMBOL_TOK_MIN = 69,                   /* TOK_MIN  */
+  YYSYMBOL_TOK_MINUS_INFINITY = 70,        /* TOK_MINUS_INFINITY  */
+  YYSYMBOL_TOK_NULL = 71,                  /* TOK_NULL  */
+  YYSYMBOL_TOK_NumericString = 72,         /* TOK_NumericString  */
+  YYSYMBOL_TOK_OBJECT = 73,                /* TOK_OBJECT  */
+  YYSYMBOL_TOK_ObjectDescriptor = 74,      /* TOK_ObjectDescriptor  */
+  YYSYMBOL_TOK_OCTET = 75,                 /* TOK_OCTET  */
+  YYSYMBOL_TOK_OF = 76,                    /* TOK_OF  */
+  YYSYMBOL_TOK_OPTIONAL = 77,              /* TOK_OPTIONAL  */
+  YYSYMBOL_TOK_PATTERN = 78,               /* TOK_PATTERN  */
+  YYSYMBOL_TOK_PDV = 79,                   /* TOK_PDV  */
+  YYSYMBOL_TOK_PLUS_INFINITY = 80,         /* TOK_PLUS_INFINITY  */
+  YYSYMBOL_TOK_PRESENT = 81,               /* TOK_PRESENT  */
+  YYSYMBOL_TOK_PrintableString = 82,       /* TOK_PrintableString  */
+  YYSYMBOL_TOK_PRIVATE = 83,               /* TOK_PRIVATE  */
+  YYSYMBOL_TOK_REAL = 84,                  /* TOK_REAL  */
+  YYSYMBOL_TOK_RELATIVE_OID = 85,          /* TOK_RELATIVE_OID  */
+  YYSYMBOL_TOK_SEQUENCE = 86,              /* TOK_SEQUENCE  */
+  YYSYMBOL_TOK_SET = 87,                   /* TOK_SET  */
+  YYSYMBOL_TOK_SIZE = 88,                  /* TOK_SIZE  */
+  YYSYMBOL_TOK_STRING = 89,                /* TOK_STRING  */
+  YYSYMBOL_TOK_SYNTAX = 90,                /* TOK_SYNTAX  */
+  YYSYMBOL_TOK_T61String = 91,             /* TOK_T61String  */
+  YYSYMBOL_TOK_TAGS = 92,                  /* TOK_TAGS  */
+  YYSYMBOL_TOK_TeletexString = 93,         /* TOK_TeletexString  */
+  YYSYMBOL_TOK_TRUE = 94,                  /* TOK_TRUE  */
+  YYSYMBOL_TOK_TYPE_IDENTIFIER = 95,       /* TOK_TYPE_IDENTIFIER  */
+  YYSYMBOL_TOK_UNIQUE = 96,                /* TOK_UNIQUE  */
+  YYSYMBOL_TOK_UNIVERSAL = 97,             /* TOK_UNIVERSAL  */
+  YYSYMBOL_TOK_UniversalString = 98,       /* TOK_UniversalString  */
+  YYSYMBOL_TOK_UTCTime = 99,               /* TOK_UTCTime  */
+  YYSYMBOL_TOK_UTF8String = 100,           /* TOK_UTF8String  */
+  YYSYMBOL_TOK_VideotexString = 101,       /* TOK_VideotexString  */
+  YYSYMBOL_TOK_VisibleString = 102,        /* TOK_VisibleString  */
+  YYSYMBOL_TOK_WITH = 103,                 /* TOK_WITH  */
+  YYSYMBOL_UTF8_BOM = 104,                 /* "UTF-8 byte order mark"  */
+  YYSYMBOL_TOK_EXCEPT = 105,               /* TOK_EXCEPT  */
+  YYSYMBOL_106_ = 106,                     /* '^'  */
+  YYSYMBOL_TOK_INTERSECTION = 107,         /* TOK_INTERSECTION  */
+  YYSYMBOL_108_ = 108,                     /* '|'  */
+  YYSYMBOL_TOK_UNION = 109,                /* TOK_UNION  */
+  YYSYMBOL_TOK_TwoDots = 110,              /* ".."  */
+  YYSYMBOL_TOK_ThreeDots = 111,            /* "..."  */
+  YYSYMBOL_112_concrete_TypeDeclaration_ = 112, /* "concrete TypeDeclaration"  */
+  YYSYMBOL_113_ = 113,                     /* '{'  */
+  YYSYMBOL_114_ = 114,                     /* '}'  */
+  YYSYMBOL_115_ = 115,                     /* '('  */
+  YYSYMBOL_116_ = 116,                     /* ')'  */
+  YYSYMBOL_117_ = 117,                     /* ';'  */
+  YYSYMBOL_118_ = 118,                     /* ','  */
+  YYSYMBOL_119_ = 119,                     /* ':'  */
+  YYSYMBOL_120_ = 120,                     /* '['  */
+  YYSYMBOL_121_ = 121,                     /* ']'  */
+  YYSYMBOL_122_ = 122,                     /* '!'  */
+  YYSYMBOL_123_ = 123,                     /* '.'  */
+  YYSYMBOL_124_ = 124,                     /* '<'  */
+  YYSYMBOL_125_ = 125,                     /* '@'  */
+  YYSYMBOL_YYACCEPT = 126,                 /* $accept  */
+  YYSYMBOL_ParsedGrammar = 127,            /* ParsedGrammar  */
+  YYSYMBOL_ModuleList = 128,               /* ModuleList  */
+  YYSYMBOL_ModuleDefinition = 129,         /* ModuleDefinition  */
+  YYSYMBOL_130_1 = 130,                    /* $@1  */
+  YYSYMBOL_optObjectIdentifier = 131,      /* optObjectIdentifier  */
+  YYSYMBOL_ObjectIdentifier = 132,         /* ObjectIdentifier  */
+  YYSYMBOL_ObjectIdentifierBody = 133,     /* ObjectIdentifierBody  */
+  YYSYMBOL_ObjectIdentifierElement = 134,  /* ObjectIdentifierElement  */
+  YYSYMBOL_optModuleDefinitionFlags = 135, /* optModuleDefinitionFlags  */
+  YYSYMBOL_ModuleDefinitionFlags = 136,    /* ModuleDefinitionFlags  */
+  YYSYMBOL_ModuleDefinitionFlag = 137,     /* ModuleDefinitionFlag  */
+  YYSYMBOL_optModuleBody = 138,            /* optModuleBody  */
+  YYSYMBOL_ModuleBody = 139,               /* ModuleBody  */
+  YYSYMBOL_AssignmentList = 140,           /* AssignmentList  */
+  YYSYMBOL_Assignment = 141,               /* Assignment  */
+  YYSYMBOL_142_2 = 142,                    /* $@2  */
+  YYSYMBOL_optImports = 143,               /* optImports  */
+  YYSYMBOL_ImportsDefinition = 144,        /* ImportsDefinition  */
+  YYSYMBOL_optImportsBundleSet = 145,      /* optImportsBundleSet  */
+  YYSYMBOL_ImportsBundleSet = 146,         /* ImportsBundleSet  */
+  YYSYMBOL_AssignedIdentifier = 147,       /* AssignedIdentifier  */
+  YYSYMBOL_ImportsBundle = 148,            /* ImportsBundle  */
+  YYSYMBOL_ImportsList = 149,              /* ImportsList  */
+  YYSYMBOL_ImportsElement = 150,           /* ImportsElement  */
+  YYSYMBOL_optExports = 151,               /* optExports  */
+  YYSYMBOL_ExportsDefinition = 152,        /* ExportsDefinition  */
+  YYSYMBOL_ExportsBody = 153,              /* ExportsBody  */
+  YYSYMBOL_ExportsElement = 154,           /* ExportsElement  */
+  YYSYMBOL_ValueSet = 155,                 /* ValueSet  */
+  YYSYMBOL_ValueSetTypeAssignment = 156,   /* ValueSetTypeAssignment  */
+  YYSYMBOL_DefinedType = 157,              /* DefinedType  */
+  YYSYMBOL_DataTypeReference = 158,        /* DataTypeReference  */
+  YYSYMBOL_ParameterArgumentList = 159,    /* ParameterArgumentList  */
+  YYSYMBOL_ParameterArgumentName = 160,    /* ParameterArgumentName  */
+  YYSYMBOL_ActualParameterList = 161,      /* ActualParameterList  */
+  YYSYMBOL_ActualParameter = 162,          /* ActualParameter  */
+  YYSYMBOL_optComponentTypeLists = 163,    /* optComponentTypeLists  */
+  YYSYMBOL_ComponentTypeLists = 164,       /* ComponentTypeLists  */
+  YYSYMBOL_ComponentType = 165,            /* ComponentType  */
+  YYSYMBOL_AlternativeTypeLists = 166,     /* AlternativeTypeLists  */
+  YYSYMBOL_AlternativeType = 167,          /* AlternativeType  */
+  YYSYMBOL_ObjectClass = 168,              /* ObjectClass  */
+  YYSYMBOL_optUNIQUE = 169,                /* optUNIQUE  */
+  YYSYMBOL_FieldSpec = 170,                /* FieldSpec  */
+  YYSYMBOL_ClassField = 171,               /* ClassField  */
+  YYSYMBOL_optWithSyntax = 172,            /* optWithSyntax  */
+  YYSYMBOL_WithSyntax = 173,               /* WithSyntax  */
+  YYSYMBOL_174_3 = 174,                    /* $@3  */
+  YYSYMBOL_WithSyntaxList = 175,           /* WithSyntaxList  */
+  YYSYMBOL_WithSyntaxToken = 176,          /* WithSyntaxToken  */
+  YYSYMBOL_ExtensionAndException = 177,    /* ExtensionAndException  */
+  YYSYMBOL_Type = 178,                     /* Type  */
+  YYSYMBOL_TaggedType = 179,               /* TaggedType  */
+  YYSYMBOL_DefinedUntaggedType = 180,      /* DefinedUntaggedType  */
+  YYSYMBOL_UntaggedType = 181,             /* UntaggedType  */
+  YYSYMBOL_MaybeIndirectTaggedType = 182,  /* MaybeIndirectTaggedType  */
+  YYSYMBOL_NSTD_IndirectMarker = 183,      /* NSTD_IndirectMarker  */
+  YYSYMBOL_MaybeIndirectTypeDeclaration = 184, /* MaybeIndirectTypeDeclaration  */
+  YYSYMBOL_TypeDeclaration = 185,          /* TypeDeclaration  */
+  YYSYMBOL_ConcreteTypeDeclaration = 186,  /* ConcreteTypeDeclaration  */
+  YYSYMBOL_ComplexTypeReference = 187,     /* ComplexTypeReference  */
+  YYSYMBOL_ComplexTypeReferenceAmpList = 188, /* ComplexTypeReferenceAmpList  */
+  YYSYMBOL_ComplexTypeReferenceElement = 189, /* ComplexTypeReferenceElement  */
+  YYSYMBOL_PrimitiveFieldReference = 190,  /* PrimitiveFieldReference  */
+  YYSYMBOL_FieldName = 191,                /* FieldName  */
+  YYSYMBOL_DefinedObjectClass = 192,       /* DefinedObjectClass  */
+  YYSYMBOL_ValueAssignment = 193,          /* ValueAssignment  */
+  YYSYMBOL_Value = 194,                    /* Value  */
+  YYSYMBOL_195_4 = 195,                    /* $@4  */
+  YYSYMBOL_SimpleValue = 196,              /* SimpleValue  */
+  YYSYMBOL_DefinedValue = 197,             /* DefinedValue  */
+  YYSYMBOL_RestrictedCharacterStringValue = 198, /* RestrictedCharacterStringValue  */
+  YYSYMBOL_Opaque = 199,                   /* Opaque  */
+  YYSYMBOL_OpaqueFirstToken = 200,         /* OpaqueFirstToken  */
+  YYSYMBOL_BasicTypeId = 201,              /* BasicTypeId  */
+  YYSYMBOL_BasicTypeId_UniverationCompatible = 202, /* BasicTypeId_UniverationCompatible  */
+  YYSYMBOL_BuiltinType = 203,              /* BuiltinType  */
+  YYSYMBOL_BasicString = 204,              /* BasicString  */
+  YYSYMBOL_UnionMark = 205,                /* UnionMark  */
+  YYSYMBOL_IntersectionMark = 206,         /* IntersectionMark  */
+  YYSYMBOL_optConstraint = 207,            /* optConstraint  */
+  YYSYMBOL_optManyConstraints = 208,       /* optManyConstraints  */
+  YYSYMBOL_optSizeOrConstraint = 209,      /* optSizeOrConstraint  */
+  YYSYMBOL_Constraint = 210,               /* Constraint  */
+  YYSYMBOL_ManyConstraints = 211,          /* ManyConstraints  */
+  YYSYMBOL_ConstraintSpec = 212,           /* ConstraintSpec  */
+  YYSYMBOL_SubtypeConstraint = 213,        /* SubtypeConstraint  */
+  YYSYMBOL_ElementSetSpecs = 214,          /* ElementSetSpecs  */
+  YYSYMBOL_ElementSetSpec = 215,           /* ElementSetSpec  */
+  YYSYMBOL_Unions = 216,                   /* Unions  */
+  YYSYMBOL_Intersections = 217,            /* Intersections  */
+  YYSYMBOL_IntersectionElements = 218,     /* IntersectionElements  */
+  YYSYMBOL_Elements = 219,                 /* Elements  */
+  YYSYMBOL_SubtypeElements = 220,          /* SubtypeElements  */
+  YYSYMBOL_PermittedAlphabet = 221,        /* PermittedAlphabet  */
+  YYSYMBOL_SizeConstraint = 222,           /* SizeConstraint  */
+  YYSYMBOL_PatternConstraint = 223,        /* PatternConstraint  */
+  YYSYMBOL_ValueRange = 224,               /* ValueRange  */
+  YYSYMBOL_LowerEndValue = 225,            /* LowerEndValue  */
+  YYSYMBOL_UpperEndValue = 226,            /* UpperEndValue  */
+  YYSYMBOL_SingleValue = 227,              /* SingleValue  */
+  YYSYMBOL_BitStringValue = 228,           /* BitStringValue  */
+  YYSYMBOL_ContainedSubtype = 229,         /* ContainedSubtype  */
+  YYSYMBOL_InnerTypeConstraints = 230,     /* InnerTypeConstraints  */
+  YYSYMBOL_SingleTypeConstraint = 231,     /* SingleTypeConstraint  */
+  YYSYMBOL_MultipleTypeConstraints = 232,  /* MultipleTypeConstraints  */
+  YYSYMBOL_FullSpecification = 233,        /* FullSpecification  */
+  YYSYMBOL_PartialSpecification = 234,     /* PartialSpecification  */
+  YYSYMBOL_TypeConstraints = 235,          /* TypeConstraints  */
+  YYSYMBOL_NamedConstraint = 236,          /* NamedConstraint  */
+  YYSYMBOL_optPresenceConstraint = 237,    /* optPresenceConstraint  */
+  YYSYMBOL_PresenceConstraint = 238,       /* PresenceConstraint  */
+  YYSYMBOL_GeneralConstraint = 239,        /* GeneralConstraint  */
+  YYSYMBOL_UserDefinedConstraint = 240,    /* UserDefinedConstraint  */
+  YYSYMBOL_241_5 = 241,                    /* $@5  */
+  YYSYMBOL_ContentsConstraint = 242,       /* ContentsConstraint  */
+  YYSYMBOL_ConstraintRangeSpec = 243,      /* ConstraintRangeSpec  */
+  YYSYMBOL_TableConstraint = 244,          /* TableConstraint  */
+  YYSYMBOL_SimpleTableConstraint = 245,    /* SimpleTableConstraint  */
+  YYSYMBOL_ComponentRelationConstraint = 246, /* ComponentRelationConstraint  */
+  YYSYMBOL_AtNotationList = 247,           /* AtNotationList  */
+  YYSYMBOL_AtNotationElement = 248,        /* AtNotationElement  */
+  YYSYMBOL_ComponentIdList = 249,          /* ComponentIdList  */
+  YYSYMBOL_optMarker = 250,                /* optMarker  */
+  YYSYMBOL_Marker = 251,                   /* Marker  */
+  YYSYMBOL_IdentifierList = 252,           /* IdentifierList  */
+  YYSYMBOL_IdentifierElement = 253,        /* IdentifierElement  */
+  YYSYMBOL_NamedNumberList = 254,          /* NamedNumberList  */
+  YYSYMBOL_NamedNumber = 255,              /* NamedNumber  */
+  YYSYMBOL_NamedBitList = 256,             /* NamedBitList  */
+  YYSYMBOL_NamedBit = 257,                 /* NamedBit  */
+  YYSYMBOL_Enumerations = 258,             /* Enumerations  */
+  YYSYMBOL_UniverationList = 259,          /* UniverationList  */
+  YYSYMBOL_UniverationElement = 260,       /* UniverationElement  */
+  YYSYMBOL_SignedNumber = 261,             /* SignedNumber  */
+  YYSYMBOL_RealValue = 262,                /* RealValue  */
+  YYSYMBOL_optTag = 263,                   /* optTag  */
+  YYSYMBOL_Tag = 264,                      /* Tag  */
+  YYSYMBOL_TagTypeValue = 265,             /* TagTypeValue  */
+  YYSYMBOL_TagClass = 266,                 /* TagClass  */
+  YYSYMBOL_TagPlicit = 267,                /* TagPlicit  */
+  YYSYMBOL_TypeRefName = 268,              /* TypeRefName  */
+  YYSYMBOL_optIdentifier = 269,            /* optIdentifier  */
+  YYSYMBOL_Identifier = 270,               /* Identifier  */
+  YYSYMBOL_IdentifierAsReference = 271,    /* IdentifierAsReference  */
+  YYSYMBOL_IdentifierAsValue = 272         /* IdentifierAsValue  */
+};
+typedef enum yysymbol_kind_t yysymbol_kind_t;
 
 
 
-/* Copy the second part of user declarations.  */
-
-
-/* Line 216 of yacc.c.  */
-#line 478 "asn1p_y.c"
 
 #ifdef short
 # undef short
 #endif
 
-#ifdef YYTYPE_UINT8
-typedef YYTYPE_UINT8 yytype_uint8;
-#else
-typedef unsigned char yytype_uint8;
+/* On compilers that do not define __PTRDIFF_MAX__ etc., make sure
+   <limits.h> and (if available) <stdint.h> are included
+   so that the code can choose integer types of a good width.  */
+
+#ifndef __PTRDIFF_MAX__
+# include <limits.h> /* INFRINGES ON USER NAME SPACE */
+# if defined __STDC_VERSION__ && 199901 <= __STDC_VERSION__
+#  include <stdint.h> /* INFRINGES ON USER NAME SPACE */
+#  define YY_STDINT_H
+# endif
 #endif
 
-#ifdef YYTYPE_INT8
-typedef YYTYPE_INT8 yytype_int8;
-#elif (defined __STDC__ || defined __C99__FUNC__ \
-     || defined __cplusplus || defined _MSC_VER)
+/* Narrow types that promote to a signed type and that can represent a
+   signed or unsigned integer of at least N bits.  In tables they can
+   save space and decrease cache pressure.  Promoting to a signed type
+   helps avoid bugs in integer arithmetic.  */
+
+#ifdef __INT_LEAST8_MAX__
+typedef __INT_LEAST8_TYPE__ yytype_int8;
+#elif defined YY_STDINT_H
+typedef int_least8_t yytype_int8;
+#else
 typedef signed char yytype_int8;
-#else
-typedef short int yytype_int8;
 #endif
 
-#ifdef YYTYPE_UINT16
-typedef YYTYPE_UINT16 yytype_uint16;
+#ifdef __INT_LEAST16_MAX__
+typedef __INT_LEAST16_TYPE__ yytype_int16;
+#elif defined YY_STDINT_H
+typedef int_least16_t yytype_int16;
 #else
-typedef unsigned short int yytype_uint16;
+typedef short yytype_int16;
 #endif
 
-#ifdef YYTYPE_INT16
-typedef YYTYPE_INT16 yytype_int16;
+/* Work around bug in HP-UX 11.23, which defines these macros
+   incorrectly for preprocessor constants.  This workaround can likely
+   be removed in 2023, as HPE has promised support for HP-UX 11.23
+   (aka HP-UX 11i v2) only through the end of 2022; see Table 2 of
+   <https://h20195.www2.hpe.com/V2/getpdf.aspx/4AA4-7673ENW.pdf>.  */
+#ifdef __hpux
+# undef UINT_LEAST8_MAX
+# undef UINT_LEAST16_MAX
+# define UINT_LEAST8_MAX 255
+# define UINT_LEAST16_MAX 65535
+#endif
+
+#if defined __UINT_LEAST8_MAX__ && __UINT_LEAST8_MAX__ <= __INT_MAX__
+typedef __UINT_LEAST8_TYPE__ yytype_uint8;
+#elif (!defined __UINT_LEAST8_MAX__ && defined YY_STDINT_H \
+       && UINT_LEAST8_MAX <= INT_MAX)
+typedef uint_least8_t yytype_uint8;
+#elif !defined __UINT_LEAST8_MAX__ && UCHAR_MAX <= INT_MAX
+typedef unsigned char yytype_uint8;
 #else
-typedef short int yytype_int16;
+typedef short yytype_uint8;
+#endif
+
+#if defined __UINT_LEAST16_MAX__ && __UINT_LEAST16_MAX__ <= __INT_MAX__
+typedef __UINT_LEAST16_TYPE__ yytype_uint16;
+#elif (!defined __UINT_LEAST16_MAX__ && defined YY_STDINT_H \
+       && UINT_LEAST16_MAX <= INT_MAX)
+typedef uint_least16_t yytype_uint16;
+#elif !defined __UINT_LEAST16_MAX__ && USHRT_MAX <= INT_MAX
+typedef unsigned short yytype_uint16;
+#else
+typedef int yytype_uint16;
+#endif
+
+#ifndef YYPTRDIFF_T
+# if defined __PTRDIFF_TYPE__ && defined __PTRDIFF_MAX__
+#  define YYPTRDIFF_T __PTRDIFF_TYPE__
+#  define YYPTRDIFF_MAXIMUM __PTRDIFF_MAX__
+# elif defined PTRDIFF_MAX
+#  ifndef ptrdiff_t
+#   include <stddef.h> /* INFRINGES ON USER NAME SPACE */
+#  endif
+#  define YYPTRDIFF_T ptrdiff_t
+#  define YYPTRDIFF_MAXIMUM PTRDIFF_MAX
+# else
+#  define YYPTRDIFF_T long
+#  define YYPTRDIFF_MAXIMUM LONG_MAX
+# endif
 #endif
 
 #ifndef YYSIZE_T
@@ -512,55 +573,106 @@ typedef short int yytype_int16;
 #  define YYSIZE_T __SIZE_TYPE__
 # elif defined size_t
 #  define YYSIZE_T size_t
-# elif ! defined YYSIZE_T && (defined __STDC__ || defined __C99__FUNC__ \
-     || defined __cplusplus || defined _MSC_VER)
+# elif defined __STDC_VERSION__ && 199901 <= __STDC_VERSION__
 #  include <stddef.h> /* INFRINGES ON USER NAME SPACE */
 #  define YYSIZE_T size_t
 # else
-#  define YYSIZE_T unsigned int
+#  define YYSIZE_T unsigned
 # endif
 #endif
 
-#define YYSIZE_MAXIMUM ((YYSIZE_T) -1)
+#define YYSIZE_MAXIMUM                                  \
+  YY_CAST (YYPTRDIFF_T,                                 \
+           (YYPTRDIFF_MAXIMUM < YY_CAST (YYSIZE_T, -1)  \
+            ? YYPTRDIFF_MAXIMUM                         \
+            : YY_CAST (YYSIZE_T, -1)))
+
+#define YYSIZEOF(X) YY_CAST (YYPTRDIFF_T, sizeof (X))
+
+
+/* Stored state numbers (used for stacks). */
+typedef yytype_int16 yy_state_t;
+
+/* State numbers in computations.  */
+typedef int yy_state_fast_t;
 
 #ifndef YY_
 # if defined YYENABLE_NLS && YYENABLE_NLS
 #  if ENABLE_NLS
 #   include <libintl.h> /* INFRINGES ON USER NAME SPACE */
-#   define YY_(msgid) dgettext ("bison-runtime", msgid)
+#   define YY_(Msgid) dgettext ("bison-runtime", Msgid)
 #  endif
 # endif
 # ifndef YY_
-#  define YY_(msgid) msgid
+#  define YY_(Msgid) Msgid
+# endif
+#endif
+
+
+#ifndef YY_ATTRIBUTE_PURE
+# if defined __GNUC__ && 2 < __GNUC__ + (96 <= __GNUC_MINOR__)
+#  define YY_ATTRIBUTE_PURE __attribute__ ((__pure__))
+# else
+#  define YY_ATTRIBUTE_PURE
+# endif
+#endif
+
+#ifndef YY_ATTRIBUTE_UNUSED
+# if defined __GNUC__ && 2 < __GNUC__ + (7 <= __GNUC_MINOR__)
+#  define YY_ATTRIBUTE_UNUSED __attribute__ ((__unused__))
+# else
+#  define YY_ATTRIBUTE_UNUSED
 # endif
 #endif
 
 /* Suppress unused-variable warnings by "using" E.  */
 #if ! defined lint || defined __GNUC__
-# define YYUSE(e) ((void) (e))
+# define YY_USE(E) ((void) (E))
 #else
-# define YYUSE(e) /* empty */
+# define YY_USE(E) /* empty */
 #endif
 
-/* Identity function, used to suppress warnings about constant conditions.  */
-#ifndef lint
-# define YYID(n) (n)
+/* Suppress an incorrect diagnostic about yylval being uninitialized.  */
+#if defined __GNUC__ && ! defined __ICC && 406 <= __GNUC__ * 100 + __GNUC_MINOR__
+# if __GNUC__ * 100 + __GNUC_MINOR__ < 407
+#  define YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN                           \
+    _Pragma ("GCC diagnostic push")                                     \
+    _Pragma ("GCC diagnostic ignored \"-Wuninitialized\"")
+# else
+#  define YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN                           \
+    _Pragma ("GCC diagnostic push")                                     \
+    _Pragma ("GCC diagnostic ignored \"-Wuninitialized\"")              \
+    _Pragma ("GCC diagnostic ignored \"-Wmaybe-uninitialized\"")
+# endif
+# define YY_IGNORE_MAYBE_UNINITIALIZED_END      \
+    _Pragma ("GCC diagnostic pop")
 #else
-#if (defined __STDC__ || defined __C99__FUNC__ \
-     || defined __cplusplus || defined _MSC_VER)
-static int
-YYID (int i)
-#else
-static int
-YYID (i)
-    int i;
+# define YY_INITIAL_VALUE(Value) Value
 #endif
-{
-  return i;
-}
+#ifndef YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN
+# define YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN
+# define YY_IGNORE_MAYBE_UNINITIALIZED_END
+#endif
+#ifndef YY_INITIAL_VALUE
+# define YY_INITIAL_VALUE(Value) /* Nothing. */
 #endif
 
-#if ! defined yyoverflow || YYERROR_VERBOSE
+#if defined __cplusplus && defined __GNUC__ && ! defined __ICC && 6 <= __GNUC__
+# define YY_IGNORE_USELESS_CAST_BEGIN                          \
+    _Pragma ("GCC diagnostic push")                            \
+    _Pragma ("GCC diagnostic ignored \"-Wuseless-cast\"")
+# define YY_IGNORE_USELESS_CAST_END            \
+    _Pragma ("GCC diagnostic pop")
+#endif
+#ifndef YY_IGNORE_USELESS_CAST_BEGIN
+# define YY_IGNORE_USELESS_CAST_BEGIN
+# define YY_IGNORE_USELESS_CAST_END
+#endif
+
+
+#define YY_ASSERT(E) ((void) (0 && (E)))
+
+#if !defined yyoverflow
 
 /* The parser invokes alloca or malloc; define the necessary symbols.  */
 
@@ -577,11 +689,11 @@ YYID (i)
 #    define alloca _alloca
 #   else
 #    define YYSTACK_ALLOC alloca
-#    if ! defined _ALLOCA_H && ! defined _STDLIB_H && (defined __STDC__ || defined __C99__FUNC__ \
-     || defined __cplusplus || defined _MSC_VER)
+#    if ! defined _ALLOCA_H && ! defined EXIT_SUCCESS
 #     include <stdlib.h> /* INFRINGES ON USER NAME SPACE */
-#     ifndef _STDLIB_H
-#      define _STDLIB_H 1
+      /* Use EXIT_SUCCESS as a witness for stdlib.h.  */
+#     ifndef EXIT_SUCCESS
+#      define EXIT_SUCCESS 0
 #     endif
 #    endif
 #   endif
@@ -589,8 +701,8 @@ YYID (i)
 # endif
 
 # ifdef YYSTACK_ALLOC
-   /* Pacify GCC's `empty if-body' warning.  */
-#  define YYSTACK_FREE(Ptr) do { /* empty */; } while (YYID (0))
+   /* Pacify GCC's 'empty if-body' warning.  */
+#  define YYSTACK_FREE(Ptr) do { /* empty */; } while (0)
 #  ifndef YYSTACK_ALLOC_MAXIMUM
     /* The OS might guarantee only one guard page at the bottom of the stack,
        and a page size can be as small as 4096 bytes.  So we cannot safely
@@ -604,87 +716,88 @@ YYID (i)
 #  ifndef YYSTACK_ALLOC_MAXIMUM
 #   define YYSTACK_ALLOC_MAXIMUM YYSIZE_MAXIMUM
 #  endif
-#  if (defined __cplusplus && ! defined _STDLIB_H \
+#  if (defined __cplusplus && ! defined EXIT_SUCCESS \
        && ! ((defined YYMALLOC || defined malloc) \
-	     && (defined YYFREE || defined free)))
+             && (defined YYFREE || defined free)))
 #   include <stdlib.h> /* INFRINGES ON USER NAME SPACE */
-#   ifndef _STDLIB_H
-#    define _STDLIB_H 1
+#   ifndef EXIT_SUCCESS
+#    define EXIT_SUCCESS 0
 #   endif
 #  endif
 #  ifndef YYMALLOC
 #   define YYMALLOC malloc
-#   if ! defined malloc && ! defined _STDLIB_H && (defined __STDC__ || defined __C99__FUNC__ \
-     || defined __cplusplus || defined _MSC_VER)
+#   if ! defined malloc && ! defined EXIT_SUCCESS
 void *malloc (YYSIZE_T); /* INFRINGES ON USER NAME SPACE */
 #   endif
 #  endif
 #  ifndef YYFREE
 #   define YYFREE free
-#   if ! defined free && ! defined _STDLIB_H && (defined __STDC__ || defined __C99__FUNC__ \
-     || defined __cplusplus || defined _MSC_VER)
+#   if ! defined free && ! defined EXIT_SUCCESS
 void free (void *); /* INFRINGES ON USER NAME SPACE */
 #   endif
 #  endif
 # endif
-#endif /* ! defined yyoverflow || YYERROR_VERBOSE */
-
+#endif /* !defined yyoverflow */
 
 #if (! defined yyoverflow \
      && (! defined __cplusplus \
-	 || (defined YYSTYPE_IS_TRIVIAL && YYSTYPE_IS_TRIVIAL)))
+         || (defined ASN1P_STYPE_IS_TRIVIAL && ASN1P_STYPE_IS_TRIVIAL)))
 
 /* A type that is properly aligned for any stack member.  */
 union yyalloc
 {
-  yytype_int16 yyss;
-  YYSTYPE yyvs;
-  };
+  yy_state_t yyss_alloc;
+  YYSTYPE yyvs_alloc;
+};
 
 /* The size of the maximum gap between one aligned stack and the next.  */
-# define YYSTACK_GAP_MAXIMUM (sizeof (union yyalloc) - 1)
+# define YYSTACK_GAP_MAXIMUM (YYSIZEOF (union yyalloc) - 1)
 
 /* The size of an array large to enough to hold all stacks, each with
    N elements.  */
 # define YYSTACK_BYTES(N) \
-     ((N) * (sizeof (yytype_int16) + sizeof (YYSTYPE)) \
+     ((N) * (YYSIZEOF (yy_state_t) + YYSIZEOF (YYSTYPE)) \
       + YYSTACK_GAP_MAXIMUM)
 
-/* Copy COUNT objects from FROM to TO.  The source and destination do
-   not overlap.  */
-# ifndef YYCOPY
-#  if defined __GNUC__ && 1 < __GNUC__
-#   define YYCOPY(To, From, Count) \
-      __builtin_memcpy (To, From, (Count) * sizeof (*(From)))
-#  else
-#   define YYCOPY(To, From, Count)		\
-      do					\
-	{					\
-	  YYSIZE_T yyi;				\
-	  for (yyi = 0; yyi < (Count); yyi++)	\
-	    (To)[yyi] = (From)[yyi];		\
-	}					\
-      while (YYID (0))
-#  endif
-# endif
+# define YYCOPY_NEEDED 1
 
 /* Relocate STACK from its old location to the new one.  The
    local variables YYSIZE and YYSTACKSIZE give the old and new number of
    elements in the stack, and YYPTR gives the new location of the
    stack.  Advance YYPTR to a properly aligned location for the next
    stack.  */
-# define YYSTACK_RELOCATE(Stack)					\
-    do									\
-      {									\
-	YYSIZE_T yynewbytes;						\
-	YYCOPY (&yyptr->Stack, Stack, yysize);				\
-	Stack = &yyptr->Stack;						\
-	yynewbytes = yystacksize * sizeof (*Stack) + YYSTACK_GAP_MAXIMUM; \
-	yyptr += yynewbytes / sizeof (*yyptr);				\
-      }									\
-    while (YYID (0))
+# define YYSTACK_RELOCATE(Stack_alloc, Stack)                           \
+    do                                                                  \
+      {                                                                 \
+        YYPTRDIFF_T yynewbytes;                                         \
+        YYCOPY (&yyptr->Stack_alloc, Stack, yysize);                    \
+        Stack = &yyptr->Stack_alloc;                                    \
+        yynewbytes = yystacksize * YYSIZEOF (*Stack) + YYSTACK_GAP_MAXIMUM; \
+        yyptr += yynewbytes / YYSIZEOF (*yyptr);                        \
+      }                                                                 \
+    while (0)
 
 #endif
+
+#if defined YYCOPY_NEEDED && YYCOPY_NEEDED
+/* Copy COUNT objects from SRC to DST.  The source and destination do
+   not overlap.  */
+# ifndef YYCOPY
+#  if defined __GNUC__ && 1 < __GNUC__
+#   define YYCOPY(Dst, Src, Count) \
+      __builtin_memcpy (Dst, Src, YY_CAST (YYSIZE_T, (Count)) * sizeof (*(Src)))
+#  else
+#   define YYCOPY(Dst, Src, Count)              \
+      do                                        \
+        {                                       \
+          YYPTRDIFF_T yyi;                      \
+          for (yyi = 0; yyi < (Count); yyi++)   \
+            (Dst)[yyi] = (Src)[yyi];            \
+        }                                       \
+      while (0)
+#  endif
+# endif
+#endif /* !YYCOPY_NEEDED */
 
 /* YYFINAL -- State number of the termination state.  */
 #define YYFINAL  9
@@ -697,18 +810,23 @@ union yyalloc
 #define YYNNTS  147
 /* YYNRULES -- Number of rules.  */
 #define YYNRULES  342
-/* YYNRULES -- Number of states.  */
+/* YYNSTATES -- Number of states.  */
 #define YYNSTATES  522
 
-/* YYTRANSLATE(YYLEX) -- Bison symbol number corresponding to YYLEX.  */
-#define YYUNDEFTOK  2
+/* YYMAXUTOK -- Last valid token kind.  */
 #define YYMAXUTOK   365
 
-#define YYTRANSLATE(YYX)						\
-  ((unsigned int) (YYX) <= YYMAXUTOK ? yytranslate[YYX] : YYUNDEFTOK)
 
-/* YYTRANSLATE[YYLEX] -- Bison symbol number corresponding to YYLEX.  */
-static const yytype_uint8 yytranslate[] =
+/* YYTRANSLATE(TOKEN-NUM) -- Symbol number corresponding to TOKEN-NUM
+   as returned by yylex, with out-of-bounds checking.  */
+#define YYTRANSLATE(YYX)                                \
+  (0 <= (YYX) && (YYX) <= YYMAXUTOK                     \
+   ? YY_CAST (yysymbol_kind_t, yytranslate[YYX])        \
+   : YYSYMBOL_YYUNDEF)
+
+/* YYTRANSLATE[TOKEN-NUM] -- Symbol number corresponding to TOKEN-NUM
+   as returned by yylex.  */
+static const yytype_int8 yytranslate[] =
 {
        0,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
@@ -749,229 +867,96 @@ static const yytype_uint8 yytranslate[] =
      105,   107,   109,   110,   111,   112
 };
 
-#if YYDEBUG
-/* YYPRHS[YYN] -- Index of the first RHS symbol of rule number YYN in
-   YYRHS.  */
-static const yytype_uint16 yyprhs[] =
+#if ASN1P_DEBUG
+/* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
+static const yytype_int16 yyrline[] =
 {
-       0,     0,     3,     6,     8,    10,    13,    14,    24,    25,
-      27,    31,    34,    36,    39,    41,    46,    48,    49,    51,
-      53,    56,    59,    62,    65,    68,    71,    72,    74,    78,
-      80,    83,    85,    87,    89,    90,    94,    96,    97,    99,
-     103,   106,   107,   109,   111,   114,   115,   117,   122,   124,
-     128,   130,   134,   136,   137,   139,   143,   147,   150,   152,
-     156,   158,   162,   164,   168,   173,   175,   180,   184,   188,
-     195,   202,   204,   208,   210,   214,   218,   222,   226,   228,
-     232,   234,   236,   238,   240,   241,   243,   245,   249,   255,
-     259,   262,   266,   268,   270,   274,   277,   279,   281,   287,
-     288,   290,   292,   296,   299,   304,   308,   312,   316,   320,
-     324,   325,   327,   328,   335,   337,   340,   342,   344,   346,
-     350,   352,   356,   360,   362,   365,   368,   371,   375,   376,
-     379,   381,   383,   385,   390,   395,   400,   407,   414,   416,
-     421,   425,   427,   429,   433,   437,   441,   443,   447,   449,
-     451,   453,   455,   459,   463,   465,   470,   472,   474,   475,
-     479,   481,   483,   485,   487,   489,   491,   493,   495,   499,
-     501,   503,   505,   507,   510,   512,   514,   516,   518,   520,
-     523,   526,   528,   530,   533,   536,   538,   540,   542,   544,
-     546,   548,   551,   553,   558,   563,   569,   574,   578,   580,
-     582,   584,   586,   588,   590,   592,   594,   596,   598,   600,
-     602,   604,   606,   608,   610,   612,   614,   615,   617,   618,
-     620,   621,   623,   625,   629,   631,   634,   636,   638,   640,
-     642,   644,   648,   654,   656,   660,   662,   666,   668,   672,
-     674,   678,   680,   684,   686,   688,   690,   692,   694,   696,
-     698,   701,   704,   707,   710,   714,   716,   718,   720,   722,
-     724,   726,   728,   731,   733,   737,   741,   743,   745,   747,
-     751,   757,   759,   763,   767,   768,   770,   772,   774,   776,
-     778,   780,   782,   783,   789,   792,   794,   797,   800,   804,
-     806,   808,   812,   817,   819,   823,   826,   830,   832,   836,
-     837,   839,   841,   844,   846,   850,   852,   854,   858,   863,
-     868,   870,   874,   879,   884,   886,   888,   892,   894,   899,
-     904,   906,   908,   910,   912,   914,   915,   917,   920,   925,
-     926,   928,   930,   932,   933,   935,   937,   939,   941,   942,
-     944,   946,   948
-};
-
-/* YYRHS -- A `-1'-separated list of the rules' RHS.  */
-static const yytype_int16 yyrhs[] =
-{
-     127,     0,    -1,   104,   128,    -1,   128,    -1,   129,    -1,
-     128,   129,    -1,    -1,   268,   130,   131,    42,   135,     3,
-      29,   138,    47,    -1,    -1,   132,    -1,   113,   133,   114,
-      -1,   113,   114,    -1,   134,    -1,   133,   134,    -1,   270,
-      -1,   270,   115,    12,   116,    -1,    12,    -1,    -1,   136,
-      -1,   137,    -1,   136,   137,    -1,    49,    92,    -1,    60,
-      92,    -1,    28,    92,    -1,    51,    61,    -1,    18,    65,
-      -1,    -1,   139,    -1,   151,   143,   140,    -1,   141,    -1,
-     140,   141,    -1,   158,    -1,   193,    -1,   156,    -1,    -1,
-      46,    18,   142,    -1,   204,    -1,    -1,   144,    -1,    62,
-     145,   117,    -1,    62,    54,    -1,    -1,   146,    -1,   148,
-      -1,   146,   148,    -1,    -1,   132,    -1,   149,    54,   268,
-     147,    -1,   150,    -1,   149,   118,   150,    -1,   268,    -1,
-     268,   113,   114,    -1,   270,    -1,    -1,   152,    -1,    50,
-     153,   117,    -1,    50,    25,   117,    -1,    50,   117,    -1,
-     154,    -1,   153,   118,   154,    -1,   268,    -1,   268,   113,
-     114,    -1,   270,    -1,   113,   214,   114,    -1,   268,   178,
-       3,   155,    -1,   187,    -1,   187,   113,   161,   114,    -1,
-     268,     3,   178,    -1,   268,     3,   168,    -1,   268,   113,
-     159,   114,     3,   178,    -1,   268,   113,   159,   114,     3,
-     168,    -1,   160,    -1,   159,   118,   160,    -1,   268,    -1,
-     268,   119,   270,    -1,   268,   119,   268,    -1,   201,   119,
-     270,    -1,   201,   119,   268,    -1,   162,    -1,   161,   118,
-     162,    -1,   181,    -1,   196,    -1,   197,    -1,   155,    -1,
-      -1,   164,    -1,   165,    -1,   164,   118,   165,    -1,   164,
-     118,     4,   164,     5,    -1,   270,   182,   250,    -1,   182,
-     250,    -1,    38,    76,   182,    -1,   177,    -1,   167,    -1,
-     166,   118,   167,    -1,   270,   182,    -1,   177,    -1,   182,
-      -1,    36,   113,   170,   114,   172,    -1,    -1,    96,    -1,
-     171,    -1,   170,   118,   171,    -1,    19,   250,    -1,    20,
-     178,   169,   250,    -1,    20,   191,   250,    -1,    20,   192,
-     250,    -1,    19,   191,   250,    -1,    19,   178,   250,    -1,
-      19,   192,   250,    -1,    -1,   173,    -1,    -1,   103,    90,
-     113,   174,   175,   114,    -1,   176,    -1,   175,   176,    -1,
-       6,    -1,    21,    -1,   190,    -1,   120,   175,   121,    -1,
-     111,    -1,   111,   122,   197,    -1,   111,   122,   261,    -1,
-     179,    -1,   263,   181,    -1,   157,   208,    -1,   185,   208,
-      -1,   263,   184,   208,    -1,    -1,   183,   185,    -1,   186,
-      -1,   157,    -1,   203,    -1,    35,   113,   166,   114,    -1,
-      86,   113,   163,   114,    -1,    87,   113,   163,   114,    -1,
-      86,   209,    76,   269,   263,   184,    -1,    87,   209,    76,
-     269,   263,   184,    -1,    26,    -1,    26,    43,    33,   270,
-      -1,    64,    76,   187,    -1,    17,    -1,    18,    -1,    17,
-     123,   268,    -1,    18,   123,   268,    -1,    18,   123,   188,
-      -1,   189,    -1,   188,   123,   189,    -1,   190,    -1,    19,
-      -1,    20,    -1,    19,    -1,   191,   123,    19,    -1,   191,
-     123,    20,    -1,    18,    -1,   270,   178,     3,   194,    -1,
-     196,    -1,   197,    -1,    -1,   113,   195,   199,    -1,    71,
-      -1,    53,    -1,    94,    -1,   261,    -1,   262,    -1,   198,
-      -1,   228,    -1,   272,    -1,   268,   123,   270,    -1,     9,
-      -1,    15,    -1,    16,    -1,   200,    -1,   199,     7,    -1,
-       7,    -1,   270,    -1,    32,    -1,    71,    -1,    84,    -1,
-      75,    89,    -1,    73,    59,    -1,    85,    -1,    52,    -1,
-      44,    79,    -1,    34,    89,    -1,    99,    -1,    55,    -1,
-     204,    -1,   202,    -1,    66,    -1,    48,    -1,    30,    89,
-      -1,   201,    -1,    66,   113,   254,   114,    -1,    48,   113,
-     258,   114,    -1,    30,    89,   113,   256,   114,    -1,    22,
-     113,   252,   114,    -1,    22,   113,   114,    -1,    31,    -1,
-      56,    -1,    57,    -1,    58,    -1,    67,    -1,    72,    -1,
-      82,    -1,    91,    -1,    93,    -1,    98,    -1,   100,    -1,
-     101,    -1,   102,    -1,    74,    -1,   108,    -1,   109,    -1,
-     106,    -1,   107,    -1,    -1,   210,    -1,    -1,   211,    -1,
-      -1,   210,    -1,   222,    -1,   115,   212,   116,    -1,   210,
-      -1,   211,   210,    -1,   213,    -1,   239,    -1,   214,    -1,
-     111,    -1,   215,    -1,   215,   118,   111,    -1,   215,   118,
-     111,   118,   215,    -1,   216,    -1,    25,   105,   219,    -1,
-     217,    -1,   216,   205,   217,    -1,   218,    -1,   217,   206,
-     218,    -1,   219,    -1,   219,   105,   219,    -1,   220,    -1,
-     115,   215,   116,    -1,   227,    -1,   229,    -1,   221,    -1,
-     222,    -1,   230,    -1,   223,    -1,   224,    -1,    54,   210,
-      -1,    88,   210,    -1,    78,     9,    -1,    78,   270,    -1,
-     225,   243,   226,    -1,   227,    -1,    69,    -1,   227,    -1,
-      68,    -1,   194,    -1,     8,    -1,    10,    -1,    63,   178,
-      -1,   180,    -1,   103,    37,   231,    -1,   103,    38,   232,
-      -1,   210,    -1,   233,    -1,   234,    -1,   113,   235,   114,
-      -1,   113,   111,   118,   235,   114,    -1,   236,    -1,   235,
-     118,   236,    -1,   272,   207,   237,    -1,    -1,   238,    -1,
-      81,    -1,    23,    -1,    77,    -1,   240,    -1,   244,    -1,
-     242,    -1,    -1,    39,    33,   113,   241,   199,    -1,    40,
-     178,    -1,   110,    -1,   110,   124,    -1,   124,   110,    -1,
-     124,   110,   124,    -1,   245,    -1,   246,    -1,   113,   268,
-     114,    -1,   245,   113,   247,   114,    -1,   248,    -1,   247,
-     118,   248,    -1,   125,   249,    -1,   125,   123,   249,    -1,
-     270,    -1,   249,   123,   270,    -1,    -1,   251,    -1,    77,
-      -1,    41,   194,    -1,   253,    -1,   252,   118,   253,    -1,
-     270,    -1,   255,    -1,   254,   118,   255,    -1,   270,   115,
-     261,   116,    -1,   270,   115,   197,   116,    -1,   257,    -1,
-     256,   118,   257,    -1,   270,   115,    12,   116,    -1,   270,
-     115,   197,   116,    -1,   259,    -1,   260,    -1,   259,   118,
-     260,    -1,   270,    -1,   270,   115,   261,   116,    -1,   270,
-     115,   197,   116,    -1,   261,    -1,   111,    -1,    12,    -1,
-      13,    -1,    14,    -1,    -1,   264,    -1,   265,   267,    -1,
-     120,   266,    12,   121,    -1,    -1,    97,    -1,    27,    -1,
-      83,    -1,    -1,    60,    -1,    49,    -1,    17,    -1,    18,
-      -1,    -1,   270,    -1,    11,    -1,   270,    -1,   271,    -1
-};
-
-/* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
-static const yytype_uint16 yyrline[] =
-{
-       0,   414,   414,   417,   423,   428,   445,   445,   474,   475,
-     479,   482,   488,   494,   503,   507,   511,   521,   522,   531,
-     534,   543,   546,   549,   552,   556,   577,   578,   587,   600,
-     603,   620,   627,   641,   649,   648,   662,   675,   676,   679,
-     689,   695,   696,   699,   704,   711,   712,   716,   727,   732,
-     739,   745,   751,   761,   762,   774,   777,   780,   788,   793,
-     800,   806,   812,   821,   824,   844,   854,   874,   880,   896,
-     902,   910,   919,   930,   934,   942,   950,   958,   969,   974,
-     981,   982,   990,   998,  1021,  1022,  1025,  1030,  1034,  1042,
-    1049,  1055,  1062,  1068,  1073,  1080,  1085,  1088,  1095,  1105,
-    1106,  1110,  1117,  1127,  1137,  1148,  1158,  1169,  1179,  1190,
-    1202,  1203,  1210,  1209,  1218,  1222,  1229,  1233,  1236,  1240,
-    1246,  1254,  1263,  1274,  1277,  1284,  1307,  1330,  1354,  1361,
-    1380,  1381,  1384,  1385,  1391,  1397,  1403,  1413,  1423,  1429,
-    1441,  1456,  1464,  1472,  1483,  1494,  1516,  1524,  1533,  1537,
-    1542,  1551,  1556,  1561,  1569,  1592,  1602,  1603,  1604,  1604,
-    1612,  1617,  1622,  1627,  1628,  1629,  1630,  1634,  1635,  1653,
-    1657,  1662,  1670,  1679,  1694,  1695,  1701,  1702,  1703,  1704,
-    1705,  1706,  1707,  1708,  1709,  1710,  1711,  1712,  1713,  1720,
-    1721,  1722,  1726,  1732,  1737,  1742,  1747,  1752,  1761,  1762,
-    1766,  1770,  1771,  1772,  1773,  1774,  1778,  1779,  1780,  1781,
-    1785,  1786,  1793,  1793,  1794,  1794,  1798,  1799,  1803,  1804,
-    1808,  1809,  1810,  1814,  1820,  1821,  1830,  1830,  1832,  1835,
-    1839,  1840,  1846,  1857,  1858,  1864,  1865,  1871,  1872,  1879,
-    1880,  1886,  1887,  1898,  1904,  1910,  1911,  1913,  1914,  1915,
-    1920,  1925,  1930,  1935,  1947,  1956,  1957,  1963,  1964,  1969,
-    1972,  1977,  1985,  1991,  2003,  2006,  2012,  2013,  2013,  2014,
-    2016,  2029,  2034,  2040,  2054,  2055,  2059,  2062,  2065,  2073,
-    2074,  2075,  2080,  2079,  2091,  2100,  2101,  2102,  2103,  2106,
-    2109,  2118,  2134,  2140,  2146,  2160,  2171,  2187,  2190,  2210,
-    2214,  2218,  2222,  2229,  2234,  2240,  2249,  2254,  2261,  2269,
-    2279,  2284,  2291,  2299,  2309,  2324,  2329,  2336,  2343,  2351,
-    2359,  2366,  2377,  2381,  2388,  2419,  2420,  2424,  2431,  2437,
-    2438,  2439,  2440,  2444,  2445,  2446,  2450,  2454,  2462,  2463,
-    2469,  2476,  2483
+       0,   418,   418,   421,   427,   432,   449,   449,   478,   479,
+     483,   486,   492,   498,   507,   511,   515,   525,   526,   535,
+     538,   547,   550,   553,   556,   560,   581,   582,   591,   604,
+     607,   624,   631,   645,   653,   652,   666,   679,   680,   683,
+     693,   699,   700,   703,   708,   715,   716,   720,   731,   736,
+     743,   749,   755,   765,   766,   778,   781,   784,   792,   797,
+     804,   810,   816,   825,   828,   848,   858,   878,   884,   900,
+     906,   914,   923,   934,   938,   946,   954,   962,   973,   978,
+     985,   986,   994,  1002,  1025,  1026,  1029,  1034,  1038,  1046,
+    1053,  1059,  1066,  1072,  1077,  1084,  1089,  1092,  1099,  1109,
+    1110,  1114,  1121,  1131,  1141,  1152,  1162,  1173,  1183,  1194,
+    1206,  1207,  1214,  1213,  1222,  1226,  1233,  1237,  1240,  1244,
+    1250,  1258,  1267,  1278,  1281,  1288,  1311,  1334,  1358,  1365,
+    1384,  1385,  1388,  1389,  1395,  1401,  1407,  1417,  1427,  1433,
+    1445,  1460,  1468,  1476,  1487,  1498,  1520,  1528,  1537,  1541,
+    1546,  1555,  1560,  1565,  1573,  1596,  1606,  1607,  1608,  1608,
+    1616,  1621,  1626,  1631,  1632,  1633,  1634,  1638,  1639,  1657,
+    1661,  1666,  1674,  1683,  1698,  1699,  1705,  1706,  1707,  1708,
+    1709,  1710,  1711,  1712,  1713,  1714,  1715,  1716,  1717,  1724,
+    1725,  1726,  1730,  1736,  1741,  1746,  1751,  1756,  1765,  1766,
+    1770,  1774,  1775,  1776,  1777,  1778,  1782,  1783,  1784,  1785,
+    1789,  1790,  1797,  1797,  1798,  1798,  1802,  1803,  1807,  1808,
+    1812,  1813,  1814,  1818,  1824,  1825,  1834,  1834,  1836,  1839,
+    1843,  1844,  1850,  1861,  1862,  1868,  1869,  1875,  1876,  1883,
+    1884,  1890,  1891,  1902,  1908,  1914,  1915,  1917,  1918,  1919,
+    1924,  1929,  1934,  1939,  1951,  1960,  1961,  1967,  1968,  1973,
+    1976,  1981,  1989,  1995,  2007,  2010,  2016,  2017,  2017,  2018,
+    2020,  2033,  2038,  2044,  2058,  2059,  2063,  2066,  2069,  2077,
+    2078,  2079,  2084,  2083,  2095,  2104,  2105,  2106,  2107,  2110,
+    2113,  2122,  2138,  2144,  2150,  2164,  2175,  2191,  2194,  2214,
+    2218,  2222,  2226,  2233,  2238,  2244,  2253,  2258,  2265,  2273,
+    2283,  2288,  2295,  2303,  2313,  2328,  2333,  2340,  2347,  2355,
+    2363,  2370,  2381,  2385,  2392,  2423,  2424,  2428,  2435,  2441,
+    2442,  2443,  2444,  2448,  2449,  2450,  2454,  2458,  2466,  2467,
+    2473,  2480,  2487
 };
 #endif
 
-#if YYDEBUG || YYERROR_VERBOSE || YYTOKEN_TABLE
+/** Accessing symbol of state STATE.  */
+#define YY_ACCESSING_SYMBOL(State) YY_CAST (yysymbol_kind_t, yystos[State])
+
+#if ASN1P_DEBUG || 0
+/* The user-facing name of the symbol whose (internal) number is
+   YYSYMBOL.  No bounds checking.  */
+static const char *yysymbol_name (yysymbol_kind_t yysymbol) YY_ATTRIBUTE_UNUSED;
+
 /* YYTNAME[SYMBOL-NUM] -- String name of the symbol SYMBOL-NUM.
    First, the terminals, then, starting at YYNTOKENS, nonterminals.  */
 static const char *const yytname[] =
 {
-  "$end", "error", "$undefined", "TOK_PPEQ", "TOK_VBracketLeft",
-  "TOK_VBracketRight", "TOK_whitespace", "TOK_opaque", "TOK_bstring",
-  "TOK_cstring", "TOK_hstring", "\"identifier\"", "\"number\"",
-  "\"negative number\"", "TOK_realnumber", "TOK_tuple", "TOK_quadruple",
-  "TOK_typereference", "TOK_capitalreference", "TOK_typefieldreference",
-  "TOK_valuefieldreference", "TOK_Literal", "TOK_ExtValue_BIT_STRING",
-  "TOK_ABSENT", "TOK_ABSTRACT_SYNTAX", "TOK_ALL", "TOK_ANY",
-  "TOK_APPLICATION", "TOK_AUTOMATIC", "TOK_BEGIN", "TOK_BIT",
-  "TOK_BMPString", "TOK_BOOLEAN", "TOK_BY", "TOK_CHARACTER", "TOK_CHOICE",
-  "TOK_CLASS", "TOK_COMPONENT", "TOK_COMPONENTS", "TOK_CONSTRAINED",
-  "TOK_CONTAINING", "TOK_DEFAULT", "TOK_DEFINITIONS", "TOK_DEFINED",
-  "TOK_EMBEDDED", "TOK_ENCODED", "TOK_ENCODING_CONTROL", "TOK_END",
-  "TOK_ENUMERATED", "TOK_EXPLICIT", "TOK_EXPORTS", "TOK_EXTENSIBILITY",
-  "TOK_EXTERNAL", "TOK_FALSE", "TOK_FROM", "TOK_GeneralizedTime",
-  "TOK_GeneralString", "TOK_GraphicString", "TOK_IA5String",
-  "TOK_IDENTIFIER", "TOK_IMPLICIT", "TOK_IMPLIED", "TOK_IMPORTS",
-  "TOK_INCLUDES", "TOK_INSTANCE", "TOK_INSTRUCTIONS", "TOK_INTEGER",
-  "TOK_ISO646String", "TOK_MAX", "TOK_MIN", "TOK_MINUS_INFINITY",
-  "TOK_NULL", "TOK_NumericString", "TOK_OBJECT", "TOK_ObjectDescriptor",
-  "TOK_OCTET", "TOK_OF", "TOK_OPTIONAL", "TOK_PATTERN", "TOK_PDV",
-  "TOK_PLUS_INFINITY", "TOK_PRESENT", "TOK_PrintableString", "TOK_PRIVATE",
-  "TOK_REAL", "TOK_RELATIVE_OID", "TOK_SEQUENCE", "TOK_SET", "TOK_SIZE",
-  "TOK_STRING", "TOK_SYNTAX", "TOK_T61String", "TOK_TAGS",
-  "TOK_TeletexString", "TOK_TRUE", "TOK_TYPE_IDENTIFIER", "TOK_UNIQUE",
-  "TOK_UNIVERSAL", "TOK_UniversalString", "TOK_UTCTime", "TOK_UTF8String",
+  "\"end of file\"", "error", "\"invalid token\"", "TOK_PPEQ",
+  "TOK_VBracketLeft", "TOK_VBracketRight", "TOK_whitespace", "TOK_opaque",
+  "TOK_bstring", "TOK_cstring", "TOK_hstring", "\"identifier\"",
+  "\"number\"", "\"negative number\"", "TOK_realnumber", "TOK_tuple",
+  "TOK_quadruple", "TOK_typereference", "TOK_capitalreference",
+  "TOK_typefieldreference", "TOK_valuefieldreference", "TOK_Literal",
+  "TOK_ExtValue_BIT_STRING", "TOK_ABSENT", "TOK_ABSTRACT_SYNTAX",
+  "TOK_ALL", "TOK_ANY", "TOK_APPLICATION", "TOK_AUTOMATIC", "TOK_BEGIN",
+  "TOK_BIT", "TOK_BMPString", "TOK_BOOLEAN", "TOK_BY", "TOK_CHARACTER",
+  "TOK_CHOICE", "TOK_CLASS", "TOK_COMPONENT", "TOK_COMPONENTS",
+  "TOK_CONSTRAINED", "TOK_CONTAINING", "TOK_DEFAULT", "TOK_DEFINITIONS",
+  "TOK_DEFINED", "TOK_EMBEDDED", "TOK_ENCODED", "TOK_ENCODING_CONTROL",
+  "TOK_END", "TOK_ENUMERATED", "TOK_EXPLICIT", "TOK_EXPORTS",
+  "TOK_EXTENSIBILITY", "TOK_EXTERNAL", "TOK_FALSE", "TOK_FROM",
+  "TOK_GeneralizedTime", "TOK_GeneralString", "TOK_GraphicString",
+  "TOK_IA5String", "TOK_IDENTIFIER", "TOK_IMPLICIT", "TOK_IMPLIED",
+  "TOK_IMPORTS", "TOK_INCLUDES", "TOK_INSTANCE", "TOK_INSTRUCTIONS",
+  "TOK_INTEGER", "TOK_ISO646String", "TOK_MAX", "TOK_MIN",
+  "TOK_MINUS_INFINITY", "TOK_NULL", "TOK_NumericString", "TOK_OBJECT",
+  "TOK_ObjectDescriptor", "TOK_OCTET", "TOK_OF", "TOK_OPTIONAL",
+  "TOK_PATTERN", "TOK_PDV", "TOK_PLUS_INFINITY", "TOK_PRESENT",
+  "TOK_PrintableString", "TOK_PRIVATE", "TOK_REAL", "TOK_RELATIVE_OID",
+  "TOK_SEQUENCE", "TOK_SET", "TOK_SIZE", "TOK_STRING", "TOK_SYNTAX",
+  "TOK_T61String", "TOK_TAGS", "TOK_TeletexString", "TOK_TRUE",
+  "TOK_TYPE_IDENTIFIER", "TOK_UNIQUE", "TOK_UNIVERSAL",
+  "TOK_UniversalString", "TOK_UTCTime", "TOK_UTF8String",
   "TOK_VideotexString", "TOK_VisibleString", "TOK_WITH",
   "\"UTF-8 byte order mark\"", "TOK_EXCEPT", "'^'", "TOK_INTERSECTION",
   "'|'", "TOK_UNION", "\"..\"", "\"...\"", "\"concrete TypeDeclaration\"",
   "'{'", "'}'", "'('", "')'", "';'", "','", "':'", "'['", "']'", "'!'",
   "'.'", "'<'", "'@'", "$accept", "ParsedGrammar", "ModuleList",
-  "ModuleDefinition", "@1", "optObjectIdentifier", "ObjectIdentifier",
+  "ModuleDefinition", "$@1", "optObjectIdentifier", "ObjectIdentifier",
   "ObjectIdentifierBody", "ObjectIdentifierElement",
   "optModuleDefinitionFlags", "ModuleDefinitionFlags",
   "ModuleDefinitionFlag", "optModuleBody", "ModuleBody", "AssignmentList",
-  "Assignment", "@2", "optImports", "ImportsDefinition",
+  "Assignment", "$@2", "optImports", "ImportsDefinition",
   "optImportsBundleSet", "ImportsBundleSet", "AssignedIdentifier",
   "ImportsBundle", "ImportsList", "ImportsElement", "optExports",
   "ExportsDefinition", "ExportsBody", "ExportsElement", "ValueSet",
@@ -980,14 +965,14 @@ static const char *const yytname[] =
   "ActualParameter", "optComponentTypeLists", "ComponentTypeLists",
   "ComponentType", "AlternativeTypeLists", "AlternativeType",
   "ObjectClass", "optUNIQUE", "FieldSpec", "ClassField", "optWithSyntax",
-  "WithSyntax", "@3", "WithSyntaxList", "WithSyntaxToken",
+  "WithSyntax", "$@3", "WithSyntaxList", "WithSyntaxToken",
   "ExtensionAndException", "Type", "TaggedType", "DefinedUntaggedType",
   "UntaggedType", "MaybeIndirectTaggedType", "NSTD_IndirectMarker",
   "MaybeIndirectTypeDeclaration", "TypeDeclaration",
   "ConcreteTypeDeclaration", "ComplexTypeReference",
   "ComplexTypeReferenceAmpList", "ComplexTypeReferenceElement",
   "PrimitiveFieldReference", "FieldName", "DefinedObjectClass",
-  "ValueAssignment", "Value", "@4", "SimpleValue", "DefinedValue",
+  "ValueAssignment", "Value", "$@4", "SimpleValue", "DefinedValue",
   "RestrictedCharacterStringValue", "Opaque", "OpaqueFirstToken",
   "BasicTypeId", "BasicTypeId_UniverationCompatible", "BuiltinType",
   "BasicString", "UnionMark", "IntersectionMark", "optConstraint",
@@ -1000,202 +985,36 @@ static const char *const yytname[] =
   "ContainedSubtype", "InnerTypeConstraints", "SingleTypeConstraint",
   "MultipleTypeConstraints", "FullSpecification", "PartialSpecification",
   "TypeConstraints", "NamedConstraint", "optPresenceConstraint",
-  "PresenceConstraint", "GeneralConstraint", "UserDefinedConstraint", "@5",
-  "ContentsConstraint", "ConstraintRangeSpec", "TableConstraint",
+  "PresenceConstraint", "GeneralConstraint", "UserDefinedConstraint",
+  "$@5", "ContentsConstraint", "ConstraintRangeSpec", "TableConstraint",
   "SimpleTableConstraint", "ComponentRelationConstraint", "AtNotationList",
   "AtNotationElement", "ComponentIdList", "optMarker", "Marker",
   "IdentifierList", "IdentifierElement", "NamedNumberList", "NamedNumber",
   "NamedBitList", "NamedBit", "Enumerations", "UniverationList",
   "UniverationElement", "SignedNumber", "RealValue", "optTag", "Tag",
   "TagTypeValue", "TagClass", "TagPlicit", "TypeRefName", "optIdentifier",
-  "Identifier", "IdentifierAsReference", "IdentifierAsValue", 0
+  "Identifier", "IdentifierAsReference", "IdentifierAsValue", YY_NULLPTR
 };
+
+static const char *
+yysymbol_name (yysymbol_kind_t yysymbol)
+{
+  return yytname[yysymbol];
+}
 #endif
 
-# ifdef YYPRINT
-/* YYTOKNUM[YYLEX-NUM] -- Internal token number corresponding to
-   token YYLEX-NUM.  */
-static const yytype_uint16 yytoknum[] =
-{
-       0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
-     265,   266,   267,   268,   269,   270,   271,   272,   273,   274,
-     275,   276,   277,   278,   279,   280,   281,   282,   283,   284,
-     285,   286,   287,   288,   289,   290,   291,   292,   293,   294,
-     295,   296,   297,   298,   299,   300,   301,   302,   303,   304,
-     305,   306,   307,   308,   309,   310,   311,   312,   313,   314,
-     315,   316,   317,   318,   319,   320,   321,   322,   323,   324,
-     325,   326,   327,   328,   329,   330,   331,   332,   333,   334,
-     335,   336,   337,   338,   339,   340,   341,   342,   343,   344,
-     345,   346,   347,   348,   349,   350,   351,   352,   353,   354,
-     355,   356,   357,   358,   359,   360,    94,   361,   124,   362,
-     363,   364,   365,   123,   125,    40,    41,    59,    44,    58,
-      91,    93,    33,    46,    60,    64
-};
-# endif
+#define YYPACT_NINF (-296)
 
-/* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
-static const yytype_uint16 yyr1[] =
-{
-       0,   126,   127,   127,   128,   128,   130,   129,   131,   131,
-     132,   132,   133,   133,   134,   134,   134,   135,   135,   136,
-     136,   137,   137,   137,   137,   137,   138,   138,   139,   140,
-     140,   141,   141,   141,   142,   141,   141,   143,   143,   144,
-     144,   145,   145,   146,   146,   147,   147,   148,   149,   149,
-     150,   150,   150,   151,   151,   152,   152,   152,   153,   153,
-     154,   154,   154,   155,   156,   157,   157,   158,   158,   158,
-     158,   159,   159,   160,   160,   160,   160,   160,   161,   161,
-     162,   162,   162,   162,   163,   163,   164,   164,   164,   165,
-     165,   165,   165,   166,   166,   167,   167,   167,   168,   169,
-     169,   170,   170,   171,   171,   171,   171,   171,   171,   171,
-     172,   172,   174,   173,   175,   175,   176,   176,   176,   176,
-     177,   177,   177,   178,   179,   180,   181,   182,   183,   184,
-     185,   185,   186,   186,   186,   186,   186,   186,   186,   186,
-     186,   187,   187,   187,   187,   187,   188,   188,   189,   190,
-     190,   191,   191,   191,   192,   193,   194,   194,   195,   194,
-     196,   196,   196,   196,   196,   196,   196,   197,   197,   198,
-     198,   198,   199,   199,   200,   200,   201,   201,   201,   201,
-     201,   201,   201,   201,   201,   201,   201,   201,   201,   202,
-     202,   202,   203,   203,   203,   203,   203,   203,   204,   204,
-     204,   204,   204,   204,   204,   204,   204,   204,   204,   204,
-     204,   204,   205,   205,   206,   206,   207,   207,   208,   208,
-     209,   209,   209,   210,   211,   211,   212,   212,   213,   214,
-     214,   214,   214,   215,   215,   216,   216,   217,   217,   218,
-     218,   219,   219,   220,   220,   220,   220,   220,   220,   220,
-     221,   222,   223,   223,   224,   225,   225,   226,   226,   227,
-     228,   228,   229,   229,   230,   230,   231,   232,   232,   233,
-     234,   235,   235,   236,   237,   237,   238,   238,   238,   239,
-     239,   239,   241,   240,   242,   243,   243,   243,   243,   244,
-     244,   245,   246,   247,   247,   248,   248,   249,   249,   250,
-     250,   251,   251,   252,   252,   253,   254,   254,   255,   255,
-     256,   256,   257,   257,   258,   259,   259,   260,   260,   260,
-     260,   260,   261,   261,   262,   263,   263,   264,   265,   266,
-     266,   266,   266,   267,   267,   267,   268,   268,   269,   269,
-     270,   271,   272
-};
+#define yypact_value_is_default(Yyn) \
+  ((Yyn) == YYPACT_NINF)
 
-/* YYR2[YYN] -- Number of symbols composing right hand side of rule YYN.  */
-static const yytype_uint8 yyr2[] =
-{
-       0,     2,     2,     1,     1,     2,     0,     9,     0,     1,
-       3,     2,     1,     2,     1,     4,     1,     0,     1,     1,
-       2,     2,     2,     2,     2,     2,     0,     1,     3,     1,
-       2,     1,     1,     1,     0,     3,     1,     0,     1,     3,
-       2,     0,     1,     1,     2,     0,     1,     4,     1,     3,
-       1,     3,     1,     0,     1,     3,     3,     2,     1,     3,
-       1,     3,     1,     3,     4,     1,     4,     3,     3,     6,
-       6,     1,     3,     1,     3,     3,     3,     3,     1,     3,
-       1,     1,     1,     1,     0,     1,     1,     3,     5,     3,
-       2,     3,     1,     1,     3,     2,     1,     1,     5,     0,
-       1,     1,     3,     2,     4,     3,     3,     3,     3,     3,
-       0,     1,     0,     6,     1,     2,     1,     1,     1,     3,
-       1,     3,     3,     1,     2,     2,     2,     3,     0,     2,
-       1,     1,     1,     4,     4,     4,     6,     6,     1,     4,
-       3,     1,     1,     3,     3,     3,     1,     3,     1,     1,
-       1,     1,     3,     3,     1,     4,     1,     1,     0,     3,
-       1,     1,     1,     1,     1,     1,     1,     1,     3,     1,
-       1,     1,     1,     2,     1,     1,     1,     1,     1,     2,
-       2,     1,     1,     2,     2,     1,     1,     1,     1,     1,
-       1,     2,     1,     4,     4,     5,     4,     3,     1,     1,
-       1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
-       1,     1,     1,     1,     1,     1,     0,     1,     0,     1,
-       0,     1,     1,     3,     1,     2,     1,     1,     1,     1,
-       1,     3,     5,     1,     3,     1,     3,     1,     3,     1,
-       3,     1,     3,     1,     1,     1,     1,     1,     1,     1,
-       2,     2,     2,     2,     3,     1,     1,     1,     1,     1,
-       1,     1,     2,     1,     3,     3,     1,     1,     1,     3,
-       5,     1,     3,     3,     0,     1,     1,     1,     1,     1,
-       1,     1,     0,     5,     2,     1,     2,     2,     3,     1,
-       1,     3,     4,     1,     3,     2,     3,     1,     3,     0,
-       1,     1,     2,     1,     3,     1,     1,     3,     4,     4,
-       1,     3,     4,     4,     1,     1,     3,     1,     4,     4,
-       1,     1,     1,     1,     1,     0,     1,     2,     4,     0,
-       1,     1,     1,     0,     1,     1,     1,     1,     0,     1,
-       1,     1,     1
-};
+#define YYTABLE_NINF (-300)
 
-/* YYDEFACT[STATE-NAME] -- Default rule to reduce with in state
-   STATE-NUM when YYTABLE doesn't specify something else to do.  Zero
-   means the default is an error.  */
-static const yytype_uint16 yydefact[] =
-{
-       0,   336,   337,     0,     0,     3,     4,     6,     2,     1,
-       5,     8,     0,     0,     9,   340,    16,    11,     0,    12,
-      14,    17,    10,    13,     0,     0,     0,     0,     0,     0,
-       0,    18,    19,     0,    25,    23,    21,    24,    22,     0,
-      20,    15,    53,     0,     0,    27,    37,    54,     0,    57,
-       0,    58,    60,    62,     7,    41,     0,    38,    56,    55,
-       0,     0,    40,     0,    42,    43,     0,    48,    50,    52,
-     198,     0,   199,   200,   201,   202,   203,   211,   204,   205,
-     206,   207,   208,   209,   210,    28,    29,    33,    31,    32,
-      36,   325,   325,    59,    61,    39,    44,     0,     0,     0,
-      34,    30,   325,     0,   329,     0,   123,     0,   326,   333,
-       0,    45,    49,    51,    35,     0,    68,    67,     0,   176,
-       0,     0,   190,   182,   186,   189,   177,     0,     0,   178,
-     181,   185,     0,    71,     0,   188,   187,    73,   331,   332,
-     330,     0,     0,   141,   142,     0,   138,     0,     0,   190,
-       0,   189,   220,   220,   131,   124,   218,   130,    65,   192,
-     132,   335,   334,   327,     0,    46,    47,     0,   191,   184,
-     183,   180,   179,     0,     0,     0,     0,     0,     0,    64,
-       0,     0,     0,     0,   191,   325,     0,     0,     0,     0,
-     325,     0,     0,   221,   222,   325,     0,   126,   224,   219,
-       0,   260,   169,   261,   322,   323,   324,   170,   171,   161,
-     160,   162,   158,   155,   156,   157,   165,   166,   163,   164,
-       0,   341,   342,   167,   325,   325,     0,   101,   325,    72,
-      77,    76,    75,    74,   328,   141,   142,     0,     0,   325,
-     256,     0,     0,   229,     0,   218,   263,   259,     0,   230,
-     233,   235,   237,   239,   241,   245,   246,   248,   249,     0,
-     243,   244,   247,   143,   149,   150,   145,   146,   148,   144,
-     197,     0,   303,   305,     0,     0,   120,     0,    93,    96,
-      97,   128,   325,   321,     0,   314,   315,   320,   317,   140,
-       0,   306,     0,   251,     0,     0,    85,    86,    92,   299,
-     325,     0,   325,   158,     0,   226,   228,   227,   279,   281,
-     280,   289,   290,   338,     0,   338,   225,   160,    83,     0,
-      78,    80,    81,    82,     0,     0,   154,   151,     0,   301,
-     299,   299,   299,   103,   300,    99,   299,   299,   110,     0,
-      70,    69,     0,   250,   262,   252,   253,     0,     0,     0,
-     125,    63,     0,   212,   213,     0,   214,   215,     0,     0,
-     285,     0,     0,     0,   196,     0,   139,     0,   310,     0,
-       0,   133,   325,     0,   218,    95,   194,     0,     0,   193,
-       0,     0,   325,   134,   325,    90,   299,     0,   284,     0,
-     223,     0,   325,   339,   135,   325,    66,     0,   174,   159,
-     172,   175,   168,   302,   108,     0,   107,   109,   100,   299,
-     105,   106,     0,    98,   111,   102,   234,   266,   264,     0,
-     265,   267,   268,   242,   231,   236,   238,   240,   286,   287,
-     258,   254,   257,   147,   304,   195,     0,     0,   121,   122,
-      94,   129,   127,   316,     0,     0,   307,     0,     0,    91,
-     325,    87,    89,   282,   291,     0,     0,   293,   128,   128,
-      79,   173,   152,   153,   104,     0,     0,     0,   271,   216,
-       0,   288,   311,     0,     0,   319,   318,   309,   308,     0,
-       0,     0,   295,   297,   292,     0,   136,   137,   112,     0,
-     269,     0,   274,   217,   232,   312,   313,    88,   283,   296,
-       0,   294,     0,     0,   272,   277,   278,   276,   273,   275,
-     298,   116,   117,     0,     0,   114,   118,   270,     0,   113,
-     115,   119
-};
-
-/* YYDEFGOTO[NTERM-NUM].  */
-static const yytype_int16 yydefgoto[] =
-{
-      -1,     4,     5,     6,    11,    13,    14,    18,    19,    30,
-      31,    32,    44,    45,    85,    86,   114,    56,    57,    63,
-      64,   166,    65,    66,    67,    46,    47,    50,    51,   318,
-      87,   245,    88,   132,   133,   319,   320,   295,   296,   297,
-     277,   278,   116,   409,   226,   227,   413,   414,   502,   514,
-     515,   298,   105,   106,   246,   321,   299,   373,   374,   156,
-     157,   158,   266,   267,   516,   331,   332,    89,   247,   324,
-     214,   215,   216,   399,   400,   159,   135,   160,   136,   355,
-     358,   492,   197,   192,   198,   199,   304,   305,   248,   249,
-     250,   251,   252,   253,   254,   255,   256,   257,   258,   259,
-     431,   260,   217,   261,   262,   418,   420,   421,   422,   467,
-     468,   508,   509,   307,   308,   480,   309,   362,   310,   311,
-     312,   456,   457,   482,   333,   334,   271,   272,   290,   291,
-     367,   368,   284,   285,   286,   218,   219,   281,   108,   109,
-     141,   163,   220,   392,   221,   222,   223
-};
+#define yytable_value_is_error(Yyn) \
+  0
 
 /* YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
    STATE-NUM.  */
-#define YYPACT_NINF -296
 static const yytype_int16 yypact[] =
 {
       51,  -296,  -296,   217,    41,   217,  -296,  -296,   217,  -296,
@@ -1253,6 +1072,66 @@ static const yytype_int16 yypact[] =
     -296,  -296
 };
 
+/* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
+   Performed when YYTABLE does not specify something else to do.  Zero
+   means the default is an error.  */
+static const yytype_int16 yydefact[] =
+{
+       0,   336,   337,     0,     0,     3,     4,     6,     2,     1,
+       5,     8,     0,     0,     9,   340,    16,    11,     0,    12,
+      14,    17,    10,    13,     0,     0,     0,     0,     0,     0,
+       0,    18,    19,     0,    25,    23,    21,    24,    22,     0,
+      20,    15,    53,     0,     0,    27,    37,    54,     0,    57,
+       0,    58,    60,    62,     7,    41,     0,    38,    56,    55,
+       0,     0,    40,     0,    42,    43,     0,    48,    50,    52,
+     198,     0,   199,   200,   201,   202,   203,   211,   204,   205,
+     206,   207,   208,   209,   210,    28,    29,    33,    31,    32,
+      36,   325,   325,    59,    61,    39,    44,     0,     0,     0,
+      34,    30,   325,     0,   329,     0,   123,     0,   326,   333,
+       0,    45,    49,    51,    35,     0,    68,    67,     0,   176,
+       0,     0,   190,   182,   186,   189,   177,     0,     0,   178,
+     181,   185,     0,    71,     0,   188,   187,    73,   331,   332,
+     330,     0,     0,   141,   142,     0,   138,     0,     0,   190,
+       0,   189,   220,   220,   131,   124,   218,   130,    65,   192,
+     132,   335,   334,   327,     0,    46,    47,     0,   191,   184,
+     183,   180,   179,     0,     0,     0,     0,     0,     0,    64,
+       0,     0,     0,     0,   191,   325,     0,     0,     0,     0,
+     325,     0,     0,   221,   222,   325,     0,   126,   224,   219,
+       0,   260,   169,   261,   322,   323,   324,   170,   171,   161,
+     160,   162,   158,   155,   156,   157,   165,   166,   163,   164,
+       0,   341,   342,   167,   325,   325,     0,   101,   325,    72,
+      77,    76,    75,    74,   328,   141,   142,     0,     0,   325,
+     256,     0,     0,   229,     0,   218,   263,   259,     0,   230,
+     233,   235,   237,   239,   241,   245,   246,   248,   249,     0,
+     243,   244,   247,   143,   149,   150,   145,   146,   148,   144,
+     197,     0,   303,   305,     0,     0,   120,     0,    93,    96,
+      97,   128,   325,   321,     0,   314,   315,   320,   317,   140,
+       0,   306,     0,   251,     0,     0,    85,    86,    92,   299,
+     325,     0,   325,   158,     0,   226,   228,   227,   279,   281,
+     280,   289,   290,   338,     0,   338,   225,   160,    83,     0,
+      78,    80,    81,    82,     0,     0,   154,   151,     0,   301,
+     299,   299,   299,   103,   300,    99,   299,   299,   110,     0,
+      70,    69,     0,   250,   262,   252,   253,     0,     0,     0,
+     125,    63,     0,   212,   213,     0,   214,   215,     0,     0,
+     285,     0,     0,     0,   196,     0,   139,     0,   310,     0,
+       0,   133,   325,     0,   218,    95,   194,     0,     0,   193,
+       0,     0,   325,   134,   325,    90,   299,     0,   284,     0,
+     223,     0,   325,   339,   135,   325,    66,     0,   174,   159,
+     172,   175,   168,   302,   108,     0,   107,   109,   100,   299,
+     105,   106,     0,    98,   111,   102,   234,   266,   264,     0,
+     265,   267,   268,   242,   231,   236,   238,   240,   286,   287,
+     258,   254,   257,   147,   304,   195,     0,     0,   121,   122,
+      94,   129,   127,   316,     0,     0,   307,     0,     0,    91,
+     325,    87,    89,   282,   291,     0,     0,   293,   128,   128,
+      79,   173,   152,   153,   104,     0,     0,     0,   271,   216,
+       0,   288,   311,     0,     0,   319,   318,   309,   308,     0,
+       0,     0,   295,   297,   292,     0,   136,   137,   112,     0,
+     269,     0,   274,   217,   232,   312,   313,    88,   283,   296,
+       0,   294,     0,     0,   272,   277,   278,   276,   273,   275,
+     298,   116,   117,     0,     0,   114,   118,   270,     0,   113,
+     115,   119
+};
+
 /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int16 yypgoto[] =
 {
@@ -1273,11 +1152,29 @@ static const yytype_int16 yypgoto[] =
     -296,  -296,    11,   232,   -12,  -296,  -295
 };
 
-/* YYTABLE[YYPACT[STATE-NUM]].  What to do in state STATE-NUM.  If
-   positive, shift that token.  If negative, reduce the rule which
-   number is the opposite.  If zero, do what YYDEFACT says.
-   If YYTABLE_NINF, syntax error.  */
-#define YYTABLE_NINF -300
+/* YYDEFGOTO[NTERM-NUM].  */
+static const yytype_int16 yydefgoto[] =
+{
+       0,     4,     5,     6,    11,    13,    14,    18,    19,    30,
+      31,    32,    44,    45,    85,    86,   114,    56,    57,    63,
+      64,   166,    65,    66,    67,    46,    47,    50,    51,   318,
+      87,   245,    88,   132,   133,   319,   320,   295,   296,   297,
+     277,   278,   116,   409,   226,   227,   413,   414,   502,   514,
+     515,   298,   105,   106,   246,   321,   299,   373,   374,   156,
+     157,   158,   266,   267,   516,   331,   332,    89,   247,   324,
+     214,   215,   216,   399,   400,   159,   135,   160,   136,   355,
+     358,   492,   197,   192,   198,   199,   304,   305,   248,   249,
+     250,   251,   252,   253,   254,   255,   256,   257,   258,   259,
+     431,   260,   217,   261,   262,   418,   420,   421,   422,   467,
+     468,   508,   509,   307,   308,   480,   309,   362,   310,   311,
+     312,   456,   457,   482,   333,   334,   271,   272,   290,   291,
+     367,   368,   284,   285,   286,   218,   219,   281,   108,   109,
+     141,   163,   220,   392,   221,   222,   223
+};
+
+/* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
+   positive, shift that token.  If negative, reduce the rule whose
+   number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_int16 yytable[] =
 {
       20,   154,   193,   193,   107,   107,    20,   349,   280,   322,
@@ -1470,9 +1367,9 @@ static const yytype_int16 yycheck[] =
       93,    -1,    -1,    -1,    -1,    98,    99,   100,   101,   102
 };
 
-/* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
-   symbol of state STATE-NUM.  */
-static const yytype_uint16 yystos[] =
+/* YYSTOS[STATE-NUM] -- The symbol kind of the accessing symbol of
+   state STATE-NUM.  */
+static const yytype_int16 yystos[] =
 {
        0,    17,    18,   104,   127,   128,   129,   268,   128,     0,
      129,   130,   113,   131,   132,    11,    12,   114,   133,   134,
@@ -1529,178 +1426,184 @@ static const yytype_uint16 yystos[] =
      176,   121
 };
 
-#define yyerrok		(yyerrstatus = 0)
-#define yyclearin	(yychar = YYEMPTY)
-#define YYEMPTY		(-2)
-#define YYEOF		0
+/* YYR1[RULE-NUM] -- Symbol kind of the left-hand side of rule RULE-NUM.  */
+static const yytype_int16 yyr1[] =
+{
+       0,   126,   127,   127,   128,   128,   130,   129,   131,   131,
+     132,   132,   133,   133,   134,   134,   134,   135,   135,   136,
+     136,   137,   137,   137,   137,   137,   138,   138,   139,   140,
+     140,   141,   141,   141,   142,   141,   141,   143,   143,   144,
+     144,   145,   145,   146,   146,   147,   147,   148,   149,   149,
+     150,   150,   150,   151,   151,   152,   152,   152,   153,   153,
+     154,   154,   154,   155,   156,   157,   157,   158,   158,   158,
+     158,   159,   159,   160,   160,   160,   160,   160,   161,   161,
+     162,   162,   162,   162,   163,   163,   164,   164,   164,   165,
+     165,   165,   165,   166,   166,   167,   167,   167,   168,   169,
+     169,   170,   170,   171,   171,   171,   171,   171,   171,   171,
+     172,   172,   174,   173,   175,   175,   176,   176,   176,   176,
+     177,   177,   177,   178,   179,   180,   181,   182,   183,   184,
+     185,   185,   186,   186,   186,   186,   186,   186,   186,   186,
+     186,   187,   187,   187,   187,   187,   188,   188,   189,   190,
+     190,   191,   191,   191,   192,   193,   194,   194,   195,   194,
+     196,   196,   196,   196,   196,   196,   196,   197,   197,   198,
+     198,   198,   199,   199,   200,   200,   201,   201,   201,   201,
+     201,   201,   201,   201,   201,   201,   201,   201,   201,   202,
+     202,   202,   203,   203,   203,   203,   203,   203,   204,   204,
+     204,   204,   204,   204,   204,   204,   204,   204,   204,   204,
+     204,   204,   205,   205,   206,   206,   207,   207,   208,   208,
+     209,   209,   209,   210,   211,   211,   212,   212,   213,   214,
+     214,   214,   214,   215,   215,   216,   216,   217,   217,   218,
+     218,   219,   219,   220,   220,   220,   220,   220,   220,   220,
+     221,   222,   223,   223,   224,   225,   225,   226,   226,   227,
+     228,   228,   229,   229,   230,   230,   231,   232,   232,   233,
+     234,   235,   235,   236,   237,   237,   238,   238,   238,   239,
+     239,   239,   241,   240,   242,   243,   243,   243,   243,   244,
+     244,   245,   246,   247,   247,   248,   248,   249,   249,   250,
+     250,   251,   251,   252,   252,   253,   254,   254,   255,   255,
+     256,   256,   257,   257,   258,   259,   259,   260,   260,   260,
+     260,   260,   261,   261,   262,   263,   263,   264,   265,   266,
+     266,   266,   266,   267,   267,   267,   268,   268,   269,   269,
+     270,   271,   272
+};
 
-#define YYACCEPT	goto yyacceptlab
-#define YYABORT		goto yyabortlab
-#define YYERROR		goto yyerrorlab
+/* YYR2[RULE-NUM] -- Number of symbols on the right-hand side of rule RULE-NUM.  */
+static const yytype_int8 yyr2[] =
+{
+       0,     2,     2,     1,     1,     2,     0,     9,     0,     1,
+       3,     2,     1,     2,     1,     4,     1,     0,     1,     1,
+       2,     2,     2,     2,     2,     2,     0,     1,     3,     1,
+       2,     1,     1,     1,     0,     3,     1,     0,     1,     3,
+       2,     0,     1,     1,     2,     0,     1,     4,     1,     3,
+       1,     3,     1,     0,     1,     3,     3,     2,     1,     3,
+       1,     3,     1,     3,     4,     1,     4,     3,     3,     6,
+       6,     1,     3,     1,     3,     3,     3,     3,     1,     3,
+       1,     1,     1,     1,     0,     1,     1,     3,     5,     3,
+       2,     3,     1,     1,     3,     2,     1,     1,     5,     0,
+       1,     1,     3,     2,     4,     3,     3,     3,     3,     3,
+       0,     1,     0,     6,     1,     2,     1,     1,     1,     3,
+       1,     3,     3,     1,     2,     2,     2,     3,     0,     2,
+       1,     1,     1,     4,     4,     4,     6,     6,     1,     4,
+       3,     1,     1,     3,     3,     3,     1,     3,     1,     1,
+       1,     1,     3,     3,     1,     4,     1,     1,     0,     3,
+       1,     1,     1,     1,     1,     1,     1,     1,     3,     1,
+       1,     1,     1,     2,     1,     1,     1,     1,     1,     2,
+       2,     1,     1,     2,     2,     1,     1,     1,     1,     1,
+       1,     2,     1,     4,     4,     5,     4,     3,     1,     1,
+       1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
+       1,     1,     1,     1,     1,     1,     0,     1,     0,     1,
+       0,     1,     1,     3,     1,     2,     1,     1,     1,     1,
+       1,     3,     5,     1,     3,     1,     3,     1,     3,     1,
+       3,     1,     3,     1,     1,     1,     1,     1,     1,     1,
+       2,     2,     2,     2,     3,     1,     1,     1,     1,     1,
+       1,     1,     2,     1,     3,     3,     1,     1,     1,     3,
+       5,     1,     3,     3,     0,     1,     1,     1,     1,     1,
+       1,     1,     0,     5,     2,     1,     2,     2,     3,     1,
+       1,     3,     4,     1,     3,     2,     3,     1,     3,     0,
+       1,     1,     2,     1,     3,     1,     1,     3,     4,     4,
+       1,     3,     4,     4,     1,     1,     3,     1,     4,     4,
+       1,     1,     1,     1,     1,     0,     1,     2,     4,     0,
+       1,     1,     1,     0,     1,     1,     1,     1,     0,     1,
+       1,     1,     1
+};
 
 
-/* Like YYERROR except do call yyerror.  This remains here temporarily
-   to ease the transition to the new meaning of YYERROR, for GCC.
-   Once GCC version 2 has supplanted version 1, this can go.  */
+enum { YYENOMEM = -2 };
 
-#define YYFAIL		goto yyerrlab
+#define yyerrok         (yyerrstatus = 0)
+#define yyclearin       (yychar = ASN1P_EMPTY)
+
+#define YYACCEPT        goto yyacceptlab
+#define YYABORT         goto yyabortlab
+#define YYERROR         goto yyerrorlab
+#define YYNOMEM         goto yyexhaustedlab
+
 
 #define YYRECOVERING()  (!!yyerrstatus)
 
-#define YYBACKUP(Token, Value)					\
-do								\
-  if (yychar == YYEMPTY && yylen == 1)				\
-    {								\
-      yychar = (Token);						\
-      yylval = (Value);						\
-      yytoken = YYTRANSLATE (yychar);				\
-      YYPOPSTACK (1);						\
-      goto yybackup;						\
-    }								\
-  else								\
-    {								\
-      yyerror (YY_("syntax error: cannot back up")); \
-      YYERROR;							\
-    }								\
-while (YYID (0))
+#define YYBACKUP(Token, Value)                                    \
+  do                                                              \
+    if (yychar == ASN1P_EMPTY)                                        \
+      {                                                           \
+        yychar = (Token);                                         \
+        yylval = (Value);                                         \
+        YYPOPSTACK (yylen);                                       \
+        yystate = *yyssp;                                         \
+        goto yybackup;                                            \
+      }                                                           \
+    else                                                          \
+      {                                                           \
+        yyerror (param, yyscanner, YY_("syntax error: cannot back up")); \
+        YYERROR;                                                  \
+      }                                                           \
+  while (0)
 
+/* Backward compatibility with an undocumented macro.
+   Use ASN1P_error or ASN1P_UNDEF. */
+#define YYERRCODE ASN1P_UNDEF
 
-#define YYTERROR	1
-#define YYERRCODE	256
-
-
-/* YYLLOC_DEFAULT -- Set CURRENT to span from RHS[1] to RHS[N].
-   If N is 0, then set CURRENT to the empty location which ends
-   the previous symbol: RHS[0] (always defined).  */
-
-#define YYRHSLOC(Rhs, K) ((Rhs)[K])
-#ifndef YYLLOC_DEFAULT
-# define YYLLOC_DEFAULT(Current, Rhs, N)				\
-    do									\
-      if (YYID (N))                                                    \
-	{								\
-	  (Current).first_line   = YYRHSLOC (Rhs, 1).first_line;	\
-	  (Current).first_column = YYRHSLOC (Rhs, 1).first_column;	\
-	  (Current).last_line    = YYRHSLOC (Rhs, N).last_line;		\
-	  (Current).last_column  = YYRHSLOC (Rhs, N).last_column;	\
-	}								\
-      else								\
-	{								\
-	  (Current).first_line   = (Current).last_line   =		\
-	    YYRHSLOC (Rhs, 0).last_line;				\
-	  (Current).first_column = (Current).last_column =		\
-	    YYRHSLOC (Rhs, 0).last_column;				\
-	}								\
-    while (YYID (0))
-#endif
-
-
-/* YY_LOCATION_PRINT -- Print the location on the stream.
-   This macro was not mandated originally: define only if we know
-   we won't break user code: when these are the locations we know.  */
-
-#ifndef YY_LOCATION_PRINT
-# if defined YYLTYPE_IS_TRIVIAL && YYLTYPE_IS_TRIVIAL
-#  define YY_LOCATION_PRINT(File, Loc)			\
-     fprintf (File, "%d.%d-%d.%d",			\
-	      (Loc).first_line, (Loc).first_column,	\
-	      (Loc).last_line,  (Loc).last_column)
-# else
-#  define YY_LOCATION_PRINT(File, Loc) ((void) 0)
-# endif
-#endif
-
-
-/* YYLEX -- calling `yylex' with the right arguments.  */
-
-#ifdef YYLEX_PARAM
-# define YYLEX yylex (YYLEX_PARAM)
-#else
-# define YYLEX yylex ()
-#endif
 
 /* Enable debugging if requested.  */
-#if YYDEBUG
+#if ASN1P_DEBUG
 
 # ifndef YYFPRINTF
 #  include <stdio.h> /* INFRINGES ON USER NAME SPACE */
 #  define YYFPRINTF fprintf
 # endif
 
-# define YYDPRINTF(Args)			\
-do {						\
-  if (yydebug)					\
-    YYFPRINTF Args;				\
-} while (YYID (0))
-
-# define YY_SYMBOL_PRINT(Title, Type, Value, Location)			  \
-do {									  \
-  if (yydebug)								  \
-    {									  \
-      YYFPRINTF (stderr, "%s ", Title);					  \
-      yy_symbol_print (stderr,						  \
-		  Type, Value); \
-      YYFPRINTF (stderr, "\n");						  \
-    }									  \
-} while (YYID (0))
+# define YYDPRINTF(Args)                        \
+do {                                            \
+  if (yydebug)                                  \
+    YYFPRINTF Args;                             \
+} while (0)
 
 
-/*--------------------------------.
-| Print this symbol on YYOUTPUT.  |
-`--------------------------------*/
 
-/*ARGSUSED*/
-#if (defined __STDC__ || defined __C99__FUNC__ \
-     || defined __cplusplus || defined _MSC_VER)
+
+# define YY_SYMBOL_PRINT(Title, Kind, Value, Location)                    \
+do {                                                                      \
+  if (yydebug)                                                            \
+    {                                                                     \
+      YYFPRINTF (stderr, "%s ", Title);                                   \
+      yy_symbol_print (stderr,                                            \
+                  Kind, Value, param, yyscanner); \
+      YYFPRINTF (stderr, "\n");                                           \
+    }                                                                     \
+} while (0)
+
+
+/*-----------------------------------.
+| Print this symbol's value on YYO.  |
+`-----------------------------------*/
+
 static void
-yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep)
-#else
-static void
-yy_symbol_value_print (yyoutput, yytype, yyvaluep)
-    FILE *yyoutput;
-    int yytype;
-    YYSTYPE const * const yyvaluep;
-#endif
+yy_symbol_value_print (FILE *yyo,
+                       yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep, void **param, yyscan_t yyscanner)
 {
+  FILE *yyoutput = yyo;
+  YY_USE (yyoutput);
+  YY_USE (param);
+  YY_USE (yyscanner);
   if (!yyvaluep)
     return;
-# ifdef YYPRINT
-  if (yytype < YYNTOKENS)
-    YYPRINT (yyoutput, yytoknum[yytype], *yyvaluep);
-# else
-  YYUSE (yyoutput);
-# endif
-  switch (yytype)
-    {
-      default:
-	break;
-    }
+  YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN
+  YY_USE (yykind);
+  YY_IGNORE_MAYBE_UNINITIALIZED_END
 }
 
 
-/*--------------------------------.
-| Print this symbol on YYOUTPUT.  |
-`--------------------------------*/
+/*---------------------------.
+| Print this symbol on YYO.  |
+`---------------------------*/
 
-#if (defined __STDC__ || defined __C99__FUNC__ \
-     || defined __cplusplus || defined _MSC_VER)
 static void
-yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep)
-#else
-static void
-yy_symbol_print (yyoutput, yytype, yyvaluep)
-    FILE *yyoutput;
-    int yytype;
-    YYSTYPE const * const yyvaluep;
-#endif
+yy_symbol_print (FILE *yyo,
+                 yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep, void **param, yyscan_t yyscanner)
 {
-  if (yytype < YYNTOKENS)
-    YYFPRINTF (yyoutput, "token %s (", yytname[yytype]);
-  else
-    YYFPRINTF (yyoutput, "nterm %s (", yytname[yytype]);
+  YYFPRINTF (yyo, "%s %s (",
+             yykind < YYNTOKENS ? "token" : "nterm", yysymbol_name (yykind));
 
-  yy_symbol_value_print (yyoutput, yytype, yyvaluep);
-  YYFPRINTF (yyoutput, ")");
+  yy_symbol_value_print (yyo, yykind, yyvaluep, param, yyscanner);
+  YYFPRINTF (yyo, ")");
 }
 
 /*------------------------------------------------------------------.
@@ -1708,80 +1611,68 @@ yy_symbol_print (yyoutput, yytype, yyvaluep)
 | TOP (included).                                                   |
 `------------------------------------------------------------------*/
 
-#if (defined __STDC__ || defined __C99__FUNC__ \
-     || defined __cplusplus || defined _MSC_VER)
 static void
-yy_stack_print (yytype_int16 *bottom, yytype_int16 *top)
-#else
-static void
-yy_stack_print (bottom, top)
-    yytype_int16 *bottom;
-    yytype_int16 *top;
-#endif
+yy_stack_print (yy_state_t *yybottom, yy_state_t *yytop)
 {
   YYFPRINTF (stderr, "Stack now");
-  for (; bottom <= top; ++bottom)
-    YYFPRINTF (stderr, " %d", *bottom);
+  for (; yybottom <= yytop; yybottom++)
+    {
+      int yybot = *yybottom;
+      YYFPRINTF (stderr, " %d", yybot);
+    }
   YYFPRINTF (stderr, "\n");
 }
 
-# define YY_STACK_PRINT(Bottom, Top)				\
-do {								\
-  if (yydebug)							\
-    yy_stack_print ((Bottom), (Top));				\
-} while (YYID (0))
+# define YY_STACK_PRINT(Bottom, Top)                            \
+do {                                                            \
+  if (yydebug)                                                  \
+    yy_stack_print ((Bottom), (Top));                           \
+} while (0)
 
 
 /*------------------------------------------------.
 | Report that the YYRULE is going to be reduced.  |
 `------------------------------------------------*/
 
-#if (defined __STDC__ || defined __C99__FUNC__ \
-     || defined __cplusplus || defined _MSC_VER)
 static void
-yy_reduce_print (YYSTYPE *yyvsp, int yyrule)
-#else
-static void
-yy_reduce_print (yyvsp, yyrule)
-    YYSTYPE *yyvsp;
-    int yyrule;
-#endif
+yy_reduce_print (yy_state_t *yyssp, YYSTYPE *yyvsp,
+                 int yyrule, void **param, yyscan_t yyscanner)
 {
+  int yylno = yyrline[yyrule];
   int yynrhs = yyr2[yyrule];
   int yyi;
-  unsigned long int yylno = yyrline[yyrule];
-  YYFPRINTF (stderr, "Reducing stack by rule %d (line %lu):\n",
-	     yyrule - 1, yylno);
+  YYFPRINTF (stderr, "Reducing stack by rule %d (line %d):\n",
+             yyrule - 1, yylno);
   /* The symbols being reduced.  */
   for (yyi = 0; yyi < yynrhs; yyi++)
     {
-      fprintf (stderr, "   $%d = ", yyi + 1);
-      yy_symbol_print (stderr, yyrhs[yyprhs[yyrule] + yyi],
-		       &(yyvsp[(yyi + 1) - (yynrhs)])
-		       		       );
-      fprintf (stderr, "\n");
+      YYFPRINTF (stderr, "   $%d = ", yyi + 1);
+      yy_symbol_print (stderr,
+                       YY_ACCESSING_SYMBOL (+yyssp[yyi + 1 - yynrhs]),
+                       &yyvsp[(yyi + 1) - (yynrhs)], param, yyscanner);
+      YYFPRINTF (stderr, "\n");
     }
 }
 
-# define YY_REDUCE_PRINT(Rule)		\
-do {					\
-  if (yydebug)				\
-    yy_reduce_print (yyvsp, Rule); \
-} while (YYID (0))
+# define YY_REDUCE_PRINT(Rule)          \
+do {                                    \
+  if (yydebug)                          \
+    yy_reduce_print (yyssp, yyvsp, Rule, param, yyscanner); \
+} while (0)
 
 /* Nonzero means print parse trace.  It is left uninitialized so that
    multiple parsers can coexist.  */
 int yydebug;
-#else /* !YYDEBUG */
-# define YYDPRINTF(Args)
-# define YY_SYMBOL_PRINT(Title, Type, Value, Location)
+#else /* !ASN1P_DEBUG */
+# define YYDPRINTF(Args) ((void) 0)
+# define YY_SYMBOL_PRINT(Title, Kind, Value, Location)
 # define YY_STACK_PRINT(Bottom, Top)
 # define YY_REDUCE_PRINT(Rule)
-#endif /* !YYDEBUG */
+#endif /* !ASN1P_DEBUG */
 
 
 /* YYINITDEPTH -- initial size of the parser's stacks.  */
-#ifndef	YYINITDEPTH
+#ifndef YYINITDEPTH
 # define YYINITDEPTH 200
 #endif
 
@@ -1796,277 +1687,33 @@ int yydebug;
 # define YYMAXDEPTH 10000
 #endif
 
-
 
-#if YYERROR_VERBOSE
 
-# ifndef yystrlen
-#  if defined __GLIBC__ && defined _STRING_H
-#   define yystrlen strlen
-#  else
-/* Return the length of YYSTR.  */
-#if (defined __STDC__ || defined __C99__FUNC__ \
-     || defined __cplusplus || defined _MSC_VER)
-static YYSIZE_T
-yystrlen (const char *yystr)
-#else
-static YYSIZE_T
-yystrlen (yystr)
-    const char *yystr;
-#endif
-{
-  YYSIZE_T yylen;
-  for (yylen = 0; yystr[yylen]; yylen++)
-    continue;
-  return yylen;
-}
-#  endif
-# endif
 
-# ifndef yystpcpy
-#  if defined __GLIBC__ && defined _STRING_H && defined _GNU_SOURCE
-#   define yystpcpy stpcpy
-#  else
-/* Copy YYSRC to YYDEST, returning the address of the terminating '\0' in
-   YYDEST.  */
-#if (defined __STDC__ || defined __C99__FUNC__ \
-     || defined __cplusplus || defined _MSC_VER)
-static char *
-yystpcpy (char *yydest, const char *yysrc)
-#else
-static char *
-yystpcpy (yydest, yysrc)
-    char *yydest;
-    const char *yysrc;
-#endif
-{
-  char *yyd = yydest;
-  const char *yys = yysrc;
 
-  while ((*yyd++ = *yys++) != '\0')
-    continue;
-
-  return yyd - 1;
-}
-#  endif
-# endif
-
-# ifndef yytnamerr
-/* Copy to YYRES the contents of YYSTR after stripping away unnecessary
-   quotes and backslashes, so that it's suitable for yyerror.  The
-   heuristic is that double-quoting is unnecessary unless the string
-   contains an apostrophe, a comma, or backslash (other than
-   backslash-backslash).  YYSTR is taken from yytname.  If YYRES is
-   null, do not copy; instead, return the length of what the result
-   would have been.  */
-static YYSIZE_T
-yytnamerr (char *yyres, const char *yystr)
-{
-  if (*yystr == '"')
-    {
-      YYSIZE_T yyn = 0;
-      char const *yyp = yystr;
-
-      for (;;)
-	switch (*++yyp)
-	  {
-	  case '\'':
-	  case ',':
-	    goto do_not_strip_quotes;
-
-	  case '\\':
-	    if (*++yyp != '\\')
-	      goto do_not_strip_quotes;
-	    /* Fall through.  */
-	  default:
-	    if (yyres)
-	      yyres[yyn] = *yyp;
-	    yyn++;
-	    break;
-
-	  case '"':
-	    if (yyres)
-	      yyres[yyn] = '\0';
-	    return yyn;
-	  }
-    do_not_strip_quotes: ;
-    }
-
-  if (! yyres)
-    return yystrlen (yystr);
-
-  return yystpcpy (yyres, yystr) - yyres;
-}
-# endif
-
-/* Copy into YYRESULT an error message about the unexpected token
-   YYCHAR while in state YYSTATE.  Return the number of bytes copied,
-   including the terminating null byte.  If YYRESULT is null, do not
-   copy anything; just return the number of bytes that would be
-   copied.  As a special case, return 0 if an ordinary "syntax error"
-   message will do.  Return YYSIZE_MAXIMUM if overflow occurs during
-   size calculation.  */
-static YYSIZE_T
-yysyntax_error (char *yyresult, int yystate, int yychar)
-{
-  int yyn = yypact[yystate];
-
-  if (! (YYPACT_NINF < yyn && yyn <= YYLAST))
-    return 0;
-  else
-    {
-      int yytype = YYTRANSLATE (yychar);
-      YYSIZE_T yysize0 = yytnamerr (0, yytname[yytype]);
-      YYSIZE_T yysize = yysize0;
-      YYSIZE_T yysize1;
-      int yysize_overflow = 0;
-      enum { YYERROR_VERBOSE_ARGS_MAXIMUM = 5 };
-      char const *yyarg[YYERROR_VERBOSE_ARGS_MAXIMUM];
-      int yyx;
-
-# if 0
-      /* This is so xgettext sees the translatable formats that are
-	 constructed on the fly.  */
-      YY_("syntax error, unexpected %s");
-      YY_("syntax error, unexpected %s, expecting %s");
-      YY_("syntax error, unexpected %s, expecting %s or %s");
-      YY_("syntax error, unexpected %s, expecting %s or %s or %s");
-      YY_("syntax error, unexpected %s, expecting %s or %s or %s or %s");
-# endif
-      char *yyfmt;
-      char const *yyf;
-      static char const yyunexpected[] = "syntax error, unexpected %s";
-      static char const yyexpecting[] = ", expecting %s";
-      static char const yyor[] = " or %s";
-      char yyformat[sizeof yyunexpected
-		    + sizeof yyexpecting - 1
-		    + ((YYERROR_VERBOSE_ARGS_MAXIMUM - 2)
-		       * (sizeof yyor - 1))];
-      char const *yyprefix = yyexpecting;
-
-      /* Start YYX at -YYN if negative to avoid negative indexes in
-	 YYCHECK.  */
-      int yyxbegin = yyn < 0 ? -yyn : 0;
-
-      /* Stay within bounds of both yycheck and yytname.  */
-      int yychecklim = YYLAST - yyn + 1;
-      int yyxend = yychecklim < YYNTOKENS ? yychecklim : YYNTOKENS;
-      int yycount = 1;
-
-      yyarg[0] = yytname[yytype];
-      yyfmt = yystpcpy (yyformat, yyunexpected);
-
-      for (yyx = yyxbegin; yyx < yyxend; ++yyx)
-	if (yycheck[yyx + yyn] == yyx && yyx != YYTERROR)
-	  {
-	    if (yycount == YYERROR_VERBOSE_ARGS_MAXIMUM)
-	      {
-		yycount = 1;
-		yysize = yysize0;
-		yyformat[sizeof yyunexpected - 1] = '\0';
-		break;
-	      }
-	    yyarg[yycount++] = yytname[yyx];
-	    yysize1 = yysize + yytnamerr (0, yytname[yyx]);
-	    yysize_overflow |= (yysize1 < yysize);
-	    yysize = yysize1;
-	    yyfmt = yystpcpy (yyfmt, yyprefix);
-	    yyprefix = yyor;
-	  }
-
-      yyf = YY_(yyformat);
-      yysize1 = yysize + yystrlen (yyf);
-      yysize_overflow |= (yysize1 < yysize);
-      yysize = yysize1;
-
-      if (yysize_overflow)
-	return YYSIZE_MAXIMUM;
-
-      if (yyresult)
-	{
-	  /* Avoid sprintf, as that infringes on the user's name space.
-	     Don't have undefined behavior even if the translation
-	     produced a string with the wrong number of "%s"s.  */
-	  char *yyp = yyresult;
-	  int yyi = 0;
-	  while ((*yyp = *yyf) != '\0')
-	    {
-	      if (*yyp == '%' && yyf[1] == 's' && yyi < yycount)
-		{
-		  yyp += yytnamerr (yyp, yyarg[yyi++]);
-		  yyf += 2;
-		}
-	      else
-		{
-		  yyp++;
-		  yyf++;
-		}
-	    }
-	}
-      return yysize;
-    }
-}
-#endif /* YYERROR_VERBOSE */
-
 
 /*-----------------------------------------------.
 | Release the memory associated to this symbol.  |
 `-----------------------------------------------*/
 
-/*ARGSUSED*/
-#if (defined __STDC__ || defined __C99__FUNC__ \
-     || defined __cplusplus || defined _MSC_VER)
 static void
-yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep)
-#else
-static void
-yydestruct (yymsg, yytype, yyvaluep)
-    const char *yymsg;
-    int yytype;
-    YYSTYPE *yyvaluep;
-#endif
+yydestruct (const char *yymsg,
+            yysymbol_kind_t yykind, YYSTYPE *yyvaluep, void **param, yyscan_t yyscanner)
 {
-  YYUSE (yyvaluep);
-
+  YY_USE (yyvaluep);
+  YY_USE (param);
+  YY_USE (yyscanner);
   if (!yymsg)
     yymsg = "Deleting";
-  YY_SYMBOL_PRINT (yymsg, yytype, yyvaluep, yylocationp);
+  YY_SYMBOL_PRINT (yymsg, yykind, yyvaluep, yylocationp);
 
-  switch (yytype)
-    {
-
-      default:
-	break;
-    }
+  YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN
+  YY_USE (yykind);
+  YY_IGNORE_MAYBE_UNINITIALIZED_END
 }
-
-
-/* Prevent warnings from -Wmissing-prototypes.  */
-
-#ifdef YYPARSE_PARAM
-#if defined __STDC__ || defined __cplusplus
-int yyparse (void *YYPARSE_PARAM);
-#else
-int yyparse ();
-#endif
-#else /* ! YYPARSE_PARAM */
-#if defined __STDC__ || defined __cplusplus
-int yyparse (void);
-#else
-int yyparse ();
-#endif
-#endif /* ! YYPARSE_PARAM */
 
 
 
-/* The look-ahead symbol.  */
-int yychar;
-
-/* The semantic value of the look-ahead symbol.  */
-YYSTYPE yylval;
-
-/* Number of syntax errors so far.  */
-int yynerrs;
 
 
 
@@ -2074,71 +1721,54 @@ int yynerrs;
 | yyparse.  |
 `----------*/
 
-#ifdef YYPARSE_PARAM
-#if (defined __STDC__ || defined __C99__FUNC__ \
-     || defined __cplusplus || defined _MSC_VER)
 int
-yyparse (void *YYPARSE_PARAM)
-#else
-int
-yyparse (YYPARSE_PARAM)
-    void *YYPARSE_PARAM;
-#endif
-#else /* ! YYPARSE_PARAM */
-#if (defined __STDC__ || defined __C99__FUNC__ \
-     || defined __cplusplus || defined _MSC_VER)
-int
-yyparse (void)
-#else
-int
-yyparse ()
-
-#endif
-#endif
+yyparse (void **param, yyscan_t yyscanner)
 {
-  
-  int yystate;
+/* Lookahead token kind.  */
+int yychar;
+
+
+/* The semantic value of the lookahead symbol.  */
+/* Default value used for initialization, for pacifying older GCCs
+   or non-GCC compilers.  */
+YY_INITIAL_VALUE (static YYSTYPE yyval_default;)
+YYSTYPE yylval YY_INITIAL_VALUE (= yyval_default);
+
+    /* Number of syntax errors so far.  */
+    int yynerrs = 0;
+
+    yy_state_fast_t yystate = 0;
+    /* Number of tokens to shift before error messages enabled.  */
+    int yyerrstatus = 0;
+
+    /* Refer to the stacks through separate pointers, to allow yyoverflow
+       to reallocate them elsewhere.  */
+
+    /* Their size.  */
+    YYPTRDIFF_T yystacksize = YYINITDEPTH;
+
+    /* The state stack: array, bottom, top.  */
+    yy_state_t yyssa[YYINITDEPTH];
+    yy_state_t *yyss = yyssa;
+    yy_state_t *yyssp = yyss;
+
+    /* The semantic value stack: array, bottom, top.  */
+    YYSTYPE yyvsa[YYINITDEPTH];
+    YYSTYPE *yyvs = yyvsa;
+    YYSTYPE *yyvsp = yyvs;
+
   int yyn;
+  /* The return value of yyparse.  */
   int yyresult;
-  /* Number of tokens to shift before error messages enabled.  */
-  int yyerrstatus;
-  /* Look-ahead token as an internal (translated) token number.  */
-  int yytoken = 0;
-#if YYERROR_VERBOSE
-  /* Buffer for error messages, and its allocated size.  */
-  char yymsgbuf[128];
-  char *yymsg = yymsgbuf;
-  YYSIZE_T yymsg_alloc = sizeof yymsgbuf;
-#endif
-
-  /* Three stacks and their tools:
-     `yyss': related to states,
-     `yyvs': related to semantic values,
-     `yyls': related to locations.
-
-     Refer to the stacks thru separate pointers, to allow yyoverflow
-     to reallocate them elsewhere.  */
-
-  /* The state stack.  */
-  yytype_int16 yyssa[YYINITDEPTH];
-  yytype_int16 *yyss = yyssa;
-  yytype_int16 *yyssp;
-
-  /* The semantic value stack.  */
-  YYSTYPE yyvsa[YYINITDEPTH];
-  YYSTYPE *yyvs = yyvsa;
-  YYSTYPE *yyvsp;
-
-
-
-#define YYPOPSTACK(N)   (yyvsp -= (N), yyssp -= (N))
-
-  YYSIZE_T yystacksize = YYINITDEPTH;
-
+  /* Lookahead symbol kind.  */
+  yysymbol_kind_t yytoken = YYSYMBOL_YYEMPTY;
   /* The variables used to return semantic value and location from the
      action routines.  */
   YYSTYPE yyval;
 
+
+
+#define YYPOPSTACK(N)   (yyvsp -= (N), yyssp -= (N))
 
   /* The number of symbols on the RHS of the reduced rule.
      Keep to zero when no symbol should be popped.  */
@@ -2146,127 +1776,137 @@ yyparse ()
 
   YYDPRINTF ((stderr, "Starting parse\n"));
 
-  yystate = 0;
-  yyerrstatus = 0;
-  yynerrs = 0;
-  yychar = YYEMPTY;		/* Cause a token to be read.  */
-
-  /* Initialize stack pointers.
-     Waste one element of value and location stack
-     so that they stay on the same level as the state stack.
-     The wasted elements are never initialized.  */
-
-  yyssp = yyss;
-  yyvsp = yyvs;
+  yychar = ASN1P_EMPTY; /* Cause a token to be read.  */
 
   goto yysetstate;
 
+
 /*------------------------------------------------------------.
-| yynewstate -- Push a new state, which is found in yystate.  |
+| yynewstate -- push a new state, which is found in yystate.  |
 `------------------------------------------------------------*/
- yynewstate:
+yynewstate:
   /* In all cases, when you get here, the value and location stacks
      have just been pushed.  So pushing a state here evens the stacks.  */
   yyssp++;
 
- yysetstate:
-  *yyssp = yystate;
+
+/*--------------------------------------------------------------------.
+| yysetstate -- set current state (the top of the stack) to yystate.  |
+`--------------------------------------------------------------------*/
+yysetstate:
+  YYDPRINTF ((stderr, "Entering state %d\n", yystate));
+  YY_ASSERT (0 <= yystate && yystate < YYNSTATES);
+  YY_IGNORE_USELESS_CAST_BEGIN
+  *yyssp = YY_CAST (yy_state_t, yystate);
+  YY_IGNORE_USELESS_CAST_END
+  YY_STACK_PRINT (yyss, yyssp);
 
   if (yyss + yystacksize - 1 <= yyssp)
+#if !defined yyoverflow && !defined YYSTACK_RELOCATE
+    YYNOMEM;
+#else
     {
       /* Get the current used size of the three stacks, in elements.  */
-      YYSIZE_T yysize = yyssp - yyss + 1;
+      YYPTRDIFF_T yysize = yyssp - yyss + 1;
 
-#ifdef yyoverflow
+# if defined yyoverflow
       {
-	/* Give user a chance to reallocate the stack.  Use copies of
-	   these so that the &'s don't force the real ones into
-	   memory.  */
-	YYSTYPE *yyvs1 = yyvs;
-	yytype_int16 *yyss1 = yyss;
+        /* Give user a chance to reallocate the stack.  Use copies of
+           these so that the &'s don't force the real ones into
+           memory.  */
+        yy_state_t *yyss1 = yyss;
+        YYSTYPE *yyvs1 = yyvs;
 
-
-	/* Each stack pointer address is followed by the size of the
-	   data in use in that stack, in bytes.  This used to be a
-	   conditional around just the two extra args, but that might
-	   be undefined if yyoverflow is a macro.  */
-	yyoverflow (YY_("memory exhausted"),
-		    &yyss1, yysize * sizeof (*yyssp),
-		    &yyvs1, yysize * sizeof (*yyvsp),
-
-		    &yystacksize);
-
-	yyss = yyss1;
-	yyvs = yyvs1;
+        /* Each stack pointer address is followed by the size of the
+           data in use in that stack, in bytes.  This used to be a
+           conditional around just the two extra args, but that might
+           be undefined if yyoverflow is a macro.  */
+        yyoverflow (YY_("memory exhausted"),
+                    &yyss1, yysize * YYSIZEOF (*yyssp),
+                    &yyvs1, yysize * YYSIZEOF (*yyvsp),
+                    &yystacksize);
+        yyss = yyss1;
+        yyvs = yyvs1;
       }
-#else /* no yyoverflow */
-# ifndef YYSTACK_RELOCATE
-      goto yyexhaustedlab;
-# else
+# else /* defined YYSTACK_RELOCATE */
       /* Extend the stack our own way.  */
       if (YYMAXDEPTH <= yystacksize)
-	goto yyexhaustedlab;
+        YYNOMEM;
       yystacksize *= 2;
       if (YYMAXDEPTH < yystacksize)
-	yystacksize = YYMAXDEPTH;
+        yystacksize = YYMAXDEPTH;
 
       {
-	yytype_int16 *yyss1 = yyss;
-	union yyalloc *yyptr =
-	  (union yyalloc *) YYSTACK_ALLOC (YYSTACK_BYTES (yystacksize));
-	if (! yyptr)
-	  goto yyexhaustedlab;
-	YYSTACK_RELOCATE (yyss);
-	YYSTACK_RELOCATE (yyvs);
-
+        yy_state_t *yyss1 = yyss;
+        union yyalloc *yyptr =
+          YY_CAST (union yyalloc *,
+                   YYSTACK_ALLOC (YY_CAST (YYSIZE_T, YYSTACK_BYTES (yystacksize))));
+        if (! yyptr)
+          YYNOMEM;
+        YYSTACK_RELOCATE (yyss_alloc, yyss);
+        YYSTACK_RELOCATE (yyvs_alloc, yyvs);
 #  undef YYSTACK_RELOCATE
-	if (yyss1 != yyssa)
-	  YYSTACK_FREE (yyss1);
+        if (yyss1 != yyssa)
+          YYSTACK_FREE (yyss1);
       }
 # endif
-#endif /* no yyoverflow */
 
       yyssp = yyss + yysize - 1;
       yyvsp = yyvs + yysize - 1;
 
-
-      YYDPRINTF ((stderr, "Stack size increased to %lu\n",
-		  (unsigned long int) yystacksize));
+      YY_IGNORE_USELESS_CAST_BEGIN
+      YYDPRINTF ((stderr, "Stack size increased to %ld\n",
+                  YY_CAST (long, yystacksize)));
+      YY_IGNORE_USELESS_CAST_END
 
       if (yyss + yystacksize - 1 <= yyssp)
-	YYABORT;
+        YYABORT;
     }
+#endif /* !defined yyoverflow && !defined YYSTACK_RELOCATE */
 
-  YYDPRINTF ((stderr, "Entering state %d\n", yystate));
+
+  if (yystate == YYFINAL)
+    YYACCEPT;
 
   goto yybackup;
+
 
 /*-----------.
 | yybackup.  |
 `-----------*/
 yybackup:
-
   /* Do appropriate processing given the current state.  Read a
-     look-ahead token if we need one and don't already have one.  */
+     lookahead token if we need one and don't already have one.  */
 
-  /* First try to decide what to do without reference to look-ahead token.  */
+  /* First try to decide what to do without reference to lookahead token.  */
   yyn = yypact[yystate];
-  if (yyn == YYPACT_NINF)
+  if (yypact_value_is_default (yyn))
     goto yydefault;
 
-  /* Not known => get a look-ahead token if don't already have one.  */
+  /* Not known => get a lookahead token if don't already have one.  */
 
-  /* YYCHAR is either YYEMPTY or YYEOF or a valid look-ahead symbol.  */
-  if (yychar == YYEMPTY)
+  /* YYCHAR is either empty, or end-of-input, or a valid lookahead.  */
+  if (yychar == ASN1P_EMPTY)
     {
-      YYDPRINTF ((stderr, "Reading a token: "));
-      yychar = YYLEX;
+      YYDPRINTF ((stderr, "Reading a token\n"));
+      yychar = yylex (&yylval, yyscanner);
     }
 
-  if (yychar <= YYEOF)
+  if (yychar <= ASN1P_EOF)
     {
-      yychar = yytoken = YYEOF;
+      yychar = ASN1P_EOF;
+      yytoken = YYSYMBOL_YYEOF;
       YYDPRINTF ((stderr, "Now at end of input.\n"));
+    }
+  else if (yychar == ASN1P_error)
+    {
+      /* The scanner already issued an error message, process directly
+         to error recovery.  But do not keep the error token as
+         lookahead, it is too special and may lead us to an endless
+         loop in error recovery. */
+      yychar = ASN1P_UNDEF;
+      yytoken = YYSYMBOL_YYerror;
+      goto yyerrlab1;
     }
   else
     {
@@ -2282,30 +1922,26 @@ yybackup:
   yyn = yytable[yyn];
   if (yyn <= 0)
     {
-      if (yyn == 0 || yyn == YYTABLE_NINF)
-	goto yyerrlab;
+      if (yytable_value_is_error (yyn))
+        goto yyerrlab;
       yyn = -yyn;
       goto yyreduce;
     }
-
-  if (yyn == YYFINAL)
-    YYACCEPT;
 
   /* Count tokens shifted since error; after three, turn off error
      status.  */
   if (yyerrstatus)
     yyerrstatus--;
 
-  /* Shift the look-ahead token.  */
+  /* Shift the lookahead token.  */
   YY_SYMBOL_PRINT ("Shifting", yytoken, &yylval, &yylloc);
-
-  /* Discard the shifted token unless it is eof.  */
-  if (yychar != YYEOF)
-    yychar = YYEMPTY;
-
   yystate = yyn;
+  YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN
   *++yyvsp = yylval;
+  YY_IGNORE_MAYBE_UNINITIALIZED_END
 
+  /* Discard the shifted token.  */
+  yychar = ASN1P_EMPTY;
   goto yynewstate;
 
 
@@ -2320,14 +1956,14 @@ yydefault:
 
 
 /*-----------------------------.
-| yyreduce -- Do a reduction.  |
+| yyreduce -- do a reduction.  |
 `-----------------------------*/
 yyreduce:
   /* yyn is the number of a rule to reduce with.  */
   yylen = yyr2[yyn];
 
   /* If YYLEN is nonzero, implement the default value of the action:
-     `$$ = $1'.
+     '$$ = $1'.
 
      Otherwise, the following line sets YYVAL to garbage.
      This behavior is undocumented and Bison
@@ -2340,1038 +1976,1153 @@ yyreduce:
   YY_REDUCE_PRINT (yyn);
   switch (yyn)
     {
-        case 2:
-#line 414 "asn1p_y.y"
-    {
-		*(void **)param = (yyvsp[(2) - (2)].a_grammar);
+  case 2: /* ParsedGrammar: "UTF-8 byte order mark" ModuleList  */
+#line 418 "asn1p_y.y"
+                            {
+		*(void **)param = (yyvsp[0].a_grammar);
 	}
+#line 1985 "asn1p_y.c"
     break;
 
-  case 3:
-#line 417 "asn1p_y.y"
-    {
-		*(void **)param = (yyvsp[(1) - (1)].a_grammar);
+  case 3: /* ParsedGrammar: ModuleList  */
+#line 421 "asn1p_y.y"
+                     {
+		*(void **)param = (yyvsp[0].a_grammar);
 	}
+#line 1993 "asn1p_y.c"
     break;
 
-  case 4:
-#line 423 "asn1p_y.y"
-    {
+  case 4: /* ModuleList: ModuleDefinition  */
+#line 427 "asn1p_y.y"
+                         {
 		(yyval.a_grammar) = asn1p_new();
 		checkmem((yyval.a_grammar));
-		TQ_ADD(&((yyval.a_grammar)->modules), (yyvsp[(1) - (1)].a_module), mod_next);
+		TQ_ADD(&((yyval.a_grammar)->modules), (yyvsp[0].a_module), mod_next);
 	}
+#line 2003 "asn1p_y.c"
     break;
 
-  case 5:
-#line 428 "asn1p_y.y"
-    {
-		(yyval.a_grammar) = (yyvsp[(1) - (2)].a_grammar);
-		TQ_ADD(&((yyval.a_grammar)->modules), (yyvsp[(2) - (2)].a_module), mod_next);
+  case 5: /* ModuleList: ModuleList ModuleDefinition  */
+#line 432 "asn1p_y.y"
+                                      {
+		(yyval.a_grammar) = (yyvsp[-1].a_grammar);
+		TQ_ADD(&((yyval.a_grammar)->modules), (yyvsp[0].a_module), mod_next);
 	}
+#line 2012 "asn1p_y.c"
     break;
 
-  case 6:
-#line 445 "asn1p_y.y"
-    { currentModule = asn1p_module_new(); }
+  case 6: /* $@1: %empty  */
+#line 449 "asn1p_y.y"
+                    { currentModule = asn1p_module_new(); }
+#line 2018 "asn1p_y.c"
     break;
 
-  case 7:
-#line 450 "asn1p_y.y"
-    {
+  case 7: /* ModuleDefinition: TypeRefName $@1 optObjectIdentifier TOK_DEFINITIONS optModuleDefinitionFlags TOK_PPEQ TOK_BEGIN optModuleBody TOK_END  */
+#line 454 "asn1p_y.y"
+                        {
 
 		(yyval.a_module) = currentModule;
 
-		if((yyvsp[(8) - (9)].a_module)) {
+		if((yyvsp[-1].a_module)) {
 			asn1p_module_t tmp = *((yyval.a_module));
-			*((yyval.a_module)) = *((yyvsp[(8) - (9)].a_module));
-			*((yyvsp[(8) - (9)].a_module)) = tmp;
-			asn1p_module_free((yyvsp[(8) - (9)].a_module));
+			*((yyval.a_module)) = *((yyvsp[-1].a_module));
+			*((yyvsp[-1].a_module)) = tmp;
+			asn1p_module_free((yyvsp[-1].a_module));
 		} else {
 			/* There's a chance that a module is just plain empty */
 		}
 
-		(yyval.a_module)->ModuleName = (yyvsp[(1) - (9)].tv_str);
-		(yyval.a_module)->module_oid = (yyvsp[(3) - (9)].a_oid);
-		(yyval.a_module)->module_flags = (yyvsp[(5) - (9)].a_module_flags);
+		(yyval.a_module)->ModuleName = (yyvsp[-8].tv_str);
+		(yyval.a_module)->module_oid = (yyvsp[-6].a_oid);
+		(yyval.a_module)->module_flags = (yyvsp[-4].a_module_flags);
 	}
+#line 2040 "asn1p_y.c"
     break;
 
-  case 8:
-#line 474 "asn1p_y.y"
-    { (yyval.a_oid) = 0; }
+  case 8: /* optObjectIdentifier: %empty  */
+#line 478 "asn1p_y.y"
+        { (yyval.a_oid) = 0; }
+#line 2046 "asn1p_y.c"
     break;
 
-  case 9:
-#line 475 "asn1p_y.y"
-    { (yyval.a_oid) = (yyvsp[(1) - (1)].a_oid); }
-    break;
-
-  case 10:
+  case 9: /* optObjectIdentifier: ObjectIdentifier  */
 #line 479 "asn1p_y.y"
-    {
-		(yyval.a_oid) = (yyvsp[(2) - (3)].a_oid);
-	}
+                           { (yyval.a_oid) = (yyvsp[0].a_oid); }
+#line 2052 "asn1p_y.c"
     break;
 
-  case 11:
-#line 482 "asn1p_y.y"
-    {
+  case 10: /* ObjectIdentifier: '{' ObjectIdentifierBody '}'  */
+#line 483 "asn1p_y.y"
+                                     {
+		(yyval.a_oid) = (yyvsp[-1].a_oid);
+	}
+#line 2060 "asn1p_y.c"
+    break;
+
+  case 11: /* ObjectIdentifier: '{' '}'  */
+#line 486 "asn1p_y.y"
+                  {
 		(yyval.a_oid) = 0;
 	}
+#line 2068 "asn1p_y.c"
     break;
 
-  case 12:
-#line 488 "asn1p_y.y"
-    {
+  case 12: /* ObjectIdentifierBody: ObjectIdentifierElement  */
+#line 492 "asn1p_y.y"
+                                {
 		(yyval.a_oid) = asn1p_oid_new();
-		asn1p_oid_add_arc((yyval.a_oid), &(yyvsp[(1) - (1)].a_oid_arc));
-		if((yyvsp[(1) - (1)].a_oid_arc).name)
-			free((yyvsp[(1) - (1)].a_oid_arc).name);
+		asn1p_oid_add_arc((yyval.a_oid), &(yyvsp[0].a_oid_arc));
+		if((yyvsp[0].a_oid_arc).name)
+			free((yyvsp[0].a_oid_arc).name);
 	}
+#line 2079 "asn1p_y.c"
     break;
 
-  case 13:
-#line 494 "asn1p_y.y"
-    {
-		(yyval.a_oid) = (yyvsp[(1) - (2)].a_oid);
-		asn1p_oid_add_arc((yyval.a_oid), &(yyvsp[(2) - (2)].a_oid_arc));
-		if((yyvsp[(2) - (2)].a_oid_arc).name)
-			free((yyvsp[(2) - (2)].a_oid_arc).name);
+  case 13: /* ObjectIdentifierBody: ObjectIdentifierBody ObjectIdentifierElement  */
+#line 498 "asn1p_y.y"
+                                                       {
+		(yyval.a_oid) = (yyvsp[-1].a_oid);
+		asn1p_oid_add_arc((yyval.a_oid), &(yyvsp[0].a_oid_arc));
+		if((yyvsp[0].a_oid_arc).name)
+			free((yyvsp[0].a_oid_arc).name);
 	}
+#line 2090 "asn1p_y.c"
     break;
 
-  case 14:
-#line 503 "asn1p_y.y"
-    {					/* iso */
-		(yyval.a_oid_arc).name = (yyvsp[(1) - (1)].tv_str);
+  case 14: /* ObjectIdentifierElement: Identifier  */
+#line 507 "asn1p_y.y"
+                   {					/* iso */
+		(yyval.a_oid_arc).name = (yyvsp[0].tv_str);
 		(yyval.a_oid_arc).number = -1;
 	}
+#line 2099 "asn1p_y.c"
     break;
 
-  case 15:
-#line 507 "asn1p_y.y"
-    {		/* iso(1) */
-		(yyval.a_oid_arc).name = (yyvsp[(1) - (4)].tv_str);
-		(yyval.a_oid_arc).number = (yyvsp[(3) - (4)].a_int);
-	}
-    break;
-
-  case 16:
+  case 15: /* ObjectIdentifierElement: Identifier '(' "number" ')'  */
 #line 511 "asn1p_y.y"
-    {					/* 1 */
+                                        {		/* iso(1) */
+		(yyval.a_oid_arc).name = (yyvsp[-3].tv_str);
+		(yyval.a_oid_arc).number = (yyvsp[-1].a_int);
+	}
+#line 2108 "asn1p_y.c"
+    break;
+
+  case 16: /* ObjectIdentifierElement: "number"  */
+#line 515 "asn1p_y.y"
+                     {					/* 1 */
 		(yyval.a_oid_arc).name = 0;
-		(yyval.a_oid_arc).number = (yyvsp[(1) - (1)].a_int);
+		(yyval.a_oid_arc).number = (yyvsp[0].a_int);
 	}
+#line 2117 "asn1p_y.c"
     break;
 
-  case 17:
-#line 521 "asn1p_y.y"
-    { (yyval.a_module_flags) = MSF_NOFLAGS; }
+  case 17: /* optModuleDefinitionFlags: %empty  */
+#line 525 "asn1p_y.y"
+        { (yyval.a_module_flags) = MSF_NOFLAGS; }
+#line 2123 "asn1p_y.c"
     break;
 
-  case 18:
-#line 522 "asn1p_y.y"
-    {
-		(yyval.a_module_flags) = (yyvsp[(1) - (1)].a_module_flags);
+  case 18: /* optModuleDefinitionFlags: ModuleDefinitionFlags  */
+#line 526 "asn1p_y.y"
+                                {
+		(yyval.a_module_flags) = (yyvsp[0].a_module_flags);
 	}
+#line 2131 "asn1p_y.c"
     break;
 
-  case 19:
-#line 531 "asn1p_y.y"
-    {
-		(yyval.a_module_flags) = (yyvsp[(1) - (1)].a_module_flags);
+  case 19: /* ModuleDefinitionFlags: ModuleDefinitionFlag  */
+#line 535 "asn1p_y.y"
+                             {
+		(yyval.a_module_flags) = (yyvsp[0].a_module_flags);
 	}
+#line 2139 "asn1p_y.c"
     break;
 
-  case 20:
-#line 534 "asn1p_y.y"
-    {
-		(yyval.a_module_flags) = (yyvsp[(1) - (2)].a_module_flags) | (yyvsp[(2) - (2)].a_module_flags);
+  case 20: /* ModuleDefinitionFlags: ModuleDefinitionFlags ModuleDefinitionFlag  */
+#line 538 "asn1p_y.y"
+                                                     {
+		(yyval.a_module_flags) = (yyvsp[-1].a_module_flags) | (yyvsp[0].a_module_flags);
 	}
+#line 2147 "asn1p_y.c"
     break;
 
-  case 21:
-#line 543 "asn1p_y.y"
-    {
+  case 21: /* ModuleDefinitionFlag: TOK_EXPLICIT TOK_TAGS  */
+#line 547 "asn1p_y.y"
+                              {
 		(yyval.a_module_flags) = MSF_EXPLICIT_TAGS;
 	}
+#line 2155 "asn1p_y.c"
     break;
 
-  case 22:
-#line 546 "asn1p_y.y"
-    {
+  case 22: /* ModuleDefinitionFlag: TOK_IMPLICIT TOK_TAGS  */
+#line 550 "asn1p_y.y"
+                                {
 		(yyval.a_module_flags) = MSF_IMPLICIT_TAGS;
 	}
+#line 2163 "asn1p_y.c"
     break;
 
-  case 23:
-#line 549 "asn1p_y.y"
-    {
+  case 23: /* ModuleDefinitionFlag: TOK_AUTOMATIC TOK_TAGS  */
+#line 553 "asn1p_y.y"
+                                 {
 		(yyval.a_module_flags) = MSF_AUTOMATIC_TAGS;
 	}
+#line 2171 "asn1p_y.c"
     break;
 
-  case 24:
-#line 552 "asn1p_y.y"
-    {
+  case 24: /* ModuleDefinitionFlag: TOK_EXTENSIBILITY TOK_IMPLIED  */
+#line 556 "asn1p_y.y"
+                                        {
 		(yyval.a_module_flags) = MSF_EXTENSIBILITY_IMPLIED;
 	}
+#line 2179 "asn1p_y.c"
     break;
 
-  case 25:
-#line 556 "asn1p_y.y"
-    {
+  case 25: /* ModuleDefinitionFlag: TOK_capitalreference TOK_INSTRUCTIONS  */
+#line 560 "asn1p_y.y"
+                                                {
 		/* X.680Amd1 specifies TAG and XER */
-		if(strcmp((yyvsp[(1) - (2)].tv_str), "TAG") == 0) {
+		if(strcmp((yyvsp[-1].tv_str), "TAG") == 0) {
 		 	(yyval.a_module_flags) = MSF_TAG_INSTRUCTIONS;
-		} else if(strcmp((yyvsp[(1) - (2)].tv_str), "XER") == 0) {
+		} else if(strcmp((yyvsp[-1].tv_str), "XER") == 0) {
 		 	(yyval.a_module_flags) = MSF_XER_INSTRUCTIONS;
 		} else {
 			fprintf(stderr,
 				"WARNING: %s INSTRUCTIONS at %s:%d: "
 				"Unrecognized encoding reference\n",
-				(yyvsp[(1) - (2)].tv_str), ASN_FILENAME, yylineno);
+				(yyvsp[-1].tv_str), ASN_FILENAME, asn1p_get_lineno(yyscanner));
 		 	(yyval.a_module_flags) = MSF_unk_INSTRUCTIONS;
 		}
-		free((yyvsp[(1) - (2)].tv_str));
+		free((yyvsp[-1].tv_str));
 	}
+#line 2199 "asn1p_y.c"
     break;
 
-  case 26:
-#line 577 "asn1p_y.y"
-    { (yyval.a_module) = 0; }
+  case 26: /* optModuleBody: %empty  */
+#line 581 "asn1p_y.y"
+        { (yyval.a_module) = 0; }
+#line 2205 "asn1p_y.c"
     break;
 
-  case 27:
-#line 578 "asn1p_y.y"
-    {
-		(yyval.a_module) = (yyvsp[(1) - (1)].a_module);
+  case 27: /* optModuleBody: ModuleBody  */
+#line 582 "asn1p_y.y"
+                     {
+		(yyval.a_module) = (yyvsp[0].a_module);
 	}
+#line 2213 "asn1p_y.c"
     break;
 
-  case 28:
-#line 587 "asn1p_y.y"
-    {
+  case 28: /* ModuleBody: optExports optImports AssignmentList  */
+#line 591 "asn1p_y.y"
+                                             {
 		(yyval.a_module) = asn1p_module_new();
-		AL_IMPORT((yyval.a_module), exports, (yyvsp[(1) - (3)].a_module), xp_next);
-		AL_IMPORT((yyval.a_module), imports, (yyvsp[(2) - (3)].a_module), xp_next);
-		asn1p_module_move_members((yyval.a_module), (yyvsp[(3) - (3)].a_module));
+		AL_IMPORT((yyval.a_module), exports, (yyvsp[-2].a_module), xp_next);
+		AL_IMPORT((yyval.a_module), imports, (yyvsp[-1].a_module), xp_next);
+		asn1p_module_move_members((yyval.a_module), (yyvsp[0].a_module));
 
-		asn1p_module_free((yyvsp[(1) - (3)].a_module));
-		asn1p_module_free((yyvsp[(2) - (3)].a_module));
-		asn1p_module_free((yyvsp[(3) - (3)].a_module));
+		asn1p_module_free((yyvsp[-2].a_module));
+		asn1p_module_free((yyvsp[-1].a_module));
+		asn1p_module_free((yyvsp[0].a_module));
 	}
+#line 2228 "asn1p_y.c"
     break;
 
-  case 29:
-#line 600 "asn1p_y.y"
-    {
-		(yyval.a_module) = (yyvsp[(1) - (1)].a_module);
+  case 29: /* AssignmentList: Assignment  */
+#line 604 "asn1p_y.y"
+                   {
+		(yyval.a_module) = (yyvsp[0].a_module);
 	}
+#line 2236 "asn1p_y.c"
     break;
 
-  case 30:
-#line 603 "asn1p_y.y"
-    {
-		if((yyvsp[(1) - (2)].a_module)) {
-			(yyval.a_module) = (yyvsp[(1) - (2)].a_module);
+  case 30: /* AssignmentList: AssignmentList Assignment  */
+#line 607 "asn1p_y.y"
+                                    {
+		if((yyvsp[-1].a_module)) {
+			(yyval.a_module) = (yyvsp[-1].a_module);
 		} else {
-			(yyval.a_module) = (yyvsp[(2) - (2)].a_module);
+			(yyval.a_module) = (yyvsp[0].a_module);
 			break;
 		}
-        asn1p_module_move_members((yyval.a_module), (yyvsp[(2) - (2)].a_module));
-		asn1p_module_free((yyvsp[(2) - (2)].a_module));
+        asn1p_module_move_members((yyval.a_module), (yyvsp[0].a_module));
+		asn1p_module_free((yyvsp[0].a_module));
 	}
+#line 2251 "asn1p_y.c"
     break;
 
-  case 31:
-#line 620 "asn1p_y.y"
-    {
+  case 31: /* Assignment: DataTypeReference  */
+#line 624 "asn1p_y.y"
+                          {
 		(yyval.a_module) = asn1p_module_new();
 		checkmem((yyval.a_module));
-		assert((yyvsp[(1) - (1)].a_expr)->expr_type != A1TC_INVALID);
-		assert((yyvsp[(1) - (1)].a_expr)->meta_type != AMT_INVALID);
-		asn1p_module_member_add((yyval.a_module), (yyvsp[(1) - (1)].a_expr));
+		assert((yyvsp[0].a_expr)->expr_type != A1TC_INVALID);
+		assert((yyvsp[0].a_expr)->meta_type != AMT_INVALID);
+		asn1p_module_member_add((yyval.a_module), (yyvsp[0].a_expr));
 	}
+#line 2263 "asn1p_y.c"
     break;
 
-  case 32:
-#line 627 "asn1p_y.y"
-    {
+  case 32: /* Assignment: ValueAssignment  */
+#line 631 "asn1p_y.y"
+                          {
 		(yyval.a_module) = asn1p_module_new();
 		checkmem((yyval.a_module));
-		assert((yyvsp[(1) - (1)].a_expr)->expr_type != A1TC_INVALID);
-		assert((yyvsp[(1) - (1)].a_expr)->meta_type != AMT_INVALID);
-		asn1p_module_member_add((yyval.a_module), (yyvsp[(1) - (1)].a_expr));
+		assert((yyvsp[0].a_expr)->expr_type != A1TC_INVALID);
+		assert((yyvsp[0].a_expr)->meta_type != AMT_INVALID);
+		asn1p_module_member_add((yyval.a_module), (yyvsp[0].a_expr));
 	}
+#line 2275 "asn1p_y.c"
     break;
 
-  case 33:
-#line 641 "asn1p_y.y"
-    {
+  case 33: /* Assignment: ValueSetTypeAssignment  */
+#line 645 "asn1p_y.y"
+                                 {
 		(yyval.a_module) = asn1p_module_new();
 		checkmem((yyval.a_module));
-		assert((yyvsp[(1) - (1)].a_expr)->expr_type != A1TC_INVALID);
-		assert((yyvsp[(1) - (1)].a_expr)->meta_type != AMT_INVALID);
-		asn1p_module_member_add((yyval.a_module), (yyvsp[(1) - (1)].a_expr));
+		assert((yyvsp[0].a_expr)->expr_type != A1TC_INVALID);
+		assert((yyvsp[0].a_expr)->meta_type != AMT_INVALID);
+		asn1p_module_member_add((yyval.a_module), (yyvsp[0].a_expr));
 	}
+#line 2287 "asn1p_y.c"
     break;
 
-  case 34:
-#line 649 "asn1p_y.y"
-    { asn1p_lexer_hack_push_encoding_control(); }
+  case 34: /* $@2: %empty  */
+#line 653 "asn1p_y.y"
+                { asn1p_lexer_hack_push_encoding_control(yyscanner); }
+#line 2293 "asn1p_y.c"
     break;
 
-  case 35:
-#line 650 "asn1p_y.y"
-    {
+  case 35: /* Assignment: TOK_ENCODING_CONTROL TOK_capitalreference $@2  */
+#line 654 "asn1p_y.y"
+                        {
 		fprintf(stderr,
 			"WARNING: ENCODING-CONTROL %s "
 			"specification at %s:%d ignored\n",
-			(yyvsp[(2) - (3)].tv_str), ASN_FILENAME, yylineno);
-		free((yyvsp[(2) - (3)].tv_str));
+			(yyvsp[-1].tv_str), ASN_FILENAME, asn1p_get_lineno(yyscanner));
+		free((yyvsp[-1].tv_str));
 		(yyval.a_module) = 0;
 	}
+#line 2306 "asn1p_y.c"
     break;
 
-  case 36:
-#line 662 "asn1p_y.y"
-    {
-		return yyerror(
+  case 36: /* Assignment: BasicString  */
+#line 666 "asn1p_y.y"
+                      {
+		return yyerror(param, yyscanner,
 			"Attempt to redefine a standard basic string type, "
 			"please comment out or remove this type redefinition.");
 	}
+#line 2316 "asn1p_y.c"
     break;
 
-  case 37:
-#line 675 "asn1p_y.y"
-    { (yyval.a_module) = 0; }
-    break;
-
-  case 39:
+  case 37: /* optImports: %empty  */
 #line 679 "asn1p_y.y"
-    {
+        { (yyval.a_module) = 0; }
+#line 2322 "asn1p_y.c"
+    break;
+
+  case 39: /* ImportsDefinition: TOK_IMPORTS optImportsBundleSet ';'  */
+#line 683 "asn1p_y.y"
+                                            {
 		if(!saved_aid && 0)
-			return yyerror("Unterminated IMPORTS FROM, "
+			return yyerror(param, yyscanner, "Unterminated IMPORTS FROM, "
 					"expected semicolon ';'");
 		saved_aid = 0;
-		(yyval.a_module) = (yyvsp[(2) - (3)].a_module);
+		(yyval.a_module) = (yyvsp[-1].a_module);
 	}
+#line 2334 "asn1p_y.c"
     break;
 
-  case 40:
-#line 689 "asn1p_y.y"
-    {
-		return yyerror("Empty IMPORTS list");
+  case 40: /* ImportsDefinition: TOK_IMPORTS TOK_FROM  */
+#line 693 "asn1p_y.y"
+                                         {
+		return yyerror(param, yyscanner, "Empty IMPORTS list");
 	}
+#line 2342 "asn1p_y.c"
     break;
 
-  case 41:
-#line 695 "asn1p_y.y"
-    { (yyval.a_module) = asn1p_module_new(); }
-    break;
-
-  case 43:
+  case 41: /* optImportsBundleSet: %empty  */
 #line 699 "asn1p_y.y"
-    {
+        { (yyval.a_module) = asn1p_module_new(); }
+#line 2348 "asn1p_y.c"
+    break;
+
+  case 43: /* ImportsBundleSet: ImportsBundle  */
+#line 703 "asn1p_y.y"
+                      {
 		(yyval.a_module) = asn1p_module_new();
 		checkmem((yyval.a_module));
-		TQ_ADD(&((yyval.a_module)->imports), (yyvsp[(1) - (1)].a_xports), xp_next);
+		TQ_ADD(&((yyval.a_module)->imports), (yyvsp[0].a_xports), xp_next);
 	}
+#line 2358 "asn1p_y.c"
     break;
 
-  case 44:
-#line 704 "asn1p_y.y"
-    {
-		(yyval.a_module) = (yyvsp[(1) - (2)].a_module);
-		TQ_ADD(&((yyval.a_module)->imports), (yyvsp[(2) - (2)].a_xports), xp_next);
+  case 44: /* ImportsBundleSet: ImportsBundleSet ImportsBundle  */
+#line 708 "asn1p_y.y"
+                                         {
+		(yyval.a_module) = (yyvsp[-1].a_module);
+		TQ_ADD(&((yyval.a_module)->imports), (yyvsp[0].a_xports), xp_next);
 	}
+#line 2367 "asn1p_y.c"
     break;
 
-  case 45:
-#line 711 "asn1p_y.y"
-    { memset(&(yyval.a_aid), 0, sizeof((yyval.a_aid))); }
+  case 45: /* AssignedIdentifier: %empty  */
+#line 715 "asn1p_y.y"
+        { memset(&(yyval.a_aid), 0, sizeof((yyval.a_aid))); }
+#line 2373 "asn1p_y.c"
     break;
 
-  case 46:
-#line 712 "asn1p_y.y"
-    { (yyval.a_aid).oid = (yyvsp[(1) - (1)].a_oid); }
-    break;
-
-  case 47:
+  case 46: /* AssignedIdentifier: ObjectIdentifier  */
 #line 716 "asn1p_y.y"
-    {
-		(yyval.a_xports) = (yyvsp[(1) - (4)].a_xports);
-		(yyval.a_xports)->fromModuleName = (yyvsp[(3) - (4)].tv_str);
-		(yyval.a_xports)->identifier = (yyvsp[(4) - (4)].a_aid);
+                           { (yyval.a_aid).oid = (yyvsp[0].a_oid); }
+#line 2379 "asn1p_y.c"
+    break;
+
+  case 47: /* ImportsBundle: ImportsList TOK_FROM TypeRefName AssignedIdentifier  */
+#line 720 "asn1p_y.y"
+                                                            {
+		(yyval.a_xports) = (yyvsp[-3].a_xports);
+		(yyval.a_xports)->fromModuleName = (yyvsp[-1].tv_str);
+		(yyval.a_xports)->identifier = (yyvsp[0].a_aid);
 		/* This stupid thing is used for look-back hack. */
 		saved_aid = (yyval.a_xports)->identifier.oid ? 0 : &((yyval.a_xports)->identifier);
 		checkmem((yyval.a_xports));
 	}
+#line 2392 "asn1p_y.c"
     break;
 
-  case 48:
-#line 727 "asn1p_y.y"
-    {
+  case 48: /* ImportsList: ImportsElement  */
+#line 731 "asn1p_y.y"
+                       {
 		(yyval.a_xports) = asn1p_xports_new();
 		checkmem((yyval.a_xports));
-		TQ_ADD(&((yyval.a_xports)->xp_members), (yyvsp[(1) - (1)].a_expr), next);
+		TQ_ADD(&((yyval.a_xports)->xp_members), (yyvsp[0].a_expr), next);
 	}
+#line 2402 "asn1p_y.c"
     break;
 
-  case 49:
-#line 732 "asn1p_y.y"
-    {
-		(yyval.a_xports) = (yyvsp[(1) - (3)].a_xports);
-		TQ_ADD(&((yyval.a_xports)->xp_members), (yyvsp[(3) - (3)].a_expr), next);
+  case 49: /* ImportsList: ImportsList ',' ImportsElement  */
+#line 736 "asn1p_y.y"
+                                         {
+		(yyval.a_xports) = (yyvsp[-2].a_xports);
+		TQ_ADD(&((yyval.a_xports)->xp_members), (yyvsp[0].a_expr), next);
 	}
+#line 2411 "asn1p_y.c"
     break;
 
-  case 50:
-#line 739 "asn1p_y.y"
-    {
+  case 50: /* ImportsElement: TypeRefName  */
+#line 743 "asn1p_y.y"
+                    {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
-		(yyval.a_expr)->Identifier = (yyvsp[(1) - (1)].tv_str);
+		(yyval.a_expr)->Identifier = (yyvsp[0].tv_str);
 		(yyval.a_expr)->expr_type = A1TC_REFERENCE;
 	}
+#line 2422 "asn1p_y.c"
     break;
 
-  case 51:
-#line 745 "asn1p_y.y"
-    {		/* Completely equivalent to above */
+  case 51: /* ImportsElement: TypeRefName '{' '}'  */
+#line 749 "asn1p_y.y"
+                              {		/* Completely equivalent to above */
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
-		(yyval.a_expr)->Identifier = (yyvsp[(1) - (3)].tv_str);
+		(yyval.a_expr)->Identifier = (yyvsp[-2].tv_str);
 		(yyval.a_expr)->expr_type = A1TC_REFERENCE;
 	}
+#line 2433 "asn1p_y.c"
     break;
 
-  case 52:
-#line 751 "asn1p_y.y"
-    {
+  case 52: /* ImportsElement: Identifier  */
+#line 755 "asn1p_y.y"
+                     {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
-		(yyval.a_expr)->Identifier = (yyvsp[(1) - (1)].tv_str);
+		(yyval.a_expr)->Identifier = (yyvsp[0].tv_str);
 		(yyval.a_expr)->expr_type = A1TC_REFERENCE;
 	}
+#line 2444 "asn1p_y.c"
     break;
 
-  case 53:
-#line 761 "asn1p_y.y"
-    { (yyval.a_module) = 0; }
+  case 53: /* optExports: %empty  */
+#line 765 "asn1p_y.y"
+        { (yyval.a_module) = 0; }
+#line 2450 "asn1p_y.c"
     break;
 
-  case 54:
-#line 762 "asn1p_y.y"
-    {
+  case 54: /* optExports: ExportsDefinition  */
+#line 766 "asn1p_y.y"
+                            {
 		(yyval.a_module) = asn1p_module_new();
 		checkmem((yyval.a_module));
-		if((yyvsp[(1) - (1)].a_xports)) {
-			TQ_ADD(&((yyval.a_module)->exports), (yyvsp[(1) - (1)].a_xports), xp_next);
+		if((yyvsp[0].a_xports)) {
+			TQ_ADD(&((yyval.a_module)->exports), (yyvsp[0].a_xports), xp_next);
 		} else {
 			/* "EXPORTS ALL;" */
 		}
 	}
+#line 2464 "asn1p_y.c"
     break;
 
-  case 55:
-#line 774 "asn1p_y.y"
-    {
-		(yyval.a_xports) = (yyvsp[(2) - (3)].a_xports);
+  case 55: /* ExportsDefinition: TOK_EXPORTS ExportsBody ';'  */
+#line 778 "asn1p_y.y"
+                                    {
+		(yyval.a_xports) = (yyvsp[-1].a_xports);
 	}
+#line 2472 "asn1p_y.c"
     break;
 
-  case 56:
-#line 777 "asn1p_y.y"
-    {
+  case 56: /* ExportsDefinition: TOK_EXPORTS TOK_ALL ';'  */
+#line 781 "asn1p_y.y"
+                                  {
 		(yyval.a_xports) = 0;
 	}
+#line 2480 "asn1p_y.c"
     break;
 
-  case 57:
-#line 780 "asn1p_y.y"
-    {
+  case 57: /* ExportsDefinition: TOK_EXPORTS ';'  */
+#line 784 "asn1p_y.y"
+                          {
 		/* Empty EXPORTS clause effectively prohibits export. */
 		(yyval.a_xports) = asn1p_xports_new();
 		checkmem((yyval.a_xports));
 	}
+#line 2490 "asn1p_y.c"
     break;
 
-  case 58:
-#line 788 "asn1p_y.y"
-    {
+  case 58: /* ExportsBody: ExportsElement  */
+#line 792 "asn1p_y.y"
+                       {
 		(yyval.a_xports) = asn1p_xports_new();
 		assert((yyval.a_xports));
-		TQ_ADD(&((yyval.a_xports)->xp_members), (yyvsp[(1) - (1)].a_expr), next);
+		TQ_ADD(&((yyval.a_xports)->xp_members), (yyvsp[0].a_expr), next);
 	}
+#line 2500 "asn1p_y.c"
     break;
 
-  case 59:
-#line 793 "asn1p_y.y"
-    {
-		(yyval.a_xports) = (yyvsp[(1) - (3)].a_xports);
-		TQ_ADD(&((yyval.a_xports)->xp_members), (yyvsp[(3) - (3)].a_expr), next);
+  case 59: /* ExportsBody: ExportsBody ',' ExportsElement  */
+#line 797 "asn1p_y.y"
+                                         {
+		(yyval.a_xports) = (yyvsp[-2].a_xports);
+		TQ_ADD(&((yyval.a_xports)->xp_members), (yyvsp[0].a_expr), next);
 	}
+#line 2509 "asn1p_y.c"
     break;
 
-  case 60:
-#line 800 "asn1p_y.y"
-    {
+  case 60: /* ExportsElement: TypeRefName  */
+#line 804 "asn1p_y.y"
+                    {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
-		(yyval.a_expr)->Identifier = (yyvsp[(1) - (1)].tv_str);
+		(yyval.a_expr)->Identifier = (yyvsp[0].tv_str);
 		(yyval.a_expr)->expr_type = A1TC_EXPORTVAR;
 	}
+#line 2520 "asn1p_y.c"
     break;
 
-  case 61:
-#line 806 "asn1p_y.y"
-    {
+  case 61: /* ExportsElement: TypeRefName '{' '}'  */
+#line 810 "asn1p_y.y"
+                              {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
-		(yyval.a_expr)->Identifier = (yyvsp[(1) - (3)].tv_str);
+		(yyval.a_expr)->Identifier = (yyvsp[-2].tv_str);
 		(yyval.a_expr)->expr_type = A1TC_EXPORTVAR;
 	}
+#line 2531 "asn1p_y.c"
     break;
 
-  case 62:
-#line 812 "asn1p_y.y"
-    {
+  case 62: /* ExportsElement: Identifier  */
+#line 816 "asn1p_y.y"
+                     {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
-		(yyval.a_expr)->Identifier = (yyvsp[(1) - (1)].tv_str);
+		(yyval.a_expr)->Identifier = (yyvsp[0].tv_str);
 		(yyval.a_expr)->expr_type = A1TC_EXPORTVAR;
 	}
+#line 2542 "asn1p_y.c"
     break;
 
-  case 63:
-#line 821 "asn1p_y.y"
-    { (yyval.a_constr) = (yyvsp[(2) - (3)].a_constr); }
+  case 63: /* ValueSet: '{' ElementSetSpecs '}'  */
+#line 825 "asn1p_y.y"
+                                  { (yyval.a_constr) = (yyvsp[-1].a_constr); }
+#line 2548 "asn1p_y.c"
     break;
 
-  case 64:
-#line 824 "asn1p_y.y"
-    {
-		(yyval.a_expr) = (yyvsp[(2) - (4)].a_expr);
+  case 64: /* ValueSetTypeAssignment: TypeRefName Type TOK_PPEQ ValueSet  */
+#line 828 "asn1p_y.y"
+                                           {
+		(yyval.a_expr) = (yyvsp[-2].a_expr);
 		assert((yyval.a_expr)->Identifier == 0);
-		(yyval.a_expr)->Identifier = (yyvsp[(1) - (4)].tv_str);
+		(yyval.a_expr)->Identifier = (yyvsp[-3].tv_str);
 		(yyval.a_expr)->meta_type = AMT_VALUESET;
-		(yyval.a_expr)->constraints = (yyvsp[(4) - (4)].a_constr);
+		(yyval.a_expr)->constraints = (yyvsp[0].a_constr);
 	}
+#line 2560 "asn1p_y.c"
     break;
 
-  case 65:
-#line 844 "asn1p_y.y"
-    {
+  case 65: /* DefinedType: ComplexTypeReference  */
+#line 848 "asn1p_y.y"
+                             {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
-		(yyval.a_expr)->reference = (yyvsp[(1) - (1)].a_ref);
+		(yyval.a_expr)->reference = (yyvsp[0].a_ref);
 		(yyval.a_expr)->expr_type = A1TC_REFERENCE;
 		(yyval.a_expr)->meta_type = AMT_TYPEREF;
 	}
+#line 2572 "asn1p_y.c"
     break;
 
-  case 66:
-#line 854 "asn1p_y.y"
-    {
+  case 66: /* DefinedType: ComplexTypeReference '{' ActualParameterList '}'  */
+#line 858 "asn1p_y.y"
+                                                           {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
-		(yyval.a_expr)->reference = (yyvsp[(1) - (4)].a_ref);
-		(yyval.a_expr)->rhs_pspecs = (yyvsp[(3) - (4)].a_expr);
+		(yyval.a_expr)->reference = (yyvsp[-3].a_ref);
+		(yyval.a_expr)->rhs_pspecs = (yyvsp[-1].a_expr);
 		(yyval.a_expr)->expr_type = A1TC_REFERENCE;
 		(yyval.a_expr)->meta_type = AMT_TYPEREF;
 	}
+#line 2585 "asn1p_y.c"
     break;
 
-  case 67:
-#line 874 "asn1p_y.y"
-    {
-		(yyval.a_expr) = (yyvsp[(3) - (3)].a_expr);
-		(yyval.a_expr)->Identifier = (yyvsp[(1) - (3)].tv_str);
+  case 67: /* DataTypeReference: TypeRefName TOK_PPEQ Type  */
+#line 878 "asn1p_y.y"
+                                  {
+		(yyval.a_expr) = (yyvsp[0].a_expr);
+		(yyval.a_expr)->Identifier = (yyvsp[-2].tv_str);
 		assert((yyval.a_expr)->expr_type);
 		assert((yyval.a_expr)->meta_type);
 	}
+#line 2596 "asn1p_y.c"
     break;
 
-  case 68:
-#line 880 "asn1p_y.y"
-    {
-		(yyval.a_expr) = (yyvsp[(3) - (3)].a_expr);
-		(yyval.a_expr)->Identifier = (yyvsp[(1) - (3)].tv_str);
+  case 68: /* DataTypeReference: TypeRefName TOK_PPEQ ObjectClass  */
+#line 884 "asn1p_y.y"
+                                           {
+		(yyval.a_expr) = (yyvsp[0].a_expr);
+		(yyval.a_expr)->Identifier = (yyvsp[-2].tv_str);
 		assert((yyval.a_expr)->expr_type == A1TC_CLASSDEF);
 		assert((yyval.a_expr)->meta_type == AMT_OBJECTCLASS);
 	}
+#line 2607 "asn1p_y.c"
     break;
 
-  case 69:
-#line 896 "asn1p_y.y"
-    {
-		(yyval.a_expr) = (yyvsp[(6) - (6)].a_expr);
-		(yyval.a_expr)->Identifier = (yyvsp[(1) - (6)].tv_str);
-		(yyval.a_expr)->lhs_params = (yyvsp[(3) - (6)].a_plist);
+  case 69: /* DataTypeReference: TypeRefName '{' ParameterArgumentList '}' TOK_PPEQ Type  */
+#line 900 "asn1p_y.y"
+                                                                  {
+		(yyval.a_expr) = (yyvsp[0].a_expr);
+		(yyval.a_expr)->Identifier = (yyvsp[-5].tv_str);
+		(yyval.a_expr)->lhs_params = (yyvsp[-3].a_plist);
 	}
+#line 2617 "asn1p_y.c"
     break;
 
-  case 70:
-#line 902 "asn1p_y.y"
-    {
-		(yyval.a_expr) = (yyvsp[(6) - (6)].a_expr);
-		(yyval.a_expr)->Identifier = (yyvsp[(1) - (6)].tv_str);
-		(yyval.a_expr)->lhs_params = (yyvsp[(3) - (6)].a_plist);
+  case 70: /* DataTypeReference: TypeRefName '{' ParameterArgumentList '}' TOK_PPEQ ObjectClass  */
+#line 906 "asn1p_y.y"
+                                                                         {
+		(yyval.a_expr) = (yyvsp[0].a_expr);
+		(yyval.a_expr)->Identifier = (yyvsp[-5].tv_str);
+		(yyval.a_expr)->lhs_params = (yyvsp[-3].a_plist);
 	}
+#line 2627 "asn1p_y.c"
     break;
 
-  case 71:
-#line 910 "asn1p_y.y"
-    {
+  case 71: /* ParameterArgumentList: ParameterArgumentName  */
+#line 914 "asn1p_y.y"
+                              {
 		int ret;
-		(yyval.a_plist) = asn1p_paramlist_new(yylineno);
+		(yyval.a_plist) = asn1p_paramlist_new(asn1p_get_lineno(yyscanner));
 		checkmem((yyval.a_plist));
-		ret = asn1p_paramlist_add_param((yyval.a_plist), (yyvsp[(1) - (1)].a_parg).governor, (yyvsp[(1) - (1)].a_parg).argument);
+		ret = asn1p_paramlist_add_param((yyval.a_plist), (yyvsp[0].a_parg).governor, (yyvsp[0].a_parg).argument);
 		checkmem(ret == 0);
-		asn1p_ref_free((yyvsp[(1) - (1)].a_parg).governor);
-		free((yyvsp[(1) - (1)].a_parg).argument);
+		asn1p_ref_free((yyvsp[0].a_parg).governor);
+		free((yyvsp[0].a_parg).argument);
 	}
+#line 2641 "asn1p_y.c"
     break;
 
-  case 72:
-#line 919 "asn1p_y.y"
-    {
+  case 72: /* ParameterArgumentList: ParameterArgumentList ',' ParameterArgumentName  */
+#line 923 "asn1p_y.y"
+                                                          {
 		int ret;
-		(yyval.a_plist) = (yyvsp[(1) - (3)].a_plist);
-		ret = asn1p_paramlist_add_param((yyval.a_plist), (yyvsp[(3) - (3)].a_parg).governor, (yyvsp[(3) - (3)].a_parg).argument);
+		(yyval.a_plist) = (yyvsp[-2].a_plist);
+		ret = asn1p_paramlist_add_param((yyval.a_plist), (yyvsp[0].a_parg).governor, (yyvsp[0].a_parg).argument);
 		checkmem(ret == 0);
-		asn1p_ref_free((yyvsp[(3) - (3)].a_parg).governor);
-		free((yyvsp[(3) - (3)].a_parg).argument);
+		asn1p_ref_free((yyvsp[0].a_parg).governor);
+		free((yyvsp[0].a_parg).argument);
 	}
+#line 2654 "asn1p_y.c"
     break;
 
-  case 73:
-#line 930 "asn1p_y.y"
-    {
-		(yyval.a_parg).governor = NULL;
-		(yyval.a_parg).argument = (yyvsp[(1) - (1)].tv_str);
-	}
-    break;
-
-  case 74:
+  case 73: /* ParameterArgumentName: TypeRefName  */
 #line 934 "asn1p_y.y"
-    {
-		int ret;
-		(yyval.a_parg).governor = asn1p_ref_new(yylineno, currentModule);
-		ret = asn1p_ref_add_component((yyval.a_parg).governor, (yyvsp[(1) - (3)].tv_str), 0);
-		checkmem(ret == 0);
-		(yyval.a_parg).argument = (yyvsp[(3) - (3)].tv_str);
-		free((yyvsp[(1) - (3)].tv_str));
+                    {
+		(yyval.a_parg).governor = NULL;
+		(yyval.a_parg).argument = (yyvsp[0].tv_str);
 	}
+#line 2663 "asn1p_y.c"
     break;
 
-  case 75:
-#line 942 "asn1p_y.y"
-    {
+  case 74: /* ParameterArgumentName: TypeRefName ':' Identifier  */
+#line 938 "asn1p_y.y"
+                                     {
 		int ret;
-		(yyval.a_parg).governor = asn1p_ref_new(yylineno, currentModule);
-		ret = asn1p_ref_add_component((yyval.a_parg).governor, (yyvsp[(1) - (3)].tv_str), 0);
+		(yyval.a_parg).governor = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
+		ret = asn1p_ref_add_component((yyval.a_parg).governor, (yyvsp[-2].tv_str), 0);
 		checkmem(ret == 0);
-		(yyval.a_parg).argument = (yyvsp[(3) - (3)].tv_str);
-		free((yyvsp[(1) - (3)].tv_str));
+		(yyval.a_parg).argument = (yyvsp[0].tv_str);
+		free((yyvsp[-2].tv_str));
 	}
+#line 2676 "asn1p_y.c"
     break;
 
-  case 76:
-#line 950 "asn1p_y.y"
-    {
+  case 75: /* ParameterArgumentName: TypeRefName ':' TypeRefName  */
+#line 946 "asn1p_y.y"
+                                      {
 		int ret;
-		(yyval.a_parg).governor = asn1p_ref_new(yylineno, currentModule);
+		(yyval.a_parg).governor = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
+		ret = asn1p_ref_add_component((yyval.a_parg).governor, (yyvsp[-2].tv_str), 0);
+		checkmem(ret == 0);
+		(yyval.a_parg).argument = (yyvsp[0].tv_str);
+		free((yyvsp[-2].tv_str));
+	}
+#line 2689 "asn1p_y.c"
+    break;
+
+  case 76: /* ParameterArgumentName: BasicTypeId ':' Identifier  */
+#line 954 "asn1p_y.y"
+                                     {
+		int ret;
+		(yyval.a_parg).governor = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		ret = asn1p_ref_add_component((yyval.a_parg).governor,
-			ASN_EXPR_TYPE2STR((yyvsp[(1) - (3)].a_type)), 1);
+			ASN_EXPR_TYPE2STR((yyvsp[-2].a_type)), 1);
 		checkmem(ret == 0);
-		(yyval.a_parg).argument = (yyvsp[(3) - (3)].tv_str);
+		(yyval.a_parg).argument = (yyvsp[0].tv_str);
 	}
+#line 2702 "asn1p_y.c"
     break;
 
-  case 77:
-#line 958 "asn1p_y.y"
-    {
+  case 77: /* ParameterArgumentName: BasicTypeId ':' TypeRefName  */
+#line 962 "asn1p_y.y"
+                                      {
 		int ret;
-		(yyval.a_parg).governor = asn1p_ref_new(yylineno, currentModule);
+		(yyval.a_parg).governor = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		ret = asn1p_ref_add_component((yyval.a_parg).governor,
-			ASN_EXPR_TYPE2STR((yyvsp[(1) - (3)].a_type)), 1);
+			ASN_EXPR_TYPE2STR((yyvsp[-2].a_type)), 1);
 		checkmem(ret == 0);
-		(yyval.a_parg).argument = (yyvsp[(3) - (3)].tv_str);
+		(yyval.a_parg).argument = (yyvsp[0].tv_str);
 	}
+#line 2715 "asn1p_y.c"
     break;
 
-  case 78:
-#line 969 "asn1p_y.y"
-    {
+  case 78: /* ActualParameterList: ActualParameter  */
+#line 973 "asn1p_y.y"
+                        {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
-		asn1p_expr_add((yyval.a_expr), (yyvsp[(1) - (1)].a_expr));
+		asn1p_expr_add((yyval.a_expr), (yyvsp[0].a_expr));
 	}
+#line 2725 "asn1p_y.c"
     break;
 
-  case 79:
-#line 974 "asn1p_y.y"
-    {
-		(yyval.a_expr) = (yyvsp[(1) - (3)].a_expr);
-		asn1p_expr_add((yyval.a_expr), (yyvsp[(3) - (3)].a_expr));
+  case 79: /* ActualParameterList: ActualParameterList ',' ActualParameter  */
+#line 978 "asn1p_y.y"
+                                                  {
+		(yyval.a_expr) = (yyvsp[-2].a_expr);
+		asn1p_expr_add((yyval.a_expr), (yyvsp[0].a_expr));
 	}
+#line 2734 "asn1p_y.c"
     break;
 
-  case 81:
-#line 982 "asn1p_y.y"
-    {
+  case 81: /* ActualParameter: SimpleValue  */
+#line 986 "asn1p_y.y"
+                      {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
 		(yyval.a_expr)->Identifier = strdup("?");
 		(yyval.a_expr)->expr_type = A1TC_REFERENCE;
 		(yyval.a_expr)->meta_type = AMT_VALUE;
-		(yyval.a_expr)->value = (yyvsp[(1) - (1)].a_value);
+		(yyval.a_expr)->value = (yyvsp[0].a_value);
 	}
+#line 2747 "asn1p_y.c"
     break;
 
-  case 82:
-#line 990 "asn1p_y.y"
-    {
+  case 82: /* ActualParameter: DefinedValue  */
+#line 994 "asn1p_y.y"
+                       {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
 		(yyval.a_expr)->Identifier = strdup("?");
 		(yyval.a_expr)->expr_type = A1TC_REFERENCE;
 		(yyval.a_expr)->meta_type = AMT_VALUE;
-		(yyval.a_expr)->value = (yyvsp[(1) - (1)].a_value);
+		(yyval.a_expr)->value = (yyvsp[0].a_value);
 	}
+#line 2760 "asn1p_y.c"
     break;
 
-  case 83:
-#line 998 "asn1p_y.y"
-    {
+  case 83: /* ActualParameter: ValueSet  */
+#line 1002 "asn1p_y.y"
+                   {
 		(yyval.a_expr) = NEW_EXPR();
 		(yyval.a_expr)->expr_type = A1TC_VALUESET;
 		(yyval.a_expr)->meta_type = AMT_VALUESET;
-		(yyval.a_expr)->constraints = (yyvsp[(1) - (1)].a_constr);
+		(yyval.a_expr)->constraints = (yyvsp[0].a_constr);
 	}
+#line 2771 "asn1p_y.c"
     break;
 
-  case 84:
-#line 1021 "asn1p_y.y"
-    { (yyval.a_expr) = NEW_EXPR(); }
-    break;
-
-  case 85:
-#line 1022 "asn1p_y.y"
-    { (yyval.a_expr) = (yyvsp[(1) - (1)].a_expr); }
-    break;
-
-  case 86:
+  case 84: /* optComponentTypeLists: %empty  */
 #line 1025 "asn1p_y.y"
-    {
+        { (yyval.a_expr) = NEW_EXPR(); }
+#line 2777 "asn1p_y.c"
+    break;
+
+  case 85: /* optComponentTypeLists: ComponentTypeLists  */
+#line 1026 "asn1p_y.y"
+                             { (yyval.a_expr) = (yyvsp[0].a_expr); }
+#line 2783 "asn1p_y.c"
+    break;
+
+  case 86: /* ComponentTypeLists: ComponentType  */
+#line 1029 "asn1p_y.y"
+                      {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
-		asn1p_expr_add((yyval.a_expr), (yyvsp[(1) - (1)].a_expr));
+		asn1p_expr_add((yyval.a_expr), (yyvsp[0].a_expr));
 	}
+#line 2793 "asn1p_y.c"
     break;
 
-  case 87:
-#line 1030 "asn1p_y.y"
-    {
-		(yyval.a_expr) = (yyvsp[(1) - (3)].a_expr);
-		asn1p_expr_add((yyval.a_expr), (yyvsp[(3) - (3)].a_expr));
-	}
-    break;
-
-  case 88:
+  case 87: /* ComponentTypeLists: ComponentTypeLists ',' ComponentType  */
 #line 1034 "asn1p_y.y"
-    {
-		(yyval.a_expr) = (yyvsp[(1) - (5)].a_expr);
-		asn1p_expr_add_many((yyval.a_expr), (yyvsp[(4) - (5)].a_expr));
-		asn1p_expr_free((yyvsp[(4) - (5)].a_expr));
+                                               {
+		(yyval.a_expr) = (yyvsp[-2].a_expr);
+		asn1p_expr_add((yyval.a_expr), (yyvsp[0].a_expr));
 	}
+#line 2802 "asn1p_y.c"
     break;
 
-  case 89:
-#line 1042 "asn1p_y.y"
-    {
-		(yyval.a_expr) = (yyvsp[(2) - (3)].a_expr);
+  case 88: /* ComponentTypeLists: ComponentTypeLists ',' TOK_VBracketLeft ComponentTypeLists TOK_VBracketRight  */
+#line 1038 "asn1p_y.y"
+                                                                                       {
+		(yyval.a_expr) = (yyvsp[-4].a_expr);
+		asn1p_expr_add_many((yyval.a_expr), (yyvsp[-1].a_expr));
+		asn1p_expr_free((yyvsp[-1].a_expr));
+	}
+#line 2812 "asn1p_y.c"
+    break;
+
+  case 89: /* ComponentType: Identifier MaybeIndirectTaggedType optMarker  */
+#line 1046 "asn1p_y.y"
+                                                     {
+		(yyval.a_expr) = (yyvsp[-1].a_expr);
 		assert((yyval.a_expr)->Identifier == 0);
-		(yyval.a_expr)->Identifier = (yyvsp[(1) - (3)].tv_str);
-		(yyvsp[(3) - (3)].a_marker).flags |= (yyval.a_expr)->marker.flags;
-		(yyval.a_expr)->marker = (yyvsp[(3) - (3)].a_marker);
+		(yyval.a_expr)->Identifier = (yyvsp[-2].tv_str);
+		(yyvsp[0].a_marker).flags |= (yyval.a_expr)->marker.flags;
+		(yyval.a_expr)->marker = (yyvsp[0].a_marker);
 	}
+#line 2824 "asn1p_y.c"
     break;
 
-  case 90:
-#line 1049 "asn1p_y.y"
-    {
-		(yyval.a_expr) = (yyvsp[(1) - (2)].a_expr);
-		(yyvsp[(2) - (2)].a_marker).flags |= (yyval.a_expr)->marker.flags;
-		(yyval.a_expr)->marker = (yyvsp[(2) - (2)].a_marker);
-		_fixup_anonymous_identifier((yyval.a_expr));
+  case 90: /* ComponentType: MaybeIndirectTaggedType optMarker  */
+#line 1053 "asn1p_y.y"
+                                            {
+		(yyval.a_expr) = (yyvsp[-1].a_expr);
+		(yyvsp[0].a_marker).flags |= (yyval.a_expr)->marker.flags;
+		(yyval.a_expr)->marker = (yyvsp[0].a_marker);
+		_fixup_anonymous_identifier((yyval.a_expr), yyscanner);
 	}
+#line 2835 "asn1p_y.c"
     break;
 
-  case 91:
-#line 1055 "asn1p_y.y"
-    {
+  case 91: /* ComponentType: TOK_COMPONENTS TOK_OF MaybeIndirectTaggedType  */
+#line 1059 "asn1p_y.y"
+                                                        {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
-		(yyval.a_expr)->meta_type = (yyvsp[(3) - (3)].a_expr)->meta_type;
+		(yyval.a_expr)->meta_type = (yyvsp[0].a_expr)->meta_type;
 		(yyval.a_expr)->expr_type = A1TC_COMPONENTS_OF;
-		asn1p_expr_add((yyval.a_expr), (yyvsp[(3) - (3)].a_expr));
+		asn1p_expr_add((yyval.a_expr), (yyvsp[0].a_expr));
 	}
+#line 2847 "asn1p_y.c"
     break;
 
-  case 92:
-#line 1062 "asn1p_y.y"
-    {
-		(yyval.a_expr) = (yyvsp[(1) - (1)].a_expr);
+  case 92: /* ComponentType: ExtensionAndException  */
+#line 1066 "asn1p_y.y"
+                                {
+		(yyval.a_expr) = (yyvsp[0].a_expr);
 	}
+#line 2855 "asn1p_y.c"
     break;
 
-  case 93:
-#line 1068 "asn1p_y.y"
-    {
+  case 93: /* AlternativeTypeLists: AlternativeType  */
+#line 1072 "asn1p_y.y"
+                        {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
-		asn1p_expr_add((yyval.a_expr), (yyvsp[(1) - (1)].a_expr));
+		asn1p_expr_add((yyval.a_expr), (yyvsp[0].a_expr));
 	}
+#line 2865 "asn1p_y.c"
     break;
 
-  case 94:
-#line 1073 "asn1p_y.y"
-    {
-		(yyval.a_expr) = (yyvsp[(1) - (3)].a_expr);
-		asn1p_expr_add((yyval.a_expr), (yyvsp[(3) - (3)].a_expr));
+  case 94: /* AlternativeTypeLists: AlternativeTypeLists ',' AlternativeType  */
+#line 1077 "asn1p_y.y"
+                                                   {
+		(yyval.a_expr) = (yyvsp[-2].a_expr);
+		asn1p_expr_add((yyval.a_expr), (yyvsp[0].a_expr));
 	}
+#line 2874 "asn1p_y.c"
     break;
 
-  case 95:
-#line 1080 "asn1p_y.y"
-    {
-		(yyval.a_expr) = (yyvsp[(2) - (2)].a_expr);
+  case 95: /* AlternativeType: Identifier MaybeIndirectTaggedType  */
+#line 1084 "asn1p_y.y"
+                                           {
+		(yyval.a_expr) = (yyvsp[0].a_expr);
 		assert((yyval.a_expr)->Identifier == 0);
-		(yyval.a_expr)->Identifier = (yyvsp[(1) - (2)].tv_str);
+		(yyval.a_expr)->Identifier = (yyvsp[-1].tv_str);
 	}
+#line 2884 "asn1p_y.c"
     break;
 
-  case 96:
-#line 1085 "asn1p_y.y"
-    {
-		(yyval.a_expr) = (yyvsp[(1) - (1)].a_expr);
+  case 96: /* AlternativeType: ExtensionAndException  */
+#line 1089 "asn1p_y.y"
+                                {
+		(yyval.a_expr) = (yyvsp[0].a_expr);
 	}
+#line 2892 "asn1p_y.c"
     break;
 
-  case 97:
-#line 1088 "asn1p_y.y"
-    {
-		(yyval.a_expr) = (yyvsp[(1) - (1)].a_expr);
-		_fixup_anonymous_identifier((yyval.a_expr));
+  case 97: /* AlternativeType: MaybeIndirectTaggedType  */
+#line 1092 "asn1p_y.y"
+                                  {
+		(yyval.a_expr) = (yyvsp[0].a_expr);
+		_fixup_anonymous_identifier((yyval.a_expr), yyscanner);
 	}
+#line 2901 "asn1p_y.c"
     break;
 
-  case 98:
-#line 1095 "asn1p_y.y"
-    {
-		(yyval.a_expr) = (yyvsp[(3) - (5)].a_expr);
+  case 98: /* ObjectClass: TOK_CLASS '{' FieldSpec '}' optWithSyntax  */
+#line 1099 "asn1p_y.y"
+                                                  {
+		(yyval.a_expr) = (yyvsp[-2].a_expr);
 		checkmem((yyval.a_expr));
-		(yyval.a_expr)->with_syntax = (yyvsp[(5) - (5)].a_wsynt);
+		(yyval.a_expr)->with_syntax = (yyvsp[0].a_wsynt);
 		assert((yyval.a_expr)->expr_type == A1TC_CLASSDEF);
 		assert((yyval.a_expr)->meta_type == AMT_OBJECTCLASS);
 	}
+#line 2913 "asn1p_y.c"
     break;
 
-  case 99:
-#line 1105 "asn1p_y.y"
-    { (yyval.a_int) = 0; }
+  case 99: /* optUNIQUE: %empty  */
+#line 1109 "asn1p_y.y"
+        { (yyval.a_int) = 0; }
+#line 2919 "asn1p_y.c"
     break;
 
-  case 100:
-#line 1106 "asn1p_y.y"
-    { (yyval.a_int) = 1; }
-    break;
-
-  case 101:
+  case 100: /* optUNIQUE: TOK_UNIQUE  */
 #line 1110 "asn1p_y.y"
-    {
+                     { (yyval.a_int) = 1; }
+#line 2925 "asn1p_y.c"
+    break;
+
+  case 101: /* FieldSpec: ClassField  */
+#line 1114 "asn1p_y.y"
+                   {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
 		(yyval.a_expr)->expr_type = A1TC_CLASSDEF;
 		(yyval.a_expr)->meta_type = AMT_OBJECTCLASS;
-		asn1p_expr_add((yyval.a_expr), (yyvsp[(1) - (1)].a_expr));
+		asn1p_expr_add((yyval.a_expr), (yyvsp[0].a_expr));
 	}
+#line 2937 "asn1p_y.c"
     break;
 
-  case 102:
-#line 1117 "asn1p_y.y"
-    {
-		(yyval.a_expr) = (yyvsp[(1) - (3)].a_expr);
-		asn1p_expr_add((yyval.a_expr), (yyvsp[(3) - (3)].a_expr));
+  case 102: /* FieldSpec: FieldSpec ',' ClassField  */
+#line 1121 "asn1p_y.y"
+                                   {
+		(yyval.a_expr) = (yyvsp[-2].a_expr);
+		asn1p_expr_add((yyval.a_expr), (yyvsp[0].a_expr));
 	}
+#line 2946 "asn1p_y.c"
     break;
 
-  case 103:
-#line 1127 "asn1p_y.y"
-    {
+  case 103: /* ClassField: TOK_typefieldreference optMarker  */
+#line 1131 "asn1p_y.y"
+                                         {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
-		(yyval.a_expr)->Identifier = (yyvsp[(1) - (2)].tv_str);
+		(yyval.a_expr)->Identifier = (yyvsp[-1].tv_str);
 		(yyval.a_expr)->meta_type = AMT_OBJECTFIELD;
 		(yyval.a_expr)->expr_type = A1TC_CLASSFIELD_TFS;	/* TypeFieldSpec */
-		(yyval.a_expr)->marker = (yyvsp[(2) - (2)].a_marker);
+		(yyval.a_expr)->marker = (yyvsp[0].a_marker);
 	}
+#line 2959 "asn1p_y.c"
     break;
 
-  case 104:
-#line 1137 "asn1p_y.y"
-    {
+  case 104: /* ClassField: TOK_valuefieldreference Type optUNIQUE optMarker  */
+#line 1141 "asn1p_y.y"
+                                                           {
 		(yyval.a_expr) = NEW_EXPR();
-		(yyval.a_expr)->Identifier = (yyvsp[(1) - (4)].tv_str);
+		(yyval.a_expr)->Identifier = (yyvsp[-3].tv_str);
 		(yyval.a_expr)->meta_type = AMT_OBJECTFIELD;
 		(yyval.a_expr)->expr_type = A1TC_CLASSFIELD_FTVFS;	/* FixedTypeValueFieldSpec */
-		(yyval.a_expr)->unique = (yyvsp[(3) - (4)].a_int);
-		(yyval.a_expr)->marker = (yyvsp[(4) - (4)].a_marker);
-		asn1p_expr_add((yyval.a_expr), (yyvsp[(2) - (4)].a_expr));
+		(yyval.a_expr)->unique = (yyvsp[-1].a_int);
+		(yyval.a_expr)->marker = (yyvsp[0].a_marker);
+		asn1p_expr_add((yyval.a_expr), (yyvsp[-2].a_expr));
 	}
+#line 2973 "asn1p_y.c"
     break;
 
-  case 105:
-#line 1148 "asn1p_y.y"
-    {
+  case 105: /* ClassField: TOK_valuefieldreference FieldName optMarker  */
+#line 1152 "asn1p_y.y"
+                                                      {
 		(yyval.a_expr) = NEW_EXPR();
-		(yyval.a_expr)->Identifier = (yyvsp[(1) - (3)].tv_str);
+		(yyval.a_expr)->Identifier = (yyvsp[-2].tv_str);
 		(yyval.a_expr)->meta_type = AMT_OBJECTFIELD;
 		(yyval.a_expr)->expr_type = A1TC_CLASSFIELD_VTVFS;
-		(yyval.a_expr)->reference = (yyvsp[(2) - (3)].a_ref);
-		(yyval.a_expr)->marker = (yyvsp[(3) - (3)].a_marker);
+		(yyval.a_expr)->reference = (yyvsp[-1].a_ref);
+		(yyval.a_expr)->marker = (yyvsp[0].a_marker);
 	}
+#line 2986 "asn1p_y.c"
     break;
 
-  case 106:
-#line 1158 "asn1p_y.y"
-    {
+  case 106: /* ClassField: TOK_valuefieldreference DefinedObjectClass optMarker  */
+#line 1162 "asn1p_y.y"
+                                                               {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
-		(yyval.a_expr)->Identifier = (yyvsp[(1) - (3)].tv_str);
-		(yyval.a_expr)->reference = (yyvsp[(2) - (3)].a_ref);
+		(yyval.a_expr)->Identifier = (yyvsp[-2].tv_str);
+		(yyval.a_expr)->reference = (yyvsp[-1].a_ref);
 		(yyval.a_expr)->meta_type = AMT_OBJECTFIELD;
 		(yyval.a_expr)->expr_type = A1TC_CLASSFIELD_OFS;
-		(yyval.a_expr)->marker = (yyvsp[(3) - (3)].a_marker);
+		(yyval.a_expr)->marker = (yyvsp[0].a_marker);
 	}
+#line 3000 "asn1p_y.c"
     break;
 
-  case 107:
-#line 1169 "asn1p_y.y"
-    {
+  case 107: /* ClassField: TOK_typefieldreference FieldName optMarker  */
+#line 1173 "asn1p_y.y"
+                                                     {
 		(yyval.a_expr) = NEW_EXPR();
-		(yyval.a_expr)->Identifier = (yyvsp[(1) - (3)].tv_str);
+		(yyval.a_expr)->Identifier = (yyvsp[-2].tv_str);
 		(yyval.a_expr)->meta_type = AMT_OBJECTFIELD;
 		(yyval.a_expr)->expr_type = A1TC_CLASSFIELD_VTVSFS;
-		(yyval.a_expr)->reference = (yyvsp[(2) - (3)].a_ref);
-		(yyval.a_expr)->marker = (yyvsp[(3) - (3)].a_marker);
+		(yyval.a_expr)->reference = (yyvsp[-1].a_ref);
+		(yyval.a_expr)->marker = (yyvsp[0].a_marker);
 	}
+#line 3013 "asn1p_y.c"
     break;
 
-  case 108:
-#line 1179 "asn1p_y.y"
-    {
+  case 108: /* ClassField: TOK_typefieldreference Type optMarker  */
+#line 1183 "asn1p_y.y"
+                                                {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
-		(yyval.a_expr)->Identifier = (yyvsp[(1) - (3)].tv_str);
+		(yyval.a_expr)->Identifier = (yyvsp[-2].tv_str);
 		(yyval.a_expr)->meta_type = AMT_OBJECTFIELD;
 		(yyval.a_expr)->expr_type = A1TC_CLASSFIELD_FTVSFS;
-		asn1p_expr_add((yyval.a_expr), (yyvsp[(2) - (3)].a_expr));
-		(yyval.a_expr)->marker = (yyvsp[(3) - (3)].a_marker);
+		asn1p_expr_add((yyval.a_expr), (yyvsp[-1].a_expr));
+		(yyval.a_expr)->marker = (yyvsp[0].a_marker);
 	}
+#line 3027 "asn1p_y.c"
     break;
 
-  case 109:
-#line 1190 "asn1p_y.y"
-    {
+  case 109: /* ClassField: TOK_typefieldreference DefinedObjectClass optMarker  */
+#line 1194 "asn1p_y.y"
+                                                              {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
-		(yyval.a_expr)->Identifier = (yyvsp[(1) - (3)].tv_str);
-		(yyval.a_expr)->reference = (yyvsp[(2) - (3)].a_ref);
+		(yyval.a_expr)->Identifier = (yyvsp[-2].tv_str);
+		(yyval.a_expr)->reference = (yyvsp[-1].a_ref);
 		(yyval.a_expr)->meta_type = AMT_OBJECTFIELD;
 		(yyval.a_expr)->expr_type = A1TC_CLASSFIELD_OSFS;
-		(yyval.a_expr)->marker = (yyvsp[(3) - (3)].a_marker);
+		(yyval.a_expr)->marker = (yyvsp[0].a_marker);
 	}
+#line 3041 "asn1p_y.c"
     break;
 
-  case 110:
-#line 1202 "asn1p_y.y"
-    { (yyval.a_wsynt) = 0; }
+  case 110: /* optWithSyntax: %empty  */
+#line 1206 "asn1p_y.y"
+        { (yyval.a_wsynt) = 0; }
+#line 3047 "asn1p_y.c"
     break;
 
-  case 111:
-#line 1203 "asn1p_y.y"
-    {
-		(yyval.a_wsynt) = (yyvsp[(1) - (1)].a_wsynt);
+  case 111: /* optWithSyntax: WithSyntax  */
+#line 1207 "asn1p_y.y"
+                     {
+		(yyval.a_wsynt) = (yyvsp[0].a_wsynt);
 	}
+#line 3055 "asn1p_y.c"
     break;
 
-  case 112:
-#line 1210 "asn1p_y.y"
-    { asn1p_lexer_hack_enable_with_syntax(); }
+  case 112: /* $@3: %empty  */
+#line 1214 "asn1p_y.y"
+                { asn1p_lexer_hack_enable_with_syntax(yyscanner); }
+#line 3061 "asn1p_y.c"
     break;
 
-  case 113:
-#line 1212 "asn1p_y.y"
-    {
-		(yyval.a_wsynt) = (yyvsp[(5) - (6)].a_wsynt);
+  case 113: /* WithSyntax: TOK_WITH TOK_SYNTAX '{' $@3 WithSyntaxList '}'  */
+#line 1216 "asn1p_y.y"
+                    {
+		(yyval.a_wsynt) = (yyvsp[-1].a_wsynt);
 	}
+#line 3069 "asn1p_y.c"
     break;
 
-  case 114:
-#line 1218 "asn1p_y.y"
-    {
-		(yyval.a_wsynt) = asn1p_wsyntx_new();
-		TQ_ADD(&((yyval.a_wsynt)->chunks), (yyvsp[(1) - (1)].a_wchunk), next);
-	}
-    break;
-
-  case 115:
+  case 114: /* WithSyntaxList: WithSyntaxToken  */
 #line 1222 "asn1p_y.y"
-    {
-		(yyval.a_wsynt) = (yyvsp[(1) - (2)].a_wsynt);
-		TQ_ADD(&((yyval.a_wsynt)->chunks), (yyvsp[(2) - (2)].a_wchunk), next);
+                        {
+		(yyval.a_wsynt) = asn1p_wsyntx_new();
+		TQ_ADD(&((yyval.a_wsynt)->chunks), (yyvsp[0].a_wchunk), next);
 	}
+#line 3078 "asn1p_y.c"
     break;
 
-  case 116:
-#line 1229 "asn1p_y.y"
-    {
-		(yyval.a_wchunk) = asn1p_wsyntx_chunk_fromstring((yyvsp[(1) - (1)].tv_opaque).buf, 0);
+  case 115: /* WithSyntaxList: WithSyntaxList WithSyntaxToken  */
+#line 1226 "asn1p_y.y"
+                                         {
+		(yyval.a_wsynt) = (yyvsp[-1].a_wsynt);
+		TQ_ADD(&((yyval.a_wsynt)->chunks), (yyvsp[0].a_wchunk), next);
+	}
+#line 3087 "asn1p_y.c"
+    break;
+
+  case 116: /* WithSyntaxToken: TOK_whitespace  */
+#line 1233 "asn1p_y.y"
+                       {
+		(yyval.a_wchunk) = asn1p_wsyntx_chunk_fromstring((yyvsp[0].tv_opaque).buf, 0);
 		(yyval.a_wchunk)->type = WC_WHITESPACE;
 	}
+#line 3096 "asn1p_y.c"
     break;
 
-  case 117:
-#line 1233 "asn1p_y.y"
-    {
-		(yyval.a_wchunk) = asn1p_wsyntx_chunk_fromstring((yyvsp[(1) - (1)].tv_str), 0);
+  case 117: /* WithSyntaxToken: TOK_Literal  */
+#line 1237 "asn1p_y.y"
+                      {
+		(yyval.a_wchunk) = asn1p_wsyntx_chunk_fromstring((yyvsp[0].tv_str), 0);
 	}
+#line 3104 "asn1p_y.c"
     break;
 
-  case 118:
-#line 1236 "asn1p_y.y"
-    {
-		(yyval.a_wchunk) = asn1p_wsyntx_chunk_fromstring((yyvsp[(1) - (1)].a_refcomp).name, 0);
+  case 118: /* WithSyntaxToken: PrimitiveFieldReference  */
+#line 1240 "asn1p_y.y"
+                                  {
+		(yyval.a_wchunk) = asn1p_wsyntx_chunk_fromstring((yyvsp[0].a_refcomp).name, 0);
 		(yyval.a_wchunk)->type = WC_FIELD;
 	}
+#line 3113 "asn1p_y.c"
     break;
 
-  case 119:
-#line 1240 "asn1p_y.y"
-    {
-		(yyval.a_wchunk) = asn1p_wsyntx_chunk_fromsyntax((yyvsp[(2) - (3)].a_wsynt));
+  case 119: /* WithSyntaxToken: '[' WithSyntaxList ']'  */
+#line 1244 "asn1p_y.y"
+                                 {
+		(yyval.a_wchunk) = asn1p_wsyntx_chunk_fromsyntax((yyvsp[-1].a_wsynt));
 	}
+#line 3121 "asn1p_y.c"
     break;
 
-  case 120:
-#line 1246 "asn1p_y.y"
-    {
+  case 120: /* ExtensionAndException: "..."  */
+#line 1250 "asn1p_y.y"
+                      {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
 		(yyval.a_expr)->Identifier = strdup("...");
@@ -3379,46 +3130,50 @@ yyreduce:
 		(yyval.a_expr)->expr_type = A1TC_EXTENSIBLE;
 		(yyval.a_expr)->meta_type = AMT_TYPE;
 	}
+#line 3134 "asn1p_y.c"
     break;
 
-  case 121:
-#line 1254 "asn1p_y.y"
-    {
+  case 121: /* ExtensionAndException: "..." '!' DefinedValue  */
+#line 1258 "asn1p_y.y"
+                                         {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
 		(yyval.a_expr)->Identifier = strdup("...");
 		checkmem((yyval.a_expr)->Identifier);
-		(yyval.a_expr)->value = (yyvsp[(3) - (3)].a_value);
+		(yyval.a_expr)->value = (yyvsp[0].a_value);
 		(yyval.a_expr)->expr_type = A1TC_EXTENSIBLE;
 		(yyval.a_expr)->meta_type = AMT_TYPE;
 	}
+#line 3148 "asn1p_y.c"
     break;
 
-  case 122:
-#line 1263 "asn1p_y.y"
-    {
+  case 122: /* ExtensionAndException: "..." '!' SignedNumber  */
+#line 1267 "asn1p_y.y"
+                                         {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
 		(yyval.a_expr)->Identifier = strdup("...");
-		(yyval.a_expr)->value = (yyvsp[(3) - (3)].a_value);
+		(yyval.a_expr)->value = (yyvsp[0].a_value);
 		checkmem((yyval.a_expr)->Identifier);
 		(yyval.a_expr)->expr_type = A1TC_EXTENSIBLE;
 		(yyval.a_expr)->meta_type = AMT_TYPE;
 	}
+#line 3162 "asn1p_y.c"
     break;
 
-  case 124:
-#line 1277 "asn1p_y.y"
-    {
-        (yyval.a_expr) = (yyvsp[(2) - (2)].a_expr);
-        (yyval.a_expr)->tag = (yyvsp[(1) - (2)].a_tag);
+  case 124: /* TaggedType: optTag UntaggedType  */
+#line 1281 "asn1p_y.y"
+                        {
+        (yyval.a_expr) = (yyvsp[0].a_expr);
+        (yyval.a_expr)->tag = (yyvsp[-1].a_tag);
     }
+#line 3171 "asn1p_y.c"
     break;
 
-  case 125:
-#line 1284 "asn1p_y.y"
-    {
-		(yyval.a_expr) = (yyvsp[(1) - (2)].a_expr);
+  case 125: /* DefinedUntaggedType: DefinedType optManyConstraints  */
+#line 1288 "asn1p_y.y"
+                                       {
+		(yyval.a_expr) = (yyvsp[-1].a_expr);
 		/*
 		 * Outer constraint for SEQUENCE OF and SET OF applies
 		 * to the inner type.
@@ -3426,23 +3181,24 @@ yyreduce:
 		if((yyval.a_expr)->expr_type == ASN_CONSTR_SEQUENCE_OF
 		|| (yyval.a_expr)->expr_type == ASN_CONSTR_SET_OF) {
 			assert(!TQ_FIRST(&((yyval.a_expr)->members))->constraints);
-			TQ_FIRST(&((yyval.a_expr)->members))->constraints = (yyvsp[(2) - (2)].a_constr);
+			TQ_FIRST(&((yyval.a_expr)->members))->constraints = (yyvsp[0].a_constr);
 		} else {
 			if((yyval.a_expr)->constraints) {
-				assert(!(yyvsp[(2) - (2)].a_constr));
+				assert(!(yyvsp[0].a_constr));
 				/* Check this : optManyConstraints is not used ?! */
-				asn1p_constraint_free((yyvsp[(2) - (2)].a_constr));
+				asn1p_constraint_free((yyvsp[0].a_constr));
 			} else {
-				(yyval.a_expr)->constraints = (yyvsp[(2) - (2)].a_constr);
+				(yyval.a_expr)->constraints = (yyvsp[0].a_constr);
 			}
 		}
 	}
+#line 3196 "asn1p_y.c"
     break;
 
-  case 126:
-#line 1307 "asn1p_y.y"
-    {
-		(yyval.a_expr) = (yyvsp[(1) - (2)].a_expr);
+  case 126: /* UntaggedType: TypeDeclaration optManyConstraints  */
+#line 1311 "asn1p_y.y"
+                                           {
+		(yyval.a_expr) = (yyvsp[-1].a_expr);
 		/*
 		 * Outer constraint for SEQUENCE OF and SET OF applies
 		 * to the inner type.
@@ -3450,24 +3206,25 @@ yyreduce:
 		if((yyval.a_expr)->expr_type == ASN_CONSTR_SEQUENCE_OF
 		|| (yyval.a_expr)->expr_type == ASN_CONSTR_SET_OF) {
 			assert(!TQ_FIRST(&((yyval.a_expr)->members))->constraints);
-			TQ_FIRST(&((yyval.a_expr)->members))->constraints = (yyvsp[(2) - (2)].a_constr);
+			TQ_FIRST(&((yyval.a_expr)->members))->constraints = (yyvsp[0].a_constr);
 		} else {
 			if((yyval.a_expr)->constraints) {
-				assert(!(yyvsp[(2) - (2)].a_constr));
+				assert(!(yyvsp[0].a_constr));
 				/* Check this : optManyConstraints is not used ?! */
-				asn1p_constraint_free((yyvsp[(2) - (2)].a_constr));
+				asn1p_constraint_free((yyvsp[0].a_constr));
 			} else {
-				(yyval.a_expr)->constraints = (yyvsp[(2) - (2)].a_constr);
+				(yyval.a_expr)->constraints = (yyvsp[0].a_constr);
 			}
 		}
 	}
+#line 3221 "asn1p_y.c"
     break;
 
-  case 127:
-#line 1330 "asn1p_y.y"
-    {
-		(yyval.a_expr) = (yyvsp[(2) - (3)].a_expr);
-		(yyval.a_expr)->tag = (yyvsp[(1) - (3)].a_tag);
+  case 127: /* MaybeIndirectTaggedType: optTag MaybeIndirectTypeDeclaration optManyConstraints  */
+#line 1334 "asn1p_y.y"
+                                                           {
+		(yyval.a_expr) = (yyvsp[-1].a_expr);
+		(yyval.a_expr)->tag = (yyvsp[-2].a_tag);
 		/*
 		 * Outer constraint for SEQUENCE OF and SET OF applies
 		 * to the inner type.
@@ -3475,32 +3232,34 @@ yyreduce:
 		if((yyval.a_expr)->expr_type == ASN_CONSTR_SEQUENCE_OF
 		|| (yyval.a_expr)->expr_type == ASN_CONSTR_SET_OF) {
 			assert(!TQ_FIRST(&((yyval.a_expr)->members))->constraints);
-			TQ_FIRST(&((yyval.a_expr)->members))->constraints = (yyvsp[(3) - (3)].a_constr);
+			TQ_FIRST(&((yyval.a_expr)->members))->constraints = (yyvsp[0].a_constr);
 		} else {
 			if((yyval.a_expr)->constraints) {
-				assert(!(yyvsp[(2) - (3)].a_expr));
+				assert(!(yyvsp[-1].a_expr));
 				/* Check this : optManyConstraints is not used ?! */
-				asn1p_constraint_free((yyvsp[(3) - (3)].a_constr));
+				asn1p_constraint_free((yyvsp[0].a_constr));
 			} else {
-				(yyval.a_expr)->constraints = (yyvsp[(3) - (3)].a_constr);
+				(yyval.a_expr)->constraints = (yyvsp[0].a_constr);
 			}
 		}
 	}
+#line 3247 "asn1p_y.c"
     break;
 
-  case 128:
-#line 1354 "asn1p_y.y"
-    {
+  case 128: /* NSTD_IndirectMarker: %empty  */
+#line 1358 "asn1p_y.y"
+        {
 		(yyval.a_int) = asn1p_as_pointer ? EM_INDIRECT : 0;
 		asn1p_as_pointer = 0;
 	}
+#line 3256 "asn1p_y.c"
     break;
 
-  case 129:
-#line 1361 "asn1p_y.y"
-    {
-        (yyval.a_expr) = (yyvsp[(2) - (2)].a_expr);
-		(yyval.a_expr)->marker.flags |= (yyvsp[(1) - (2)].a_int);
+  case 129: /* MaybeIndirectTypeDeclaration: NSTD_IndirectMarker TypeDeclaration  */
+#line 1365 "asn1p_y.y"
+                                        {
+        (yyval.a_expr) = (yyvsp[0].a_expr);
+		(yyval.a_expr)->marker.flags |= (yyvsp[-1].a_int);
 
 		if(((yyval.a_expr)->marker.flags & EM_INDIRECT)
 		&& ((yyval.a_expr)->marker.flags & EM_OPTIONAL) != EM_OPTIONAL) {
@@ -3514,164 +3273,177 @@ yyreduce:
 			);
 		}
     }
+#line 3277 "asn1p_y.c"
     break;
 
-  case 133:
-#line 1385 "asn1p_y.y"
-    {
-		(yyval.a_expr) = (yyvsp[(3) - (4)].a_expr);
+  case 133: /* ConcreteTypeDeclaration: TOK_CHOICE '{' AlternativeTypeLists '}'  */
+#line 1389 "asn1p_y.y"
+                                                  {
+		(yyval.a_expr) = (yyvsp[-1].a_expr);
 		assert((yyval.a_expr)->expr_type == A1TC_INVALID);
 		(yyval.a_expr)->expr_type = ASN_CONSTR_CHOICE;
 		(yyval.a_expr)->meta_type = AMT_TYPE;
 	}
+#line 3288 "asn1p_y.c"
     break;
 
-  case 134:
-#line 1391 "asn1p_y.y"
-    {
-		(yyval.a_expr) = (yyvsp[(3) - (4)].a_expr);
+  case 134: /* ConcreteTypeDeclaration: TOK_SEQUENCE '{' optComponentTypeLists '}'  */
+#line 1395 "asn1p_y.y"
+                                                     {
+		(yyval.a_expr) = (yyvsp[-1].a_expr);
 		assert((yyval.a_expr)->expr_type == A1TC_INVALID);
 		(yyval.a_expr)->expr_type = ASN_CONSTR_SEQUENCE;
 		(yyval.a_expr)->meta_type = AMT_TYPE;
 	}
+#line 3299 "asn1p_y.c"
     break;
 
-  case 135:
-#line 1397 "asn1p_y.y"
-    {
-		(yyval.a_expr) = (yyvsp[(3) - (4)].a_expr);
+  case 135: /* ConcreteTypeDeclaration: TOK_SET '{' optComponentTypeLists '}'  */
+#line 1401 "asn1p_y.y"
+                                                {
+		(yyval.a_expr) = (yyvsp[-1].a_expr);
 		assert((yyval.a_expr)->expr_type == A1TC_INVALID);
 		(yyval.a_expr)->expr_type = ASN_CONSTR_SET;
 		(yyval.a_expr)->meta_type = AMT_TYPE;
 	}
+#line 3310 "asn1p_y.c"
     break;
 
-  case 136:
-#line 1403 "asn1p_y.y"
-    {
+  case 136: /* ConcreteTypeDeclaration: TOK_SEQUENCE optSizeOrConstraint TOK_OF optIdentifier optTag MaybeIndirectTypeDeclaration  */
+#line 1407 "asn1p_y.y"
+                                                                                                    {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
-		(yyval.a_expr)->constraints = (yyvsp[(2) - (6)].a_constr);
+		(yyval.a_expr)->constraints = (yyvsp[-4].a_constr);
 		(yyval.a_expr)->expr_type = ASN_CONSTR_SEQUENCE_OF;
 		(yyval.a_expr)->meta_type = AMT_TYPE;
-		(yyvsp[(6) - (6)].a_expr)->Identifier = (yyvsp[(4) - (6)].tv_str);
-		(yyvsp[(6) - (6)].a_expr)->tag = (yyvsp[(5) - (6)].a_tag);
-		asn1p_expr_add((yyval.a_expr), (yyvsp[(6) - (6)].a_expr));
+		(yyvsp[0].a_expr)->Identifier = (yyvsp[-2].tv_str);
+		(yyvsp[0].a_expr)->tag = (yyvsp[-1].a_tag);
+		asn1p_expr_add((yyval.a_expr), (yyvsp[0].a_expr));
 	}
+#line 3325 "asn1p_y.c"
     break;
 
-  case 137:
-#line 1413 "asn1p_y.y"
-    {
+  case 137: /* ConcreteTypeDeclaration: TOK_SET optSizeOrConstraint TOK_OF optIdentifier optTag MaybeIndirectTypeDeclaration  */
+#line 1417 "asn1p_y.y"
+                                                                                               {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
-		(yyval.a_expr)->constraints = (yyvsp[(2) - (6)].a_constr);
+		(yyval.a_expr)->constraints = (yyvsp[-4].a_constr);
 		(yyval.a_expr)->expr_type = ASN_CONSTR_SET_OF;
 		(yyval.a_expr)->meta_type = AMT_TYPE;
-		(yyvsp[(6) - (6)].a_expr)->Identifier = (yyvsp[(4) - (6)].tv_str);
-		(yyvsp[(6) - (6)].a_expr)->tag = (yyvsp[(5) - (6)].a_tag);
-		asn1p_expr_add((yyval.a_expr), (yyvsp[(6) - (6)].a_expr));
+		(yyvsp[0].a_expr)->Identifier = (yyvsp[-2].tv_str);
+		(yyvsp[0].a_expr)->tag = (yyvsp[-1].a_tag);
+		asn1p_expr_add((yyval.a_expr), (yyvsp[0].a_expr));
 	}
+#line 3340 "asn1p_y.c"
     break;
 
-  case 138:
-#line 1423 "asn1p_y.y"
-    {
+  case 138: /* ConcreteTypeDeclaration: TOK_ANY  */
+#line 1427 "asn1p_y.y"
+                                                        {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
 		(yyval.a_expr)->expr_type = ASN_TYPE_ANY;
 		(yyval.a_expr)->meta_type = AMT_TYPE;
 	}
+#line 3351 "asn1p_y.c"
     break;
 
-  case 139:
-#line 1429 "asn1p_y.y"
-    {
+  case 139: /* ConcreteTypeDeclaration: TOK_ANY TOK_DEFINED TOK_BY Identifier  */
+#line 1433 "asn1p_y.y"
+                                                        {
 		int ret;
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
-		(yyval.a_expr)->reference = asn1p_ref_new(yylineno, currentModule);
+		(yyval.a_expr)->reference = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		ret = asn1p_ref_add_component((yyval.a_expr)->reference,
-			(yyvsp[(4) - (4)].tv_str), RLT_lowercase);
+			(yyvsp[0].tv_str), RLT_lowercase);
 		checkmem(ret == 0);
 		(yyval.a_expr)->expr_type = ASN_TYPE_ANY;
 		(yyval.a_expr)->meta_type = AMT_TYPE;
-		free((yyvsp[(4) - (4)].tv_str));
+		free((yyvsp[0].tv_str));
 	}
+#line 3368 "asn1p_y.c"
     break;
 
-  case 140:
-#line 1441 "asn1p_y.y"
-    {
+  case 140: /* ConcreteTypeDeclaration: TOK_INSTANCE TOK_OF ComplexTypeReference  */
+#line 1445 "asn1p_y.y"
+                                                   {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
-		(yyval.a_expr)->reference = (yyvsp[(3) - (3)].a_ref);
+		(yyval.a_expr)->reference = (yyvsp[0].a_ref);
 		(yyval.a_expr)->expr_type = A1TC_INSTANCE;
 		(yyval.a_expr)->meta_type = AMT_TYPE;
 	}
+#line 3380 "asn1p_y.c"
     break;
 
-  case 141:
-#line 1456 "asn1p_y.y"
-    {
+  case 141: /* ComplexTypeReference: TOK_typereference  */
+#line 1460 "asn1p_y.y"
+                          {
 		int ret;
-		(yyval.a_ref) = asn1p_ref_new(yylineno, currentModule);
+		(yyval.a_ref) = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		checkmem((yyval.a_ref));
-		ret = asn1p_ref_add_component((yyval.a_ref), (yyvsp[(1) - (1)].tv_str), RLT_UNKNOWN);
+		ret = asn1p_ref_add_component((yyval.a_ref), (yyvsp[0].tv_str), RLT_UNKNOWN);
 		checkmem(ret == 0);
-		free((yyvsp[(1) - (1)].tv_str));
+		free((yyvsp[0].tv_str));
 	}
+#line 3393 "asn1p_y.c"
     break;
 
-  case 142:
-#line 1464 "asn1p_y.y"
-    {
+  case 142: /* ComplexTypeReference: TOK_capitalreference  */
+#line 1468 "asn1p_y.y"
+                               {
 		int ret;
-		(yyval.a_ref) = asn1p_ref_new(yylineno, currentModule);
+		(yyval.a_ref) = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		checkmem((yyval.a_ref));
-		ret = asn1p_ref_add_component((yyval.a_ref), (yyvsp[(1) - (1)].tv_str), RLT_CAPITALS);
-		free((yyvsp[(1) - (1)].tv_str));
+		ret = asn1p_ref_add_component((yyval.a_ref), (yyvsp[0].tv_str), RLT_CAPITALS);
+		free((yyvsp[0].tv_str));
 		checkmem(ret == 0);
 	}
+#line 3406 "asn1p_y.c"
     break;
 
-  case 143:
-#line 1472 "asn1p_y.y"
-    {
+  case 143: /* ComplexTypeReference: TOK_typereference '.' TypeRefName  */
+#line 1476 "asn1p_y.y"
+                                            {
 		int ret;
-		(yyval.a_ref) = asn1p_ref_new(yylineno, currentModule);
+		(yyval.a_ref) = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		checkmem((yyval.a_ref));
-		ret = asn1p_ref_add_component((yyval.a_ref), (yyvsp[(1) - (3)].tv_str), RLT_UNKNOWN);
+		ret = asn1p_ref_add_component((yyval.a_ref), (yyvsp[-2].tv_str), RLT_UNKNOWN);
 		checkmem(ret == 0);
-		ret = asn1p_ref_add_component((yyval.a_ref), (yyvsp[(3) - (3)].tv_str), RLT_UNKNOWN);
+		ret = asn1p_ref_add_component((yyval.a_ref), (yyvsp[0].tv_str), RLT_UNKNOWN);
 		checkmem(ret == 0);
-		free((yyvsp[(1) - (3)].tv_str));
-		free((yyvsp[(3) - (3)].tv_str));
+		free((yyvsp[-2].tv_str));
+		free((yyvsp[0].tv_str));
 	}
+#line 3422 "asn1p_y.c"
     break;
 
-  case 144:
-#line 1483 "asn1p_y.y"
-    {
+  case 144: /* ComplexTypeReference: TOK_capitalreference '.' TypeRefName  */
+#line 1487 "asn1p_y.y"
+                                               {
 		int ret;
-		(yyval.a_ref) = asn1p_ref_new(yylineno, currentModule);
+		(yyval.a_ref) = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		checkmem((yyval.a_ref));
-		ret = asn1p_ref_add_component((yyval.a_ref), (yyvsp[(1) - (3)].tv_str), RLT_UNKNOWN);
+		ret = asn1p_ref_add_component((yyval.a_ref), (yyvsp[-2].tv_str), RLT_UNKNOWN);
 		checkmem(ret == 0);
-		ret = asn1p_ref_add_component((yyval.a_ref), (yyvsp[(3) - (3)].tv_str), RLT_UNKNOWN);
+		ret = asn1p_ref_add_component((yyval.a_ref), (yyvsp[0].tv_str), RLT_UNKNOWN);
 		checkmem(ret == 0);
-		free((yyvsp[(1) - (3)].tv_str));
-		free((yyvsp[(3) - (3)].tv_str));
+		free((yyvsp[-2].tv_str));
+		free((yyvsp[0].tv_str));
 	}
+#line 3438 "asn1p_y.c"
     break;
 
-  case 145:
-#line 1494 "asn1p_y.y"
-    {
+  case 145: /* ComplexTypeReference: TOK_capitalreference '.' ComplexTypeReferenceAmpList  */
+#line 1498 "asn1p_y.y"
+                                                               {
 		int ret;
-		(yyval.a_ref) = (yyvsp[(3) - (3)].a_ref);
-		ret = asn1p_ref_add_component((yyval.a_ref), (yyvsp[(1) - (3)].tv_str), RLT_CAPITALS);
-		free((yyvsp[(1) - (3)].tv_str));
+		(yyval.a_ref) = (yyvsp[0].a_ref);
+		ret = asn1p_ref_add_component((yyval.a_ref), (yyvsp[-2].tv_str), RLT_CAPITALS);
+		free((yyvsp[-2].tv_str));
 		checkmem(ret == 0);
 		/*
 		 * Move the last element infront.
@@ -3686,1125 +3458,1258 @@ yyreduce:
 			(yyval.a_ref)->components[0] = tmp_comp;
 		}
 	}
+#line 3462 "asn1p_y.c"
     break;
 
-  case 146:
-#line 1516 "asn1p_y.y"
-    {
+  case 146: /* ComplexTypeReferenceAmpList: ComplexTypeReferenceElement  */
+#line 1520 "asn1p_y.y"
+                                    {
 		int ret;
-		(yyval.a_ref) = asn1p_ref_new(yylineno, currentModule);
+		(yyval.a_ref) = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		checkmem((yyval.a_ref));
-		ret = asn1p_ref_add_component((yyval.a_ref), (yyvsp[(1) - (1)].a_refcomp).name, (yyvsp[(1) - (1)].a_refcomp).lex_type);
-		free((yyvsp[(1) - (1)].a_refcomp).name);
+		ret = asn1p_ref_add_component((yyval.a_ref), (yyvsp[0].a_refcomp).name, (yyvsp[0].a_refcomp).lex_type);
+		free((yyvsp[0].a_refcomp).name);
 		checkmem(ret == 0);
 	}
+#line 3475 "asn1p_y.c"
     break;
 
-  case 147:
-#line 1524 "asn1p_y.y"
-    {
+  case 147: /* ComplexTypeReferenceAmpList: ComplexTypeReferenceAmpList '.' ComplexTypeReferenceElement  */
+#line 1528 "asn1p_y.y"
+                                                                      {
 		int ret;
-		(yyval.a_ref) = (yyvsp[(1) - (3)].a_ref);
-		ret = asn1p_ref_add_component((yyval.a_ref), (yyvsp[(3) - (3)].a_refcomp).name, (yyvsp[(3) - (3)].a_refcomp).lex_type);
-		free((yyvsp[(3) - (3)].a_refcomp).name);
+		(yyval.a_ref) = (yyvsp[-2].a_ref);
+		ret = asn1p_ref_add_component((yyval.a_ref), (yyvsp[0].a_refcomp).name, (yyvsp[0].a_refcomp).lex_type);
+		free((yyvsp[0].a_refcomp).name);
 		checkmem(ret == 0);
 	}
+#line 3487 "asn1p_y.c"
     break;
 
-  case 149:
-#line 1537 "asn1p_y.y"
-    {
+  case 149: /* PrimitiveFieldReference: TOK_typefieldreference  */
+#line 1541 "asn1p_y.y"
+                               {
 		(yyval.a_refcomp).lex_type = RLT_AmpUppercase;
-		(yyval.a_refcomp).name = (yyvsp[(1) - (1)].tv_str);
+		(yyval.a_refcomp).name = (yyvsp[0].tv_str);
 	}
+#line 3496 "asn1p_y.c"
     break;
 
-  case 150:
-#line 1542 "asn1p_y.y"
-    {
+  case 150: /* PrimitiveFieldReference: TOK_valuefieldreference  */
+#line 1546 "asn1p_y.y"
+                                  {
 		(yyval.a_refcomp).lex_type = RLT_Amplowercase;
-		(yyval.a_refcomp).name = (yyvsp[(1) - (1)].tv_str);
+		(yyval.a_refcomp).name = (yyvsp[0].tv_str);
 	}
+#line 3505 "asn1p_y.c"
     break;
 
-  case 151:
-#line 1551 "asn1p_y.y"
-    {
-		(yyval.a_ref) = asn1p_ref_new(yylineno, currentModule);
-		asn1p_ref_add_component((yyval.a_ref), (yyvsp[(1) - (1)].tv_str), RLT_AmpUppercase);
-		free((yyvsp[(1) - (1)].tv_str));
+  case 151: /* FieldName: TOK_typefieldreference  */
+#line 1555 "asn1p_y.y"
+                               {
+		(yyval.a_ref) = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
+		asn1p_ref_add_component((yyval.a_ref), (yyvsp[0].tv_str), RLT_AmpUppercase);
+		free((yyvsp[0].tv_str));
 	}
+#line 3515 "asn1p_y.c"
     break;
 
-  case 152:
-#line 1556 "asn1p_y.y"
-    {
+  case 152: /* FieldName: FieldName '.' TOK_typefieldreference  */
+#line 1560 "asn1p_y.y"
+                                               {
 		(yyval.a_ref) = (yyval.a_ref);
-		asn1p_ref_add_component((yyval.a_ref), (yyvsp[(3) - (3)].tv_str), RLT_AmpUppercase);
-		free((yyvsp[(3) - (3)].tv_str));
+		asn1p_ref_add_component((yyval.a_ref), (yyvsp[0].tv_str), RLT_AmpUppercase);
+		free((yyvsp[0].tv_str));
 	}
+#line 3525 "asn1p_y.c"
     break;
 
-  case 153:
-#line 1561 "asn1p_y.y"
-    {
+  case 153: /* FieldName: FieldName '.' TOK_valuefieldreference  */
+#line 1565 "asn1p_y.y"
+                                                {
 		(yyval.a_ref) = (yyval.a_ref);
-		asn1p_ref_add_component((yyval.a_ref), (yyvsp[(3) - (3)].tv_str), RLT_Amplowercase);
-		free((yyvsp[(3) - (3)].tv_str));
+		asn1p_ref_add_component((yyval.a_ref), (yyvsp[0].tv_str), RLT_Amplowercase);
+		free((yyvsp[0].tv_str));
 	}
+#line 3535 "asn1p_y.c"
     break;
 
-  case 154:
-#line 1569 "asn1p_y.y"
-    {
-		(yyval.a_ref) = asn1p_ref_new(yylineno, currentModule);
-		asn1p_ref_add_component((yyval.a_ref), (yyvsp[(1) - (1)].tv_str), RLT_CAPITALS);
-		free((yyvsp[(1) - (1)].tv_str));
+  case 154: /* DefinedObjectClass: TOK_capitalreference  */
+#line 1573 "asn1p_y.y"
+                             {
+		(yyval.a_ref) = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
+		asn1p_ref_add_component((yyval.a_ref), (yyvsp[0].tv_str), RLT_CAPITALS);
+		free((yyvsp[0].tv_str));
 	}
+#line 3545 "asn1p_y.c"
     break;
 
-  case 155:
-#line 1592 "asn1p_y.y"
-    {
-		(yyval.a_expr) = (yyvsp[(2) - (4)].a_expr);
+  case 155: /* ValueAssignment: Identifier Type TOK_PPEQ Value  */
+#line 1596 "asn1p_y.y"
+                                       {
+		(yyval.a_expr) = (yyvsp[-2].a_expr);
 		assert((yyval.a_expr)->Identifier == NULL);
-		(yyval.a_expr)->Identifier = (yyvsp[(1) - (4)].tv_str);
+		(yyval.a_expr)->Identifier = (yyvsp[-3].tv_str);
 		(yyval.a_expr)->meta_type = AMT_VALUE;
-		(yyval.a_expr)->value = (yyvsp[(4) - (4)].a_value);
+		(yyval.a_expr)->value = (yyvsp[0].a_value);
 	}
+#line 3557 "asn1p_y.c"
     break;
 
-  case 158:
-#line 1604 "asn1p_y.y"
-    { asn1p_lexer_hack_push_opaque_state(); }
+  case 158: /* $@4: %empty  */
+#line 1608 "asn1p_y.y"
+              { asn1p_lexer_hack_push_opaque_state(yyscanner); }
+#line 3563 "asn1p_y.c"
     break;
 
-  case 159:
-#line 1604 "asn1p_y.y"
-    {
-		(yyval.a_value) = asn1p_value_frombuf((yyvsp[(3) - (3)].tv_opaque).buf, (yyvsp[(3) - (3)].tv_opaque).len, 0);
+  case 159: /* Value: '{' $@4 Opaque  */
+#line 1608 "asn1p_y.y"
+                                                                        {
+		(yyval.a_value) = asn1p_value_frombuf((yyvsp[0].tv_opaque).buf, (yyvsp[0].tv_opaque).len, 0);
 		checkmem((yyval.a_value));
 		(yyval.a_value)->type = ATV_UNPARSED;
 	}
+#line 3573 "asn1p_y.c"
     break;
 
-  case 160:
-#line 1612 "asn1p_y.y"
-    {
+  case 160: /* SimpleValue: TOK_NULL  */
+#line 1616 "asn1p_y.y"
+                 {
 		(yyval.a_value) = asn1p_value_fromint(0);
 		checkmem((yyval.a_value));
 		(yyval.a_value)->type = ATV_NULL;
 	}
+#line 3583 "asn1p_y.c"
     break;
 
-  case 161:
-#line 1617 "asn1p_y.y"
-    {
+  case 161: /* SimpleValue: TOK_FALSE  */
+#line 1621 "asn1p_y.y"
+                    {
 		(yyval.a_value) = asn1p_value_fromint(0);
 		checkmem((yyval.a_value));
 		(yyval.a_value)->type = ATV_FALSE;
 	}
+#line 3593 "asn1p_y.c"
     break;
 
-  case 162:
-#line 1622 "asn1p_y.y"
-    {
+  case 162: /* SimpleValue: TOK_TRUE  */
+#line 1626 "asn1p_y.y"
+                   {
 		(yyval.a_value) = asn1p_value_fromint(1);
 		checkmem((yyval.a_value));
 		(yyval.a_value)->type = ATV_TRUE;
 	}
+#line 3603 "asn1p_y.c"
     break;
 
-  case 168:
-#line 1635 "asn1p_y.y"
-    {
+  case 168: /* DefinedValue: TypeRefName '.' Identifier  */
+#line 1639 "asn1p_y.y"
+                                     {
 		asn1p_ref_t *ref;
 		int ret;
-		ref = asn1p_ref_new(yylineno, currentModule);
+		ref = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		checkmem(ref);
-		ret = asn1p_ref_add_component(ref, (yyvsp[(1) - (3)].tv_str), RLT_UNKNOWN);
+		ret = asn1p_ref_add_component(ref, (yyvsp[-2].tv_str), RLT_UNKNOWN);
 		checkmem(ret == 0);
-		ret = asn1p_ref_add_component(ref, (yyvsp[(3) - (3)].tv_str), RLT_lowercase);
+		ret = asn1p_ref_add_component(ref, (yyvsp[0].tv_str), RLT_lowercase);
 		checkmem(ret == 0);
 		(yyval.a_value) = asn1p_value_fromref(ref, 0);
 		checkmem((yyval.a_value));
-		free((yyvsp[(1) - (3)].tv_str));
-		free((yyvsp[(3) - (3)].tv_str));
+		free((yyvsp[-2].tv_str));
+		free((yyvsp[0].tv_str));
 	}
+#line 3622 "asn1p_y.c"
     break;
 
-  case 169:
-#line 1653 "asn1p_y.y"
-    {
-		(yyval.a_value) = asn1p_value_frombuf((yyvsp[(1) - (1)].tv_opaque).buf, (yyvsp[(1) - (1)].tv_opaque).len, 0);
+  case 169: /* RestrictedCharacterStringValue: TOK_cstring  */
+#line 1657 "asn1p_y.y"
+                    {
+		(yyval.a_value) = asn1p_value_frombuf((yyvsp[0].tv_opaque).buf, (yyvsp[0].tv_opaque).len, 0);
 		checkmem((yyval.a_value));
 	}
+#line 3631 "asn1p_y.c"
     break;
 
-  case 170:
-#line 1657 "asn1p_y.y"
-    {
-		(yyval.a_value) = asn1p_value_fromint((yyvsp[(1) - (1)].a_int));
+  case 170: /* RestrictedCharacterStringValue: TOK_tuple  */
+#line 1661 "asn1p_y.y"
+                    {
+		(yyval.a_value) = asn1p_value_fromint((yyvsp[0].a_int));
 		checkmem((yyval.a_value));
 		(yyval.a_value)->type = ATV_TUPLE;
 	}
+#line 3641 "asn1p_y.c"
     break;
 
-  case 171:
-#line 1662 "asn1p_y.y"
-    {
-		(yyval.a_value) = asn1p_value_fromint((yyvsp[(1) - (1)].a_int));
+  case 171: /* RestrictedCharacterStringValue: TOK_quadruple  */
+#line 1666 "asn1p_y.y"
+                        {
+		(yyval.a_value) = asn1p_value_fromint((yyvsp[0].a_int));
 		checkmem((yyval.a_value));
 		(yyval.a_value)->type = ATV_QUADRUPLE;
 	}
+#line 3651 "asn1p_y.c"
     break;
 
-  case 172:
-#line 1670 "asn1p_y.y"
-    {
-		(yyval.tv_opaque).len = (yyvsp[(1) - (1)].tv_opaque).len + 1;
+  case 172: /* Opaque: OpaqueFirstToken  */
+#line 1674 "asn1p_y.y"
+                     {
+		(yyval.tv_opaque).len = (yyvsp[0].tv_opaque).len + 1;
 		(yyval.tv_opaque).buf = malloc(1 + (yyval.tv_opaque).len + 1);
 		checkmem((yyval.tv_opaque).buf);
 		(yyval.tv_opaque).buf[0] = '{';
-		memcpy((yyval.tv_opaque).buf + 1, (yyvsp[(1) - (1)].tv_opaque).buf, (yyvsp[(1) - (1)].tv_opaque).len);
+		memcpy((yyval.tv_opaque).buf + 1, (yyvsp[0].tv_opaque).buf, (yyvsp[0].tv_opaque).len);
 		(yyval.tv_opaque).buf[(yyval.tv_opaque).len] = '\0';
-		free((yyvsp[(1) - (1)].tv_opaque).buf);
+		free((yyvsp[0].tv_opaque).buf);
     }
+#line 3665 "asn1p_y.c"
     break;
 
-  case 173:
-#line 1679 "asn1p_y.y"
-    {
-		int newsize = (yyvsp[(1) - (2)].tv_opaque).len + (yyvsp[(2) - (2)].tv_opaque).len;
+  case 173: /* Opaque: Opaque TOK_opaque  */
+#line 1683 "asn1p_y.y"
+                            {
+		int newsize = (yyvsp[-1].tv_opaque).len + (yyvsp[0].tv_opaque).len;
 		char *p = malloc(newsize + 1);
 		checkmem(p);
-		memcpy(p         , (yyvsp[(1) - (2)].tv_opaque).buf, (yyvsp[(1) - (2)].tv_opaque).len);
-		memcpy(p + (yyvsp[(1) - (2)].tv_opaque).len, (yyvsp[(2) - (2)].tv_opaque).buf, (yyvsp[(2) - (2)].tv_opaque).len);
+		memcpy(p         , (yyvsp[-1].tv_opaque).buf, (yyvsp[-1].tv_opaque).len);
+		memcpy(p + (yyvsp[-1].tv_opaque).len, (yyvsp[0].tv_opaque).buf, (yyvsp[0].tv_opaque).len);
 		p[newsize] = '\0';
-		free((yyvsp[(1) - (2)].tv_opaque).buf);
-		free((yyvsp[(2) - (2)].tv_opaque).buf);
+		free((yyvsp[-1].tv_opaque).buf);
+		free((yyvsp[0].tv_opaque).buf);
 		(yyval.tv_opaque).buf = p;
 		(yyval.tv_opaque).len = newsize;
 	}
+#line 3682 "asn1p_y.c"
     break;
 
-  case 175:
-#line 1695 "asn1p_y.y"
-    {
-        (yyval.tv_opaque).len = strlen((yyvsp[(1) - (1)].tv_str));
-        (yyval.tv_opaque).buf = (yyvsp[(1) - (1)].tv_str);
+  case 175: /* OpaqueFirstToken: Identifier  */
+#line 1699 "asn1p_y.y"
+                 {
+        (yyval.tv_opaque).len = strlen((yyvsp[0].tv_str));
+        (yyval.tv_opaque).buf = (yyvsp[0].tv_str);
     }
+#line 3691 "asn1p_y.c"
     break;
 
-  case 176:
-#line 1701 "asn1p_y.y"
-    { (yyval.a_type) = ASN_BASIC_BOOLEAN; }
-    break;
-
-  case 177:
-#line 1702 "asn1p_y.y"
-    { (yyval.a_type) = ASN_BASIC_NULL; }
-    break;
-
-  case 178:
-#line 1703 "asn1p_y.y"
-    { (yyval.a_type) = ASN_BASIC_REAL; }
-    break;
-
-  case 179:
-#line 1704 "asn1p_y.y"
-    { (yyval.a_type) = ASN_BASIC_OCTET_STRING; }
-    break;
-
-  case 180:
+  case 176: /* BasicTypeId: TOK_BOOLEAN  */
 #line 1705 "asn1p_y.y"
-    { (yyval.a_type) = ASN_BASIC_OBJECT_IDENTIFIER; }
+                    { (yyval.a_type) = ASN_BASIC_BOOLEAN; }
+#line 3697 "asn1p_y.c"
     break;
 
-  case 181:
+  case 177: /* BasicTypeId: TOK_NULL  */
 #line 1706 "asn1p_y.y"
-    { (yyval.a_type) = ASN_BASIC_RELATIVE_OID; }
+                   { (yyval.a_type) = ASN_BASIC_NULL; }
+#line 3703 "asn1p_y.c"
     break;
 
-  case 182:
+  case 178: /* BasicTypeId: TOK_REAL  */
 #line 1707 "asn1p_y.y"
-    { (yyval.a_type) = ASN_BASIC_EXTERNAL; }
+                   { (yyval.a_type) = ASN_BASIC_REAL; }
+#line 3709 "asn1p_y.c"
     break;
 
-  case 183:
+  case 179: /* BasicTypeId: TOK_OCTET TOK_STRING  */
 #line 1708 "asn1p_y.y"
-    { (yyval.a_type) = ASN_BASIC_EMBEDDED_PDV; }
+                               { (yyval.a_type) = ASN_BASIC_OCTET_STRING; }
+#line 3715 "asn1p_y.c"
     break;
 
-  case 184:
+  case 180: /* BasicTypeId: TOK_OBJECT TOK_IDENTIFIER  */
 #line 1709 "asn1p_y.y"
-    { (yyval.a_type) = ASN_BASIC_CHARACTER_STRING; }
+                                    { (yyval.a_type) = ASN_BASIC_OBJECT_IDENTIFIER; }
+#line 3721 "asn1p_y.c"
     break;
 
-  case 185:
+  case 181: /* BasicTypeId: TOK_RELATIVE_OID  */
 #line 1710 "asn1p_y.y"
-    { (yyval.a_type) = ASN_BASIC_UTCTime; }
+                           { (yyval.a_type) = ASN_BASIC_RELATIVE_OID; }
+#line 3727 "asn1p_y.c"
     break;
 
-  case 186:
+  case 182: /* BasicTypeId: TOK_EXTERNAL  */
 #line 1711 "asn1p_y.y"
-    { (yyval.a_type) = ASN_BASIC_GeneralizedTime; }
+                       { (yyval.a_type) = ASN_BASIC_EXTERNAL; }
+#line 3733 "asn1p_y.c"
     break;
 
-  case 189:
-#line 1720 "asn1p_y.y"
-    { (yyval.a_type) = ASN_BASIC_INTEGER; }
+  case 183: /* BasicTypeId: TOK_EMBEDDED TOK_PDV  */
+#line 1712 "asn1p_y.y"
+                               { (yyval.a_type) = ASN_BASIC_EMBEDDED_PDV; }
+#line 3739 "asn1p_y.c"
     break;
 
-  case 190:
-#line 1721 "asn1p_y.y"
-    { (yyval.a_type) = ASN_BASIC_ENUMERATED; }
+  case 184: /* BasicTypeId: TOK_CHARACTER TOK_STRING  */
+#line 1713 "asn1p_y.y"
+                                   { (yyval.a_type) = ASN_BASIC_CHARACTER_STRING; }
+#line 3745 "asn1p_y.c"
     break;
 
-  case 191:
-#line 1722 "asn1p_y.y"
-    { (yyval.a_type) = ASN_BASIC_BIT_STRING; }
+  case 185: /* BasicTypeId: TOK_UTCTime  */
+#line 1714 "asn1p_y.y"
+                      { (yyval.a_type) = ASN_BASIC_UTCTime; }
+#line 3751 "asn1p_y.c"
     break;
 
-  case 192:
+  case 186: /* BasicTypeId: TOK_GeneralizedTime  */
+#line 1715 "asn1p_y.y"
+                              { (yyval.a_type) = ASN_BASIC_GeneralizedTime; }
+#line 3757 "asn1p_y.c"
+    break;
+
+  case 189: /* BasicTypeId_UniverationCompatible: TOK_INTEGER  */
+#line 1724 "asn1p_y.y"
+                    { (yyval.a_type) = ASN_BASIC_INTEGER; }
+#line 3763 "asn1p_y.c"
+    break;
+
+  case 190: /* BasicTypeId_UniverationCompatible: TOK_ENUMERATED  */
+#line 1725 "asn1p_y.y"
+                         { (yyval.a_type) = ASN_BASIC_ENUMERATED; }
+#line 3769 "asn1p_y.c"
+    break;
+
+  case 191: /* BasicTypeId_UniverationCompatible: TOK_BIT TOK_STRING  */
 #line 1726 "asn1p_y.y"
-    {
+                             { (yyval.a_type) = ASN_BASIC_BIT_STRING; }
+#line 3775 "asn1p_y.c"
+    break;
+
+  case 192: /* BuiltinType: BasicTypeId  */
+#line 1730 "asn1p_y.y"
+                    {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
-		(yyval.a_expr)->expr_type = (yyvsp[(1) - (1)].a_type);
+		(yyval.a_expr)->expr_type = (yyvsp[0].a_type);
 		(yyval.a_expr)->meta_type = AMT_TYPE;
 	}
+#line 3786 "asn1p_y.c"
     break;
 
-  case 193:
-#line 1732 "asn1p_y.y"
-    {
-        (yyval.a_expr) = (yyvsp[(3) - (4)].a_expr);
+  case 193: /* BuiltinType: TOK_INTEGER '{' NamedNumberList '}'  */
+#line 1736 "asn1p_y.y"
+                                          {
+        (yyval.a_expr) = (yyvsp[-1].a_expr);
         (yyval.a_expr)->expr_type = ASN_BASIC_INTEGER;
         (yyval.a_expr)->meta_type = AMT_TYPE;
     }
+#line 3796 "asn1p_y.c"
     break;
 
-  case 194:
-#line 1737 "asn1p_y.y"
-    {
-        (yyval.a_expr) = (yyvsp[(3) - (4)].a_expr);
+  case 194: /* BuiltinType: TOK_ENUMERATED '{' Enumerations '}'  */
+#line 1741 "asn1p_y.y"
+                                          {
+        (yyval.a_expr) = (yyvsp[-1].a_expr);
         (yyval.a_expr)->expr_type = ASN_BASIC_ENUMERATED;
         (yyval.a_expr)->meta_type = AMT_TYPE;
     }
+#line 3806 "asn1p_y.c"
     break;
 
-  case 195:
-#line 1742 "asn1p_y.y"
-    {
-        (yyval.a_expr) = (yyvsp[(4) - (5)].a_expr);
+  case 195: /* BuiltinType: TOK_BIT TOK_STRING '{' NamedBitList '}'  */
+#line 1746 "asn1p_y.y"
+                                              {
+        (yyval.a_expr) = (yyvsp[-1].a_expr);
         (yyval.a_expr)->expr_type = ASN_BASIC_BIT_STRING;
         (yyval.a_expr)->meta_type = AMT_TYPE;
     }
+#line 3816 "asn1p_y.c"
     break;
 
-  case 196:
-#line 1747 "asn1p_y.y"
-    {
-        (yyval.a_expr) = (yyvsp[(3) - (4)].a_expr);
+  case 196: /* BuiltinType: TOK_ExtValue_BIT_STRING '{' IdentifierList '}'  */
+#line 1751 "asn1p_y.y"
+                                                     {
+        (yyval.a_expr) = (yyvsp[-1].a_expr);
         (yyval.a_expr)->expr_type = ASN_BASIC_BIT_STRING;
         (yyval.a_expr)->meta_type = AMT_TYPE;
     }
+#line 3826 "asn1p_y.c"
     break;
 
-  case 197:
-#line 1752 "asn1p_y.y"
-    {
+  case 197: /* BuiltinType: TOK_ExtValue_BIT_STRING '{' '}'  */
+#line 1756 "asn1p_y.y"
+                                      {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
         (yyval.a_expr)->expr_type = ASN_BASIC_BIT_STRING;
         (yyval.a_expr)->meta_type = AMT_TYPE;
     }
+#line 3837 "asn1p_y.c"
     break;
 
-  case 198:
-#line 1761 "asn1p_y.y"
-    { (yyval.a_type) = ASN_STRING_BMPString; }
+  case 198: /* BasicString: TOK_BMPString  */
+#line 1765 "asn1p_y.y"
+                      { (yyval.a_type) = ASN_STRING_BMPString; }
+#line 3843 "asn1p_y.c"
     break;
 
-  case 199:
-#line 1762 "asn1p_y.y"
-    {
+  case 199: /* BasicString: TOK_GeneralString  */
+#line 1766 "asn1p_y.y"
+                            {
 		(yyval.a_type) = ASN_STRING_GeneralString;
 		fprintf(stderr, "WARNING: GeneralString is not fully supported\n");
 	}
+#line 3852 "asn1p_y.c"
     break;
 
-  case 200:
-#line 1766 "asn1p_y.y"
-    {
+  case 200: /* BasicString: TOK_GraphicString  */
+#line 1770 "asn1p_y.y"
+                            {
 		(yyval.a_type) = ASN_STRING_GraphicString;
 		fprintf(stderr, "WARNING: GraphicString is not fully supported\n");
 	}
+#line 3861 "asn1p_y.c"
     break;
 
-  case 201:
-#line 1770 "asn1p_y.y"
-    { (yyval.a_type) = ASN_STRING_IA5String; }
-    break;
-
-  case 202:
-#line 1771 "asn1p_y.y"
-    { (yyval.a_type) = ASN_STRING_ISO646String; }
-    break;
-
-  case 203:
-#line 1772 "asn1p_y.y"
-    { (yyval.a_type) = ASN_STRING_NumericString; }
-    break;
-
-  case 204:
-#line 1773 "asn1p_y.y"
-    { (yyval.a_type) = ASN_STRING_PrintableString; }
-    break;
-
-  case 205:
+  case 201: /* BasicString: TOK_IA5String  */
 #line 1774 "asn1p_y.y"
-    {
+                        { (yyval.a_type) = ASN_STRING_IA5String; }
+#line 3867 "asn1p_y.c"
+    break;
+
+  case 202: /* BasicString: TOK_ISO646String  */
+#line 1775 "asn1p_y.y"
+                           { (yyval.a_type) = ASN_STRING_ISO646String; }
+#line 3873 "asn1p_y.c"
+    break;
+
+  case 203: /* BasicString: TOK_NumericString  */
+#line 1776 "asn1p_y.y"
+                            { (yyval.a_type) = ASN_STRING_NumericString; }
+#line 3879 "asn1p_y.c"
+    break;
+
+  case 204: /* BasicString: TOK_PrintableString  */
+#line 1777 "asn1p_y.y"
+                              { (yyval.a_type) = ASN_STRING_PrintableString; }
+#line 3885 "asn1p_y.c"
+    break;
+
+  case 205: /* BasicString: TOK_T61String  */
+#line 1778 "asn1p_y.y"
+                        {
 		(yyval.a_type) = ASN_STRING_T61String;
 		fprintf(stderr, "WARNING: T61String is not fully supported\n");
 	}
+#line 3894 "asn1p_y.c"
     break;
 
-  case 206:
-#line 1778 "asn1p_y.y"
-    { (yyval.a_type) = ASN_STRING_TeletexString; }
+  case 206: /* BasicString: TOK_TeletexString  */
+#line 1782 "asn1p_y.y"
+                            { (yyval.a_type) = ASN_STRING_TeletexString; }
+#line 3900 "asn1p_y.c"
     break;
 
-  case 207:
-#line 1779 "asn1p_y.y"
-    { (yyval.a_type) = ASN_STRING_UniversalString; }
+  case 207: /* BasicString: TOK_UniversalString  */
+#line 1783 "asn1p_y.y"
+                              { (yyval.a_type) = ASN_STRING_UniversalString; }
+#line 3906 "asn1p_y.c"
     break;
 
-  case 208:
-#line 1780 "asn1p_y.y"
-    { (yyval.a_type) = ASN_STRING_UTF8String; }
+  case 208: /* BasicString: TOK_UTF8String  */
+#line 1784 "asn1p_y.y"
+                         { (yyval.a_type) = ASN_STRING_UTF8String; }
+#line 3912 "asn1p_y.c"
     break;
 
-  case 209:
-#line 1781 "asn1p_y.y"
-    {
+  case 209: /* BasicString: TOK_VideotexString  */
+#line 1785 "asn1p_y.y"
+                             {
 		(yyval.a_type) = ASN_STRING_VideotexString;
 		fprintf(stderr, "WARNING: VideotexString is not fully supported\n");
 	}
+#line 3921 "asn1p_y.c"
     break;
 
-  case 210:
-#line 1785 "asn1p_y.y"
-    { (yyval.a_type) = ASN_STRING_VisibleString; }
+  case 210: /* BasicString: TOK_VisibleString  */
+#line 1789 "asn1p_y.y"
+                            { (yyval.a_type) = ASN_STRING_VisibleString; }
+#line 3927 "asn1p_y.c"
     break;
 
-  case 211:
-#line 1786 "asn1p_y.y"
-    { (yyval.a_type) = ASN_STRING_ObjectDescriptor; }
+  case 211: /* BasicString: TOK_ObjectDescriptor  */
+#line 1790 "asn1p_y.y"
+                               { (yyval.a_type) = ASN_STRING_ObjectDescriptor; }
+#line 3933 "asn1p_y.c"
     break;
 
-  case 216:
-#line 1798 "asn1p_y.y"
-    { (yyval.a_constr) = 0; }
+  case 216: /* optConstraint: %empty  */
+#line 1802 "asn1p_y.y"
+        { (yyval.a_constr) = 0; }
+#line 3939 "asn1p_y.c"
     break;
 
-  case 218:
-#line 1803 "asn1p_y.y"
-    { (yyval.a_constr) = 0; }
+  case 218: /* optManyConstraints: %empty  */
+#line 1807 "asn1p_y.y"
+        { (yyval.a_constr) = 0; }
+#line 3945 "asn1p_y.c"
     break;
 
-  case 220:
-#line 1808 "asn1p_y.y"
-    { (yyval.a_constr) = 0; }
+  case 220: /* optSizeOrConstraint: %empty  */
+#line 1812 "asn1p_y.y"
+        { (yyval.a_constr) = 0; }
+#line 3951 "asn1p_y.c"
     break;
 
-  case 223:
-#line 1814 "asn1p_y.y"
-    {
-		CONSTRAINT_INSERT((yyval.a_constr), ACT_CA_SET, (yyvsp[(2) - (3)].a_constr), 0);
+  case 223: /* Constraint: '(' ConstraintSpec ')'  */
+#line 1818 "asn1p_y.y"
+                           {
+		CONSTRAINT_INSERT((yyval.a_constr), ACT_CA_SET, (yyvsp[-1].a_constr), 0);
     }
+#line 3959 "asn1p_y.c"
     break;
 
-  case 225:
-#line 1821 "asn1p_y.y"
-    {
-        if((yyvsp[(2) - (2)].a_constr)->type == ACT_CA_SET && (yyvsp[(2) - (2)].a_constr)->el_count == 1) {
-            CONSTRAINT_INSERT((yyval.a_constr), ACT_CA_SET, (yyvsp[(1) - (2)].a_constr), (yyvsp[(2) - (2)].a_constr)->elements[0]);
+  case 225: /* ManyConstraints: ManyConstraints Constraint  */
+#line 1825 "asn1p_y.y"
+                                     {
+        if((yyvsp[0].a_constr)->type == ACT_CA_SET && (yyvsp[0].a_constr)->el_count == 1) {
+            CONSTRAINT_INSERT((yyval.a_constr), ACT_CA_SET, (yyvsp[-1].a_constr), (yyvsp[0].a_constr)->elements[0]);
         } else {
-            CONSTRAINT_INSERT((yyval.a_constr), ACT_CA_SET, (yyvsp[(1) - (2)].a_constr), (yyvsp[(2) - (2)].a_constr));
+            CONSTRAINT_INSERT((yyval.a_constr), ACT_CA_SET, (yyvsp[-1].a_constr), (yyvsp[0].a_constr));
         }
 	}
+#line 3971 "asn1p_y.c"
     break;
 
-  case 229:
-#line 1835 "asn1p_y.y"
-    {
-		(yyval.a_constr) = asn1p_constraint_new(yylineno, currentModule);
+  case 229: /* ElementSetSpecs: "..."  */
+#line 1839 "asn1p_y.y"
+                       {
+		(yyval.a_constr) = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
 		(yyval.a_constr)->type = ACT_EL_EXT;
 	}
+#line 3980 "asn1p_y.c"
     break;
 
-  case 231:
-#line 1840 "asn1p_y.y"
-    {
+  case 231: /* ElementSetSpecs: ElementSetSpec ',' "..."  */
+#line 1844 "asn1p_y.y"
+                                      {
        asn1p_constraint_t *ct;
-       ct = asn1p_constraint_new(yylineno, currentModule);
+       ct = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
        ct->type = ACT_EL_EXT;
-       CONSTRAINT_INSERT((yyval.a_constr), ACT_CA_CSV, (yyvsp[(1) - (3)].a_constr), ct);
+       CONSTRAINT_INSERT((yyval.a_constr), ACT_CA_CSV, (yyvsp[-2].a_constr), ct);
    }
+#line 3991 "asn1p_y.c"
     break;
 
-  case 232:
-#line 1846 "asn1p_y.y"
-    {
+  case 232: /* ElementSetSpecs: ElementSetSpec ',' "..." ',' ElementSetSpec  */
+#line 1850 "asn1p_y.y"
+                                                         {
        asn1p_constraint_t *ct;
-       ct = asn1p_constraint_new(yylineno, currentModule);
+       ct = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
        ct->type = ACT_EL_EXT;
-       CONSTRAINT_INSERT((yyval.a_constr), ACT_CA_CSV, (yyvsp[(1) - (5)].a_constr), ct);
+       CONSTRAINT_INSERT((yyval.a_constr), ACT_CA_CSV, (yyvsp[-4].a_constr), ct);
        ct = (yyval.a_constr);
-       CONSTRAINT_INSERT((yyval.a_constr), ACT_CA_CSV, ct, (yyvsp[(5) - (5)].a_constr));
+       CONSTRAINT_INSERT((yyval.a_constr), ACT_CA_CSV, ct, (yyvsp[0].a_constr));
    }
+#line 4004 "asn1p_y.c"
     break;
 
-  case 234:
-#line 1858 "asn1p_y.y"
-    {
-		CONSTRAINT_INSERT((yyval.a_constr), ACT_CA_AEX, (yyvsp[(3) - (3)].a_constr), 0);
+  case 234: /* ElementSetSpec: TOK_ALL TOK_EXCEPT Elements  */
+#line 1862 "asn1p_y.y"
+                                      {
+		CONSTRAINT_INSERT((yyval.a_constr), ACT_CA_AEX, (yyvsp[0].a_constr), 0);
 	}
+#line 4012 "asn1p_y.c"
     break;
 
-  case 236:
-#line 1865 "asn1p_y.y"
-    {
-		CONSTRAINT_INSERT((yyval.a_constr), ACT_CA_UNI, (yyvsp[(1) - (3)].a_constr), (yyvsp[(3) - (3)].a_constr));
+  case 236: /* Unions: Unions UnionMark Intersections  */
+#line 1869 "asn1p_y.y"
+                                         {
+		CONSTRAINT_INSERT((yyval.a_constr), ACT_CA_UNI, (yyvsp[-2].a_constr), (yyvsp[0].a_constr));
 	}
+#line 4020 "asn1p_y.c"
     break;
 
-  case 238:
-#line 1872 "asn1p_y.y"
-    {
-		CONSTRAINT_INSERT((yyval.a_constr), ACT_CA_INT, (yyvsp[(1) - (3)].a_constr), (yyvsp[(3) - (3)].a_constr));
+  case 238: /* Intersections: Intersections IntersectionMark IntersectionElements  */
+#line 1876 "asn1p_y.y"
+                                                               {
+		CONSTRAINT_INSERT((yyval.a_constr), ACT_CA_INT, (yyvsp[-2].a_constr), (yyvsp[0].a_constr));
 	}
+#line 4028 "asn1p_y.c"
     break;
 
-  case 240:
-#line 1880 "asn1p_y.y"
-    {
-		CONSTRAINT_INSERT((yyval.a_constr), ACT_CA_EXC, (yyvsp[(1) - (3)].a_constr), (yyvsp[(3) - (3)].a_constr));
+  case 240: /* IntersectionElements: Elements TOK_EXCEPT Elements  */
+#line 1884 "asn1p_y.y"
+                                       {
+		CONSTRAINT_INSERT((yyval.a_constr), ACT_CA_EXC, (yyvsp[-2].a_constr), (yyvsp[0].a_constr));
 	}
+#line 4036 "asn1p_y.c"
     break;
 
-  case 242:
-#line 1887 "asn1p_y.y"
-    {
+  case 242: /* Elements: '(' ElementSetSpec ')'  */
+#line 1891 "asn1p_y.y"
+                             {
         int ret;
-        (yyval.a_constr) = asn1p_constraint_new(yylineno, currentModule);
+        (yyval.a_constr) = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
         checkmem((yyval.a_constr));
         (yyval.a_constr)->type = ACT_CA_SET;
-        ret = asn1p_constraint_insert((yyval.a_constr), (yyvsp[(2) - (3)].a_constr));
+        ret = asn1p_constraint_insert((yyval.a_constr), (yyvsp[-1].a_constr));
         checkmem(ret == 0);
     }
+#line 4049 "asn1p_y.c"
     break;
 
-  case 243:
-#line 1898 "asn1p_y.y"
-    {
-		(yyval.a_constr) = asn1p_constraint_new(yylineno, currentModule);
+  case 243: /* SubtypeElements: SingleValue  */
+#line 1902 "asn1p_y.y"
+                    {
+		(yyval.a_constr) = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
 		checkmem((yyval.a_constr));
 		(yyval.a_constr)->type = ACT_EL_VALUE;
-		(yyval.a_constr)->value = (yyvsp[(1) - (1)].a_value);
+		(yyval.a_constr)->value = (yyvsp[0].a_value);
 	}
+#line 4060 "asn1p_y.c"
     break;
 
-  case 244:
-#line 1904 "asn1p_y.y"
-    {
-		(yyval.a_constr) = asn1p_constraint_new(yylineno, currentModule);
+  case 244: /* SubtypeElements: ContainedSubtype  */
+#line 1908 "asn1p_y.y"
+                           {
+		(yyval.a_constr) = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
 		checkmem((yyval.a_constr));
 		(yyval.a_constr)->type = ACT_EL_TYPE;
-		(yyval.a_constr)->containedSubtype = (yyvsp[(1) - (1)].a_value);
+		(yyval.a_constr)->containedSubtype = (yyvsp[0].a_value);
 	}
+#line 4071 "asn1p_y.c"
     break;
 
-  case 250:
-#line 1920 "asn1p_y.y"
-    {
-		CONSTRAINT_INSERT((yyval.a_constr), ACT_CT_FROM, (yyvsp[(2) - (2)].a_constr), 0);
+  case 250: /* PermittedAlphabet: TOK_FROM Constraint  */
+#line 1924 "asn1p_y.y"
+                            {
+		CONSTRAINT_INSERT((yyval.a_constr), ACT_CT_FROM, (yyvsp[0].a_constr), 0);
 	}
+#line 4079 "asn1p_y.c"
     break;
 
-  case 251:
-#line 1925 "asn1p_y.y"
-    {
-		CONSTRAINT_INSERT((yyval.a_constr), ACT_CT_SIZE, (yyvsp[(2) - (2)].a_constr), 0);
+  case 251: /* SizeConstraint: TOK_SIZE Constraint  */
+#line 1929 "asn1p_y.y"
+                            {
+		CONSTRAINT_INSERT((yyval.a_constr), ACT_CT_SIZE, (yyvsp[0].a_constr), 0);
 	}
+#line 4087 "asn1p_y.c"
     break;
 
-  case 252:
-#line 1930 "asn1p_y.y"
-    {
-		(yyval.a_constr) = asn1p_constraint_new(yylineno, currentModule);
+  case 252: /* PatternConstraint: TOK_PATTERN TOK_cstring  */
+#line 1934 "asn1p_y.y"
+                                {
+		(yyval.a_constr) = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
 		(yyval.a_constr)->type = ACT_CT_PATTERN;
-		(yyval.a_constr)->value = asn1p_value_frombuf((yyvsp[(2) - (2)].tv_opaque).buf, (yyvsp[(2) - (2)].tv_opaque).len, 0);
+		(yyval.a_constr)->value = asn1p_value_frombuf((yyvsp[0].tv_opaque).buf, (yyvsp[0].tv_opaque).len, 0);
 	}
+#line 4097 "asn1p_y.c"
     break;
 
-  case 253:
-#line 1935 "asn1p_y.y"
-    {
+  case 253: /* PatternConstraint: TOK_PATTERN Identifier  */
+#line 1939 "asn1p_y.y"
+                                 {
 		asn1p_ref_t *ref;
-		(yyval.a_constr) = asn1p_constraint_new(yylineno, currentModule);
+		(yyval.a_constr) = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
 		(yyval.a_constr)->type = ACT_CT_PATTERN;
-		ref = asn1p_ref_new(yylineno, currentModule);
-		asn1p_ref_add_component(ref, (yyvsp[(2) - (2)].tv_str), RLT_lowercase);
+		ref = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
+		asn1p_ref_add_component(ref, (yyvsp[0].tv_str), RLT_lowercase);
 		(yyval.a_constr)->value = asn1p_value_fromref(ref, 0);
-		free((yyvsp[(2) - (2)].tv_str));
+		free((yyvsp[0].tv_str));
 	}
+#line 4111 "asn1p_y.c"
     break;
 
-  case 254:
-#line 1947 "asn1p_y.y"
-    {
-		(yyval.a_constr) = asn1p_constraint_new(yylineno, currentModule);
+  case 254: /* ValueRange: LowerEndValue ConstraintRangeSpec UpperEndValue  */
+#line 1951 "asn1p_y.y"
+                                                    {
+		(yyval.a_constr) = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
 		checkmem((yyval.a_constr));
-		(yyval.a_constr)->type = (yyvsp[(2) - (3)].a_ctype);
-		(yyval.a_constr)->range_start = (yyvsp[(1) - (3)].a_value);
-		(yyval.a_constr)->range_stop = (yyvsp[(3) - (3)].a_value);
+		(yyval.a_constr)->type = (yyvsp[-1].a_ctype);
+		(yyval.a_constr)->range_start = (yyvsp[-2].a_value);
+		(yyval.a_constr)->range_stop = (yyvsp[0].a_value);
     }
+#line 4123 "asn1p_y.c"
     break;
 
-  case 256:
-#line 1957 "asn1p_y.y"
-    {
+  case 256: /* LowerEndValue: TOK_MIN  */
+#line 1961 "asn1p_y.y"
+              {
 		(yyval.a_value) = asn1p_value_fromint(-123);
 		(yyval.a_value)->type = ATV_MIN;
     }
+#line 4132 "asn1p_y.c"
     break;
 
-  case 258:
-#line 1964 "asn1p_y.y"
-    {
+  case 258: /* UpperEndValue: TOK_MAX  */
+#line 1968 "asn1p_y.y"
+              {
 		(yyval.a_value) = asn1p_value_fromint(321);
 		(yyval.a_value)->type = ATV_MAX;
     }
+#line 4141 "asn1p_y.c"
     break;
 
-  case 260:
-#line 1972 "asn1p_y.y"
-    {
-		(yyval.a_value) = _convert_bitstring2binary((yyvsp[(1) - (1)].tv_str), 'B');
+  case 260: /* BitStringValue: TOK_bstring  */
+#line 1976 "asn1p_y.y"
+                    {
+		(yyval.a_value) = _convert_bitstring2binary((yyvsp[0].tv_str), 'B');
 		checkmem((yyval.a_value));
-		free((yyvsp[(1) - (1)].tv_str));
+		free((yyvsp[0].tv_str));
 	}
+#line 4151 "asn1p_y.c"
     break;
 
-  case 261:
-#line 1977 "asn1p_y.y"
-    {
-		(yyval.a_value) = _convert_bitstring2binary((yyvsp[(1) - (1)].tv_str), 'H');
+  case 261: /* BitStringValue: TOK_hstring  */
+#line 1981 "asn1p_y.y"
+                      {
+		(yyval.a_value) = _convert_bitstring2binary((yyvsp[0].tv_str), 'H');
 		checkmem((yyval.a_value));
-		free((yyvsp[(1) - (1)].tv_str));
+		free((yyvsp[0].tv_str));
 	}
+#line 4161 "asn1p_y.c"
     break;
 
-  case 262:
-#line 1985 "asn1p_y.y"
-    {
-		(yyval.a_value) = asn1p_value_fromtype((yyvsp[(2) - (2)].a_expr));
+  case 262: /* ContainedSubtype: TOK_INCLUDES Type  */
+#line 1989 "asn1p_y.y"
+                      {
+		(yyval.a_value) = asn1p_value_fromtype((yyvsp[0].a_expr));
 		checkmem((yyval.a_value));
-		asn1p_expr_free((yyvsp[(2) - (2)].a_expr));
+		asn1p_expr_free((yyvsp[0].a_expr));
     }
+#line 4171 "asn1p_y.c"
     break;
 
-  case 263:
-#line 1991 "asn1p_y.y"
-    {
-		(yyval.a_value) = asn1p_value_fromtype((yyvsp[(1) - (1)].a_expr));
+  case 263: /* ContainedSubtype: DefinedUntaggedType  */
+#line 1995 "asn1p_y.y"
+                          {
+		(yyval.a_value) = asn1p_value_fromtype((yyvsp[0].a_expr));
 		checkmem((yyval.a_value));
-		asn1p_expr_free((yyvsp[(1) - (1)].a_expr));
+		asn1p_expr_free((yyvsp[0].a_expr));
     }
+#line 4181 "asn1p_y.c"
     break;
 
-  case 264:
-#line 2003 "asn1p_y.y"
-    {
-		CONSTRAINT_INSERT((yyval.a_constr), ACT_CT_WCOMP, (yyvsp[(3) - (3)].a_constr), 0);
+  case 264: /* InnerTypeConstraints: TOK_WITH TOK_COMPONENT SingleTypeConstraint  */
+#line 2007 "asn1p_y.y"
+                                                    {
+		CONSTRAINT_INSERT((yyval.a_constr), ACT_CT_WCOMP, (yyvsp[0].a_constr), 0);
 	}
+#line 4189 "asn1p_y.c"
     break;
 
-  case 265:
-#line 2006 "asn1p_y.y"
-    {
-        assert((yyvsp[(3) - (3)].a_constr)->type == ACT_CA_CSV);
-        (yyvsp[(3) - (3)].a_constr)->type = ACT_CT_WCOMPS;
-        (yyval.a_constr) = (yyvsp[(3) - (3)].a_constr);
+  case 265: /* InnerTypeConstraints: TOK_WITH TOK_COMPONENTS MultipleTypeConstraints  */
+#line 2010 "asn1p_y.y"
+                                                          {
+        assert((yyvsp[0].a_constr)->type == ACT_CA_CSV);
+        (yyvsp[0].a_constr)->type = ACT_CT_WCOMPS;
+        (yyval.a_constr) = (yyvsp[0].a_constr);
 	}
+#line 4199 "asn1p_y.c"
     break;
 
-  case 269:
-#line 2014 "asn1p_y.y"
-    { (yyval.a_constr) = (yyvsp[(2) - (3)].a_constr); }
+  case 269: /* FullSpecification: '{' TypeConstraints '}'  */
+#line 2018 "asn1p_y.y"
+                                           { (yyval.a_constr) = (yyvsp[-1].a_constr); }
+#line 4205 "asn1p_y.c"
     break;
 
-  case 270:
-#line 2016 "asn1p_y.y"
-    {
-        assert((yyvsp[(4) - (5)].a_constr)->type == ACT_CA_CSV);
-		(yyval.a_constr) = asn1p_constraint_new(yylineno, currentModule);
+  case 270: /* PartialSpecification: '{' "..." ',' TypeConstraints '}'  */
+#line 2020 "asn1p_y.y"
+                                              {
+        assert((yyvsp[-1].a_constr)->type == ACT_CA_CSV);
+		(yyval.a_constr) = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
         (yyval.a_constr)->type = ACT_CA_CSV;
-		asn1p_constraint_t *ct = asn1p_constraint_new(yylineno, currentModule);
+		asn1p_constraint_t *ct = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
 		checkmem((yyval.a_constr));
 		ct->type = ACT_EL_EXT;
         asn1p_constraint_insert((yyval.a_constr), ct);
-        for(unsigned i = 0; i < (yyvsp[(4) - (5)].a_constr)->el_count; i++) {
-            asn1p_constraint_insert((yyval.a_constr), (yyvsp[(4) - (5)].a_constr)->elements[i]);
+        for(unsigned i = 0; i < (yyvsp[-1].a_constr)->el_count; i++) {
+            asn1p_constraint_insert((yyval.a_constr), (yyvsp[-1].a_constr)->elements[i]);
         }
     }
+#line 4222 "asn1p_y.c"
     break;
 
-  case 271:
-#line 2029 "asn1p_y.y"
-    {
-        (yyval.a_constr) = asn1p_constraint_new(yylineno, currentModule);
+  case 271: /* TypeConstraints: NamedConstraint  */
+#line 2033 "asn1p_y.y"
+                    {
+        (yyval.a_constr) = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
         (yyval.a_constr)->type = ACT_CA_CSV;
-        asn1p_constraint_insert((yyval.a_constr), (yyvsp[(1) - (1)].a_constr));
+        asn1p_constraint_insert((yyval.a_constr), (yyvsp[0].a_constr));
     }
+#line 4232 "asn1p_y.c"
     break;
 
-  case 272:
-#line 2034 "asn1p_y.y"
-    {
-        (yyval.a_constr) = (yyvsp[(1) - (3)].a_constr);
-        asn1p_constraint_insert((yyval.a_constr), (yyvsp[(3) - (3)].a_constr));
+  case 272: /* TypeConstraints: TypeConstraints ',' NamedConstraint  */
+#line 2038 "asn1p_y.y"
+                                          {
+        (yyval.a_constr) = (yyvsp[-2].a_constr);
+        asn1p_constraint_insert((yyval.a_constr), (yyvsp[0].a_constr));
 	}
+#line 4241 "asn1p_y.c"
     break;
 
-  case 273:
-#line 2040 "asn1p_y.y"
-    {
-        (yyval.a_constr) = asn1p_constraint_new(yylineno, currentModule);
+  case 273: /* NamedConstraint: IdentifierAsValue optConstraint optPresenceConstraint  */
+#line 2044 "asn1p_y.y"
+                                                              {
+        (yyval.a_constr) = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
         checkmem((yyval.a_constr));
         (yyval.a_constr)->type = ACT_EL_VALUE;
-        (yyval.a_constr)->value = (yyvsp[(1) - (3)].a_value);
-        if((yyvsp[(2) - (3)].a_constr)) asn1p_constraint_insert((yyval.a_constr), (yyvsp[(2) - (3)].a_constr));
-        (yyval.a_constr)->presence = (yyvsp[(3) - (3)].a_pres);
+        (yyval.a_constr)->value = (yyvsp[-2].a_value);
+        if((yyvsp[-1].a_constr)) asn1p_constraint_insert((yyval.a_constr), (yyvsp[-1].a_constr));
+        (yyval.a_constr)->presence = (yyvsp[0].a_pres);
     }
+#line 4254 "asn1p_y.c"
     break;
 
-  case 274:
-#line 2054 "asn1p_y.y"
-    { (yyval.a_pres) = ACPRES_DEFAULT; }
+  case 274: /* optPresenceConstraint: %empty  */
+#line 2058 "asn1p_y.y"
+        { (yyval.a_pres) = ACPRES_DEFAULT; }
+#line 4260 "asn1p_y.c"
     break;
 
-  case 275:
-#line 2055 "asn1p_y.y"
-    { (yyval.a_pres) = (yyvsp[(1) - (1)].a_pres); }
-    break;
-
-  case 276:
+  case 275: /* optPresenceConstraint: PresenceConstraint  */
 #line 2059 "asn1p_y.y"
-    {
+                             { (yyval.a_pres) = (yyvsp[0].a_pres); }
+#line 4266 "asn1p_y.c"
+    break;
+
+  case 276: /* PresenceConstraint: TOK_PRESENT  */
+#line 2063 "asn1p_y.y"
+                    {
 		(yyval.a_pres) = ACPRES_PRESENT;
 	}
+#line 4274 "asn1p_y.c"
     break;
 
-  case 277:
-#line 2062 "asn1p_y.y"
-    {
+  case 277: /* PresenceConstraint: TOK_ABSENT  */
+#line 2066 "asn1p_y.y"
+                     {
 		(yyval.a_pres) = ACPRES_ABSENT;
 	}
+#line 4282 "asn1p_y.c"
     break;
 
-  case 278:
-#line 2065 "asn1p_y.y"
-    {
+  case 278: /* PresenceConstraint: TOK_OPTIONAL  */
+#line 2069 "asn1p_y.y"
+                       {
 		(yyval.a_pres) = ACPRES_OPTIONAL;
 	}
+#line 4290 "asn1p_y.c"
     break;
 
-  case 282:
-#line 2080 "asn1p_y.y"
-    { asn1p_lexer_hack_push_opaque_state(); }
+  case 282: /* $@5: %empty  */
+#line 2084 "asn1p_y.y"
+                { asn1p_lexer_hack_push_opaque_state(yyscanner); }
+#line 4296 "asn1p_y.c"
     break;
 
-  case 283:
-#line 2080 "asn1p_y.y"
-    {
-		(yyval.a_constr) = asn1p_constraint_new(yylineno, currentModule);
+  case 283: /* UserDefinedConstraint: TOK_CONSTRAINED TOK_BY '{' $@5 Opaque  */
+#line 2084 "asn1p_y.y"
+                                                                                    {
+		(yyval.a_constr) = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
 		checkmem((yyval.a_constr));
 		(yyval.a_constr)->type = ACT_CT_CTDBY;
-		(yyval.a_constr)->value = asn1p_value_frombuf((yyvsp[(5) - (5)].tv_opaque).buf, (yyvsp[(5) - (5)].tv_opaque).len, 0);
+		(yyval.a_constr)->value = asn1p_value_frombuf((yyvsp[0].tv_opaque).buf, (yyvsp[0].tv_opaque).len, 0);
 		checkmem((yyval.a_constr)->value);
 		(yyval.a_constr)->value->type = ATV_UNPARSED;
 	}
+#line 4309 "asn1p_y.c"
     break;
 
-  case 284:
-#line 2091 "asn1p_y.y"
-    {
-		(yyval.a_constr) = asn1p_constraint_new(yylineno, currentModule);
+  case 284: /* ContentsConstraint: TOK_CONTAINING Type  */
+#line 2095 "asn1p_y.y"
+                            {
+		(yyval.a_constr) = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
 		(yyval.a_constr)->type = ACT_CT_CTNG;
-		(yyval.a_constr)->value = asn1p_value_fromtype((yyvsp[(2) - (2)].a_expr));
-		asn1p_expr_free((yyvsp[(2) - (2)].a_expr));
+		(yyval.a_constr)->value = asn1p_value_fromtype((yyvsp[0].a_expr));
+		asn1p_expr_free((yyvsp[0].a_expr));
 	}
+#line 4320 "asn1p_y.c"
     break;
 
-  case 285:
-#line 2100 "asn1p_y.y"
-    { (yyval.a_ctype) = ACT_EL_RANGE; }
+  case 285: /* ConstraintRangeSpec: ".."  */
+#line 2104 "asn1p_y.y"
+                                { (yyval.a_ctype) = ACT_EL_RANGE; }
+#line 4326 "asn1p_y.c"
     break;
 
-  case 286:
-#line 2101 "asn1p_y.y"
-    { (yyval.a_ctype) = ACT_EL_RLRANGE; }
+  case 286: /* ConstraintRangeSpec: ".." '<'  */
+#line 2105 "asn1p_y.y"
+                                { (yyval.a_ctype) = ACT_EL_RLRANGE; }
+#line 4332 "asn1p_y.c"
     break;
 
-  case 287:
-#line 2102 "asn1p_y.y"
-    { (yyval.a_ctype) = ACT_EL_LLRANGE; }
-    break;
-
-  case 288:
-#line 2103 "asn1p_y.y"
-    { (yyval.a_ctype) = ACT_EL_ULRANGE; }
-    break;
-
-  case 289:
+  case 287: /* ConstraintRangeSpec: '<' ".."  */
 #line 2106 "asn1p_y.y"
-    {
-		(yyval.a_constr) = (yyvsp[(1) - (1)].a_constr);
-	}
+                                { (yyval.a_ctype) = ACT_EL_LLRANGE; }
+#line 4338 "asn1p_y.c"
     break;
 
-  case 290:
-#line 2109 "asn1p_y.y"
-    {
-		(yyval.a_constr) = (yyvsp[(1) - (1)].a_constr);
-	}
+  case 288: /* ConstraintRangeSpec: '<' ".." '<'  */
+#line 2107 "asn1p_y.y"
+                                { (yyval.a_ctype) = ACT_EL_ULRANGE; }
+#line 4344 "asn1p_y.c"
     break;
 
-  case 291:
-#line 2118 "asn1p_y.y"
-    {
-		asn1p_ref_t *ref = asn1p_ref_new(yylineno, currentModule);
+  case 289: /* TableConstraint: SimpleTableConstraint  */
+#line 2110 "asn1p_y.y"
+                              {
+		(yyval.a_constr) = (yyvsp[0].a_constr);
+	}
+#line 4352 "asn1p_y.c"
+    break;
+
+  case 290: /* TableConstraint: ComponentRelationConstraint  */
+#line 2113 "asn1p_y.y"
+                                      {
+		(yyval.a_constr) = (yyvsp[0].a_constr);
+	}
+#line 4360 "asn1p_y.c"
+    break;
+
+  case 291: /* SimpleTableConstraint: '{' TypeRefName '}'  */
+#line 2122 "asn1p_y.y"
+                            {
+		asn1p_ref_t *ref = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		asn1p_constraint_t *ct;
 		int ret;
-		ret = asn1p_ref_add_component(ref, (yyvsp[(2) - (3)].tv_str), 0);
+		ret = asn1p_ref_add_component(ref, (yyvsp[-1].tv_str), 0);
 		checkmem(ret == 0);
-		ct = asn1p_constraint_new(yylineno, currentModule);
+		ct = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
 		checkmem((yyval.a_constr));
 		ct->type = ACT_EL_VALUE;
 		ct->value = asn1p_value_fromref(ref, 0);
 		CONSTRAINT_INSERT((yyval.a_constr), ACT_CA_CRC, ct, 0);
-		free((yyvsp[(2) - (3)].tv_str));
+		free((yyvsp[-1].tv_str));
 	}
+#line 4378 "asn1p_y.c"
     break;
 
-  case 292:
-#line 2134 "asn1p_y.y"
-    {
-		CONSTRAINT_INSERT((yyval.a_constr), ACT_CA_CRC, (yyvsp[(1) - (4)].a_constr), (yyvsp[(3) - (4)].a_constr));
+  case 292: /* ComponentRelationConstraint: SimpleTableConstraint '{' AtNotationList '}'  */
+#line 2138 "asn1p_y.y"
+                                                     {
+		CONSTRAINT_INSERT((yyval.a_constr), ACT_CA_CRC, (yyvsp[-3].a_constr), (yyvsp[-1].a_constr));
 	}
+#line 4386 "asn1p_y.c"
     break;
 
-  case 293:
-#line 2140 "asn1p_y.y"
-    {
-		(yyval.a_constr) = asn1p_constraint_new(yylineno, currentModule);
+  case 293: /* AtNotationList: AtNotationElement  */
+#line 2144 "asn1p_y.y"
+                          {
+		(yyval.a_constr) = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
 		checkmem((yyval.a_constr));
 		(yyval.a_constr)->type = ACT_EL_VALUE;
-		(yyval.a_constr)->value = asn1p_value_fromref((yyvsp[(1) - (1)].a_ref), 0);
+		(yyval.a_constr)->value = asn1p_value_fromref((yyvsp[0].a_ref), 0);
 	}
+#line 4397 "asn1p_y.c"
     break;
 
-  case 294:
-#line 2146 "asn1p_y.y"
-    {
+  case 294: /* AtNotationList: AtNotationList ',' AtNotationElement  */
+#line 2150 "asn1p_y.y"
+                                               {
 		asn1p_constraint_t *ct;
-		ct = asn1p_constraint_new(yylineno, currentModule);
+		ct = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
 		checkmem(ct);
 		ct->type = ACT_EL_VALUE;
-		ct->value = asn1p_value_fromref((yyvsp[(3) - (3)].a_ref), 0);
-		CONSTRAINT_INSERT((yyval.a_constr), ACT_CA_CSV, (yyvsp[(1) - (3)].a_constr), ct);
+		ct->value = asn1p_value_fromref((yyvsp[0].a_ref), 0);
+		CONSTRAINT_INSERT((yyval.a_constr), ACT_CA_CSV, (yyvsp[-2].a_constr), ct);
 	}
+#line 4410 "asn1p_y.c"
     break;
 
-  case 295:
-#line 2160 "asn1p_y.y"
-    {
-		char *p = malloc(strlen((yyvsp[(2) - (2)].tv_str)) + 2);
+  case 295: /* AtNotationElement: '@' ComponentIdList  */
+#line 2164 "asn1p_y.y"
+                            {
+		char *p = malloc(strlen((yyvsp[0].tv_str)) + 2);
 		int ret;
 		*p = '@';
-		strcpy(p + 1, (yyvsp[(2) - (2)].tv_str));
-		(yyval.a_ref) = asn1p_ref_new(yylineno, currentModule);
+		strcpy(p + 1, (yyvsp[0].tv_str));
+		(yyval.a_ref) = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		ret = asn1p_ref_add_component((yyval.a_ref), p, 0);
 		checkmem(ret == 0);
 		free(p);
-		free((yyvsp[(2) - (2)].tv_str));
+		free((yyvsp[0].tv_str));
 	}
+#line 4426 "asn1p_y.c"
     break;
 
-  case 296:
-#line 2171 "asn1p_y.y"
-    {
-		char *p = malloc(strlen((yyvsp[(3) - (3)].tv_str)) + 3);
+  case 296: /* AtNotationElement: '@' '.' ComponentIdList  */
+#line 2175 "asn1p_y.y"
+                                  {
+		char *p = malloc(strlen((yyvsp[0].tv_str)) + 3);
 		int ret;
 		p[0] = '@';
 		p[1] = '.';
-		strcpy(p + 2, (yyvsp[(3) - (3)].tv_str));
-		(yyval.a_ref) = asn1p_ref_new(yylineno, currentModule);
+		strcpy(p + 2, (yyvsp[0].tv_str));
+		(yyval.a_ref) = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		ret = asn1p_ref_add_component((yyval.a_ref), p, 0);
 		checkmem(ret == 0);
 		free(p);
-		free((yyvsp[(3) - (3)].tv_str));
+		free((yyvsp[0].tv_str));
 	}
+#line 4443 "asn1p_y.c"
     break;
 
-  case 297:
-#line 2187 "asn1p_y.y"
-    {
-		(yyval.tv_str) = (yyvsp[(1) - (1)].tv_str);
+  case 297: /* ComponentIdList: Identifier  */
+#line 2191 "asn1p_y.y"
+                   {
+		(yyval.tv_str) = (yyvsp[0].tv_str);
 	}
+#line 4451 "asn1p_y.c"
     break;
 
-  case 298:
-#line 2190 "asn1p_y.y"
-    {
-		int l1 = strlen((yyvsp[(1) - (3)].tv_str));
-		int l3 = strlen((yyvsp[(3) - (3)].tv_str));
+  case 298: /* ComponentIdList: ComponentIdList '.' Identifier  */
+#line 2194 "asn1p_y.y"
+                                         {
+		int l1 = strlen((yyvsp[-2].tv_str));
+		int l3 = strlen((yyvsp[0].tv_str));
 		(yyval.tv_str) = malloc(l1 + 1 + l3 + 1);
-		memcpy((yyval.tv_str), (yyvsp[(1) - (3)].tv_str), l1);
+		memcpy((yyval.tv_str), (yyvsp[-2].tv_str), l1);
 		(yyval.tv_str)[l1] = '.';
-		memcpy((yyval.tv_str) + l1 + 1, (yyvsp[(3) - (3)].tv_str), l3);
+		memcpy((yyval.tv_str) + l1 + 1, (yyvsp[0].tv_str), l3);
 		(yyval.tv_str)[l1 + 1 + l3] = '\0';
-		free((yyvsp[(1) - (3)].tv_str));
-		free((yyvsp[(3) - (3)].tv_str));
+		free((yyvsp[-2].tv_str));
+		free((yyvsp[0].tv_str));
 	}
+#line 4467 "asn1p_y.c"
     break;
 
-  case 299:
-#line 2210 "asn1p_y.y"
-    {
+  case 299: /* optMarker: %empty  */
+#line 2214 "asn1p_y.y"
+        {
 		(yyval.a_marker).flags = EM_NOMARK;
 		(yyval.a_marker).default_value = 0;
 	}
+#line 4476 "asn1p_y.c"
     break;
 
-  case 300:
-#line 2214 "asn1p_y.y"
-    { (yyval.a_marker) = (yyvsp[(1) - (1)].a_marker); }
-    break;
-
-  case 301:
+  case 300: /* optMarker: Marker  */
 #line 2218 "asn1p_y.y"
-    {
+                 { (yyval.a_marker) = (yyvsp[0].a_marker); }
+#line 4482 "asn1p_y.c"
+    break;
+
+  case 301: /* Marker: TOK_OPTIONAL  */
+#line 2222 "asn1p_y.y"
+                     {
 		(yyval.a_marker).flags = EM_OPTIONAL | EM_INDIRECT;
 		(yyval.a_marker).default_value = 0;
 	}
+#line 4491 "asn1p_y.c"
     break;
 
-  case 302:
-#line 2222 "asn1p_y.y"
-    {
+  case 302: /* Marker: TOK_DEFAULT Value  */
+#line 2226 "asn1p_y.y"
+                            {
 		(yyval.a_marker).flags = EM_DEFAULT;
-		(yyval.a_marker).default_value = (yyvsp[(2) - (2)].a_value);
+		(yyval.a_marker).default_value = (yyvsp[0].a_value);
 	}
+#line 4500 "asn1p_y.c"
     break;
 
-  case 303:
-#line 2229 "asn1p_y.y"
-    {
+  case 303: /* IdentifierList: IdentifierElement  */
+#line 2233 "asn1p_y.y"
+                      {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
-		asn1p_expr_add((yyval.a_expr), (yyvsp[(1) - (1)].a_expr));
+		asn1p_expr_add((yyval.a_expr), (yyvsp[0].a_expr));
     }
+#line 4510 "asn1p_y.c"
     break;
 
-  case 304:
-#line 2234 "asn1p_y.y"
-    {
-		(yyval.a_expr) = (yyvsp[(1) - (3)].a_expr);
-		asn1p_expr_add((yyval.a_expr), (yyvsp[(3) - (3)].a_expr));
+  case 304: /* IdentifierList: IdentifierList ',' IdentifierElement  */
+#line 2238 "asn1p_y.y"
+                                           {
+		(yyval.a_expr) = (yyvsp[-2].a_expr);
+		asn1p_expr_add((yyval.a_expr), (yyvsp[0].a_expr));
     }
+#line 4519 "asn1p_y.c"
     break;
 
-  case 305:
-#line 2240 "asn1p_y.y"
-    {
+  case 305: /* IdentifierElement: Identifier  */
+#line 2244 "asn1p_y.y"
+               {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
 		(yyval.a_expr)->expr_type = A1TC_UNIVERVAL;
 		(yyval.a_expr)->meta_type = AMT_VALUE;
-		(yyval.a_expr)->Identifier = (yyvsp[(1) - (1)].tv_str);
+		(yyval.a_expr)->Identifier = (yyvsp[0].tv_str);
     }
+#line 4531 "asn1p_y.c"
     break;
 
-  case 306:
-#line 2249 "asn1p_y.y"
-    {
+  case 306: /* NamedNumberList: NamedNumber  */
+#line 2253 "asn1p_y.y"
+                    {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
-		asn1p_expr_add((yyval.a_expr), (yyvsp[(1) - (1)].a_expr));
+		asn1p_expr_add((yyval.a_expr), (yyvsp[0].a_expr));
 	}
+#line 4541 "asn1p_y.c"
     break;
 
-  case 307:
-#line 2254 "asn1p_y.y"
-    {
-		(yyval.a_expr) = (yyvsp[(1) - (3)].a_expr);
-		asn1p_expr_add((yyval.a_expr), (yyvsp[(3) - (3)].a_expr));
+  case 307: /* NamedNumberList: NamedNumberList ',' NamedNumber  */
+#line 2258 "asn1p_y.y"
+                                          {
+		(yyval.a_expr) = (yyvsp[-2].a_expr);
+		asn1p_expr_add((yyval.a_expr), (yyvsp[0].a_expr));
 	}
+#line 4550 "asn1p_y.c"
     break;
 
-  case 308:
-#line 2261 "asn1p_y.y"
-    {
-		(yyval.a_expr) = NEW_EXPR();
-		checkmem((yyval.a_expr));
-		(yyval.a_expr)->expr_type = A1TC_UNIVERVAL;
-		(yyval.a_expr)->meta_type = AMT_VALUE;
-		(yyval.a_expr)->Identifier = (yyvsp[(1) - (4)].tv_str);
-		(yyval.a_expr)->value = (yyvsp[(3) - (4)].a_value);
-	}
-    break;
-
-  case 309:
-#line 2269 "asn1p_y.y"
-    {
+  case 308: /* NamedNumber: Identifier '(' SignedNumber ')'  */
+#line 2265 "asn1p_y.y"
+                                        {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
 		(yyval.a_expr)->expr_type = A1TC_UNIVERVAL;
 		(yyval.a_expr)->meta_type = AMT_VALUE;
-		(yyval.a_expr)->Identifier = (yyvsp[(1) - (4)].tv_str);
-		(yyval.a_expr)->value = (yyvsp[(3) - (4)].a_value);
+		(yyval.a_expr)->Identifier = (yyvsp[-3].tv_str);
+		(yyval.a_expr)->value = (yyvsp[-1].a_value);
 	}
+#line 4563 "asn1p_y.c"
     break;
 
-  case 310:
-#line 2279 "asn1p_y.y"
-    {
-		(yyval.a_expr) = NEW_EXPR();
-		checkmem((yyval.a_expr));
-		asn1p_expr_add((yyval.a_expr), (yyvsp[(1) - (1)].a_expr));
-	}
-    break;
-
-  case 311:
-#line 2284 "asn1p_y.y"
-    {
-		(yyval.a_expr) = (yyvsp[(1) - (3)].a_expr);
-		asn1p_expr_add((yyval.a_expr), (yyvsp[(3) - (3)].a_expr));
-	}
-    break;
-
-  case 312:
-#line 2291 "asn1p_y.y"
-    {
+  case 309: /* NamedNumber: Identifier '(' DefinedValue ')'  */
+#line 2273 "asn1p_y.y"
+                                          {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
 		(yyval.a_expr)->expr_type = A1TC_UNIVERVAL;
 		(yyval.a_expr)->meta_type = AMT_VALUE;
-		(yyval.a_expr)->Identifier = (yyvsp[(1) - (4)].tv_str);
-		(yyval.a_expr)->value = asn1p_value_fromint((yyvsp[(3) - (4)].a_int));
+		(yyval.a_expr)->Identifier = (yyvsp[-3].tv_str);
+		(yyval.a_expr)->value = (yyvsp[-1].a_value);
 	}
+#line 4576 "asn1p_y.c"
     break;
 
-  case 313:
-#line 2299 "asn1p_y.y"
-    {
+  case 310: /* NamedBitList: NamedBit  */
+#line 2283 "asn1p_y.y"
+                 {
+		(yyval.a_expr) = NEW_EXPR();
+		checkmem((yyval.a_expr));
+		asn1p_expr_add((yyval.a_expr), (yyvsp[0].a_expr));
+	}
+#line 4586 "asn1p_y.c"
+    break;
+
+  case 311: /* NamedBitList: NamedBitList ',' NamedBit  */
+#line 2288 "asn1p_y.y"
+                                    {
+		(yyval.a_expr) = (yyvsp[-2].a_expr);
+		asn1p_expr_add((yyval.a_expr), (yyvsp[0].a_expr));
+	}
+#line 4595 "asn1p_y.c"
+    break;
+
+  case 312: /* NamedBit: Identifier '(' "number" ')'  */
+#line 2295 "asn1p_y.y"
+                                      {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
 		(yyval.a_expr)->expr_type = A1TC_UNIVERVAL;
 		(yyval.a_expr)->meta_type = AMT_VALUE;
-		(yyval.a_expr)->Identifier = (yyvsp[(1) - (4)].tv_str);
-		(yyval.a_expr)->value = (yyvsp[(3) - (4)].a_value);
+		(yyval.a_expr)->Identifier = (yyvsp[-3].tv_str);
+		(yyval.a_expr)->value = asn1p_value_fromint((yyvsp[-1].a_int));
 	}
+#line 4608 "asn1p_y.c"
     break;
 
-  case 314:
-#line 2309 "asn1p_y.y"
-    {
-		(yyval.a_expr) = (yyvsp[(1) - (1)].a_expr);
+  case 313: /* NamedBit: Identifier '(' DefinedValue ')'  */
+#line 2303 "asn1p_y.y"
+                                          {
+		(yyval.a_expr) = NEW_EXPR();
+		checkmem((yyval.a_expr));
+		(yyval.a_expr)->expr_type = A1TC_UNIVERVAL;
+		(yyval.a_expr)->meta_type = AMT_VALUE;
+		(yyval.a_expr)->Identifier = (yyvsp[-3].tv_str);
+		(yyval.a_expr)->value = (yyvsp[-1].a_value);
+	}
+#line 4621 "asn1p_y.c"
+    break;
+
+  case 314: /* Enumerations: UniverationList  */
+#line 2313 "asn1p_y.y"
+                    {
+		(yyval.a_expr) = (yyvsp[0].a_expr);
         asn1p_expr_t *first_memb = TQ_FIRST(&((yyval.a_expr)->members));
         if(first_memb) {
             if(first_memb->expr_type == A1TC_EXTENSIBLE) {
-                return yyerror(
+                return yyerror(param, yyscanner,
                     "The ENUMERATION cannot start with extension (...).");
             }
         } else {
-            return yyerror(
+            return yyerror(param, yyscanner,
                 "The ENUMERATION list cannot be empty.");
         }
     }
+#line 4639 "asn1p_y.c"
     break;
 
-  case 315:
-#line 2324 "asn1p_y.y"
-    {
+  case 315: /* UniverationList: UniverationElement  */
+#line 2328 "asn1p_y.y"
+                           {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
-		asn1p_expr_add((yyval.a_expr), (yyvsp[(1) - (1)].a_expr));
+		asn1p_expr_add((yyval.a_expr), (yyvsp[0].a_expr));
 	}
+#line 4649 "asn1p_y.c"
     break;
 
-  case 316:
-#line 2329 "asn1p_y.y"
-    {
-		(yyval.a_expr) = (yyvsp[(1) - (3)].a_expr);
-		asn1p_expr_add((yyval.a_expr), (yyvsp[(3) - (3)].a_expr));
+  case 316: /* UniverationList: UniverationList ',' UniverationElement  */
+#line 2333 "asn1p_y.y"
+                                                 {
+		(yyval.a_expr) = (yyvsp[-2].a_expr);
+		asn1p_expr_add((yyval.a_expr), (yyvsp[0].a_expr));
 	}
+#line 4658 "asn1p_y.c"
     break;
 
-  case 317:
-#line 2336 "asn1p_y.y"
-    {
-		(yyval.a_expr) = NEW_EXPR();
-		checkmem((yyval.a_expr));
-		(yyval.a_expr)->expr_type = A1TC_UNIVERVAL;
-		(yyval.a_expr)->meta_type = AMT_VALUE;
-		(yyval.a_expr)->Identifier = (yyvsp[(1) - (1)].tv_str);
-	}
-    break;
-
-  case 318:
-#line 2343 "asn1p_y.y"
-    {
+  case 317: /* UniverationElement: Identifier  */
+#line 2340 "asn1p_y.y"
+                   {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
 		(yyval.a_expr)->expr_type = A1TC_UNIVERVAL;
 		(yyval.a_expr)->meta_type = AMT_VALUE;
-		(yyval.a_expr)->Identifier = (yyvsp[(1) - (4)].tv_str);
-		(yyval.a_expr)->value = (yyvsp[(3) - (4)].a_value);
+		(yyval.a_expr)->Identifier = (yyvsp[0].tv_str);
 	}
+#line 4670 "asn1p_y.c"
     break;
 
-  case 319:
-#line 2351 "asn1p_y.y"
-    {
+  case 318: /* UniverationElement: Identifier '(' SignedNumber ')'  */
+#line 2347 "asn1p_y.y"
+                                          {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
 		(yyval.a_expr)->expr_type = A1TC_UNIVERVAL;
 		(yyval.a_expr)->meta_type = AMT_VALUE;
-		(yyval.a_expr)->Identifier = (yyvsp[(1) - (4)].tv_str);
-		(yyval.a_expr)->value = (yyvsp[(3) - (4)].a_value);
+		(yyval.a_expr)->Identifier = (yyvsp[-3].tv_str);
+		(yyval.a_expr)->value = (yyvsp[-1].a_value);
 	}
+#line 4683 "asn1p_y.c"
     break;
 
-  case 320:
-#line 2359 "asn1p_y.y"
-    {
+  case 319: /* UniverationElement: Identifier '(' DefinedValue ')'  */
+#line 2355 "asn1p_y.y"
+                                          {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
 		(yyval.a_expr)->expr_type = A1TC_UNIVERVAL;
 		(yyval.a_expr)->meta_type = AMT_VALUE;
-		(yyval.a_expr)->value = (yyvsp[(1) - (1)].a_value);
+		(yyval.a_expr)->Identifier = (yyvsp[-3].tv_str);
+		(yyval.a_expr)->value = (yyvsp[-1].a_value);
 	}
+#line 4696 "asn1p_y.c"
     break;
 
-  case 321:
-#line 2366 "asn1p_y.y"
-    {
+  case 320: /* UniverationElement: SignedNumber  */
+#line 2363 "asn1p_y.y"
+                       {
+		(yyval.a_expr) = NEW_EXPR();
+		checkmem((yyval.a_expr));
+		(yyval.a_expr)->expr_type = A1TC_UNIVERVAL;
+		(yyval.a_expr)->meta_type = AMT_VALUE;
+		(yyval.a_expr)->value = (yyvsp[0].a_value);
+	}
+#line 4708 "asn1p_y.c"
+    break;
+
+  case 321: /* UniverationElement: "..."  */
+#line 2370 "asn1p_y.y"
+                        {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
 		(yyval.a_expr)->Identifier = strdup("...");
@@ -4812,241 +4717,238 @@ yyreduce:
 		(yyval.a_expr)->expr_type = A1TC_EXTENSIBLE;
 		(yyval.a_expr)->meta_type = AMT_VALUE;
 	}
+#line 4721 "asn1p_y.c"
     break;
 
-  case 322:
-#line 2377 "asn1p_y.y"
-    {
-		(yyval.a_value) = asn1p_value_fromint((yyvsp[(1) - (1)].a_int));
-		checkmem((yyval.a_value));
-	}
-    break;
-
-  case 323:
+  case 322: /* SignedNumber: "number"  */
 #line 2381 "asn1p_y.y"
-    {
-		(yyval.a_value) = asn1p_value_fromint((yyvsp[(1) - (1)].a_int));
+                   {
+		(yyval.a_value) = asn1p_value_fromint((yyvsp[0].a_int));
 		checkmem((yyval.a_value));
 	}
+#line 4730 "asn1p_y.c"
     break;
 
-  case 324:
-#line 2388 "asn1p_y.y"
-    {
-		(yyval.a_value) = asn1p_value_fromdouble((yyvsp[(1) - (1)].a_dbl));
+  case 323: /* SignedNumber: "negative number"  */
+#line 2385 "asn1p_y.y"
+                              {
+		(yyval.a_value) = asn1p_value_fromint((yyvsp[0].a_int));
 		checkmem((yyval.a_value));
 	}
+#line 4739 "asn1p_y.c"
     break;
 
-  case 325:
-#line 2419 "asn1p_y.y"
-    { memset(&(yyval.a_tag), 0, sizeof((yyval.a_tag))); }
+  case 324: /* RealValue: TOK_realnumber  */
+#line 2392 "asn1p_y.y"
+                       {
+		(yyval.a_value) = asn1p_value_fromdouble((yyvsp[0].a_dbl));
+		checkmem((yyval.a_value));
+	}
+#line 4748 "asn1p_y.c"
     break;
 
-  case 326:
-#line 2420 "asn1p_y.y"
-    { (yyval.a_tag) = (yyvsp[(1) - (1)].a_tag); }
+  case 325: /* optTag: %empty  */
+#line 2423 "asn1p_y.y"
+        { memset(&(yyval.a_tag), 0, sizeof((yyval.a_tag))); }
+#line 4754 "asn1p_y.c"
     break;
 
-  case 327:
+  case 326: /* optTag: Tag  */
 #line 2424 "asn1p_y.y"
-    {
-		(yyval.a_tag) = (yyvsp[(1) - (2)].a_tag);
-		(yyval.a_tag).tag_mode = (yyvsp[(2) - (2)].a_tag).tag_mode;
+              { (yyval.a_tag) = (yyvsp[0].a_tag); }
+#line 4760 "asn1p_y.c"
+    break;
+
+  case 327: /* Tag: TagTypeValue TagPlicit  */
+#line 2428 "asn1p_y.y"
+                               {
+		(yyval.a_tag) = (yyvsp[-1].a_tag);
+		(yyval.a_tag).tag_mode = (yyvsp[0].a_tag).tag_mode;
 	}
+#line 4769 "asn1p_y.c"
     break;
 
-  case 328:
-#line 2431 "asn1p_y.y"
-    {
-		(yyval.a_tag) = (yyvsp[(2) - (4)].a_tag);
-		(yyval.a_tag).tag_value = (yyvsp[(3) - (4)].a_int);
+  case 328: /* TagTypeValue: '[' TagClass "number" ']'  */
+#line 2435 "asn1p_y.y"
+                                    {
+		(yyval.a_tag) = (yyvsp[-2].a_tag);
+		(yyval.a_tag).tag_value = (yyvsp[-1].a_int);
 	}
+#line 4778 "asn1p_y.c"
     break;
 
-  case 329:
-#line 2437 "asn1p_y.y"
-    { (yyval.a_tag).tag_class = TC_CONTEXT_SPECIFIC; }
+  case 329: /* TagClass: %empty  */
+#line 2441 "asn1p_y.y"
+        { (yyval.a_tag).tag_class = TC_CONTEXT_SPECIFIC; }
+#line 4784 "asn1p_y.c"
     break;
 
-  case 330:
-#line 2438 "asn1p_y.y"
-    { (yyval.a_tag).tag_class = TC_UNIVERSAL; }
+  case 330: /* TagClass: TOK_UNIVERSAL  */
+#line 2442 "asn1p_y.y"
+                        { (yyval.a_tag).tag_class = TC_UNIVERSAL; }
+#line 4790 "asn1p_y.c"
     break;
 
-  case 331:
-#line 2439 "asn1p_y.y"
-    { (yyval.a_tag).tag_class = TC_APPLICATION; }
+  case 331: /* TagClass: TOK_APPLICATION  */
+#line 2443 "asn1p_y.y"
+                          { (yyval.a_tag).tag_class = TC_APPLICATION; }
+#line 4796 "asn1p_y.c"
     break;
 
-  case 332:
-#line 2440 "asn1p_y.y"
-    { (yyval.a_tag).tag_class = TC_PRIVATE; }
-    break;
-
-  case 333:
+  case 332: /* TagClass: TOK_PRIVATE  */
 #line 2444 "asn1p_y.y"
-    { (yyval.a_tag).tag_mode = TM_DEFAULT; }
+                      { (yyval.a_tag).tag_class = TC_PRIVATE; }
+#line 4802 "asn1p_y.c"
     break;
 
-  case 334:
-#line 2445 "asn1p_y.y"
-    { (yyval.a_tag).tag_mode = TM_IMPLICIT; }
+  case 333: /* TagPlicit: %empty  */
+#line 2448 "asn1p_y.y"
+        { (yyval.a_tag).tag_mode = TM_DEFAULT; }
+#line 4808 "asn1p_y.c"
     break;
 
-  case 335:
-#line 2446 "asn1p_y.y"
-    { (yyval.a_tag).tag_mode = TM_EXPLICIT; }
+  case 334: /* TagPlicit: TOK_IMPLICIT  */
+#line 2449 "asn1p_y.y"
+                       { (yyval.a_tag).tag_mode = TM_IMPLICIT; }
+#line 4814 "asn1p_y.c"
     break;
 
-  case 336:
+  case 335: /* TagPlicit: TOK_EXPLICIT  */
 #line 2450 "asn1p_y.y"
-    {
-		checkmem((yyvsp[(1) - (1)].tv_str));
-		(yyval.tv_str) = (yyvsp[(1) - (1)].tv_str);
-	}
+                       { (yyval.a_tag).tag_mode = TM_EXPLICIT; }
+#line 4820 "asn1p_y.c"
     break;
 
-  case 337:
+  case 336: /* TypeRefName: TOK_typereference  */
 #line 2454 "asn1p_y.y"
-    {
-		checkmem((yyvsp[(1) - (1)].tv_str));
-		(yyval.tv_str) = (yyvsp[(1) - (1)].tv_str);
+                          {
+		checkmem((yyvsp[0].tv_str));
+		(yyval.tv_str) = (yyvsp[0].tv_str);
 	}
+#line 4829 "asn1p_y.c"
     break;
 
-  case 338:
-#line 2462 "asn1p_y.y"
-    { (yyval.tv_str) = 0; }
-    break;
-
-  case 339:
-#line 2463 "asn1p_y.y"
-    {
-		(yyval.tv_str) = (yyvsp[(1) - (1)].tv_str);
+  case 337: /* TypeRefName: TOK_capitalreference  */
+#line 2458 "asn1p_y.y"
+                               {
+		checkmem((yyvsp[0].tv_str));
+		(yyval.tv_str) = (yyvsp[0].tv_str);
 	}
+#line 4838 "asn1p_y.c"
     break;
 
-  case 340:
-#line 2469 "asn1p_y.y"
-    {
-		checkmem((yyvsp[(1) - (1)].tv_str));
-		(yyval.tv_str) = (yyvsp[(1) - (1)].tv_str);
+  case 338: /* optIdentifier: %empty  */
+#line 2466 "asn1p_y.y"
+        { (yyval.tv_str) = 0; }
+#line 4844 "asn1p_y.c"
+    break;
+
+  case 339: /* optIdentifier: Identifier  */
+#line 2467 "asn1p_y.y"
+                     {
+		(yyval.tv_str) = (yyvsp[0].tv_str);
 	}
+#line 4852 "asn1p_y.c"
     break;
 
-  case 341:
-#line 2476 "asn1p_y.y"
-    {
-		(yyval.a_ref) = asn1p_ref_new(yylineno, currentModule);
-		asn1p_ref_add_component((yyval.a_ref), (yyvsp[(1) - (1)].tv_str), RLT_lowercase);
-		free((yyvsp[(1) - (1)].tv_str));
+  case 340: /* Identifier: "identifier"  */
+#line 2473 "asn1p_y.y"
+                       {
+		checkmem((yyvsp[0].tv_str));
+		(yyval.tv_str) = (yyvsp[0].tv_str);
+	}
+#line 4861 "asn1p_y.c"
+    break;
+
+  case 341: /* IdentifierAsReference: Identifier  */
+#line 2480 "asn1p_y.y"
+               {
+		(yyval.a_ref) = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
+		asn1p_ref_add_component((yyval.a_ref), (yyvsp[0].tv_str), RLT_lowercase);
+		free((yyvsp[0].tv_str));
     }
+#line 4871 "asn1p_y.c"
     break;
 
-  case 342:
-#line 2483 "asn1p_y.y"
-    {
-		(yyval.a_value) = asn1p_value_fromref((yyvsp[(1) - (1)].a_ref), 0);
+  case 342: /* IdentifierAsValue: IdentifierAsReference  */
+#line 2487 "asn1p_y.y"
+                          {
+		(yyval.a_value) = asn1p_value_fromref((yyvsp[0].a_ref), 0);
     }
+#line 4879 "asn1p_y.c"
     break;
 
 
-/* Line 1267 of yacc.c.  */
-#line 4957 "asn1p_y.c"
+#line 4883 "asn1p_y.c"
+
       default: break;
     }
-  YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
+  /* User semantic actions sometimes alter yychar, and that requires
+     that yytoken be updated with the new translation.  We take the
+     approach of translating immediately before every use of yytoken.
+     One alternative is translating here after every semantic action,
+     but that translation would be missed if the semantic action invokes
+     YYABORT, YYACCEPT, or YYERROR immediately after altering yychar or
+     if it invokes YYBACKUP.  In the case of YYABORT or YYACCEPT, an
+     incorrect destructor might then be invoked immediately.  In the
+     case of YYERROR or YYBACKUP, subsequent parser actions might lead
+     to an incorrect destructor call or verbose syntax error message
+     before the lookahead is translated.  */
+  YY_SYMBOL_PRINT ("-> $$ =", YY_CAST (yysymbol_kind_t, yyr1[yyn]), &yyval, &yyloc);
 
   YYPOPSTACK (yylen);
   yylen = 0;
-  YY_STACK_PRINT (yyss, yyssp);
 
   *++yyvsp = yyval;
 
-
-  /* Now `shift' the result of the reduction.  Determine what state
+  /* Now 'shift' the result of the reduction.  Determine what state
      that goes to, based on the state we popped back to and the rule
      number reduced by.  */
-
-  yyn = yyr1[yyn];
-
-  yystate = yypgoto[yyn - YYNTOKENS] + *yyssp;
-  if (0 <= yystate && yystate <= YYLAST && yycheck[yystate] == *yyssp)
-    yystate = yytable[yystate];
-  else
-    yystate = yydefgoto[yyn - YYNTOKENS];
+  {
+    const int yylhs = yyr1[yyn] - YYNTOKENS;
+    const int yyi = yypgoto[yylhs] + *yyssp;
+    yystate = (0 <= yyi && yyi <= YYLAST && yycheck[yyi] == *yyssp
+               ? yytable[yyi]
+               : yydefgoto[yylhs]);
+  }
 
   goto yynewstate;
 
 
-/*------------------------------------.
-| yyerrlab -- here on detecting error |
-`------------------------------------*/
+/*--------------------------------------.
+| yyerrlab -- here on detecting error.  |
+`--------------------------------------*/
 yyerrlab:
+  /* Make sure we have latest lookahead translation.  See comments at
+     user semantic actions for why this is necessary.  */
+  yytoken = yychar == ASN1P_EMPTY ? YYSYMBOL_YYEMPTY : YYTRANSLATE (yychar);
   /* If not already recovering from an error, report this error.  */
   if (!yyerrstatus)
     {
       ++yynerrs;
-#if ! YYERROR_VERBOSE
-      yyerror (YY_("syntax error"));
-#else
-      {
-	YYSIZE_T yysize = yysyntax_error (0, yystate, yychar);
-	if (yymsg_alloc < yysize && yymsg_alloc < YYSTACK_ALLOC_MAXIMUM)
-	  {
-	    YYSIZE_T yyalloc = 2 * yysize;
-	    if (! (yysize <= yyalloc && yyalloc <= YYSTACK_ALLOC_MAXIMUM))
-	      yyalloc = YYSTACK_ALLOC_MAXIMUM;
-	    if (yymsg != yymsgbuf)
-	      YYSTACK_FREE (yymsg);
-	    yymsg = (char *) YYSTACK_ALLOC (yyalloc);
-	    if (yymsg)
-	      yymsg_alloc = yyalloc;
-	    else
-	      {
-		yymsg = yymsgbuf;
-		yymsg_alloc = sizeof yymsgbuf;
-	      }
-	  }
-
-	if (0 < yysize && yysize <= yymsg_alloc)
-	  {
-	    (void) yysyntax_error (yymsg, yystate, yychar);
-	    yyerror (yymsg);
-	  }
-	else
-	  {
-	    yyerror (YY_("syntax error"));
-	    if (yysize != 0)
-	      goto yyexhaustedlab;
-	  }
-      }
-#endif
+      yyerror (param, yyscanner, YY_("syntax error"));
     }
-
-
 
   if (yyerrstatus == 3)
     {
-      /* If just tried and failed to reuse look-ahead token after an
-	 error, discard it.  */
+      /* If just tried and failed to reuse lookahead token after an
+         error, discard it.  */
 
-      if (yychar <= YYEOF)
-	{
-	  /* Return failure if at end of input.  */
-	  if (yychar == YYEOF)
-	    YYABORT;
-	}
+      if (yychar <= ASN1P_EOF)
+        {
+          /* Return failure if at end of input.  */
+          if (yychar == ASN1P_EOF)
+            YYABORT;
+        }
       else
-	{
-	  yydestruct ("Error: discarding",
-		      yytoken, &yylval);
-	  yychar = YYEMPTY;
-	}
+        {
+          yydestruct ("Error: discarding",
+                      yytoken, &yylval, param, yyscanner);
+          yychar = ASN1P_EMPTY;
+        }
     }
 
-  /* Else will try to reuse look-ahead token after shifting the error
+  /* Else will try to reuse lookahead token after shifting the error
      token.  */
   goto yyerrlab1;
 
@@ -5055,14 +4957,13 @@ yyerrlab:
 | yyerrorlab -- error raised explicitly by YYERROR.  |
 `---------------------------------------------------*/
 yyerrorlab:
+  /* Pacify compilers when the user code never invokes YYERROR and the
+     label yyerrorlab therefore never appears in user code.  */
+  if (0)
+    YYERROR;
+  ++yynerrs;
 
-  /* Pacify compilers like GCC when the user code never invokes
-     YYERROR and the label yyerrorlab therefore never appears in user
-     code.  */
-  if (/*CONSTCOND*/ 0)
-     goto yyerrorlab;
-
-  /* Do not reclaim the symbols of the rule which action triggered
+  /* Do not reclaim the symbols of the rule whose action triggered
      this YYERROR.  */
   YYPOPSTACK (yylen);
   yylen = 0;
@@ -5075,42 +4976,42 @@ yyerrorlab:
 | yyerrlab1 -- common code for both syntax error and YYERROR.  |
 `-------------------------------------------------------------*/
 yyerrlab1:
-  yyerrstatus = 3;	/* Each real token shifted decrements this.  */
+  yyerrstatus = 3;      /* Each real token shifted decrements this.  */
 
+  /* Pop stack until we find a state that shifts the error token.  */
   for (;;)
     {
       yyn = yypact[yystate];
-      if (yyn != YYPACT_NINF)
-	{
-	  yyn += YYTERROR;
-	  if (0 <= yyn && yyn <= YYLAST && yycheck[yyn] == YYTERROR)
-	    {
-	      yyn = yytable[yyn];
-	      if (0 < yyn)
-		break;
-	    }
-	}
+      if (!yypact_value_is_default (yyn))
+        {
+          yyn += YYSYMBOL_YYerror;
+          if (0 <= yyn && yyn <= YYLAST && yycheck[yyn] == YYSYMBOL_YYerror)
+            {
+              yyn = yytable[yyn];
+              if (0 < yyn)
+                break;
+            }
+        }
 
       /* Pop the current state because it cannot handle the error token.  */
       if (yyssp == yyss)
-	YYABORT;
+        YYABORT;
 
 
       yydestruct ("Error: popping",
-		  yystos[yystate], yyvsp);
+                  YY_ACCESSING_SYMBOL (yystate), yyvsp, param, yyscanner);
       YYPOPSTACK (1);
       yystate = *yyssp;
       YY_STACK_PRINT (yyss, yyssp);
     }
 
-  if (yyn == YYFINAL)
-    YYACCEPT;
-
+  YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN
   *++yyvsp = yylval;
+  YY_IGNORE_MAYBE_UNINITIALIZED_END
 
 
   /* Shift the error token.  */
-  YY_SYMBOL_PRINT ("Shifting", yystos[yyn], yyvsp, yylsp);
+  YY_SYMBOL_PRINT ("Shifting", YY_ACCESSING_SYMBOL (yyn), yyvsp, yylsp);
 
   yystate = yyn;
   goto yynewstate;
@@ -5121,53 +5022,57 @@ yyerrlab1:
 `-------------------------------------*/
 yyacceptlab:
   yyresult = 0;
-  goto yyreturn;
+  goto yyreturnlab;
+
 
 /*-----------------------------------.
 | yyabortlab -- YYABORT comes here.  |
 `-----------------------------------*/
 yyabortlab:
   yyresult = 1;
-  goto yyreturn;
+  goto yyreturnlab;
 
-#ifndef yyoverflow
-/*-------------------------------------------------.
-| yyexhaustedlab -- memory exhaustion comes here.  |
-`-------------------------------------------------*/
+
+/*-----------------------------------------------------------.
+| yyexhaustedlab -- YYNOMEM (memory exhaustion) comes here.  |
+`-----------------------------------------------------------*/
 yyexhaustedlab:
-  yyerror (YY_("memory exhausted"));
+  yyerror (param, yyscanner, YY_("memory exhausted"));
   yyresult = 2;
-  /* Fall through.  */
-#endif
+  goto yyreturnlab;
 
-yyreturn:
-  if (yychar != YYEOF && yychar != YYEMPTY)
-     yydestruct ("Cleanup: discarding lookahead",
-		 yytoken, &yylval);
-  /* Do not reclaim the symbols of the rule which action triggered
+
+/*----------------------------------------------------------.
+| yyreturnlab -- parsing is finished, clean up and return.  |
+`----------------------------------------------------------*/
+yyreturnlab:
+  if (yychar != ASN1P_EMPTY)
+    {
+      /* Make sure we have latest lookahead translation.  See comments at
+         user semantic actions for why this is necessary.  */
+      yytoken = YYTRANSLATE (yychar);
+      yydestruct ("Cleanup: discarding lookahead",
+                  yytoken, &yylval, param, yyscanner);
+    }
+  /* Do not reclaim the symbols of the rule whose action triggered
      this YYABORT or YYACCEPT.  */
   YYPOPSTACK (yylen);
   YY_STACK_PRINT (yyss, yyssp);
   while (yyssp != yyss)
     {
       yydestruct ("Cleanup: popping",
-		  yystos[*yyssp], yyvsp);
+                  YY_ACCESSING_SYMBOL (+*yyssp), yyvsp, param, yyscanner);
       YYPOPSTACK (1);
     }
 #ifndef yyoverflow
   if (yyss != yyssa)
     YYSTACK_FREE (yyss);
 #endif
-#if YYERROR_VERBOSE
-  if (yymsg != yymsgbuf)
-    YYSTACK_FREE (yymsg);
-#endif
-  /* Make sure YYID is used.  */
-  return YYID (yyresult);
+
+  return yyresult;
 }
 
-
-#line 2487 "asn1p_y.y"
+#line 2491 "asn1p_y.y"
 
 
 
@@ -5271,7 +5176,7 @@ _convert_bitstring2binary(char *str, int base) {
  * the specification's compliance to modern ASN.1 standards.
  */
 static void
-_fixup_anonymous_identifier(asn1p_expr_t *expr) {
+_fixup_anonymous_identifier(asn1p_expr_t *expr, yyscan_t yyscanner) {
 	char *p;
 	assert(expr->Identifier == 0);
 
@@ -5288,7 +5193,7 @@ _fixup_anonymous_identifier(asn1p_expr_t *expr) {
 		"found an unnamed %s.\n"
 		"WARNING: Obsolete X.208 syntax detected, "
 		"please give the member a name.\n",
-		yylineno, expr->Identifier ? expr->Identifier : "type");
+		asn1p_get_lineno(yyscanner), expr->Identifier ? expr->Identifier : "type");
 
 	if(!expr->Identifier)
 		expr->Identifier = "unnamed";
@@ -5308,13 +5213,11 @@ _fixup_anonymous_identifier(asn1p_expr_t *expr) {
 }
 
 static int
-yyerror(const char *msg) {
-	extern char *asn1p_text;
+yyerror(void **param, yyscan_t yyscanner, const char *msg) {
 	fprintf(stderr,
 		"ASN.1 grammar parse error "
 		"near %s:%d (token \"%s\"): %s\n",
-		ASN_FILENAME, yylineno, asn1p_text, msg);
+		ASN_FILENAME, asn1p_get_lineno(yyscanner), asn1p_get_text(yyscanner), msg);
 	return -1;
 }
-
 
