@@ -490,8 +490,8 @@ TokenKind Scanner::ScanSpecialString() {
         }
     }
   }
-exit_loop:
 
+exit_loop:
   TokenKind kind = TokenKind::MALFORMED;
   if (HasNext()) {
     switch (Peek()) {

@@ -306,7 +306,7 @@ enum class NodeKind : std::uint8_t {
 
 struct Token {
   TokenKind kind;
-  ast::Range range;
+  Range range;
 
   [[nodiscard]] std::string_view On(std::string_view src) const noexcept {
     return range.String(src);
@@ -322,7 +322,7 @@ struct Node {
   Node(NodeKind nkind_) : nkind(nkind_) {}
 
   Node* parent;
-  ast::Range nrange;
+  Range nrange;
   const NodeKind nkind;
 
   void Accept(const NodeInspector& inspector) const;
