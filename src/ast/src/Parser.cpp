@@ -92,7 +92,6 @@ constexpr auto kTokOperandStart = lib::MakeStaticSet<TokenKind>({ // +IDENT? see
   TokenKind::UNMAP,
 });
 constexpr auto kTokTopLevel = lib::MakeStaticSet<TokenKind>({
-  TokenKind::COMMA,
   TokenKind::SEMICOLON,
   TokenKind::MODULE,
   TokenKind::CONTROL,
@@ -219,6 +218,9 @@ RootNode* Parser::ParseRoot() {
           ;
         }
         break;
+      }
+      if (tok_ == TokenKind::SEMICOLON) {
+        Consume();
       }
     }
   });
