@@ -14,6 +14,7 @@
 namespace vanadium::ast {
 namespace parser {
 
+namespace {
 // clang-format off
 // TODO: maybe replace those sets with bool[elements_count(TokenKind)] = { [aKind]= 1 }, idk if it would make difference
 constexpr auto kTokStmtStart = lib::MakeStaticSet<TokenKind>({
@@ -137,7 +138,6 @@ constexpr auto kTokTopLevel = lib::MakeStaticSet<TokenKind>({
 // clang-format on
 
 constexpr int kLowestPrec = 0;
-namespace {
 [[nodiscard]] int PrecedenceOf(TokenKind kind) {
   switch (kind) {
     case TokenKind::ASSIGN:
