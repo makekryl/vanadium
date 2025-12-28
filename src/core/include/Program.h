@@ -1,6 +1,8 @@
 #pragma once
 
 #include <oneapi/tbb/spin_mutex.h>
+#include <vanadium/ast/AST.h>
+#include <vanadium/ast/ASTNodes.h>
 
 #include <ranges>
 #include <string>
@@ -9,8 +11,6 @@
 #include <unordered_set>
 #include <vector>
 
-#include "AST.h"
-#include "ASTNodes.h"
 #include "Arena.h"
 #include "Bitset.h"
 #include "DelimitedStringView.h"

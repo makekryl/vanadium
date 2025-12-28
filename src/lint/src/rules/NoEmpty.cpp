@@ -1,4 +1,5 @@
-#include "ASTNodes.h"
+#include <vanadium/ast/ASTNodes.h>
+
 #include "BuiltinRules.h"
 #include "Context.h"
 #include "Rule.h"

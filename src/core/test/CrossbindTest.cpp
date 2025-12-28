@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <vanadium/ast/utils/ASTUtils.h>
 #include <vanadium/testing/macro.h>
 
 #include <initializer_list>
@@ -9,7 +10,6 @@
 #include "Program.h"
 #include "Semantic.h"
 #include "helpers/TestPrinters.h"
-#include "utils/ASTUtils.h"
 
 using namespace vanadium;
 using namespace vanadium::core;

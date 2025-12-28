@@ -1,8 +1,10 @@
 #include "detail/CodeAction.h"
 
-#include "AST.h"
-#include "ASTNodes.h"
-#include "ASTTypes.h"
+#include <vanadium/ast/AST.h>
+#include <vanadium/ast/ASTNodes.h>
+#include <vanadium/ast/ASTTypes.h>
+#include <vanadium/ast/utils/ASTUtils.h>
+
 #include "LSProtocol.h"
 #include "LanguageServerConv.h"
 #include "LanguageServerLogger.h"
@@ -10,7 +12,6 @@
 #include "Semantic.h"
 #include "TypeChecker.h"
 #include "detail/Helpers.h"
-#include "utils/ASTUtils.h"
 
 namespace vanadium::ls::detail {
 

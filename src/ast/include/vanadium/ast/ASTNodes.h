@@ -4,7 +4,7 @@
 #include <string_view>
 #include <type_traits>
 
-#include "ASTTypes.h"
+#include "vanadium/ast/ASTTypes.h"
 
 namespace vanadium::ast {
 
@@ -425,7 +425,7 @@ struct NameIdent : Ident {
   NameIdent() : Ident(NodeKind::NameIdent) {}
 };
 
-#include "gen/ASTNodes.inc"
+#include "vanadium/ast/gen/ASTNodes.inc"
 
 }  // namespace nodes
 

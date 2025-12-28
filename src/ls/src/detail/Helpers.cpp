@@ -1,9 +1,9 @@
 #include "detail/Helpers.h"
 
-#include "AST.h"
-#include "ASTNodes.h"
-#include "ASTTypes.h"
-#include "Scanner.h"
+#include <vanadium/ast/AST.h>
+#include <vanadium/ast/ASTNodes.h>
+#include <vanadium/ast/ASTTypes.h>
+#include <vanadium/ast/Scanner.h>
 
 namespace vanadium::ls::detail {
 

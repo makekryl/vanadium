@@ -1,6 +1,7 @@
 #include "detail/References.h"
 
-#include "ASTNodes.h"
+#include <vanadium/ast/ASTNodes.h>
+
 #include "LSProtocol.h"
 #include "LSProtocolEx.h"
 #include "LanguageServerContext.h"

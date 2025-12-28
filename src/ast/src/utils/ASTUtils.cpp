@@ -1,8 +1,8 @@
-#include "utils/ASTUtils.h"
+#include "vanadium/ast/utils/ASTUtils.h"
 
-#include "ASTNodes.h"
-#include "ASTTypes.h"
-#include "Scanner.h"
+#include <vanadium/ast/ASTNodes.h>
+#include <vanadium/ast/ASTTypes.h>
+#include <vanadium/ast/Scanner.h>
 
 namespace vanadium::ast {
 namespace utils {

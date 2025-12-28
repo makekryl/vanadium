@@ -3,8 +3,8 @@
 #include <string_view>
 #include <vector>
 
-#include "ASTNodes.h"
-#include "ASTTypes.h"
+#include "vanadium/ast/ASTNodes.h"
+#include "vanadium/ast/ASTTypes.h"
 
 namespace vanadium {
 

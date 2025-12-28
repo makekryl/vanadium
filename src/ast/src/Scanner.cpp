@@ -1,11 +1,11 @@
-#include "Scanner.h"
+#include "vanadium/ast/Scanner.h"
 
 #include <cctype>
 #include <string_view>
 
-#include "ASTNodes.h"
-#include "ASTTypes.h"
 #include "StaticMap.h"
+#include "vanadium/ast/ASTNodes.h"
+#include "vanadium/ast/ASTTypes.h"
 
 namespace vanadium::ast {
 namespace parser {

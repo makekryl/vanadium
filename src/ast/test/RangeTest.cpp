@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "ASTTypes.h"
+#include "vanadium/ast/ASTTypes.h"
 
 using namespace vanadium;
 using namespace vanadium::ast;

@@ -1,7 +1,9 @@
+#include <vanadium/ast/ASTNodes.h>
+#include <vanadium/ast/utils/ASTUtils.h>
+
 #include <concepts>
 #include <utility>
 
-#include "ASTNodes.h"
 #include "LSProtocol.h"
 #include "LSProtocolEx.h"
 #include "LanguageServerContext.h"
@@ -13,7 +15,6 @@
 #include "Semantic.h"
 #include "TypeChecker.h"
 #include "detail/InlayHint.h"
-#include "utils/ASTUtils.h"
 
 namespace lsp {
 inline SemanticTokenModifiers operator|(SemanticTokenModifiers lhs, SemanticTokenModifiers rhs) {

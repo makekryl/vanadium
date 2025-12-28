@@ -1,12 +1,13 @@
 #pragma once
 
+#include <vanadium/ast/ASTNodes.h>
+
 #include <cassert>
 #include <cstdint>
 #include <ranges>
 #include <unordered_map>
 #include <vector>
 
-#include "ASTNodes.h"
 #include "Builtins.h"
 
 namespace vanadium::core {

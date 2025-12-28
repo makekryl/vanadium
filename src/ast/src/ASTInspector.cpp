@@ -1,8 +1,8 @@
 #include <cassert>
 
-#include "AST.h"
-#include "ASTNodes.h"
-#include "ASTTypes.h"
+#include "vanadium/ast/AST.h"
+#include "vanadium/ast/ASTNodes.h"
+#include "vanadium/ast/ASTTypes.h"
 
 namespace vanadium::ast {
 
@@ -22,7 +22,7 @@ void Node::Accept(const NodeInspector& inspector) const {
     FORWARD_ACCEPT(ExprStmt)
     case NodeKind::ErrorNode:
       break;
-#include "gen/ASTInspector.inc"
+#include "vanadium/ast/gen/ASTInspector.inc"
     default:
       assert(false && "unhandled node kind in inspector code");
       break;

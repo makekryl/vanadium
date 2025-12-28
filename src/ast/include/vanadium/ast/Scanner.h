@@ -3,7 +3,7 @@
 #include <string_view>
 #include <vector>
 
-#include "ASTNodes.h"
+#include "vanadium/ast/ASTNodes.h"
 
 namespace vanadium::ast {
 namespace parser {

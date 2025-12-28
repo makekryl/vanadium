@@ -1,5 +1,9 @@
 #include "TypeChecker.h"
 
+#include <vanadium/ast/ASTNodes.h>
+#include <vanadium/ast/ASTTypes.h>
+#include <vanadium/ast/utils/ASTUtils.h>
+
 #include <algorithm>
 #include <cstdlib>
 #include <format>
@@ -7,14 +11,11 @@
 #include <type_traits>
 #include <utility>
 
-#include "ASTNodes.h"
-#include "ASTTypes.h"
 #include "Builtins.h"
 #include "BuiltinsSuperbases.h"
 #include "Program.h"
 #include "ScopedNodeVisitor.h"
 #include "Semantic.h"
-#include "utils/ASTUtils.h"
 #include "utils/SemanticUtils.h"
 
 namespace vanadium::core {

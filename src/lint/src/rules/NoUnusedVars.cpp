@@ -1,13 +1,14 @@
+#include <vanadium/ast/ASTNodes.h>
+#include <vanadium/ast/ASTTypes.h>
+#include <vanadium/ast/utils/ASTUtils.h>
+
 #include <format>
 #include <ranges>
 
-#include "ASTNodes.h"
-#include "ASTTypes.h"
 #include "BuiltinRules.h"
 #include "Context.h"
 #include "Rule.h"
 #include "Semantic.h"
-#include "utils/ASTUtils.h"
 
 namespace vanadium::lint {
 namespace rules {

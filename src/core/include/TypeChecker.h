@@ -1,7 +1,8 @@
 #pragma once
 
-#include "ASTNodes.h"
-#include "ASTTypes.h"
+#include <vanadium/ast/ASTNodes.h>
+#include <vanadium/ast/ASTTypes.h>
+
 #include "EnumFlags.h"
 #include "Semantic.h"
 

@@ -3,9 +3,9 @@
 #include <cassert>
 #include <string_view>
 
-#include "AST.h"
-#include "ASTNodes.h"
-#include "ASTTypes.h"
+#include "vanadium/ast/AST.h"
+#include "vanadium/ast/ASTNodes.h"
+#include "vanadium/ast/ASTTypes.h"
 
 namespace vanadium::ast {
 
@@ -89,7 +89,7 @@ class Dumper {
         DumpGroup("ErrorNode", [&] {});
         break;
       }
-#include "gen/ASTDumper.inc"
+#include "vanadium/ast/gen/ASTDumper.inc"
       default:
         assert(false && "Unhandled node");
         break;

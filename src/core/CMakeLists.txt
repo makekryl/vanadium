@@ -13,7 +13,7 @@ target_include_directories(vanadium_core PUBLIC
 
 target_link_libraries(vanadium_core PUBLIC
   vanadium_ast
-  vanadium_ast_asn1
+  vanadium_ast_xasn1
   vanadium_lib_common
   vanadium_lib_arena
   TBB::tbb

@@ -3,6 +3,9 @@
 #include <oneapi/tbb/parallel_for_each.h>
 #include <oneapi/tbb/spin_mutex.h>
 #include <oneapi/tbb/task_group.h>
+#include <vanadium/ast/ASTNodes.h>
+#include <vanadium/ast/Parser.h>
+#include <vanadium/ast/utils/ASTUtils.h>
 
 #include <algorithm>
 #include <cassert>
@@ -15,15 +18,12 @@
 #include <type_traits>
 #include <unordered_map>
 
-#include "ASTNodes.h"
 #include "Arena.h"
 #include "Asn1Transparser.h"
 #include "Bitset.h"
 #include "ImportVisitor.h"
-#include "Parser.h"
 #include "Semantic.h"
 #include "TypeChecker.h"
-#include "utils/ASTUtils.h"
 
 namespace vanadium::core {
 

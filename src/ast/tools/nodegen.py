@@ -8,7 +8,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from graphlib import TopologicalSorter
 from pathlib import Path
-from typing import Callable, Self, TextIO
+from typing import Callable, Self
 
 import yaml
 

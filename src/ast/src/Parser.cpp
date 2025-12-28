@@ -1,4 +1,4 @@
-#include "Parser.h"
+#include "vanadium/ast/Parser.h"
 
 #include <cctype>
 #include <cstring>
@@ -6,10 +6,10 @@
 #include <magic_enum/magic_enum.hpp>
 #include <utility>
 
-#include "AST.h"
-#include "ASTNodes.h"
-#include "Scanner.h"
 #include "StaticSet.h"
+#include "vanadium/ast/AST.h"
+#include "vanadium/ast/ASTNodes.h"
+#include "vanadium/ast/Scanner.h"
 
 namespace vanadium::ast {
 namespace parser {

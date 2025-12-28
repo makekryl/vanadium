@@ -22,7 +22,7 @@ add_gtest_executable(vanadium_ast)
 
 set(VANADIUM_AST_ASTGEN_EXEC "${CMAKE_CURRENT_SOURCE_DIR}/tools/nodegen.py")
 set(VANADIUM_AST_ASTGEN_SRC  "${CMAKE_CURRENT_SOURCE_DIR}/nodes.yml")
-set(VANADIUM_AST_ASTGEN_DEST "${CMAKE_CURRENT_SOURCE_DIR}/include/gen")
+set(VANADIUM_AST_ASTGEN_DEST "${CMAKE_CURRENT_SOURCE_DIR}/include/vanadium/ast/gen")
 add_custom_command(
   OUTPUT ${VANADIUM_AST_ASTGEN_DEST}
   COMMAND ${Python3_EXECUTABLE} ${VANADIUM_AST_ASTGEN_EXEC}

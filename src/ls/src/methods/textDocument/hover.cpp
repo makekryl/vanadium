@@ -1,10 +1,12 @@
+#include <vanadium/ast/AST.h>
+#include <vanadium/ast/ASTNodes.h>
+#include <vanadium/ast/ASTTypes.h>
+#include <vanadium/ast/utils/ASTUtils.h>
+
 #include <format>
 #include <iterator>
 #include <ranges>
 
-#include "AST.h"
-#include "ASTNodes.h"
-#include "ASTTypes.h"
 #include "LSProtocol.h"
 #include "LSProtocolEx.h"
 #include "LanguageServerContext.h"
@@ -15,7 +17,6 @@
 #include "Semantic.h"
 #include "detail/Definition.h"
 #include "magic_enum/magic_enum.hpp"
-#include "utils/ASTUtils.h"
 
 namespace vanadium::ls {
 

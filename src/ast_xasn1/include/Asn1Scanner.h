@@ -1,9 +1,10 @@
 #pragma once
 
+#include <vanadium/ast/ASTTypes.h>
+
 #include <string_view>
 #include <vector>
 
-#include "ASTTypes.h"
 #include "Asn1AST.h"
 
 namespace vanadium::asn1::ast {

@@ -1,12 +1,13 @@
 #include "Builtins.h"
 
+#include <vanadium/ast/AST.h>
+#include <vanadium/ast/ASTNodes.h>
+#include <vanadium/ast/Parser.h>
+
 #include <print>
 
-#include "AST.h"
-#include "ASTNodes.h"
 #include "Arena.h"
 #include "BuiltinsSuperbases.h"
-#include "Parser.h"
 #include "Program.h"
 #include "Semantic.h"
 #include "StaticMap.h"

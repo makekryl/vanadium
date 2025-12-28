@@ -1,3 +1,8 @@
+#include <vanadium/ast/AST.h>
+#include <vanadium/ast/ASTNodes.h>
+#include <vanadium/ast/ASTTypes.h>
+#include <vanadium/ast/utils/ASTUtils.h>
+
 #include <algorithm>
 #include <cassert>
 #include <memory>
@@ -8,14 +13,10 @@
 #include <unordered_set>
 #include <vector>
 
-#include "AST.h"
-#include "ASTNodes.h"
-#include "ASTTypes.h"
 #include "Bitset.h"
 #include "DelimitedStringView.h"
 #include "Program.h"
 #include "Semantic.h"
-#include "utils/ASTUtils.h"
 
 namespace vanadium::core {
 namespace semantic {

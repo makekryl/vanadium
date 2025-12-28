@@ -1,6 +1,7 @@
 #pragma once
 
-#include "ASTNodes.h"
+#include <vanadium/ast/ASTNodes.h>
+
 #include "Context.h"
 #include "Rule.h"
 

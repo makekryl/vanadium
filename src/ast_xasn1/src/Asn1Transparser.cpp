@@ -1,5 +1,10 @@
 #include "Asn1Transparser.h"
 
+#include <vanadium/ast/AST.h>
+#include <vanadium/ast/ASTNodes.h>
+#include <vanadium/ast/ASTTypes.h>
+#include <vanadium/ast/Scanner.h>
+
 #include <algorithm>
 #include <cctype>
 #include <charconv>
@@ -16,12 +21,8 @@
 #include <string_view>
 #include <utility>
 
-#include "AST.h"
-#include "ASTNodes.h"
-#include "ASTTypes.h"
 #include "Asn1AST.h"
 #include "Asn1Scanner.h"
-#include "Scanner.h"
 #include "magic_enum/magic_enum.hpp"
 
 // TODO: hardening (missing kEOF checks, etc.)

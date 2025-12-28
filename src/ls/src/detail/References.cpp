@@ -1,11 +1,12 @@
 #include "detail/References.h"
 
+#include <vanadium/ast/AST.h>
+#include <vanadium/ast/ASTNodes.h>
+#include <vanadium/ast/utils/ASTUtils.h>
+
 #include <memory>
 
-#include "AST.h"
-#include "ASTNodes.h"
 #include "detail/Definition.h"
-#include "utils/ASTUtils.h"
 
 namespace vanadium::ls::detail {
 

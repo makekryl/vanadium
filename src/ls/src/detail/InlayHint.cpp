@@ -1,5 +1,9 @@
 #include "detail/InlayHint.h"
 
+#include <vanadium/ast/ASTNodes.h>
+#include <vanadium/ast/ASTTypes.h>
+#include <vanadium/ast/utils/ASTUtils.h>
+
 #include <algorithm>
 #include <glaze/json.hpp>
 #include <stack>
@@ -8,8 +12,6 @@
 #include <utility>
 #include <variant>
 
-#include "ASTNodes.h"
-#include "ASTTypes.h"
 #include "LSProtocol.h"
 #include "LanguageServerConv.h"
 #include "LanguageServerLogger.h"
@@ -20,7 +22,6 @@
 #include "Solution.h"
 #include "TypeChecker.h"
 #include "detail/Definition.h"
-#include "utils/ASTUtils.h"
 #include "utils/SemanticUtils.h"
 
 // TODO: maybe track file version

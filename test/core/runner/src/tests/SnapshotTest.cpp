@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <vanadium/ast/ASTTypes.h>
 #include <vanadium/testing/gtest_helpers.h>
 #include <vanadium/testing/utils.h>
 
@@ -8,7 +9,6 @@
 #include <fstream>
 #include <magic_enum/magic_enum.hpp>
 
-#include "ASTTypes.h"
 #include "CoreTests.h"
 #include "Program.h"
 #include "RunnerOpts.h"

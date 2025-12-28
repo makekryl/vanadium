@@ -1,9 +1,9 @@
 #include "utils/SemanticUtils.h"
 
-#include <string_view>
+#include <vanadium/ast/ASTTypes.h>
+#include <vanadium/ast/utils/ASTUtils.h>
 
-#include "ASTTypes.h"
-#include "utils/ASTUtils.h"
+#include <string_view>
 
 namespace vanadium::core::semantic::utils {
 

@@ -1,11 +1,12 @@
 #pragma once
 
+#include <vanadium/ast/ASTNodes.h>
+
 #include <memory>
 #include <optional>
 #include <unordered_map>
 #include <vector>
 
-#include "ASTNodes.h"
 #include "Context.h"
 #include "FunctionRef.h"
 #include "Program.h"

@@ -1,8 +1,9 @@
 #pragma once
 
+#include <vanadium/ast/ASTNodes.h>
+
 #include <string_view>
 
-#include "ASTNodes.h"
 #include "FunctionRef.h"
 
 namespace vanadium::lint {

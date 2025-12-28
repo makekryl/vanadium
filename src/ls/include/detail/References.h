@@ -1,6 +1,7 @@
 #pragma once
 
-#include "ASTNodes.h"
+#include <vanadium/ast/ASTNodes.h>
+
 #include "FunctionRef.h"
 #include "LSProtocol.h"
 #include "Program.h"

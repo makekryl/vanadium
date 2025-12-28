@@ -1,13 +1,15 @@
 #include "detail/Completion.h"
 
+#include <vanadium/ast/AST.h>
+#include <vanadium/ast/ASTNodes.h>
+#include <vanadium/ast/ASTTypes.h>
+#include <vanadium/ast/utils/ASTUtils.h>
+
 #include <algorithm>
 #include <glaze/json.hpp>
 #include <string_view>
 #include <variant>
 
-#include "AST.h"
-#include "ASTNodes.h"
-#include "ASTTypes.h"
 #include "Arena.h"
 #include "LSProtocol.h"
 #include "LanguageServerConv.h"
@@ -20,7 +22,6 @@
 #include "detail/Definition.h"
 #include "detail/Helpers.h"
 #include "magic_enum/magic_enum.hpp"
-#include "utils/ASTUtils.h"
 #include "utils/SemanticUtils.h"
 
 namespace vanadium::ls::detail {
