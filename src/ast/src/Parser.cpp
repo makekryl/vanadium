@@ -220,9 +220,6 @@ RootNode* Parser::ParseRoot() {
         }
         break;
       }
-      if (tok_ == TokenKind::COMMA || tok_ == TokenKind::SEMICOLON) {
-        Consume();
-      }
     }
   });
 }
