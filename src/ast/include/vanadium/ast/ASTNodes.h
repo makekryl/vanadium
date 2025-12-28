@@ -206,7 +206,6 @@ enum class NodeKind : std::uint8_t {
   expr_begin_,
   Ident,
   CompositeIdent,
-  NameIdent,
   ParametrizedIdent,
   UnaryExpr,
   PostExpr,
@@ -398,10 +397,6 @@ struct Ident : Expr {
 
   Ident() : Expr(NodeKind::Ident) {}
 
-  [[nodiscard]] constexpr bool IsName() const noexcept {
-    return nkind == NodeKind::NameIdent;
-  }
-
   [[nodiscard]] constexpr bool IsComposite() const noexcept {
     return nkind == NodeKind::CompositeIdent;
   }
@@ -418,11 +413,6 @@ struct CompositeIdent : Ident {
 
   Token tok1;
   Token tok2;
-};
-struct NameIdent : Ident {
-  static constexpr NodeKind kKind = NodeKind::NameIdent;
-
-  NameIdent() : Ident(NodeKind::NameIdent) {}
 };
 
 #include "vanadium/ast/gen/ASTNodes.inc"

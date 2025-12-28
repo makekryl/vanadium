@@ -17,7 +17,6 @@ void Node::Accept(const NodeInspector& inspector) const {
     FORWARD_ACCEPT(RootNode)
     FORWARD_ACCEPT(Ident)
     FORWARD_ACCEPT(CompositeIdent)
-    FORWARD_ACCEPT(NameIdent)
     FORWARD_ACCEPT(DeclStmt)
     FORWARD_ACCEPT(ExprStmt)
     case NodeKind::ErrorNode:
