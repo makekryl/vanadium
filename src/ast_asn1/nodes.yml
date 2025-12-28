@@ -1,0 +1,26 @@
+---
+Module:
+  name: Ident
+  components: DefinitiveComponents*?
+  tags: Token?
+  extensibility: Token?
+  exports: ModuleExports*?
+  imports: ModuleImports*?
+  defs: Node*[]
+DefinitiveComponents:
+  list: DefinitiveComponent*[]
+DefinitiveComponent:
+  name: Ident*?
+  number: Token?
+ModuleExports:
+  all: bool
+  list: SymbolReference*[]
+ModuleImports:
+  list: SymbolsFromModule*[]
+SymbolsFromModule:
+  provider: Ident
+  list: SymbolReference*[]
+  # TODO: assignedIdentifier : (objectIdentifierValue | definedValue)? ;
+SymbolReference:
+  ident: Ident
+  parametrized: bool

@@ -1,0 +1,7 @@
+FORWARD_ACCEPT(Module)
+FORWARD_ACCEPT(DefinitiveComponents)
+FORWARD_ACCEPT(DefinitiveComponent)
+FORWARD_ACCEPT(ModuleExports)
+FORWARD_ACCEPT(ModuleImports)
+FORWARD_ACCEPT(SymbolsFromModule)
+FORWARD_ACCEPT(SymbolReference)
