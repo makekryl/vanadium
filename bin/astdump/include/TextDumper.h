@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vanadium/ast/AST.h>
+#include <vanadium/ast/ASTDumper.h>
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/ASTTypes.h>
 
@@ -11,8 +12,6 @@
 #include <ostream>
 #include <ranges>
 #include <string_view>
-
-#include "ASTDumper.h"
 
 class TextASTDumper {
  private:
