@@ -73,7 +73,7 @@
 #define yynerrs         asn1p_nerrs
 
 /* First part of user prologue.  */
-#line 12 "asn1p_y.y"
+#line 29 "asn1p_y.y"
 
 
 #include <stdlib.h>
@@ -871,41 +871,41 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   418,   418,   421,   427,   432,   449,   449,   478,   479,
-     483,   486,   492,   498,   507,   511,   515,   525,   526,   535,
-     538,   547,   550,   553,   556,   560,   581,   582,   591,   604,
-     607,   624,   631,   645,   653,   652,   666,   679,   680,   683,
-     693,   699,   700,   703,   708,   715,   716,   720,   731,   736,
-     743,   749,   755,   765,   766,   778,   781,   784,   792,   797,
-     804,   810,   816,   825,   828,   848,   858,   878,   884,   900,
-     906,   914,   923,   934,   938,   946,   954,   962,   973,   978,
-     985,   986,   994,  1002,  1025,  1026,  1029,  1034,  1038,  1046,
-    1053,  1059,  1066,  1072,  1077,  1084,  1089,  1092,  1099,  1109,
-    1110,  1114,  1121,  1131,  1141,  1152,  1162,  1173,  1183,  1194,
-    1206,  1207,  1214,  1213,  1222,  1226,  1233,  1237,  1240,  1244,
-    1250,  1258,  1267,  1278,  1281,  1288,  1311,  1334,  1358,  1365,
-    1384,  1385,  1388,  1389,  1395,  1401,  1407,  1417,  1427,  1433,
-    1445,  1460,  1468,  1476,  1487,  1498,  1520,  1528,  1537,  1541,
-    1546,  1555,  1560,  1565,  1573,  1596,  1606,  1607,  1608,  1608,
-    1616,  1621,  1626,  1631,  1632,  1633,  1634,  1638,  1639,  1657,
-    1661,  1666,  1674,  1683,  1698,  1699,  1705,  1706,  1707,  1708,
-    1709,  1710,  1711,  1712,  1713,  1714,  1715,  1716,  1717,  1724,
-    1725,  1726,  1730,  1736,  1741,  1746,  1751,  1756,  1765,  1766,
-    1770,  1774,  1775,  1776,  1777,  1778,  1782,  1783,  1784,  1785,
-    1789,  1790,  1797,  1797,  1798,  1798,  1802,  1803,  1807,  1808,
-    1812,  1813,  1814,  1818,  1824,  1825,  1834,  1834,  1836,  1839,
-    1843,  1844,  1850,  1861,  1862,  1868,  1869,  1875,  1876,  1883,
-    1884,  1890,  1891,  1902,  1908,  1914,  1915,  1917,  1918,  1919,
-    1924,  1929,  1934,  1939,  1951,  1960,  1961,  1967,  1968,  1973,
-    1976,  1981,  1989,  1995,  2007,  2010,  2016,  2017,  2017,  2018,
-    2020,  2033,  2038,  2044,  2058,  2059,  2063,  2066,  2069,  2077,
-    2078,  2079,  2084,  2083,  2095,  2104,  2105,  2106,  2107,  2110,
-    2113,  2122,  2138,  2144,  2150,  2164,  2175,  2191,  2194,  2214,
-    2218,  2222,  2226,  2233,  2238,  2244,  2253,  2258,  2265,  2273,
-    2283,  2288,  2295,  2303,  2313,  2328,  2333,  2340,  2347,  2355,
-    2363,  2370,  2381,  2385,  2392,  2423,  2424,  2428,  2435,  2441,
-    2442,  2443,  2444,  2448,  2449,  2450,  2454,  2458,  2466,  2467,
-    2473,  2480,  2487
+       0,   435,   435,   438,   444,   449,   466,   466,   495,   496,
+     500,   503,   509,   515,   524,   528,   532,   542,   543,   552,
+     555,   564,   567,   570,   573,   577,   598,   599,   608,   621,
+     624,   641,   648,   662,   670,   669,   683,   696,   697,   700,
+     710,   716,   717,   720,   725,   732,   733,   737,   748,   753,
+     760,   766,   772,   782,   783,   795,   798,   801,   809,   814,
+     821,   827,   833,   842,   845,   865,   875,   895,   901,   917,
+     923,   931,   940,   951,   955,   963,   971,   979,   990,   995,
+    1002,  1003,  1011,  1019,  1042,  1043,  1046,  1051,  1055,  1063,
+    1070,  1076,  1083,  1089,  1094,  1101,  1106,  1109,  1116,  1126,
+    1127,  1131,  1138,  1148,  1158,  1169,  1179,  1190,  1200,  1211,
+    1223,  1224,  1231,  1230,  1239,  1243,  1250,  1254,  1257,  1261,
+    1267,  1275,  1284,  1295,  1298,  1305,  1328,  1351,  1375,  1382,
+    1401,  1402,  1405,  1406,  1412,  1418,  1424,  1434,  1444,  1450,
+    1462,  1477,  1485,  1493,  1504,  1515,  1537,  1545,  1554,  1558,
+    1563,  1572,  1577,  1582,  1590,  1613,  1623,  1624,  1625,  1625,
+    1633,  1638,  1643,  1648,  1649,  1650,  1651,  1655,  1656,  1674,
+    1678,  1683,  1691,  1700,  1715,  1716,  1722,  1723,  1724,  1725,
+    1726,  1727,  1728,  1729,  1730,  1731,  1732,  1733,  1734,  1741,
+    1742,  1743,  1747,  1753,  1758,  1763,  1768,  1773,  1782,  1783,
+    1787,  1791,  1792,  1793,  1794,  1795,  1799,  1800,  1801,  1802,
+    1806,  1807,  1814,  1814,  1815,  1815,  1819,  1820,  1824,  1825,
+    1829,  1830,  1831,  1835,  1841,  1842,  1851,  1851,  1853,  1856,
+    1860,  1861,  1867,  1878,  1879,  1885,  1886,  1892,  1893,  1900,
+    1901,  1907,  1908,  1919,  1925,  1931,  1932,  1934,  1935,  1936,
+    1941,  1946,  1951,  1956,  1968,  1977,  1978,  1984,  1985,  1990,
+    1993,  1998,  2006,  2012,  2024,  2027,  2033,  2034,  2034,  2035,
+    2037,  2050,  2055,  2061,  2075,  2076,  2080,  2083,  2086,  2094,
+    2095,  2096,  2101,  2100,  2112,  2121,  2122,  2123,  2124,  2127,
+    2130,  2139,  2155,  2161,  2167,  2181,  2192,  2208,  2211,  2231,
+    2235,  2239,  2243,  2250,  2255,  2261,  2270,  2275,  2282,  2290,
+    2300,  2305,  2312,  2320,  2330,  2345,  2350,  2357,  2364,  2372,
+    2380,  2387,  2398,  2402,  2409,  2440,  2441,  2445,  2452,  2458,
+    2459,  2460,  2461,  2465,  2466,  2467,  2471,  2475,  2483,  2484,
+    2490,  2497,  2504
 };
 #endif
 
@@ -1532,7 +1532,7 @@ enum { YYENOMEM = -2 };
       }                                                           \
     else                                                          \
       {                                                           \
-        yyerror (param, yyscanner, YY_("syntax error: cannot back up")); \
+        yyerror (ctx, yyscanner, YY_("syntax error: cannot back up")); \
         YYERROR;                                                  \
       }                                                           \
   while (0)
@@ -1565,7 +1565,7 @@ do {                                                                      \
     {                                                                     \
       YYFPRINTF (stderr, "%s ", Title);                                   \
       yy_symbol_print (stderr,                                            \
-                  Kind, Value, param, yyscanner); \
+                  Kind, Value, ctx, yyscanner); \
       YYFPRINTF (stderr, "\n");                                           \
     }                                                                     \
 } while (0)
@@ -1577,11 +1577,11 @@ do {                                                                      \
 
 static void
 yy_symbol_value_print (FILE *yyo,
-                       yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep, void **param, yyscan_t yyscanner)
+                       yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep, asn1p_yctx_t *ctx, yyscan_t yyscanner)
 {
   FILE *yyoutput = yyo;
   YY_USE (yyoutput);
-  YY_USE (param);
+  YY_USE (ctx);
   YY_USE (yyscanner);
   if (!yyvaluep)
     return;
@@ -1597,12 +1597,12 @@ yy_symbol_value_print (FILE *yyo,
 
 static void
 yy_symbol_print (FILE *yyo,
-                 yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep, void **param, yyscan_t yyscanner)
+                 yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep, asn1p_yctx_t *ctx, yyscan_t yyscanner)
 {
   YYFPRINTF (yyo, "%s %s (",
              yykind < YYNTOKENS ? "token" : "nterm", yysymbol_name (yykind));
 
-  yy_symbol_value_print (yyo, yykind, yyvaluep, param, yyscanner);
+  yy_symbol_value_print (yyo, yykind, yyvaluep, ctx, yyscanner);
   YYFPRINTF (yyo, ")");
 }
 
@@ -1636,7 +1636,7 @@ do {                                                            \
 
 static void
 yy_reduce_print (yy_state_t *yyssp, YYSTYPE *yyvsp,
-                 int yyrule, void **param, yyscan_t yyscanner)
+                 int yyrule, asn1p_yctx_t *ctx, yyscan_t yyscanner)
 {
   int yylno = yyrline[yyrule];
   int yynrhs = yyr2[yyrule];
@@ -1649,7 +1649,7 @@ yy_reduce_print (yy_state_t *yyssp, YYSTYPE *yyvsp,
       YYFPRINTF (stderr, "   $%d = ", yyi + 1);
       yy_symbol_print (stderr,
                        YY_ACCESSING_SYMBOL (+yyssp[yyi + 1 - yynrhs]),
-                       &yyvsp[(yyi + 1) - (yynrhs)], param, yyscanner);
+                       &yyvsp[(yyi + 1) - (yynrhs)], ctx, yyscanner);
       YYFPRINTF (stderr, "\n");
     }
 }
@@ -1657,7 +1657,7 @@ yy_reduce_print (yy_state_t *yyssp, YYSTYPE *yyvsp,
 # define YY_REDUCE_PRINT(Rule)          \
 do {                                    \
   if (yydebug)                          \
-    yy_reduce_print (yyssp, yyvsp, Rule, param, yyscanner); \
+    yy_reduce_print (yyssp, yyvsp, Rule, ctx, yyscanner); \
 } while (0)
 
 /* Nonzero means print parse trace.  It is left uninitialized so that
@@ -1698,10 +1698,10 @@ int yydebug;
 
 static void
 yydestruct (const char *yymsg,
-            yysymbol_kind_t yykind, YYSTYPE *yyvaluep, void **param, yyscan_t yyscanner)
+            yysymbol_kind_t yykind, YYSTYPE *yyvaluep, asn1p_yctx_t *ctx, yyscan_t yyscanner)
 {
   YY_USE (yyvaluep);
-  YY_USE (param);
+  YY_USE (ctx);
   YY_USE (yyscanner);
   if (!yymsg)
     yymsg = "Deleting";
@@ -1722,7 +1722,7 @@ yydestruct (const char *yymsg,
 `----------*/
 
 int
-yyparse (void **param, yyscan_t yyscanner)
+yyparse (asn1p_yctx_t *ctx, yyscan_t yyscanner)
 {
 /* Lookahead token kind.  */
 int yychar;
@@ -1977,7 +1977,7 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* ParsedGrammar: "UTF-8 byte order mark" ModuleList  */
-#line 418 "asn1p_y.y"
+#line 435 "asn1p_y.y"
                             {
 		*(void **)param = (yyvsp[0].a_grammar);
 	}
@@ -1985,7 +1985,7 @@ yyreduce:
     break;
 
   case 3: /* ParsedGrammar: ModuleList  */
-#line 421 "asn1p_y.y"
+#line 438 "asn1p_y.y"
                      {
 		*(void **)param = (yyvsp[0].a_grammar);
 	}
@@ -1993,7 +1993,7 @@ yyreduce:
     break;
 
   case 4: /* ModuleList: ModuleDefinition  */
-#line 427 "asn1p_y.y"
+#line 444 "asn1p_y.y"
                          {
 		(yyval.a_grammar) = asn1p_new();
 		checkmem((yyval.a_grammar));
@@ -2003,7 +2003,7 @@ yyreduce:
     break;
 
   case 5: /* ModuleList: ModuleList ModuleDefinition  */
-#line 432 "asn1p_y.y"
+#line 449 "asn1p_y.y"
                                       {
 		(yyval.a_grammar) = (yyvsp[-1].a_grammar);
 		TQ_ADD(&((yyval.a_grammar)->modules), (yyvsp[0].a_module), mod_next);
@@ -2012,13 +2012,13 @@ yyreduce:
     break;
 
   case 6: /* $@1: %empty  */
-#line 449 "asn1p_y.y"
+#line 466 "asn1p_y.y"
                     { currentModule = asn1p_module_new(); }
 #line 2018 "asn1p_y.c"
     break;
 
   case 7: /* ModuleDefinition: TypeRefName $@1 optObjectIdentifier TOK_DEFINITIONS optModuleDefinitionFlags TOK_PPEQ TOK_BEGIN optModuleBody TOK_END  */
-#line 454 "asn1p_y.y"
+#line 471 "asn1p_y.y"
                         {
 
 		(yyval.a_module) = currentModule;
@@ -2040,19 +2040,19 @@ yyreduce:
     break;
 
   case 8: /* optObjectIdentifier: %empty  */
-#line 478 "asn1p_y.y"
+#line 495 "asn1p_y.y"
         { (yyval.a_oid) = 0; }
 #line 2046 "asn1p_y.c"
     break;
 
   case 9: /* optObjectIdentifier: ObjectIdentifier  */
-#line 479 "asn1p_y.y"
+#line 496 "asn1p_y.y"
                            { (yyval.a_oid) = (yyvsp[0].a_oid); }
 #line 2052 "asn1p_y.c"
     break;
 
   case 10: /* ObjectIdentifier: '{' ObjectIdentifierBody '}'  */
-#line 483 "asn1p_y.y"
+#line 500 "asn1p_y.y"
                                      {
 		(yyval.a_oid) = (yyvsp[-1].a_oid);
 	}
@@ -2060,7 +2060,7 @@ yyreduce:
     break;
 
   case 11: /* ObjectIdentifier: '{' '}'  */
-#line 486 "asn1p_y.y"
+#line 503 "asn1p_y.y"
                   {
 		(yyval.a_oid) = 0;
 	}
@@ -2068,7 +2068,7 @@ yyreduce:
     break;
 
   case 12: /* ObjectIdentifierBody: ObjectIdentifierElement  */
-#line 492 "asn1p_y.y"
+#line 509 "asn1p_y.y"
                                 {
 		(yyval.a_oid) = asn1p_oid_new();
 		asn1p_oid_add_arc((yyval.a_oid), &(yyvsp[0].a_oid_arc));
@@ -2079,7 +2079,7 @@ yyreduce:
     break;
 
   case 13: /* ObjectIdentifierBody: ObjectIdentifierBody ObjectIdentifierElement  */
-#line 498 "asn1p_y.y"
+#line 515 "asn1p_y.y"
                                                        {
 		(yyval.a_oid) = (yyvsp[-1].a_oid);
 		asn1p_oid_add_arc((yyval.a_oid), &(yyvsp[0].a_oid_arc));
@@ -2090,7 +2090,7 @@ yyreduce:
     break;
 
   case 14: /* ObjectIdentifierElement: Identifier  */
-#line 507 "asn1p_y.y"
+#line 524 "asn1p_y.y"
                    {					/* iso */
 		(yyval.a_oid_arc).name = (yyvsp[0].tv_str);
 		(yyval.a_oid_arc).number = -1;
@@ -2099,7 +2099,7 @@ yyreduce:
     break;
 
   case 15: /* ObjectIdentifierElement: Identifier '(' "number" ')'  */
-#line 511 "asn1p_y.y"
+#line 528 "asn1p_y.y"
                                         {		/* iso(1) */
 		(yyval.a_oid_arc).name = (yyvsp[-3].tv_str);
 		(yyval.a_oid_arc).number = (yyvsp[-1].a_int);
@@ -2108,7 +2108,7 @@ yyreduce:
     break;
 
   case 16: /* ObjectIdentifierElement: "number"  */
-#line 515 "asn1p_y.y"
+#line 532 "asn1p_y.y"
                      {					/* 1 */
 		(yyval.a_oid_arc).name = 0;
 		(yyval.a_oid_arc).number = (yyvsp[0].a_int);
@@ -2117,13 +2117,13 @@ yyreduce:
     break;
 
   case 17: /* optModuleDefinitionFlags: %empty  */
-#line 525 "asn1p_y.y"
+#line 542 "asn1p_y.y"
         { (yyval.a_module_flags) = MSF_NOFLAGS; }
 #line 2123 "asn1p_y.c"
     break;
 
   case 18: /* optModuleDefinitionFlags: ModuleDefinitionFlags  */
-#line 526 "asn1p_y.y"
+#line 543 "asn1p_y.y"
                                 {
 		(yyval.a_module_flags) = (yyvsp[0].a_module_flags);
 	}
@@ -2131,7 +2131,7 @@ yyreduce:
     break;
 
   case 19: /* ModuleDefinitionFlags: ModuleDefinitionFlag  */
-#line 535 "asn1p_y.y"
+#line 552 "asn1p_y.y"
                              {
 		(yyval.a_module_flags) = (yyvsp[0].a_module_flags);
 	}
@@ -2139,7 +2139,7 @@ yyreduce:
     break;
 
   case 20: /* ModuleDefinitionFlags: ModuleDefinitionFlags ModuleDefinitionFlag  */
-#line 538 "asn1p_y.y"
+#line 555 "asn1p_y.y"
                                                      {
 		(yyval.a_module_flags) = (yyvsp[-1].a_module_flags) | (yyvsp[0].a_module_flags);
 	}
@@ -2147,7 +2147,7 @@ yyreduce:
     break;
 
   case 21: /* ModuleDefinitionFlag: TOK_EXPLICIT TOK_TAGS  */
-#line 547 "asn1p_y.y"
+#line 564 "asn1p_y.y"
                               {
 		(yyval.a_module_flags) = MSF_EXPLICIT_TAGS;
 	}
@@ -2155,7 +2155,7 @@ yyreduce:
     break;
 
   case 22: /* ModuleDefinitionFlag: TOK_IMPLICIT TOK_TAGS  */
-#line 550 "asn1p_y.y"
+#line 567 "asn1p_y.y"
                                 {
 		(yyval.a_module_flags) = MSF_IMPLICIT_TAGS;
 	}
@@ -2163,7 +2163,7 @@ yyreduce:
     break;
 
   case 23: /* ModuleDefinitionFlag: TOK_AUTOMATIC TOK_TAGS  */
-#line 553 "asn1p_y.y"
+#line 570 "asn1p_y.y"
                                  {
 		(yyval.a_module_flags) = MSF_AUTOMATIC_TAGS;
 	}
@@ -2171,7 +2171,7 @@ yyreduce:
     break;
 
   case 24: /* ModuleDefinitionFlag: TOK_EXTENSIBILITY TOK_IMPLIED  */
-#line 556 "asn1p_y.y"
+#line 573 "asn1p_y.y"
                                         {
 		(yyval.a_module_flags) = MSF_EXTENSIBILITY_IMPLIED;
 	}
@@ -2179,7 +2179,7 @@ yyreduce:
     break;
 
   case 25: /* ModuleDefinitionFlag: TOK_capitalreference TOK_INSTRUCTIONS  */
-#line 560 "asn1p_y.y"
+#line 577 "asn1p_y.y"
                                                 {
 		/* X.680Amd1 specifies TAG and XER */
 		if(strcmp((yyvsp[-1].tv_str), "TAG") == 0) {
@@ -2199,13 +2199,13 @@ yyreduce:
     break;
 
   case 26: /* optModuleBody: %empty  */
-#line 581 "asn1p_y.y"
+#line 598 "asn1p_y.y"
         { (yyval.a_module) = 0; }
 #line 2205 "asn1p_y.c"
     break;
 
   case 27: /* optModuleBody: ModuleBody  */
-#line 582 "asn1p_y.y"
+#line 599 "asn1p_y.y"
                      {
 		(yyval.a_module) = (yyvsp[0].a_module);
 	}
@@ -2213,7 +2213,7 @@ yyreduce:
     break;
 
   case 28: /* ModuleBody: optExports optImports AssignmentList  */
-#line 591 "asn1p_y.y"
+#line 608 "asn1p_y.y"
                                              {
 		(yyval.a_module) = asn1p_module_new();
 		AL_IMPORT((yyval.a_module), exports, (yyvsp[-2].a_module), xp_next);
@@ -2228,7 +2228,7 @@ yyreduce:
     break;
 
   case 29: /* AssignmentList: Assignment  */
-#line 604 "asn1p_y.y"
+#line 621 "asn1p_y.y"
                    {
 		(yyval.a_module) = (yyvsp[0].a_module);
 	}
@@ -2236,7 +2236,7 @@ yyreduce:
     break;
 
   case 30: /* AssignmentList: AssignmentList Assignment  */
-#line 607 "asn1p_y.y"
+#line 624 "asn1p_y.y"
                                     {
 		if((yyvsp[-1].a_module)) {
 			(yyval.a_module) = (yyvsp[-1].a_module);
@@ -2251,7 +2251,7 @@ yyreduce:
     break;
 
   case 31: /* Assignment: DataTypeReference  */
-#line 624 "asn1p_y.y"
+#line 641 "asn1p_y.y"
                           {
 		(yyval.a_module) = asn1p_module_new();
 		checkmem((yyval.a_module));
@@ -2263,7 +2263,7 @@ yyreduce:
     break;
 
   case 32: /* Assignment: ValueAssignment  */
-#line 631 "asn1p_y.y"
+#line 648 "asn1p_y.y"
                           {
 		(yyval.a_module) = asn1p_module_new();
 		checkmem((yyval.a_module));
@@ -2275,7 +2275,7 @@ yyreduce:
     break;
 
   case 33: /* Assignment: ValueSetTypeAssignment  */
-#line 645 "asn1p_y.y"
+#line 662 "asn1p_y.y"
                                  {
 		(yyval.a_module) = asn1p_module_new();
 		checkmem((yyval.a_module));
@@ -2287,13 +2287,13 @@ yyreduce:
     break;
 
   case 34: /* $@2: %empty  */
-#line 653 "asn1p_y.y"
+#line 670 "asn1p_y.y"
                 { asn1p_lexer_hack_push_encoding_control(yyscanner); }
 #line 2293 "asn1p_y.c"
     break;
 
   case 35: /* Assignment: TOK_ENCODING_CONTROL TOK_capitalreference $@2  */
-#line 654 "asn1p_y.y"
+#line 671 "asn1p_y.y"
                         {
 		fprintf(stderr,
 			"WARNING: ENCODING-CONTROL %s "
@@ -2306,7 +2306,7 @@ yyreduce:
     break;
 
   case 36: /* Assignment: BasicString  */
-#line 666 "asn1p_y.y"
+#line 683 "asn1p_y.y"
                       {
 		return yyerror(param, yyscanner,
 			"Attempt to redefine a standard basic string type, "
@@ -2316,13 +2316,13 @@ yyreduce:
     break;
 
   case 37: /* optImports: %empty  */
-#line 679 "asn1p_y.y"
+#line 696 "asn1p_y.y"
         { (yyval.a_module) = 0; }
 #line 2322 "asn1p_y.c"
     break;
 
   case 39: /* ImportsDefinition: TOK_IMPORTS optImportsBundleSet ';'  */
-#line 683 "asn1p_y.y"
+#line 700 "asn1p_y.y"
                                             {
 		if(!saved_aid && 0)
 			return yyerror(param, yyscanner, "Unterminated IMPORTS FROM, "
@@ -2334,7 +2334,7 @@ yyreduce:
     break;
 
   case 40: /* ImportsDefinition: TOK_IMPORTS TOK_FROM  */
-#line 693 "asn1p_y.y"
+#line 710 "asn1p_y.y"
                                          {
 		return yyerror(param, yyscanner, "Empty IMPORTS list");
 	}
@@ -2342,13 +2342,13 @@ yyreduce:
     break;
 
   case 41: /* optImportsBundleSet: %empty  */
-#line 699 "asn1p_y.y"
+#line 716 "asn1p_y.y"
         { (yyval.a_module) = asn1p_module_new(); }
 #line 2348 "asn1p_y.c"
     break;
 
   case 43: /* ImportsBundleSet: ImportsBundle  */
-#line 703 "asn1p_y.y"
+#line 720 "asn1p_y.y"
                       {
 		(yyval.a_module) = asn1p_module_new();
 		checkmem((yyval.a_module));
@@ -2358,7 +2358,7 @@ yyreduce:
     break;
 
   case 44: /* ImportsBundleSet: ImportsBundleSet ImportsBundle  */
-#line 708 "asn1p_y.y"
+#line 725 "asn1p_y.y"
                                          {
 		(yyval.a_module) = (yyvsp[-1].a_module);
 		TQ_ADD(&((yyval.a_module)->imports), (yyvsp[0].a_xports), xp_next);
@@ -2367,19 +2367,19 @@ yyreduce:
     break;
 
   case 45: /* AssignedIdentifier: %empty  */
-#line 715 "asn1p_y.y"
+#line 732 "asn1p_y.y"
         { memset(&(yyval.a_aid), 0, sizeof((yyval.a_aid))); }
 #line 2373 "asn1p_y.c"
     break;
 
   case 46: /* AssignedIdentifier: ObjectIdentifier  */
-#line 716 "asn1p_y.y"
+#line 733 "asn1p_y.y"
                            { (yyval.a_aid).oid = (yyvsp[0].a_oid); }
 #line 2379 "asn1p_y.c"
     break;
 
   case 47: /* ImportsBundle: ImportsList TOK_FROM TypeRefName AssignedIdentifier  */
-#line 720 "asn1p_y.y"
+#line 737 "asn1p_y.y"
                                                             {
 		(yyval.a_xports) = (yyvsp[-3].a_xports);
 		(yyval.a_xports)->fromModuleName = (yyvsp[-1].tv_str);
@@ -2392,7 +2392,7 @@ yyreduce:
     break;
 
   case 48: /* ImportsList: ImportsElement  */
-#line 731 "asn1p_y.y"
+#line 748 "asn1p_y.y"
                        {
 		(yyval.a_xports) = asn1p_xports_new();
 		checkmem((yyval.a_xports));
@@ -2402,7 +2402,7 @@ yyreduce:
     break;
 
   case 49: /* ImportsList: ImportsList ',' ImportsElement  */
-#line 736 "asn1p_y.y"
+#line 753 "asn1p_y.y"
                                          {
 		(yyval.a_xports) = (yyvsp[-2].a_xports);
 		TQ_ADD(&((yyval.a_xports)->xp_members), (yyvsp[0].a_expr), next);
@@ -2411,7 +2411,7 @@ yyreduce:
     break;
 
   case 50: /* ImportsElement: TypeRefName  */
-#line 743 "asn1p_y.y"
+#line 760 "asn1p_y.y"
                     {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -2422,7 +2422,7 @@ yyreduce:
     break;
 
   case 51: /* ImportsElement: TypeRefName '{' '}'  */
-#line 749 "asn1p_y.y"
+#line 766 "asn1p_y.y"
                               {		/* Completely equivalent to above */
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -2433,7 +2433,7 @@ yyreduce:
     break;
 
   case 52: /* ImportsElement: Identifier  */
-#line 755 "asn1p_y.y"
+#line 772 "asn1p_y.y"
                      {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -2444,13 +2444,13 @@ yyreduce:
     break;
 
   case 53: /* optExports: %empty  */
-#line 765 "asn1p_y.y"
+#line 782 "asn1p_y.y"
         { (yyval.a_module) = 0; }
 #line 2450 "asn1p_y.c"
     break;
 
   case 54: /* optExports: ExportsDefinition  */
-#line 766 "asn1p_y.y"
+#line 783 "asn1p_y.y"
                             {
 		(yyval.a_module) = asn1p_module_new();
 		checkmem((yyval.a_module));
@@ -2464,7 +2464,7 @@ yyreduce:
     break;
 
   case 55: /* ExportsDefinition: TOK_EXPORTS ExportsBody ';'  */
-#line 778 "asn1p_y.y"
+#line 795 "asn1p_y.y"
                                     {
 		(yyval.a_xports) = (yyvsp[-1].a_xports);
 	}
@@ -2472,7 +2472,7 @@ yyreduce:
     break;
 
   case 56: /* ExportsDefinition: TOK_EXPORTS TOK_ALL ';'  */
-#line 781 "asn1p_y.y"
+#line 798 "asn1p_y.y"
                                   {
 		(yyval.a_xports) = 0;
 	}
@@ -2480,7 +2480,7 @@ yyreduce:
     break;
 
   case 57: /* ExportsDefinition: TOK_EXPORTS ';'  */
-#line 784 "asn1p_y.y"
+#line 801 "asn1p_y.y"
                           {
 		/* Empty EXPORTS clause effectively prohibits export. */
 		(yyval.a_xports) = asn1p_xports_new();
@@ -2490,7 +2490,7 @@ yyreduce:
     break;
 
   case 58: /* ExportsBody: ExportsElement  */
-#line 792 "asn1p_y.y"
+#line 809 "asn1p_y.y"
                        {
 		(yyval.a_xports) = asn1p_xports_new();
 		assert((yyval.a_xports));
@@ -2500,7 +2500,7 @@ yyreduce:
     break;
 
   case 59: /* ExportsBody: ExportsBody ',' ExportsElement  */
-#line 797 "asn1p_y.y"
+#line 814 "asn1p_y.y"
                                          {
 		(yyval.a_xports) = (yyvsp[-2].a_xports);
 		TQ_ADD(&((yyval.a_xports)->xp_members), (yyvsp[0].a_expr), next);
@@ -2509,7 +2509,7 @@ yyreduce:
     break;
 
   case 60: /* ExportsElement: TypeRefName  */
-#line 804 "asn1p_y.y"
+#line 821 "asn1p_y.y"
                     {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -2520,7 +2520,7 @@ yyreduce:
     break;
 
   case 61: /* ExportsElement: TypeRefName '{' '}'  */
-#line 810 "asn1p_y.y"
+#line 827 "asn1p_y.y"
                               {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -2531,7 +2531,7 @@ yyreduce:
     break;
 
   case 62: /* ExportsElement: Identifier  */
-#line 816 "asn1p_y.y"
+#line 833 "asn1p_y.y"
                      {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -2542,13 +2542,13 @@ yyreduce:
     break;
 
   case 63: /* ValueSet: '{' ElementSetSpecs '}'  */
-#line 825 "asn1p_y.y"
+#line 842 "asn1p_y.y"
                                   { (yyval.a_constr) = (yyvsp[-1].a_constr); }
 #line 2548 "asn1p_y.c"
     break;
 
   case 64: /* ValueSetTypeAssignment: TypeRefName Type TOK_PPEQ ValueSet  */
-#line 828 "asn1p_y.y"
+#line 845 "asn1p_y.y"
                                            {
 		(yyval.a_expr) = (yyvsp[-2].a_expr);
 		assert((yyval.a_expr)->Identifier == 0);
@@ -2560,7 +2560,7 @@ yyreduce:
     break;
 
   case 65: /* DefinedType: ComplexTypeReference  */
-#line 848 "asn1p_y.y"
+#line 865 "asn1p_y.y"
                              {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -2572,7 +2572,7 @@ yyreduce:
     break;
 
   case 66: /* DefinedType: ComplexTypeReference '{' ActualParameterList '}'  */
-#line 858 "asn1p_y.y"
+#line 875 "asn1p_y.y"
                                                            {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -2585,7 +2585,7 @@ yyreduce:
     break;
 
   case 67: /* DataTypeReference: TypeRefName TOK_PPEQ Type  */
-#line 878 "asn1p_y.y"
+#line 895 "asn1p_y.y"
                                   {
 		(yyval.a_expr) = (yyvsp[0].a_expr);
 		(yyval.a_expr)->Identifier = (yyvsp[-2].tv_str);
@@ -2596,7 +2596,7 @@ yyreduce:
     break;
 
   case 68: /* DataTypeReference: TypeRefName TOK_PPEQ ObjectClass  */
-#line 884 "asn1p_y.y"
+#line 901 "asn1p_y.y"
                                            {
 		(yyval.a_expr) = (yyvsp[0].a_expr);
 		(yyval.a_expr)->Identifier = (yyvsp[-2].tv_str);
@@ -2607,7 +2607,7 @@ yyreduce:
     break;
 
   case 69: /* DataTypeReference: TypeRefName '{' ParameterArgumentList '}' TOK_PPEQ Type  */
-#line 900 "asn1p_y.y"
+#line 917 "asn1p_y.y"
                                                                   {
 		(yyval.a_expr) = (yyvsp[0].a_expr);
 		(yyval.a_expr)->Identifier = (yyvsp[-5].tv_str);
@@ -2617,7 +2617,7 @@ yyreduce:
     break;
 
   case 70: /* DataTypeReference: TypeRefName '{' ParameterArgumentList '}' TOK_PPEQ ObjectClass  */
-#line 906 "asn1p_y.y"
+#line 923 "asn1p_y.y"
                                                                          {
 		(yyval.a_expr) = (yyvsp[0].a_expr);
 		(yyval.a_expr)->Identifier = (yyvsp[-5].tv_str);
@@ -2627,7 +2627,7 @@ yyreduce:
     break;
 
   case 71: /* ParameterArgumentList: ParameterArgumentName  */
-#line 914 "asn1p_y.y"
+#line 931 "asn1p_y.y"
                               {
 		int ret;
 		(yyval.a_plist) = asn1p_paramlist_new(asn1p_get_lineno(yyscanner));
@@ -2641,7 +2641,7 @@ yyreduce:
     break;
 
   case 72: /* ParameterArgumentList: ParameterArgumentList ',' ParameterArgumentName  */
-#line 923 "asn1p_y.y"
+#line 940 "asn1p_y.y"
                                                           {
 		int ret;
 		(yyval.a_plist) = (yyvsp[-2].a_plist);
@@ -2654,7 +2654,7 @@ yyreduce:
     break;
 
   case 73: /* ParameterArgumentName: TypeRefName  */
-#line 934 "asn1p_y.y"
+#line 951 "asn1p_y.y"
                     {
 		(yyval.a_parg).governor = NULL;
 		(yyval.a_parg).argument = (yyvsp[0].tv_str);
@@ -2663,7 +2663,7 @@ yyreduce:
     break;
 
   case 74: /* ParameterArgumentName: TypeRefName ':' Identifier  */
-#line 938 "asn1p_y.y"
+#line 955 "asn1p_y.y"
                                      {
 		int ret;
 		(yyval.a_parg).governor = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
@@ -2676,7 +2676,7 @@ yyreduce:
     break;
 
   case 75: /* ParameterArgumentName: TypeRefName ':' TypeRefName  */
-#line 946 "asn1p_y.y"
+#line 963 "asn1p_y.y"
                                       {
 		int ret;
 		(yyval.a_parg).governor = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
@@ -2689,7 +2689,7 @@ yyreduce:
     break;
 
   case 76: /* ParameterArgumentName: BasicTypeId ':' Identifier  */
-#line 954 "asn1p_y.y"
+#line 971 "asn1p_y.y"
                                      {
 		int ret;
 		(yyval.a_parg).governor = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
@@ -2702,7 +2702,7 @@ yyreduce:
     break;
 
   case 77: /* ParameterArgumentName: BasicTypeId ':' TypeRefName  */
-#line 962 "asn1p_y.y"
+#line 979 "asn1p_y.y"
                                       {
 		int ret;
 		(yyval.a_parg).governor = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
@@ -2715,7 +2715,7 @@ yyreduce:
     break;
 
   case 78: /* ActualParameterList: ActualParameter  */
-#line 973 "asn1p_y.y"
+#line 990 "asn1p_y.y"
                         {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -2725,7 +2725,7 @@ yyreduce:
     break;
 
   case 79: /* ActualParameterList: ActualParameterList ',' ActualParameter  */
-#line 978 "asn1p_y.y"
+#line 995 "asn1p_y.y"
                                                   {
 		(yyval.a_expr) = (yyvsp[-2].a_expr);
 		asn1p_expr_add((yyval.a_expr), (yyvsp[0].a_expr));
@@ -2734,7 +2734,7 @@ yyreduce:
     break;
 
   case 81: /* ActualParameter: SimpleValue  */
-#line 986 "asn1p_y.y"
+#line 1003 "asn1p_y.y"
                       {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -2747,7 +2747,7 @@ yyreduce:
     break;
 
   case 82: /* ActualParameter: DefinedValue  */
-#line 994 "asn1p_y.y"
+#line 1011 "asn1p_y.y"
                        {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -2760,7 +2760,7 @@ yyreduce:
     break;
 
   case 83: /* ActualParameter: ValueSet  */
-#line 1002 "asn1p_y.y"
+#line 1019 "asn1p_y.y"
                    {
 		(yyval.a_expr) = NEW_EXPR();
 		(yyval.a_expr)->expr_type = A1TC_VALUESET;
@@ -2771,19 +2771,19 @@ yyreduce:
     break;
 
   case 84: /* optComponentTypeLists: %empty  */
-#line 1025 "asn1p_y.y"
+#line 1042 "asn1p_y.y"
         { (yyval.a_expr) = NEW_EXPR(); }
 #line 2777 "asn1p_y.c"
     break;
 
   case 85: /* optComponentTypeLists: ComponentTypeLists  */
-#line 1026 "asn1p_y.y"
+#line 1043 "asn1p_y.y"
                              { (yyval.a_expr) = (yyvsp[0].a_expr); }
 #line 2783 "asn1p_y.c"
     break;
 
   case 86: /* ComponentTypeLists: ComponentType  */
-#line 1029 "asn1p_y.y"
+#line 1046 "asn1p_y.y"
                       {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -2793,7 +2793,7 @@ yyreduce:
     break;
 
   case 87: /* ComponentTypeLists: ComponentTypeLists ',' ComponentType  */
-#line 1034 "asn1p_y.y"
+#line 1051 "asn1p_y.y"
                                                {
 		(yyval.a_expr) = (yyvsp[-2].a_expr);
 		asn1p_expr_add((yyval.a_expr), (yyvsp[0].a_expr));
@@ -2802,7 +2802,7 @@ yyreduce:
     break;
 
   case 88: /* ComponentTypeLists: ComponentTypeLists ',' TOK_VBracketLeft ComponentTypeLists TOK_VBracketRight  */
-#line 1038 "asn1p_y.y"
+#line 1055 "asn1p_y.y"
                                                                                        {
 		(yyval.a_expr) = (yyvsp[-4].a_expr);
 		asn1p_expr_add_many((yyval.a_expr), (yyvsp[-1].a_expr));
@@ -2812,7 +2812,7 @@ yyreduce:
     break;
 
   case 89: /* ComponentType: Identifier MaybeIndirectTaggedType optMarker  */
-#line 1046 "asn1p_y.y"
+#line 1063 "asn1p_y.y"
                                                      {
 		(yyval.a_expr) = (yyvsp[-1].a_expr);
 		assert((yyval.a_expr)->Identifier == 0);
@@ -2824,7 +2824,7 @@ yyreduce:
     break;
 
   case 90: /* ComponentType: MaybeIndirectTaggedType optMarker  */
-#line 1053 "asn1p_y.y"
+#line 1070 "asn1p_y.y"
                                             {
 		(yyval.a_expr) = (yyvsp[-1].a_expr);
 		(yyvsp[0].a_marker).flags |= (yyval.a_expr)->marker.flags;
@@ -2835,7 +2835,7 @@ yyreduce:
     break;
 
   case 91: /* ComponentType: TOK_COMPONENTS TOK_OF MaybeIndirectTaggedType  */
-#line 1059 "asn1p_y.y"
+#line 1076 "asn1p_y.y"
                                                         {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -2847,7 +2847,7 @@ yyreduce:
     break;
 
   case 92: /* ComponentType: ExtensionAndException  */
-#line 1066 "asn1p_y.y"
+#line 1083 "asn1p_y.y"
                                 {
 		(yyval.a_expr) = (yyvsp[0].a_expr);
 	}
@@ -2855,7 +2855,7 @@ yyreduce:
     break;
 
   case 93: /* AlternativeTypeLists: AlternativeType  */
-#line 1072 "asn1p_y.y"
+#line 1089 "asn1p_y.y"
                         {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -2865,7 +2865,7 @@ yyreduce:
     break;
 
   case 94: /* AlternativeTypeLists: AlternativeTypeLists ',' AlternativeType  */
-#line 1077 "asn1p_y.y"
+#line 1094 "asn1p_y.y"
                                                    {
 		(yyval.a_expr) = (yyvsp[-2].a_expr);
 		asn1p_expr_add((yyval.a_expr), (yyvsp[0].a_expr));
@@ -2874,7 +2874,7 @@ yyreduce:
     break;
 
   case 95: /* AlternativeType: Identifier MaybeIndirectTaggedType  */
-#line 1084 "asn1p_y.y"
+#line 1101 "asn1p_y.y"
                                            {
 		(yyval.a_expr) = (yyvsp[0].a_expr);
 		assert((yyval.a_expr)->Identifier == 0);
@@ -2884,7 +2884,7 @@ yyreduce:
     break;
 
   case 96: /* AlternativeType: ExtensionAndException  */
-#line 1089 "asn1p_y.y"
+#line 1106 "asn1p_y.y"
                                 {
 		(yyval.a_expr) = (yyvsp[0].a_expr);
 	}
@@ -2892,7 +2892,7 @@ yyreduce:
     break;
 
   case 97: /* AlternativeType: MaybeIndirectTaggedType  */
-#line 1092 "asn1p_y.y"
+#line 1109 "asn1p_y.y"
                                   {
 		(yyval.a_expr) = (yyvsp[0].a_expr);
 		_fixup_anonymous_identifier((yyval.a_expr), yyscanner);
@@ -2901,7 +2901,7 @@ yyreduce:
     break;
 
   case 98: /* ObjectClass: TOK_CLASS '{' FieldSpec '}' optWithSyntax  */
-#line 1099 "asn1p_y.y"
+#line 1116 "asn1p_y.y"
                                                   {
 		(yyval.a_expr) = (yyvsp[-2].a_expr);
 		checkmem((yyval.a_expr));
@@ -2913,19 +2913,19 @@ yyreduce:
     break;
 
   case 99: /* optUNIQUE: %empty  */
-#line 1109 "asn1p_y.y"
+#line 1126 "asn1p_y.y"
         { (yyval.a_int) = 0; }
 #line 2919 "asn1p_y.c"
     break;
 
   case 100: /* optUNIQUE: TOK_UNIQUE  */
-#line 1110 "asn1p_y.y"
+#line 1127 "asn1p_y.y"
                      { (yyval.a_int) = 1; }
 #line 2925 "asn1p_y.c"
     break;
 
   case 101: /* FieldSpec: ClassField  */
-#line 1114 "asn1p_y.y"
+#line 1131 "asn1p_y.y"
                    {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -2937,7 +2937,7 @@ yyreduce:
     break;
 
   case 102: /* FieldSpec: FieldSpec ',' ClassField  */
-#line 1121 "asn1p_y.y"
+#line 1138 "asn1p_y.y"
                                    {
 		(yyval.a_expr) = (yyvsp[-2].a_expr);
 		asn1p_expr_add((yyval.a_expr), (yyvsp[0].a_expr));
@@ -2946,7 +2946,7 @@ yyreduce:
     break;
 
   case 103: /* ClassField: TOK_typefieldreference optMarker  */
-#line 1131 "asn1p_y.y"
+#line 1148 "asn1p_y.y"
                                          {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -2959,7 +2959,7 @@ yyreduce:
     break;
 
   case 104: /* ClassField: TOK_valuefieldreference Type optUNIQUE optMarker  */
-#line 1141 "asn1p_y.y"
+#line 1158 "asn1p_y.y"
                                                            {
 		(yyval.a_expr) = NEW_EXPR();
 		(yyval.a_expr)->Identifier = (yyvsp[-3].tv_str);
@@ -2973,7 +2973,7 @@ yyreduce:
     break;
 
   case 105: /* ClassField: TOK_valuefieldreference FieldName optMarker  */
-#line 1152 "asn1p_y.y"
+#line 1169 "asn1p_y.y"
                                                       {
 		(yyval.a_expr) = NEW_EXPR();
 		(yyval.a_expr)->Identifier = (yyvsp[-2].tv_str);
@@ -2986,7 +2986,7 @@ yyreduce:
     break;
 
   case 106: /* ClassField: TOK_valuefieldreference DefinedObjectClass optMarker  */
-#line 1162 "asn1p_y.y"
+#line 1179 "asn1p_y.y"
                                                                {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -3000,7 +3000,7 @@ yyreduce:
     break;
 
   case 107: /* ClassField: TOK_typefieldreference FieldName optMarker  */
-#line 1173 "asn1p_y.y"
+#line 1190 "asn1p_y.y"
                                                      {
 		(yyval.a_expr) = NEW_EXPR();
 		(yyval.a_expr)->Identifier = (yyvsp[-2].tv_str);
@@ -3013,7 +3013,7 @@ yyreduce:
     break;
 
   case 108: /* ClassField: TOK_typefieldreference Type optMarker  */
-#line 1183 "asn1p_y.y"
+#line 1200 "asn1p_y.y"
                                                 {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -3027,7 +3027,7 @@ yyreduce:
     break;
 
   case 109: /* ClassField: TOK_typefieldreference DefinedObjectClass optMarker  */
-#line 1194 "asn1p_y.y"
+#line 1211 "asn1p_y.y"
                                                               {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -3041,13 +3041,13 @@ yyreduce:
     break;
 
   case 110: /* optWithSyntax: %empty  */
-#line 1206 "asn1p_y.y"
+#line 1223 "asn1p_y.y"
         { (yyval.a_wsynt) = 0; }
 #line 3047 "asn1p_y.c"
     break;
 
   case 111: /* optWithSyntax: WithSyntax  */
-#line 1207 "asn1p_y.y"
+#line 1224 "asn1p_y.y"
                      {
 		(yyval.a_wsynt) = (yyvsp[0].a_wsynt);
 	}
@@ -3055,13 +3055,13 @@ yyreduce:
     break;
 
   case 112: /* $@3: %empty  */
-#line 1214 "asn1p_y.y"
+#line 1231 "asn1p_y.y"
                 { asn1p_lexer_hack_enable_with_syntax(yyscanner); }
 #line 3061 "asn1p_y.c"
     break;
 
   case 113: /* WithSyntax: TOK_WITH TOK_SYNTAX '{' $@3 WithSyntaxList '}'  */
-#line 1216 "asn1p_y.y"
+#line 1233 "asn1p_y.y"
                     {
 		(yyval.a_wsynt) = (yyvsp[-1].a_wsynt);
 	}
@@ -3069,7 +3069,7 @@ yyreduce:
     break;
 
   case 114: /* WithSyntaxList: WithSyntaxToken  */
-#line 1222 "asn1p_y.y"
+#line 1239 "asn1p_y.y"
                         {
 		(yyval.a_wsynt) = asn1p_wsyntx_new();
 		TQ_ADD(&((yyval.a_wsynt)->chunks), (yyvsp[0].a_wchunk), next);
@@ -3078,7 +3078,7 @@ yyreduce:
     break;
 
   case 115: /* WithSyntaxList: WithSyntaxList WithSyntaxToken  */
-#line 1226 "asn1p_y.y"
+#line 1243 "asn1p_y.y"
                                          {
 		(yyval.a_wsynt) = (yyvsp[-1].a_wsynt);
 		TQ_ADD(&((yyval.a_wsynt)->chunks), (yyvsp[0].a_wchunk), next);
@@ -3087,7 +3087,7 @@ yyreduce:
     break;
 
   case 116: /* WithSyntaxToken: TOK_whitespace  */
-#line 1233 "asn1p_y.y"
+#line 1250 "asn1p_y.y"
                        {
 		(yyval.a_wchunk) = asn1p_wsyntx_chunk_fromstring((yyvsp[0].tv_opaque).buf, 0);
 		(yyval.a_wchunk)->type = WC_WHITESPACE;
@@ -3096,7 +3096,7 @@ yyreduce:
     break;
 
   case 117: /* WithSyntaxToken: TOK_Literal  */
-#line 1237 "asn1p_y.y"
+#line 1254 "asn1p_y.y"
                       {
 		(yyval.a_wchunk) = asn1p_wsyntx_chunk_fromstring((yyvsp[0].tv_str), 0);
 	}
@@ -3104,7 +3104,7 @@ yyreduce:
     break;
 
   case 118: /* WithSyntaxToken: PrimitiveFieldReference  */
-#line 1240 "asn1p_y.y"
+#line 1257 "asn1p_y.y"
                                   {
 		(yyval.a_wchunk) = asn1p_wsyntx_chunk_fromstring((yyvsp[0].a_refcomp).name, 0);
 		(yyval.a_wchunk)->type = WC_FIELD;
@@ -3113,7 +3113,7 @@ yyreduce:
     break;
 
   case 119: /* WithSyntaxToken: '[' WithSyntaxList ']'  */
-#line 1244 "asn1p_y.y"
+#line 1261 "asn1p_y.y"
                                  {
 		(yyval.a_wchunk) = asn1p_wsyntx_chunk_fromsyntax((yyvsp[-1].a_wsynt));
 	}
@@ -3121,7 +3121,7 @@ yyreduce:
     break;
 
   case 120: /* ExtensionAndException: "..."  */
-#line 1250 "asn1p_y.y"
+#line 1267 "asn1p_y.y"
                       {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -3134,7 +3134,7 @@ yyreduce:
     break;
 
   case 121: /* ExtensionAndException: "..." '!' DefinedValue  */
-#line 1258 "asn1p_y.y"
+#line 1275 "asn1p_y.y"
                                          {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -3148,7 +3148,7 @@ yyreduce:
     break;
 
   case 122: /* ExtensionAndException: "..." '!' SignedNumber  */
-#line 1267 "asn1p_y.y"
+#line 1284 "asn1p_y.y"
                                          {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -3162,7 +3162,7 @@ yyreduce:
     break;
 
   case 124: /* TaggedType: optTag UntaggedType  */
-#line 1281 "asn1p_y.y"
+#line 1298 "asn1p_y.y"
                         {
         (yyval.a_expr) = (yyvsp[0].a_expr);
         (yyval.a_expr)->tag = (yyvsp[-1].a_tag);
@@ -3171,7 +3171,7 @@ yyreduce:
     break;
 
   case 125: /* DefinedUntaggedType: DefinedType optManyConstraints  */
-#line 1288 "asn1p_y.y"
+#line 1305 "asn1p_y.y"
                                        {
 		(yyval.a_expr) = (yyvsp[-1].a_expr);
 		/*
@@ -3196,7 +3196,7 @@ yyreduce:
     break;
 
   case 126: /* UntaggedType: TypeDeclaration optManyConstraints  */
-#line 1311 "asn1p_y.y"
+#line 1328 "asn1p_y.y"
                                            {
 		(yyval.a_expr) = (yyvsp[-1].a_expr);
 		/*
@@ -3221,7 +3221,7 @@ yyreduce:
     break;
 
   case 127: /* MaybeIndirectTaggedType: optTag MaybeIndirectTypeDeclaration optManyConstraints  */
-#line 1334 "asn1p_y.y"
+#line 1351 "asn1p_y.y"
                                                            {
 		(yyval.a_expr) = (yyvsp[-1].a_expr);
 		(yyval.a_expr)->tag = (yyvsp[-2].a_tag);
@@ -3247,7 +3247,7 @@ yyreduce:
     break;
 
   case 128: /* NSTD_IndirectMarker: %empty  */
-#line 1358 "asn1p_y.y"
+#line 1375 "asn1p_y.y"
         {
 		(yyval.a_int) = asn1p_as_pointer ? EM_INDIRECT : 0;
 		asn1p_as_pointer = 0;
@@ -3256,7 +3256,7 @@ yyreduce:
     break;
 
   case 129: /* MaybeIndirectTypeDeclaration: NSTD_IndirectMarker TypeDeclaration  */
-#line 1365 "asn1p_y.y"
+#line 1382 "asn1p_y.y"
                                         {
         (yyval.a_expr) = (yyvsp[0].a_expr);
 		(yyval.a_expr)->marker.flags |= (yyvsp[-1].a_int);
@@ -3277,7 +3277,7 @@ yyreduce:
     break;
 
   case 133: /* ConcreteTypeDeclaration: TOK_CHOICE '{' AlternativeTypeLists '}'  */
-#line 1389 "asn1p_y.y"
+#line 1406 "asn1p_y.y"
                                                   {
 		(yyval.a_expr) = (yyvsp[-1].a_expr);
 		assert((yyval.a_expr)->expr_type == A1TC_INVALID);
@@ -3288,7 +3288,7 @@ yyreduce:
     break;
 
   case 134: /* ConcreteTypeDeclaration: TOK_SEQUENCE '{' optComponentTypeLists '}'  */
-#line 1395 "asn1p_y.y"
+#line 1412 "asn1p_y.y"
                                                      {
 		(yyval.a_expr) = (yyvsp[-1].a_expr);
 		assert((yyval.a_expr)->expr_type == A1TC_INVALID);
@@ -3299,7 +3299,7 @@ yyreduce:
     break;
 
   case 135: /* ConcreteTypeDeclaration: TOK_SET '{' optComponentTypeLists '}'  */
-#line 1401 "asn1p_y.y"
+#line 1418 "asn1p_y.y"
                                                 {
 		(yyval.a_expr) = (yyvsp[-1].a_expr);
 		assert((yyval.a_expr)->expr_type == A1TC_INVALID);
@@ -3310,7 +3310,7 @@ yyreduce:
     break;
 
   case 136: /* ConcreteTypeDeclaration: TOK_SEQUENCE optSizeOrConstraint TOK_OF optIdentifier optTag MaybeIndirectTypeDeclaration  */
-#line 1407 "asn1p_y.y"
+#line 1424 "asn1p_y.y"
                                                                                                     {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -3325,7 +3325,7 @@ yyreduce:
     break;
 
   case 137: /* ConcreteTypeDeclaration: TOK_SET optSizeOrConstraint TOK_OF optIdentifier optTag MaybeIndirectTypeDeclaration  */
-#line 1417 "asn1p_y.y"
+#line 1434 "asn1p_y.y"
                                                                                                {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -3340,7 +3340,7 @@ yyreduce:
     break;
 
   case 138: /* ConcreteTypeDeclaration: TOK_ANY  */
-#line 1427 "asn1p_y.y"
+#line 1444 "asn1p_y.y"
                                                         {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -3351,7 +3351,7 @@ yyreduce:
     break;
 
   case 139: /* ConcreteTypeDeclaration: TOK_ANY TOK_DEFINED TOK_BY Identifier  */
-#line 1433 "asn1p_y.y"
+#line 1450 "asn1p_y.y"
                                                         {
 		int ret;
 		(yyval.a_expr) = NEW_EXPR();
@@ -3368,7 +3368,7 @@ yyreduce:
     break;
 
   case 140: /* ConcreteTypeDeclaration: TOK_INSTANCE TOK_OF ComplexTypeReference  */
-#line 1445 "asn1p_y.y"
+#line 1462 "asn1p_y.y"
                                                    {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -3380,7 +3380,7 @@ yyreduce:
     break;
 
   case 141: /* ComplexTypeReference: TOK_typereference  */
-#line 1460 "asn1p_y.y"
+#line 1477 "asn1p_y.y"
                           {
 		int ret;
 		(yyval.a_ref) = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
@@ -3393,7 +3393,7 @@ yyreduce:
     break;
 
   case 142: /* ComplexTypeReference: TOK_capitalreference  */
-#line 1468 "asn1p_y.y"
+#line 1485 "asn1p_y.y"
                                {
 		int ret;
 		(yyval.a_ref) = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
@@ -3406,7 +3406,7 @@ yyreduce:
     break;
 
   case 143: /* ComplexTypeReference: TOK_typereference '.' TypeRefName  */
-#line 1476 "asn1p_y.y"
+#line 1493 "asn1p_y.y"
                                             {
 		int ret;
 		(yyval.a_ref) = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
@@ -3422,7 +3422,7 @@ yyreduce:
     break;
 
   case 144: /* ComplexTypeReference: TOK_capitalreference '.' TypeRefName  */
-#line 1487 "asn1p_y.y"
+#line 1504 "asn1p_y.y"
                                                {
 		int ret;
 		(yyval.a_ref) = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
@@ -3438,7 +3438,7 @@ yyreduce:
     break;
 
   case 145: /* ComplexTypeReference: TOK_capitalreference '.' ComplexTypeReferenceAmpList  */
-#line 1498 "asn1p_y.y"
+#line 1515 "asn1p_y.y"
                                                                {
 		int ret;
 		(yyval.a_ref) = (yyvsp[0].a_ref);
@@ -3462,7 +3462,7 @@ yyreduce:
     break;
 
   case 146: /* ComplexTypeReferenceAmpList: ComplexTypeReferenceElement  */
-#line 1520 "asn1p_y.y"
+#line 1537 "asn1p_y.y"
                                     {
 		int ret;
 		(yyval.a_ref) = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
@@ -3475,7 +3475,7 @@ yyreduce:
     break;
 
   case 147: /* ComplexTypeReferenceAmpList: ComplexTypeReferenceAmpList '.' ComplexTypeReferenceElement  */
-#line 1528 "asn1p_y.y"
+#line 1545 "asn1p_y.y"
                                                                       {
 		int ret;
 		(yyval.a_ref) = (yyvsp[-2].a_ref);
@@ -3487,7 +3487,7 @@ yyreduce:
     break;
 
   case 149: /* PrimitiveFieldReference: TOK_typefieldreference  */
-#line 1541 "asn1p_y.y"
+#line 1558 "asn1p_y.y"
                                {
 		(yyval.a_refcomp).lex_type = RLT_AmpUppercase;
 		(yyval.a_refcomp).name = (yyvsp[0].tv_str);
@@ -3496,7 +3496,7 @@ yyreduce:
     break;
 
   case 150: /* PrimitiveFieldReference: TOK_valuefieldreference  */
-#line 1546 "asn1p_y.y"
+#line 1563 "asn1p_y.y"
                                   {
 		(yyval.a_refcomp).lex_type = RLT_Amplowercase;
 		(yyval.a_refcomp).name = (yyvsp[0].tv_str);
@@ -3505,7 +3505,7 @@ yyreduce:
     break;
 
   case 151: /* FieldName: TOK_typefieldreference  */
-#line 1555 "asn1p_y.y"
+#line 1572 "asn1p_y.y"
                                {
 		(yyval.a_ref) = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		asn1p_ref_add_component((yyval.a_ref), (yyvsp[0].tv_str), RLT_AmpUppercase);
@@ -3515,7 +3515,7 @@ yyreduce:
     break;
 
   case 152: /* FieldName: FieldName '.' TOK_typefieldreference  */
-#line 1560 "asn1p_y.y"
+#line 1577 "asn1p_y.y"
                                                {
 		(yyval.a_ref) = (yyval.a_ref);
 		asn1p_ref_add_component((yyval.a_ref), (yyvsp[0].tv_str), RLT_AmpUppercase);
@@ -3525,7 +3525,7 @@ yyreduce:
     break;
 
   case 153: /* FieldName: FieldName '.' TOK_valuefieldreference  */
-#line 1565 "asn1p_y.y"
+#line 1582 "asn1p_y.y"
                                                 {
 		(yyval.a_ref) = (yyval.a_ref);
 		asn1p_ref_add_component((yyval.a_ref), (yyvsp[0].tv_str), RLT_Amplowercase);
@@ -3535,7 +3535,7 @@ yyreduce:
     break;
 
   case 154: /* DefinedObjectClass: TOK_capitalreference  */
-#line 1573 "asn1p_y.y"
+#line 1590 "asn1p_y.y"
                              {
 		(yyval.a_ref) = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		asn1p_ref_add_component((yyval.a_ref), (yyvsp[0].tv_str), RLT_CAPITALS);
@@ -3545,7 +3545,7 @@ yyreduce:
     break;
 
   case 155: /* ValueAssignment: Identifier Type TOK_PPEQ Value  */
-#line 1596 "asn1p_y.y"
+#line 1613 "asn1p_y.y"
                                        {
 		(yyval.a_expr) = (yyvsp[-2].a_expr);
 		assert((yyval.a_expr)->Identifier == NULL);
@@ -3557,13 +3557,13 @@ yyreduce:
     break;
 
   case 158: /* $@4: %empty  */
-#line 1608 "asn1p_y.y"
+#line 1625 "asn1p_y.y"
               { asn1p_lexer_hack_push_opaque_state(yyscanner); }
 #line 3563 "asn1p_y.c"
     break;
 
   case 159: /* Value: '{' $@4 Opaque  */
-#line 1608 "asn1p_y.y"
+#line 1625 "asn1p_y.y"
                                                                         {
 		(yyval.a_value) = asn1p_value_frombuf((yyvsp[0].tv_opaque).buf, (yyvsp[0].tv_opaque).len, 0);
 		checkmem((yyval.a_value));
@@ -3573,7 +3573,7 @@ yyreduce:
     break;
 
   case 160: /* SimpleValue: TOK_NULL  */
-#line 1616 "asn1p_y.y"
+#line 1633 "asn1p_y.y"
                  {
 		(yyval.a_value) = asn1p_value_fromint(0);
 		checkmem((yyval.a_value));
@@ -3583,7 +3583,7 @@ yyreduce:
     break;
 
   case 161: /* SimpleValue: TOK_FALSE  */
-#line 1621 "asn1p_y.y"
+#line 1638 "asn1p_y.y"
                     {
 		(yyval.a_value) = asn1p_value_fromint(0);
 		checkmem((yyval.a_value));
@@ -3593,7 +3593,7 @@ yyreduce:
     break;
 
   case 162: /* SimpleValue: TOK_TRUE  */
-#line 1626 "asn1p_y.y"
+#line 1643 "asn1p_y.y"
                    {
 		(yyval.a_value) = asn1p_value_fromint(1);
 		checkmem((yyval.a_value));
@@ -3603,7 +3603,7 @@ yyreduce:
     break;
 
   case 168: /* DefinedValue: TypeRefName '.' Identifier  */
-#line 1639 "asn1p_y.y"
+#line 1656 "asn1p_y.y"
                                      {
 		asn1p_ref_t *ref;
 		int ret;
@@ -3622,7 +3622,7 @@ yyreduce:
     break;
 
   case 169: /* RestrictedCharacterStringValue: TOK_cstring  */
-#line 1657 "asn1p_y.y"
+#line 1674 "asn1p_y.y"
                     {
 		(yyval.a_value) = asn1p_value_frombuf((yyvsp[0].tv_opaque).buf, (yyvsp[0].tv_opaque).len, 0);
 		checkmem((yyval.a_value));
@@ -3631,7 +3631,7 @@ yyreduce:
     break;
 
   case 170: /* RestrictedCharacterStringValue: TOK_tuple  */
-#line 1661 "asn1p_y.y"
+#line 1678 "asn1p_y.y"
                     {
 		(yyval.a_value) = asn1p_value_fromint((yyvsp[0].a_int));
 		checkmem((yyval.a_value));
@@ -3641,7 +3641,7 @@ yyreduce:
     break;
 
   case 171: /* RestrictedCharacterStringValue: TOK_quadruple  */
-#line 1666 "asn1p_y.y"
+#line 1683 "asn1p_y.y"
                         {
 		(yyval.a_value) = asn1p_value_fromint((yyvsp[0].a_int));
 		checkmem((yyval.a_value));
@@ -3651,7 +3651,7 @@ yyreduce:
     break;
 
   case 172: /* Opaque: OpaqueFirstToken  */
-#line 1674 "asn1p_y.y"
+#line 1691 "asn1p_y.y"
                      {
 		(yyval.tv_opaque).len = (yyvsp[0].tv_opaque).len + 1;
 		(yyval.tv_opaque).buf = malloc(1 + (yyval.tv_opaque).len + 1);
@@ -3665,7 +3665,7 @@ yyreduce:
     break;
 
   case 173: /* Opaque: Opaque TOK_opaque  */
-#line 1683 "asn1p_y.y"
+#line 1700 "asn1p_y.y"
                             {
 		int newsize = (yyvsp[-1].tv_opaque).len + (yyvsp[0].tv_opaque).len;
 		char *p = malloc(newsize + 1);
@@ -3682,7 +3682,7 @@ yyreduce:
     break;
 
   case 175: /* OpaqueFirstToken: Identifier  */
-#line 1699 "asn1p_y.y"
+#line 1716 "asn1p_y.y"
                  {
         (yyval.tv_opaque).len = strlen((yyvsp[0].tv_str));
         (yyval.tv_opaque).buf = (yyvsp[0].tv_str);
@@ -3691,91 +3691,91 @@ yyreduce:
     break;
 
   case 176: /* BasicTypeId: TOK_BOOLEAN  */
-#line 1705 "asn1p_y.y"
+#line 1722 "asn1p_y.y"
                     { (yyval.a_type) = ASN_BASIC_BOOLEAN; }
 #line 3697 "asn1p_y.c"
     break;
 
   case 177: /* BasicTypeId: TOK_NULL  */
-#line 1706 "asn1p_y.y"
+#line 1723 "asn1p_y.y"
                    { (yyval.a_type) = ASN_BASIC_NULL; }
 #line 3703 "asn1p_y.c"
     break;
 
   case 178: /* BasicTypeId: TOK_REAL  */
-#line 1707 "asn1p_y.y"
+#line 1724 "asn1p_y.y"
                    { (yyval.a_type) = ASN_BASIC_REAL; }
 #line 3709 "asn1p_y.c"
     break;
 
   case 179: /* BasicTypeId: TOK_OCTET TOK_STRING  */
-#line 1708 "asn1p_y.y"
+#line 1725 "asn1p_y.y"
                                { (yyval.a_type) = ASN_BASIC_OCTET_STRING; }
 #line 3715 "asn1p_y.c"
     break;
 
   case 180: /* BasicTypeId: TOK_OBJECT TOK_IDENTIFIER  */
-#line 1709 "asn1p_y.y"
+#line 1726 "asn1p_y.y"
                                     { (yyval.a_type) = ASN_BASIC_OBJECT_IDENTIFIER; }
 #line 3721 "asn1p_y.c"
     break;
 
   case 181: /* BasicTypeId: TOK_RELATIVE_OID  */
-#line 1710 "asn1p_y.y"
+#line 1727 "asn1p_y.y"
                            { (yyval.a_type) = ASN_BASIC_RELATIVE_OID; }
 #line 3727 "asn1p_y.c"
     break;
 
   case 182: /* BasicTypeId: TOK_EXTERNAL  */
-#line 1711 "asn1p_y.y"
+#line 1728 "asn1p_y.y"
                        { (yyval.a_type) = ASN_BASIC_EXTERNAL; }
 #line 3733 "asn1p_y.c"
     break;
 
   case 183: /* BasicTypeId: TOK_EMBEDDED TOK_PDV  */
-#line 1712 "asn1p_y.y"
+#line 1729 "asn1p_y.y"
                                { (yyval.a_type) = ASN_BASIC_EMBEDDED_PDV; }
 #line 3739 "asn1p_y.c"
     break;
 
   case 184: /* BasicTypeId: TOK_CHARACTER TOK_STRING  */
-#line 1713 "asn1p_y.y"
+#line 1730 "asn1p_y.y"
                                    { (yyval.a_type) = ASN_BASIC_CHARACTER_STRING; }
 #line 3745 "asn1p_y.c"
     break;
 
   case 185: /* BasicTypeId: TOK_UTCTime  */
-#line 1714 "asn1p_y.y"
+#line 1731 "asn1p_y.y"
                       { (yyval.a_type) = ASN_BASIC_UTCTime; }
 #line 3751 "asn1p_y.c"
     break;
 
   case 186: /* BasicTypeId: TOK_GeneralizedTime  */
-#line 1715 "asn1p_y.y"
+#line 1732 "asn1p_y.y"
                               { (yyval.a_type) = ASN_BASIC_GeneralizedTime; }
 #line 3757 "asn1p_y.c"
     break;
 
   case 189: /* BasicTypeId_UniverationCompatible: TOK_INTEGER  */
-#line 1724 "asn1p_y.y"
+#line 1741 "asn1p_y.y"
                     { (yyval.a_type) = ASN_BASIC_INTEGER; }
 #line 3763 "asn1p_y.c"
     break;
 
   case 190: /* BasicTypeId_UniverationCompatible: TOK_ENUMERATED  */
-#line 1725 "asn1p_y.y"
+#line 1742 "asn1p_y.y"
                          { (yyval.a_type) = ASN_BASIC_ENUMERATED; }
 #line 3769 "asn1p_y.c"
     break;
 
   case 191: /* BasicTypeId_UniverationCompatible: TOK_BIT TOK_STRING  */
-#line 1726 "asn1p_y.y"
+#line 1743 "asn1p_y.y"
                              { (yyval.a_type) = ASN_BASIC_BIT_STRING; }
 #line 3775 "asn1p_y.c"
     break;
 
   case 192: /* BuiltinType: BasicTypeId  */
-#line 1730 "asn1p_y.y"
+#line 1747 "asn1p_y.y"
                     {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -3786,7 +3786,7 @@ yyreduce:
     break;
 
   case 193: /* BuiltinType: TOK_INTEGER '{' NamedNumberList '}'  */
-#line 1736 "asn1p_y.y"
+#line 1753 "asn1p_y.y"
                                           {
         (yyval.a_expr) = (yyvsp[-1].a_expr);
         (yyval.a_expr)->expr_type = ASN_BASIC_INTEGER;
@@ -3796,7 +3796,7 @@ yyreduce:
     break;
 
   case 194: /* BuiltinType: TOK_ENUMERATED '{' Enumerations '}'  */
-#line 1741 "asn1p_y.y"
+#line 1758 "asn1p_y.y"
                                           {
         (yyval.a_expr) = (yyvsp[-1].a_expr);
         (yyval.a_expr)->expr_type = ASN_BASIC_ENUMERATED;
@@ -3806,7 +3806,7 @@ yyreduce:
     break;
 
   case 195: /* BuiltinType: TOK_BIT TOK_STRING '{' NamedBitList '}'  */
-#line 1746 "asn1p_y.y"
+#line 1763 "asn1p_y.y"
                                               {
         (yyval.a_expr) = (yyvsp[-1].a_expr);
         (yyval.a_expr)->expr_type = ASN_BASIC_BIT_STRING;
@@ -3816,7 +3816,7 @@ yyreduce:
     break;
 
   case 196: /* BuiltinType: TOK_ExtValue_BIT_STRING '{' IdentifierList '}'  */
-#line 1751 "asn1p_y.y"
+#line 1768 "asn1p_y.y"
                                                      {
         (yyval.a_expr) = (yyvsp[-1].a_expr);
         (yyval.a_expr)->expr_type = ASN_BASIC_BIT_STRING;
@@ -3826,7 +3826,7 @@ yyreduce:
     break;
 
   case 197: /* BuiltinType: TOK_ExtValue_BIT_STRING '{' '}'  */
-#line 1756 "asn1p_y.y"
+#line 1773 "asn1p_y.y"
                                       {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -3837,13 +3837,13 @@ yyreduce:
     break;
 
   case 198: /* BasicString: TOK_BMPString  */
-#line 1765 "asn1p_y.y"
+#line 1782 "asn1p_y.y"
                       { (yyval.a_type) = ASN_STRING_BMPString; }
 #line 3843 "asn1p_y.c"
     break;
 
   case 199: /* BasicString: TOK_GeneralString  */
-#line 1766 "asn1p_y.y"
+#line 1783 "asn1p_y.y"
                             {
 		(yyval.a_type) = ASN_STRING_GeneralString;
 		fprintf(stderr, "WARNING: GeneralString is not fully supported\n");
@@ -3852,7 +3852,7 @@ yyreduce:
     break;
 
   case 200: /* BasicString: TOK_GraphicString  */
-#line 1770 "asn1p_y.y"
+#line 1787 "asn1p_y.y"
                             {
 		(yyval.a_type) = ASN_STRING_GraphicString;
 		fprintf(stderr, "WARNING: GraphicString is not fully supported\n");
@@ -3861,31 +3861,31 @@ yyreduce:
     break;
 
   case 201: /* BasicString: TOK_IA5String  */
-#line 1774 "asn1p_y.y"
+#line 1791 "asn1p_y.y"
                         { (yyval.a_type) = ASN_STRING_IA5String; }
 #line 3867 "asn1p_y.c"
     break;
 
   case 202: /* BasicString: TOK_ISO646String  */
-#line 1775 "asn1p_y.y"
+#line 1792 "asn1p_y.y"
                            { (yyval.a_type) = ASN_STRING_ISO646String; }
 #line 3873 "asn1p_y.c"
     break;
 
   case 203: /* BasicString: TOK_NumericString  */
-#line 1776 "asn1p_y.y"
+#line 1793 "asn1p_y.y"
                             { (yyval.a_type) = ASN_STRING_NumericString; }
 #line 3879 "asn1p_y.c"
     break;
 
   case 204: /* BasicString: TOK_PrintableString  */
-#line 1777 "asn1p_y.y"
+#line 1794 "asn1p_y.y"
                               { (yyval.a_type) = ASN_STRING_PrintableString; }
 #line 3885 "asn1p_y.c"
     break;
 
   case 205: /* BasicString: TOK_T61String  */
-#line 1778 "asn1p_y.y"
+#line 1795 "asn1p_y.y"
                         {
 		(yyval.a_type) = ASN_STRING_T61String;
 		fprintf(stderr, "WARNING: T61String is not fully supported\n");
@@ -3894,25 +3894,25 @@ yyreduce:
     break;
 
   case 206: /* BasicString: TOK_TeletexString  */
-#line 1782 "asn1p_y.y"
+#line 1799 "asn1p_y.y"
                             { (yyval.a_type) = ASN_STRING_TeletexString; }
 #line 3900 "asn1p_y.c"
     break;
 
   case 207: /* BasicString: TOK_UniversalString  */
-#line 1783 "asn1p_y.y"
+#line 1800 "asn1p_y.y"
                               { (yyval.a_type) = ASN_STRING_UniversalString; }
 #line 3906 "asn1p_y.c"
     break;
 
   case 208: /* BasicString: TOK_UTF8String  */
-#line 1784 "asn1p_y.y"
+#line 1801 "asn1p_y.y"
                          { (yyval.a_type) = ASN_STRING_UTF8String; }
 #line 3912 "asn1p_y.c"
     break;
 
   case 209: /* BasicString: TOK_VideotexString  */
-#line 1785 "asn1p_y.y"
+#line 1802 "asn1p_y.y"
                              {
 		(yyval.a_type) = ASN_STRING_VideotexString;
 		fprintf(stderr, "WARNING: VideotexString is not fully supported\n");
@@ -3921,37 +3921,37 @@ yyreduce:
     break;
 
   case 210: /* BasicString: TOK_VisibleString  */
-#line 1789 "asn1p_y.y"
+#line 1806 "asn1p_y.y"
                             { (yyval.a_type) = ASN_STRING_VisibleString; }
 #line 3927 "asn1p_y.c"
     break;
 
   case 211: /* BasicString: TOK_ObjectDescriptor  */
-#line 1790 "asn1p_y.y"
+#line 1807 "asn1p_y.y"
                                { (yyval.a_type) = ASN_STRING_ObjectDescriptor; }
 #line 3933 "asn1p_y.c"
     break;
 
   case 216: /* optConstraint: %empty  */
-#line 1802 "asn1p_y.y"
+#line 1819 "asn1p_y.y"
         { (yyval.a_constr) = 0; }
 #line 3939 "asn1p_y.c"
     break;
 
   case 218: /* optManyConstraints: %empty  */
-#line 1807 "asn1p_y.y"
+#line 1824 "asn1p_y.y"
         { (yyval.a_constr) = 0; }
 #line 3945 "asn1p_y.c"
     break;
 
   case 220: /* optSizeOrConstraint: %empty  */
-#line 1812 "asn1p_y.y"
+#line 1829 "asn1p_y.y"
         { (yyval.a_constr) = 0; }
 #line 3951 "asn1p_y.c"
     break;
 
   case 223: /* Constraint: '(' ConstraintSpec ')'  */
-#line 1818 "asn1p_y.y"
+#line 1835 "asn1p_y.y"
                            {
 		CONSTRAINT_INSERT((yyval.a_constr), ACT_CA_SET, (yyvsp[-1].a_constr), 0);
     }
@@ -3959,7 +3959,7 @@ yyreduce:
     break;
 
   case 225: /* ManyConstraints: ManyConstraints Constraint  */
-#line 1825 "asn1p_y.y"
+#line 1842 "asn1p_y.y"
                                      {
         if((yyvsp[0].a_constr)->type == ACT_CA_SET && (yyvsp[0].a_constr)->el_count == 1) {
             CONSTRAINT_INSERT((yyval.a_constr), ACT_CA_SET, (yyvsp[-1].a_constr), (yyvsp[0].a_constr)->elements[0]);
@@ -3971,7 +3971,7 @@ yyreduce:
     break;
 
   case 229: /* ElementSetSpecs: "..."  */
-#line 1839 "asn1p_y.y"
+#line 1856 "asn1p_y.y"
                        {
 		(yyval.a_constr) = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
 		(yyval.a_constr)->type = ACT_EL_EXT;
@@ -3980,7 +3980,7 @@ yyreduce:
     break;
 
   case 231: /* ElementSetSpecs: ElementSetSpec ',' "..."  */
-#line 1844 "asn1p_y.y"
+#line 1861 "asn1p_y.y"
                                       {
        asn1p_constraint_t *ct;
        ct = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
@@ -3991,7 +3991,7 @@ yyreduce:
     break;
 
   case 232: /* ElementSetSpecs: ElementSetSpec ',' "..." ',' ElementSetSpec  */
-#line 1850 "asn1p_y.y"
+#line 1867 "asn1p_y.y"
                                                          {
        asn1p_constraint_t *ct;
        ct = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
@@ -4004,7 +4004,7 @@ yyreduce:
     break;
 
   case 234: /* ElementSetSpec: TOK_ALL TOK_EXCEPT Elements  */
-#line 1862 "asn1p_y.y"
+#line 1879 "asn1p_y.y"
                                       {
 		CONSTRAINT_INSERT((yyval.a_constr), ACT_CA_AEX, (yyvsp[0].a_constr), 0);
 	}
@@ -4012,7 +4012,7 @@ yyreduce:
     break;
 
   case 236: /* Unions: Unions UnionMark Intersections  */
-#line 1869 "asn1p_y.y"
+#line 1886 "asn1p_y.y"
                                          {
 		CONSTRAINT_INSERT((yyval.a_constr), ACT_CA_UNI, (yyvsp[-2].a_constr), (yyvsp[0].a_constr));
 	}
@@ -4020,7 +4020,7 @@ yyreduce:
     break;
 
   case 238: /* Intersections: Intersections IntersectionMark IntersectionElements  */
-#line 1876 "asn1p_y.y"
+#line 1893 "asn1p_y.y"
                                                                {
 		CONSTRAINT_INSERT((yyval.a_constr), ACT_CA_INT, (yyvsp[-2].a_constr), (yyvsp[0].a_constr));
 	}
@@ -4028,7 +4028,7 @@ yyreduce:
     break;
 
   case 240: /* IntersectionElements: Elements TOK_EXCEPT Elements  */
-#line 1884 "asn1p_y.y"
+#line 1901 "asn1p_y.y"
                                        {
 		CONSTRAINT_INSERT((yyval.a_constr), ACT_CA_EXC, (yyvsp[-2].a_constr), (yyvsp[0].a_constr));
 	}
@@ -4036,7 +4036,7 @@ yyreduce:
     break;
 
   case 242: /* Elements: '(' ElementSetSpec ')'  */
-#line 1891 "asn1p_y.y"
+#line 1908 "asn1p_y.y"
                              {
         int ret;
         (yyval.a_constr) = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
@@ -4049,7 +4049,7 @@ yyreduce:
     break;
 
   case 243: /* SubtypeElements: SingleValue  */
-#line 1902 "asn1p_y.y"
+#line 1919 "asn1p_y.y"
                     {
 		(yyval.a_constr) = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
 		checkmem((yyval.a_constr));
@@ -4060,7 +4060,7 @@ yyreduce:
     break;
 
   case 244: /* SubtypeElements: ContainedSubtype  */
-#line 1908 "asn1p_y.y"
+#line 1925 "asn1p_y.y"
                            {
 		(yyval.a_constr) = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
 		checkmem((yyval.a_constr));
@@ -4071,7 +4071,7 @@ yyreduce:
     break;
 
   case 250: /* PermittedAlphabet: TOK_FROM Constraint  */
-#line 1924 "asn1p_y.y"
+#line 1941 "asn1p_y.y"
                             {
 		CONSTRAINT_INSERT((yyval.a_constr), ACT_CT_FROM, (yyvsp[0].a_constr), 0);
 	}
@@ -4079,7 +4079,7 @@ yyreduce:
     break;
 
   case 251: /* SizeConstraint: TOK_SIZE Constraint  */
-#line 1929 "asn1p_y.y"
+#line 1946 "asn1p_y.y"
                             {
 		CONSTRAINT_INSERT((yyval.a_constr), ACT_CT_SIZE, (yyvsp[0].a_constr), 0);
 	}
@@ -4087,7 +4087,7 @@ yyreduce:
     break;
 
   case 252: /* PatternConstraint: TOK_PATTERN TOK_cstring  */
-#line 1934 "asn1p_y.y"
+#line 1951 "asn1p_y.y"
                                 {
 		(yyval.a_constr) = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
 		(yyval.a_constr)->type = ACT_CT_PATTERN;
@@ -4097,7 +4097,7 @@ yyreduce:
     break;
 
   case 253: /* PatternConstraint: TOK_PATTERN Identifier  */
-#line 1939 "asn1p_y.y"
+#line 1956 "asn1p_y.y"
                                  {
 		asn1p_ref_t *ref;
 		(yyval.a_constr) = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
@@ -4111,7 +4111,7 @@ yyreduce:
     break;
 
   case 254: /* ValueRange: LowerEndValue ConstraintRangeSpec UpperEndValue  */
-#line 1951 "asn1p_y.y"
+#line 1968 "asn1p_y.y"
                                                     {
 		(yyval.a_constr) = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
 		checkmem((yyval.a_constr));
@@ -4123,7 +4123,7 @@ yyreduce:
     break;
 
   case 256: /* LowerEndValue: TOK_MIN  */
-#line 1961 "asn1p_y.y"
+#line 1978 "asn1p_y.y"
               {
 		(yyval.a_value) = asn1p_value_fromint(-123);
 		(yyval.a_value)->type = ATV_MIN;
@@ -4132,7 +4132,7 @@ yyreduce:
     break;
 
   case 258: /* UpperEndValue: TOK_MAX  */
-#line 1968 "asn1p_y.y"
+#line 1985 "asn1p_y.y"
               {
 		(yyval.a_value) = asn1p_value_fromint(321);
 		(yyval.a_value)->type = ATV_MAX;
@@ -4141,7 +4141,7 @@ yyreduce:
     break;
 
   case 260: /* BitStringValue: TOK_bstring  */
-#line 1976 "asn1p_y.y"
+#line 1993 "asn1p_y.y"
                     {
 		(yyval.a_value) = _convert_bitstring2binary((yyvsp[0].tv_str), 'B');
 		checkmem((yyval.a_value));
@@ -4151,7 +4151,7 @@ yyreduce:
     break;
 
   case 261: /* BitStringValue: TOK_hstring  */
-#line 1981 "asn1p_y.y"
+#line 1998 "asn1p_y.y"
                       {
 		(yyval.a_value) = _convert_bitstring2binary((yyvsp[0].tv_str), 'H');
 		checkmem((yyval.a_value));
@@ -4161,7 +4161,7 @@ yyreduce:
     break;
 
   case 262: /* ContainedSubtype: TOK_INCLUDES Type  */
-#line 1989 "asn1p_y.y"
+#line 2006 "asn1p_y.y"
                       {
 		(yyval.a_value) = asn1p_value_fromtype((yyvsp[0].a_expr));
 		checkmem((yyval.a_value));
@@ -4171,7 +4171,7 @@ yyreduce:
     break;
 
   case 263: /* ContainedSubtype: DefinedUntaggedType  */
-#line 1995 "asn1p_y.y"
+#line 2012 "asn1p_y.y"
                           {
 		(yyval.a_value) = asn1p_value_fromtype((yyvsp[0].a_expr));
 		checkmem((yyval.a_value));
@@ -4181,7 +4181,7 @@ yyreduce:
     break;
 
   case 264: /* InnerTypeConstraints: TOK_WITH TOK_COMPONENT SingleTypeConstraint  */
-#line 2007 "asn1p_y.y"
+#line 2024 "asn1p_y.y"
                                                     {
 		CONSTRAINT_INSERT((yyval.a_constr), ACT_CT_WCOMP, (yyvsp[0].a_constr), 0);
 	}
@@ -4189,7 +4189,7 @@ yyreduce:
     break;
 
   case 265: /* InnerTypeConstraints: TOK_WITH TOK_COMPONENTS MultipleTypeConstraints  */
-#line 2010 "asn1p_y.y"
+#line 2027 "asn1p_y.y"
                                                           {
         assert((yyvsp[0].a_constr)->type == ACT_CA_CSV);
         (yyvsp[0].a_constr)->type = ACT_CT_WCOMPS;
@@ -4199,13 +4199,13 @@ yyreduce:
     break;
 
   case 269: /* FullSpecification: '{' TypeConstraints '}'  */
-#line 2018 "asn1p_y.y"
+#line 2035 "asn1p_y.y"
                                            { (yyval.a_constr) = (yyvsp[-1].a_constr); }
 #line 4205 "asn1p_y.c"
     break;
 
   case 270: /* PartialSpecification: '{' "..." ',' TypeConstraints '}'  */
-#line 2020 "asn1p_y.y"
+#line 2037 "asn1p_y.y"
                                               {
         assert((yyvsp[-1].a_constr)->type == ACT_CA_CSV);
 		(yyval.a_constr) = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
@@ -4222,7 +4222,7 @@ yyreduce:
     break;
 
   case 271: /* TypeConstraints: NamedConstraint  */
-#line 2033 "asn1p_y.y"
+#line 2050 "asn1p_y.y"
                     {
         (yyval.a_constr) = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
         (yyval.a_constr)->type = ACT_CA_CSV;
@@ -4232,7 +4232,7 @@ yyreduce:
     break;
 
   case 272: /* TypeConstraints: TypeConstraints ',' NamedConstraint  */
-#line 2038 "asn1p_y.y"
+#line 2055 "asn1p_y.y"
                                           {
         (yyval.a_constr) = (yyvsp[-2].a_constr);
         asn1p_constraint_insert((yyval.a_constr), (yyvsp[0].a_constr));
@@ -4241,7 +4241,7 @@ yyreduce:
     break;
 
   case 273: /* NamedConstraint: IdentifierAsValue optConstraint optPresenceConstraint  */
-#line 2044 "asn1p_y.y"
+#line 2061 "asn1p_y.y"
                                                               {
         (yyval.a_constr) = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
         checkmem((yyval.a_constr));
@@ -4254,19 +4254,19 @@ yyreduce:
     break;
 
   case 274: /* optPresenceConstraint: %empty  */
-#line 2058 "asn1p_y.y"
+#line 2075 "asn1p_y.y"
         { (yyval.a_pres) = ACPRES_DEFAULT; }
 #line 4260 "asn1p_y.c"
     break;
 
   case 275: /* optPresenceConstraint: PresenceConstraint  */
-#line 2059 "asn1p_y.y"
+#line 2076 "asn1p_y.y"
                              { (yyval.a_pres) = (yyvsp[0].a_pres); }
 #line 4266 "asn1p_y.c"
     break;
 
   case 276: /* PresenceConstraint: TOK_PRESENT  */
-#line 2063 "asn1p_y.y"
+#line 2080 "asn1p_y.y"
                     {
 		(yyval.a_pres) = ACPRES_PRESENT;
 	}
@@ -4274,7 +4274,7 @@ yyreduce:
     break;
 
   case 277: /* PresenceConstraint: TOK_ABSENT  */
-#line 2066 "asn1p_y.y"
+#line 2083 "asn1p_y.y"
                      {
 		(yyval.a_pres) = ACPRES_ABSENT;
 	}
@@ -4282,7 +4282,7 @@ yyreduce:
     break;
 
   case 278: /* PresenceConstraint: TOK_OPTIONAL  */
-#line 2069 "asn1p_y.y"
+#line 2086 "asn1p_y.y"
                        {
 		(yyval.a_pres) = ACPRES_OPTIONAL;
 	}
@@ -4290,13 +4290,13 @@ yyreduce:
     break;
 
   case 282: /* $@5: %empty  */
-#line 2084 "asn1p_y.y"
+#line 2101 "asn1p_y.y"
                 { asn1p_lexer_hack_push_opaque_state(yyscanner); }
 #line 4296 "asn1p_y.c"
     break;
 
   case 283: /* UserDefinedConstraint: TOK_CONSTRAINED TOK_BY '{' $@5 Opaque  */
-#line 2084 "asn1p_y.y"
+#line 2101 "asn1p_y.y"
                                                                                     {
 		(yyval.a_constr) = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
 		checkmem((yyval.a_constr));
@@ -4309,7 +4309,7 @@ yyreduce:
     break;
 
   case 284: /* ContentsConstraint: TOK_CONTAINING Type  */
-#line 2095 "asn1p_y.y"
+#line 2112 "asn1p_y.y"
                             {
 		(yyval.a_constr) = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
 		(yyval.a_constr)->type = ACT_CT_CTNG;
@@ -4320,31 +4320,31 @@ yyreduce:
     break;
 
   case 285: /* ConstraintRangeSpec: ".."  */
-#line 2104 "asn1p_y.y"
+#line 2121 "asn1p_y.y"
                                 { (yyval.a_ctype) = ACT_EL_RANGE; }
 #line 4326 "asn1p_y.c"
     break;
 
   case 286: /* ConstraintRangeSpec: ".." '<'  */
-#line 2105 "asn1p_y.y"
+#line 2122 "asn1p_y.y"
                                 { (yyval.a_ctype) = ACT_EL_RLRANGE; }
 #line 4332 "asn1p_y.c"
     break;
 
   case 287: /* ConstraintRangeSpec: '<' ".."  */
-#line 2106 "asn1p_y.y"
+#line 2123 "asn1p_y.y"
                                 { (yyval.a_ctype) = ACT_EL_LLRANGE; }
 #line 4338 "asn1p_y.c"
     break;
 
   case 288: /* ConstraintRangeSpec: '<' ".." '<'  */
-#line 2107 "asn1p_y.y"
+#line 2124 "asn1p_y.y"
                                 { (yyval.a_ctype) = ACT_EL_ULRANGE; }
 #line 4344 "asn1p_y.c"
     break;
 
   case 289: /* TableConstraint: SimpleTableConstraint  */
-#line 2110 "asn1p_y.y"
+#line 2127 "asn1p_y.y"
                               {
 		(yyval.a_constr) = (yyvsp[0].a_constr);
 	}
@@ -4352,7 +4352,7 @@ yyreduce:
     break;
 
   case 290: /* TableConstraint: ComponentRelationConstraint  */
-#line 2113 "asn1p_y.y"
+#line 2130 "asn1p_y.y"
                                       {
 		(yyval.a_constr) = (yyvsp[0].a_constr);
 	}
@@ -4360,7 +4360,7 @@ yyreduce:
     break;
 
   case 291: /* SimpleTableConstraint: '{' TypeRefName '}'  */
-#line 2122 "asn1p_y.y"
+#line 2139 "asn1p_y.y"
                             {
 		asn1p_ref_t *ref = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		asn1p_constraint_t *ct;
@@ -4378,7 +4378,7 @@ yyreduce:
     break;
 
   case 292: /* ComponentRelationConstraint: SimpleTableConstraint '{' AtNotationList '}'  */
-#line 2138 "asn1p_y.y"
+#line 2155 "asn1p_y.y"
                                                      {
 		CONSTRAINT_INSERT((yyval.a_constr), ACT_CA_CRC, (yyvsp[-3].a_constr), (yyvsp[-1].a_constr));
 	}
@@ -4386,7 +4386,7 @@ yyreduce:
     break;
 
   case 293: /* AtNotationList: AtNotationElement  */
-#line 2144 "asn1p_y.y"
+#line 2161 "asn1p_y.y"
                           {
 		(yyval.a_constr) = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
 		checkmem((yyval.a_constr));
@@ -4397,7 +4397,7 @@ yyreduce:
     break;
 
   case 294: /* AtNotationList: AtNotationList ',' AtNotationElement  */
-#line 2150 "asn1p_y.y"
+#line 2167 "asn1p_y.y"
                                                {
 		asn1p_constraint_t *ct;
 		ct = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
@@ -4410,7 +4410,7 @@ yyreduce:
     break;
 
   case 295: /* AtNotationElement: '@' ComponentIdList  */
-#line 2164 "asn1p_y.y"
+#line 2181 "asn1p_y.y"
                             {
 		char *p = malloc(strlen((yyvsp[0].tv_str)) + 2);
 		int ret;
@@ -4426,7 +4426,7 @@ yyreduce:
     break;
 
   case 296: /* AtNotationElement: '@' '.' ComponentIdList  */
-#line 2175 "asn1p_y.y"
+#line 2192 "asn1p_y.y"
                                   {
 		char *p = malloc(strlen((yyvsp[0].tv_str)) + 3);
 		int ret;
@@ -4443,7 +4443,7 @@ yyreduce:
     break;
 
   case 297: /* ComponentIdList: Identifier  */
-#line 2191 "asn1p_y.y"
+#line 2208 "asn1p_y.y"
                    {
 		(yyval.tv_str) = (yyvsp[0].tv_str);
 	}
@@ -4451,7 +4451,7 @@ yyreduce:
     break;
 
   case 298: /* ComponentIdList: ComponentIdList '.' Identifier  */
-#line 2194 "asn1p_y.y"
+#line 2211 "asn1p_y.y"
                                          {
 		int l1 = strlen((yyvsp[-2].tv_str));
 		int l3 = strlen((yyvsp[0].tv_str));
@@ -4467,7 +4467,7 @@ yyreduce:
     break;
 
   case 299: /* optMarker: %empty  */
-#line 2214 "asn1p_y.y"
+#line 2231 "asn1p_y.y"
         {
 		(yyval.a_marker).flags = EM_NOMARK;
 		(yyval.a_marker).default_value = 0;
@@ -4476,13 +4476,13 @@ yyreduce:
     break;
 
   case 300: /* optMarker: Marker  */
-#line 2218 "asn1p_y.y"
+#line 2235 "asn1p_y.y"
                  { (yyval.a_marker) = (yyvsp[0].a_marker); }
 #line 4482 "asn1p_y.c"
     break;
 
   case 301: /* Marker: TOK_OPTIONAL  */
-#line 2222 "asn1p_y.y"
+#line 2239 "asn1p_y.y"
                      {
 		(yyval.a_marker).flags = EM_OPTIONAL | EM_INDIRECT;
 		(yyval.a_marker).default_value = 0;
@@ -4491,7 +4491,7 @@ yyreduce:
     break;
 
   case 302: /* Marker: TOK_DEFAULT Value  */
-#line 2226 "asn1p_y.y"
+#line 2243 "asn1p_y.y"
                             {
 		(yyval.a_marker).flags = EM_DEFAULT;
 		(yyval.a_marker).default_value = (yyvsp[0].a_value);
@@ -4500,7 +4500,7 @@ yyreduce:
     break;
 
   case 303: /* IdentifierList: IdentifierElement  */
-#line 2233 "asn1p_y.y"
+#line 2250 "asn1p_y.y"
                       {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -4510,7 +4510,7 @@ yyreduce:
     break;
 
   case 304: /* IdentifierList: IdentifierList ',' IdentifierElement  */
-#line 2238 "asn1p_y.y"
+#line 2255 "asn1p_y.y"
                                            {
 		(yyval.a_expr) = (yyvsp[-2].a_expr);
 		asn1p_expr_add((yyval.a_expr), (yyvsp[0].a_expr));
@@ -4519,7 +4519,7 @@ yyreduce:
     break;
 
   case 305: /* IdentifierElement: Identifier  */
-#line 2244 "asn1p_y.y"
+#line 2261 "asn1p_y.y"
                {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -4531,7 +4531,7 @@ yyreduce:
     break;
 
   case 306: /* NamedNumberList: NamedNumber  */
-#line 2253 "asn1p_y.y"
+#line 2270 "asn1p_y.y"
                     {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -4541,7 +4541,7 @@ yyreduce:
     break;
 
   case 307: /* NamedNumberList: NamedNumberList ',' NamedNumber  */
-#line 2258 "asn1p_y.y"
+#line 2275 "asn1p_y.y"
                                           {
 		(yyval.a_expr) = (yyvsp[-2].a_expr);
 		asn1p_expr_add((yyval.a_expr), (yyvsp[0].a_expr));
@@ -4550,7 +4550,7 @@ yyreduce:
     break;
 
   case 308: /* NamedNumber: Identifier '(' SignedNumber ')'  */
-#line 2265 "asn1p_y.y"
+#line 2282 "asn1p_y.y"
                                         {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -4563,7 +4563,7 @@ yyreduce:
     break;
 
   case 309: /* NamedNumber: Identifier '(' DefinedValue ')'  */
-#line 2273 "asn1p_y.y"
+#line 2290 "asn1p_y.y"
                                           {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -4576,7 +4576,7 @@ yyreduce:
     break;
 
   case 310: /* NamedBitList: NamedBit  */
-#line 2283 "asn1p_y.y"
+#line 2300 "asn1p_y.y"
                  {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -4586,7 +4586,7 @@ yyreduce:
     break;
 
   case 311: /* NamedBitList: NamedBitList ',' NamedBit  */
-#line 2288 "asn1p_y.y"
+#line 2305 "asn1p_y.y"
                                     {
 		(yyval.a_expr) = (yyvsp[-2].a_expr);
 		asn1p_expr_add((yyval.a_expr), (yyvsp[0].a_expr));
@@ -4595,7 +4595,7 @@ yyreduce:
     break;
 
   case 312: /* NamedBit: Identifier '(' "number" ')'  */
-#line 2295 "asn1p_y.y"
+#line 2312 "asn1p_y.y"
                                       {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -4608,7 +4608,7 @@ yyreduce:
     break;
 
   case 313: /* NamedBit: Identifier '(' DefinedValue ')'  */
-#line 2303 "asn1p_y.y"
+#line 2320 "asn1p_y.y"
                                           {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -4621,7 +4621,7 @@ yyreduce:
     break;
 
   case 314: /* Enumerations: UniverationList  */
-#line 2313 "asn1p_y.y"
+#line 2330 "asn1p_y.y"
                     {
 		(yyval.a_expr) = (yyvsp[0].a_expr);
         asn1p_expr_t *first_memb = TQ_FIRST(&((yyval.a_expr)->members));
@@ -4639,7 +4639,7 @@ yyreduce:
     break;
 
   case 315: /* UniverationList: UniverationElement  */
-#line 2328 "asn1p_y.y"
+#line 2345 "asn1p_y.y"
                            {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -4649,7 +4649,7 @@ yyreduce:
     break;
 
   case 316: /* UniverationList: UniverationList ',' UniverationElement  */
-#line 2333 "asn1p_y.y"
+#line 2350 "asn1p_y.y"
                                                  {
 		(yyval.a_expr) = (yyvsp[-2].a_expr);
 		asn1p_expr_add((yyval.a_expr), (yyvsp[0].a_expr));
@@ -4658,7 +4658,7 @@ yyreduce:
     break;
 
   case 317: /* UniverationElement: Identifier  */
-#line 2340 "asn1p_y.y"
+#line 2357 "asn1p_y.y"
                    {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -4670,7 +4670,7 @@ yyreduce:
     break;
 
   case 318: /* UniverationElement: Identifier '(' SignedNumber ')'  */
-#line 2347 "asn1p_y.y"
+#line 2364 "asn1p_y.y"
                                           {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -4683,7 +4683,7 @@ yyreduce:
     break;
 
   case 319: /* UniverationElement: Identifier '(' DefinedValue ')'  */
-#line 2355 "asn1p_y.y"
+#line 2372 "asn1p_y.y"
                                           {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -4696,7 +4696,7 @@ yyreduce:
     break;
 
   case 320: /* UniverationElement: SignedNumber  */
-#line 2363 "asn1p_y.y"
+#line 2380 "asn1p_y.y"
                        {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -4708,7 +4708,7 @@ yyreduce:
     break;
 
   case 321: /* UniverationElement: "..."  */
-#line 2370 "asn1p_y.y"
+#line 2387 "asn1p_y.y"
                         {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -4721,7 +4721,7 @@ yyreduce:
     break;
 
   case 322: /* SignedNumber: "number"  */
-#line 2381 "asn1p_y.y"
+#line 2398 "asn1p_y.y"
                    {
 		(yyval.a_value) = asn1p_value_fromint((yyvsp[0].a_int));
 		checkmem((yyval.a_value));
@@ -4730,7 +4730,7 @@ yyreduce:
     break;
 
   case 323: /* SignedNumber: "negative number"  */
-#line 2385 "asn1p_y.y"
+#line 2402 "asn1p_y.y"
                               {
 		(yyval.a_value) = asn1p_value_fromint((yyvsp[0].a_int));
 		checkmem((yyval.a_value));
@@ -4739,7 +4739,7 @@ yyreduce:
     break;
 
   case 324: /* RealValue: TOK_realnumber  */
-#line 2392 "asn1p_y.y"
+#line 2409 "asn1p_y.y"
                        {
 		(yyval.a_value) = asn1p_value_fromdouble((yyvsp[0].a_dbl));
 		checkmem((yyval.a_value));
@@ -4748,19 +4748,19 @@ yyreduce:
     break;
 
   case 325: /* optTag: %empty  */
-#line 2423 "asn1p_y.y"
+#line 2440 "asn1p_y.y"
         { memset(&(yyval.a_tag), 0, sizeof((yyval.a_tag))); }
 #line 4754 "asn1p_y.c"
     break;
 
   case 326: /* optTag: Tag  */
-#line 2424 "asn1p_y.y"
+#line 2441 "asn1p_y.y"
               { (yyval.a_tag) = (yyvsp[0].a_tag); }
 #line 4760 "asn1p_y.c"
     break;
 
   case 327: /* Tag: TagTypeValue TagPlicit  */
-#line 2428 "asn1p_y.y"
+#line 2445 "asn1p_y.y"
                                {
 		(yyval.a_tag) = (yyvsp[-1].a_tag);
 		(yyval.a_tag).tag_mode = (yyvsp[0].a_tag).tag_mode;
@@ -4769,7 +4769,7 @@ yyreduce:
     break;
 
   case 328: /* TagTypeValue: '[' TagClass "number" ']'  */
-#line 2435 "asn1p_y.y"
+#line 2452 "asn1p_y.y"
                                     {
 		(yyval.a_tag) = (yyvsp[-2].a_tag);
 		(yyval.a_tag).tag_value = (yyvsp[-1].a_int);
@@ -4778,49 +4778,49 @@ yyreduce:
     break;
 
   case 329: /* TagClass: %empty  */
-#line 2441 "asn1p_y.y"
+#line 2458 "asn1p_y.y"
         { (yyval.a_tag).tag_class = TC_CONTEXT_SPECIFIC; }
 #line 4784 "asn1p_y.c"
     break;
 
   case 330: /* TagClass: TOK_UNIVERSAL  */
-#line 2442 "asn1p_y.y"
+#line 2459 "asn1p_y.y"
                         { (yyval.a_tag).tag_class = TC_UNIVERSAL; }
 #line 4790 "asn1p_y.c"
     break;
 
   case 331: /* TagClass: TOK_APPLICATION  */
-#line 2443 "asn1p_y.y"
+#line 2460 "asn1p_y.y"
                           { (yyval.a_tag).tag_class = TC_APPLICATION; }
 #line 4796 "asn1p_y.c"
     break;
 
   case 332: /* TagClass: TOK_PRIVATE  */
-#line 2444 "asn1p_y.y"
+#line 2461 "asn1p_y.y"
                       { (yyval.a_tag).tag_class = TC_PRIVATE; }
 #line 4802 "asn1p_y.c"
     break;
 
   case 333: /* TagPlicit: %empty  */
-#line 2448 "asn1p_y.y"
+#line 2465 "asn1p_y.y"
         { (yyval.a_tag).tag_mode = TM_DEFAULT; }
 #line 4808 "asn1p_y.c"
     break;
 
   case 334: /* TagPlicit: TOK_IMPLICIT  */
-#line 2449 "asn1p_y.y"
+#line 2466 "asn1p_y.y"
                        { (yyval.a_tag).tag_mode = TM_IMPLICIT; }
 #line 4814 "asn1p_y.c"
     break;
 
   case 335: /* TagPlicit: TOK_EXPLICIT  */
-#line 2450 "asn1p_y.y"
+#line 2467 "asn1p_y.y"
                        { (yyval.a_tag).tag_mode = TM_EXPLICIT; }
 #line 4820 "asn1p_y.c"
     break;
 
   case 336: /* TypeRefName: TOK_typereference  */
-#line 2454 "asn1p_y.y"
+#line 2471 "asn1p_y.y"
                           {
 		checkmem((yyvsp[0].tv_str));
 		(yyval.tv_str) = (yyvsp[0].tv_str);
@@ -4829,7 +4829,7 @@ yyreduce:
     break;
 
   case 337: /* TypeRefName: TOK_capitalreference  */
-#line 2458 "asn1p_y.y"
+#line 2475 "asn1p_y.y"
                                {
 		checkmem((yyvsp[0].tv_str));
 		(yyval.tv_str) = (yyvsp[0].tv_str);
@@ -4838,13 +4838,13 @@ yyreduce:
     break;
 
   case 338: /* optIdentifier: %empty  */
-#line 2466 "asn1p_y.y"
+#line 2483 "asn1p_y.y"
         { (yyval.tv_str) = 0; }
 #line 4844 "asn1p_y.c"
     break;
 
   case 339: /* optIdentifier: Identifier  */
-#line 2467 "asn1p_y.y"
+#line 2484 "asn1p_y.y"
                      {
 		(yyval.tv_str) = (yyvsp[0].tv_str);
 	}
@@ -4852,7 +4852,7 @@ yyreduce:
     break;
 
   case 340: /* Identifier: "identifier"  */
-#line 2473 "asn1p_y.y"
+#line 2490 "asn1p_y.y"
                        {
 		checkmem((yyvsp[0].tv_str));
 		(yyval.tv_str) = (yyvsp[0].tv_str);
@@ -4861,7 +4861,7 @@ yyreduce:
     break;
 
   case 341: /* IdentifierAsReference: Identifier  */
-#line 2480 "asn1p_y.y"
+#line 2497 "asn1p_y.y"
                {
 		(yyval.a_ref) = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		asn1p_ref_add_component((yyval.a_ref), (yyvsp[0].tv_str), RLT_lowercase);
@@ -4871,7 +4871,7 @@ yyreduce:
     break;
 
   case 342: /* IdentifierAsValue: IdentifierAsReference  */
-#line 2487 "asn1p_y.y"
+#line 2504 "asn1p_y.y"
                           {
 		(yyval.a_value) = asn1p_value_fromref((yyvsp[0].a_ref), 0);
     }
@@ -4926,7 +4926,7 @@ yyerrlab:
   if (!yyerrstatus)
     {
       ++yynerrs;
-      yyerror (param, yyscanner, YY_("syntax error"));
+      yyerror (ctx, yyscanner, YY_("syntax error"));
     }
 
   if (yyerrstatus == 3)
@@ -4943,7 +4943,7 @@ yyerrlab:
       else
         {
           yydestruct ("Error: discarding",
-                      yytoken, &yylval, param, yyscanner);
+                      yytoken, &yylval, ctx, yyscanner);
           yychar = ASN1P_EMPTY;
         }
     }
@@ -4999,7 +4999,7 @@ yyerrlab1:
 
 
       yydestruct ("Error: popping",
-                  YY_ACCESSING_SYMBOL (yystate), yyvsp, param, yyscanner);
+                  YY_ACCESSING_SYMBOL (yystate), yyvsp, ctx, yyscanner);
       YYPOPSTACK (1);
       yystate = *yyssp;
       YY_STACK_PRINT (yyss, yyssp);
@@ -5037,7 +5037,7 @@ yyabortlab:
 | yyexhaustedlab -- YYNOMEM (memory exhaustion) comes here.  |
 `-----------------------------------------------------------*/
 yyexhaustedlab:
-  yyerror (param, yyscanner, YY_("memory exhausted"));
+  yyerror (ctx, yyscanner, YY_("memory exhausted"));
   yyresult = 2;
   goto yyreturnlab;
 
@@ -5052,7 +5052,7 @@ yyreturnlab:
          user semantic actions for why this is necessary.  */
       yytoken = YYTRANSLATE (yychar);
       yydestruct ("Cleanup: discarding lookahead",
-                  yytoken, &yylval, param, yyscanner);
+                  yytoken, &yylval, ctx, yyscanner);
     }
   /* Do not reclaim the symbols of the rule whose action triggered
      this YYABORT or YYACCEPT.  */
@@ -5061,7 +5061,7 @@ yyreturnlab:
   while (yyssp != yyss)
     {
       yydestruct ("Cleanup: popping",
-                  YY_ACCESSING_SYMBOL (+*yyssp), yyvsp, param, yyscanner);
+                  YY_ACCESSING_SYMBOL (+*yyssp), yyvsp, ctx, yyscanner);
       YYPOPSTACK (1);
     }
 #ifndef yyoverflow
@@ -5072,7 +5072,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 2491 "asn1p_y.y"
+#line 2508 "asn1p_y.y"
 
 
 
@@ -5221,3 +5221,10 @@ yyerror(void **param, yyscan_t yyscanner, const char *msg) {
 	return -1;
 }
 
+void asn1p_yctx_init(asn1p_yctx_t *ctx) {
+
+}
+
+void asn1p_yctx_free(asn1p_yctx_t *ctx) {
+
+}

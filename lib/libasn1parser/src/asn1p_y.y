@@ -1,12 +1,31 @@
 %define api.pure full
 %define api.prefix {asn1p_}
 
-%parse-param { void **param }
+%parse-param { asn1p_yctx_t *ctx }
 %parse-param { yyscan_t yyscanner }
 %lex-param   { yyscan_t yyscanner }
 
 %code requires {
 typedef void *yyscan_t;
+}
+
+%code requires {
+typedef struct {
+  int line;
+  int column;
+  char *msg;
+} asn1p_yerr_t;
+
+typedef struct {
+  asn1p_t *outp;
+
+  asn1p_yerr_t *errors;
+  size_t errors_size;
+  size_t errors_capacity;
+} asn1p_yctx_t;
+
+void asn1p_yctx_init(asn1p_yctx_t *ctx);
+void asn1p_yctx_free(asn1p_yctx_t *ctx);
 }
 
 %{
@@ -2636,3 +2655,10 @@ yyerror(void **param, yyscan_t yyscanner, const char *msg) {
 	return -1;
 }
 
+void asn1p_yctx_init(asn1p_yctx_t *ctx) {
+
+}
+
+void asn1p_yctx_free(asn1p_yctx_t *ctx) {
+
+}

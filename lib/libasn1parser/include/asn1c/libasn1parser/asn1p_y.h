@@ -56,8 +56,24 @@ extern int asn1p_debug;
 #line 8 "asn1p_y.y"
 
 typedef void *yyscan_t;
+#line 12 "asn1p_y.y"
 
-#line 61 "../include/asn1c/libasn1parser/asn1p_y.h"
+typedef struct {
+  int line;
+  int column;
+  char *msg;
+} asn1p_yerr_t;
+
+typedef struct {
+  asn1p_yerr_t *errors;
+  size_t errors_size;
+  size_t errors_capacity;
+} asn1p_yctx_t;
+
+void asn1p_yctx_init(asn1p_yctx_t *ctx);
+void asn1p_yctx_free(asn1p_yctx_t *ctx);
+
+#line 77 "../include/asn1c/libasn1parser/asn1p_y.h"
 
 /* Token kinds.  */
 #ifndef ASN1P_TOKENTYPE
@@ -183,7 +199,7 @@ typedef void *yyscan_t;
 #if ! defined ASN1P_STYPE && ! defined ASN1P_STYPE_IS_DECLARED
 union ASN1P_STYPE
 {
-#line 119 "asn1p_y.y"
+#line 136 "asn1p_y.y"
 
 	asn1p_t			*a_grammar;
 	asn1p_module_flags_e	 a_module_flags;
@@ -218,7 +234,7 @@ union ASN1P_STYPE
 		struct asn1p_type_tag_s tag;
 	} tv_nametag;
 
-#line 222 "../include/asn1c/libasn1parser/asn1p_y.h"
+#line 238 "../include/asn1c/libasn1parser/asn1p_y.h"
 
 };
 typedef union ASN1P_STYPE ASN1P_STYPE;
@@ -229,7 +245,7 @@ typedef union ASN1P_STYPE ASN1P_STYPE;
 
 
 
-int asn1p_parse (void **param, yyscan_t yyscanner);
+int asn1p_parse (asn1p_yctx_t *ctx, yyscan_t yyscanner);
 
 
 #endif /* !YY_ASN1P_INCLUDE_ASN1C_LIBASN1PARSER_ASN1P_Y_H_INCLUDED  */
