@@ -36,10 +36,12 @@ enum class TokenKind : std::uint8_t {
 
   //
 
-  DOT,          // .
-  COMMA,        // ,
-  SEMICOLON,    // ;
-  VERTICALBAR,  // |
+  DOT,               // .
+  COMMA,             // ,
+  COLON,             // :
+  SEMICOLON,         // ;
+  VERTICALBAR,       // |
+  EXCLAMATION_MARK,  // !
 
   REF,  // &
 
@@ -51,8 +53,10 @@ enum class TokenKind : std::uint8_t {
   RPAREN,   // )
   LBRACE,   // {
   RBRACE,   // }
-  LDBRACK,  // [[
-  RDBRACK,  // ]]
+  LBRACK,   // [
+  RBRACK,   // ]
+  DLBRACK,  // [[
+  DRBRACK,  // ]]
 
   //
 
@@ -73,6 +77,7 @@ enum class TokenKind : std::uint8_t {
   END,
 
   SEQUENCE,
+  SET,
   CHOICE,
   ENUMERATED,
   CLASS,
@@ -85,10 +90,15 @@ enum class TokenKind : std::uint8_t {
   BOOLEAN,
 
   OBJECT,
-  UNIQUE,
+  IDENTIFIER,
+
+  UNIVERSAL,
+  APPLICATION,
+  PRIVATE,
 
   DEFAULT,
   OPTIONAL,
+  UNIQUE,
   SIZE,
   CONTAINING,
   WITH,
@@ -106,15 +116,57 @@ enum class NodeKind : std::uint8_t {
   Ident,
 
   Module,
-
-  DefinitiveComponent,
-  DefinitiveComponents,
-
   ModuleExports,
   ModuleImports,
   SymbolsFromModule,
-
-  SymbolReference,
+  Symbol,
+  Assignment,
+  TypeAssignment,
+  ValueAssignment,
+  ParameterizedAssignment,
+  ObjectClassAssignment,
+  Tag,
+  BuiltinTypeIdent,
+  AsnType,
+  DefinedType,
+  SequenceType,
+  SetType,
+  ComponentType,
+  SequenceOfType,
+  SetOfType,
+  ChoiceType,
+  EnumeratedType,
+  EnumerationItem,
+  NamedNumber,
+  NamedType,
+  Constraint,
+  ExceptionSpec,
+  ElementSetSpec,
+  ExtensionSpec,
+  ElementSet,
+  Intersection,
+  Elements,
+  Value,
+  BuiltinValue,
+  ObjectIdentifierValue,
+  OidComponent,
+  AssignedOidComponent,
+  ValueLiteral,
+  DefinedValue,
+  Parameter,
+  ObjectClass,
+  DefinedObjectClass,
+  ObjectClassDefn,
+  Object,
+  FieldSpec,
+  ObjectSetSpec,
+  DefinedObject,
+  ParameterizedObject,
+  ActualParameter,
+  ObjectSet,
+  WithSyntaxSpec,
+  SyntaxToken,
+  OptionalGroup,
 };
 // NOLINTEND(readability-identifier-naming)
 
@@ -161,14 +213,6 @@ struct Node {
 };
 
 namespace nodes {
-
-struct Ident : Node {
-  static constexpr NodeKind kKind = NodeKind::Ident;
-
-  Ident() : Node(NodeKind::Ident) {}
-
-  void Accept(const NodeInspector&) const {};
-};
 
 #include "vanadium/asn1/ast/gen/ASTNodes.inc"
 

@@ -4,6 +4,7 @@
 #include <string_view>
 
 #include "StaticMap.h"
+#include "vanadium/asn1/ast/Asn1ASTNodes.h"
 
 namespace vanadium::asn1::ast {
 namespace parser {
@@ -26,6 +27,7 @@ constexpr auto kKeywordLookup = lib::MakeStaticMap<std::string_view, TokenKind>(
     {"END", TokenKind::END},
 
     {"SEQUENCE", TokenKind::SEQUENCE},
+    {"SET", TokenKind::SET},
     {"CHOICE", TokenKind::CHOICE},
     {"ENUMERATED", TokenKind::ENUMERATED},
     {"CLASS", TokenKind::CLASS},
@@ -38,10 +40,15 @@ constexpr auto kKeywordLookup = lib::MakeStaticMap<std::string_view, TokenKind>(
     {"BOOLEAN", TokenKind::BOOLEAN},
 
     {"OBJECT", TokenKind::OBJECT},
-    {"UNIQUE", TokenKind::UNIQUE},
+    {"IDENTIFIER", TokenKind::IDENTIFIER},
+
+    {"UNIVERSAL", TokenKind::UNIVERSAL},
+    {"APPLICATION", TokenKind::APPLICATION},
+    {"PRIVATE", TokenKind::PRIVATE},
 
     {"DEFAULT", TokenKind::DEFAULT},
     {"OPTIONAL", TokenKind::OPTIONAL},
+    {"UNIQUE", TokenKind::UNIQUE},
     {"SIZE", TokenKind::SIZE},
     {"CONTAINING", TokenKind::CONTAINING},
     {"WITH", TokenKind::WITH},
@@ -108,15 +115,20 @@ Token Scanner::Scan() {
       case '}':
         kind = TokenKind::RBRACE;
         break;
+      case '!':
+        kind = TokenKind::EXCLAMATION_MARK;
+        break;
       case '[':
+        kind = TokenKind::LBRACK;
         if (next == '[') {
-          kind = TokenKind::LDBRACK;
+          kind = TokenKind::DLBRACK;
           ++pos_;
         }
         break;
       case ']':
+        kind = TokenKind::RBRACK;
         if (next == ']') {
-          kind = TokenKind::RDBRACK;
+          kind = TokenKind::DRBRACK;
           ++pos_;
         }
         break;
@@ -147,6 +159,8 @@ Token Scanner::Scan() {
             ++pos_;
             kind = TokenKind::ASSIGN;
           }
+        } else {
+          kind = TokenKind::COLON;
         }
         break;
       case '\'':

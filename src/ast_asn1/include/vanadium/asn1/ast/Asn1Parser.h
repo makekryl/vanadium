@@ -31,16 +31,42 @@ class Parser {
   void ParseIdent(nodes::Ident&);
   nodes::Ident* ParseIdent();
   //
-  nodes::SymbolReference* ParseSymbolReference();
-  //
   nodes::Module* ParseModule();
-  nodes::DefinitiveComponents* ParseDefinitiveComponents();
   nodes::ModuleExports* ParseModuleExports();
   nodes::ModuleImports* ParseModuleImports();
   nodes::SymbolsFromModule* ParseSymbolsFromModule();
-  std::vector<nodes::SymbolReference*> ParseSymbolReferenceList();
-  //
-  Node* ParseDefinition();
+  nodes::Symbol* ParseSymbol();
+  nodes::Assignment* ParseAssignment();
+  nodes::TypeAssignment* ParseTypeAssignment();
+  nodes::ValueAssignment* ParseValueAssignment();
+  nodes::ParameterizedAssignment* ParseParameterizedAssignment();
+  nodes::Tag* ParseTag();
+  nodes::AsnType* ParseAsnType();
+  Node* ParseTypeBase();
+  nodes::SequenceType* ParseSequenceType();
+  nodes::SetType* ParseSetType();
+  nodes::ChoiceType* ParseChoiceType();
+  nodes::EnumeratedType* ParseEnumeratedType();
+  std::vector<nodes::ComponentType*> ParseComponentTypeList();
+  nodes::ComponentType* ParseComponentType();
+  std::vector<nodes::NamedType*> ParseNamedTypeList();
+  nodes::NamedType* ParseNamedType();
+  std::vector<nodes::EnumerationItem*> ParseEnumerationList();
+  nodes::EnumerationItem* ParseEnumerationItem();
+  nodes::NamedNumber* ParseNamedNumber();
+  nodes::DefinedType* ParseDefinedType();
+  nodes::ObjectIdentifierValue* ParseObjectIdentifierValue();
+  nodes::Value* ParseValue();
+  nodes::DefinedValue* ParseDefinedValue();
+  nodes::OidComponent* ParseOidComponent();
+  nodes::AssignedOidComponent* ParseAssignedOidComponent();
+  std::vector<nodes::Parameter*> ParseParameterList();
+  nodes::Parameter* ParseParameter();
+  std::vector<nodes::ActualParameter*> ParseActualParameterList();
+  nodes::ActualParameter* ParseActualParameter();
+  nodes::Constraint* ParseConstraint();
+  nodes::ExceptionSpec* ParseExceptionSpec();
+  Node* ParseAnyRhs();
   //
 
   Token Consume();

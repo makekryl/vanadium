@@ -9,6 +9,7 @@ target_include_directories(vanadium_asn1_ast PUBLIC
 
 target_link_libraries(vanadium_asn1_ast PUBLIC
   vanadium_ast
+  stdc++exp # TODO REMOVE
 )
 
 target_link_libraries(vanadium_asn1_ast PRIVATE

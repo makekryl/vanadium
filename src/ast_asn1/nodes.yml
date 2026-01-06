@@ -1,26 +1,196 @@
 ---
+
+Ident: {}
+
 Module:
   name: Ident
-  components: DefinitiveComponents*?
-  tags: Token?
-  extensibility: Token?
+  oidComponents: OidComponent*[]?    # from IDENTIFIER { ... }
+  tagDefault: Token                 # EXPLICIT | IMPLICIT | AUTOMATIC
+  extensibility: Token?              # IMPLIED
   exports: ModuleExports*?
   imports: ModuleImports*?
-  defs: Node*[]
-DefinitiveComponents:
-  list: DefinitiveComponent*[]
-DefinitiveComponent:
-  name: Ident*?
-  number: Token?
+  assignments: Assignment*[]
+
 ModuleExports:
   all: bool
-  list: SymbolReference*[]
+  symbols: Symbol*[]?
+
 ModuleImports:
-  list: SymbolsFromModule*[]
+  symbolsFromModules: SymbolsFromModule*[]
+
 SymbolsFromModule:
-  provider: Ident
-  list: SymbolReference*[]
-  # TODO: assignedIdentifier : (objectIdentifierValue | definedValue)? ;
-SymbolReference:
+  symbols: Symbol*[]
+  fromModule: Ident
+
+Symbol:
   ident: Ident
   parametrized: bool
+
+Assignment:
+  name: Ident
+  rhs: Node*                        # TypeAssignment | ValueAssignment | ParameterizedAssignment | ObjectClassAssignment
+
+TypeAssignment:
+  type: AsnType*
+
+ValueAssignment:
+  type: AsnType*
+  value: Value*
+
+ParameterizedAssignment:
+  parameters: Parameter*[]
+  rhs: Node*                        # AsnType | Value | ValueSet | Object | ObjectClass | ObjectSet
+
+ObjectClassAssignment:
+  objectClass: ObjectClass*
+
+Tag:
+  tagClass: Token? # UNIVERSAL | APPLICATION | PRIVATE
+  number: Token
+  mode: Token?
+
+BuiltinTypeIdent:
+  tok1: Token
+  tok2: Token
+
+AsnType:
+  tag: Tag*?
+  base: Node*                       # SequenceType | SetType | ChoiceType | EnumeratedType | IntegerType | BitStringType | OctetStringType | DefinedType
+  constraints: Constraint*[]
+
+DefinedType:
+  name: Ident
+  module: Ident*?
+  parameters: ActualParameter*[]?
+
+SequenceType:
+  components: ComponentType*[]?
+  extensible: bool
+
+SetType:
+  components: ComponentType*[]?
+  extensible: bool
+
+ComponentType:
+  content: Node*                    # NamedType | AsnType
+  optional: bool
+  defaultValue: Value*?
+
+SequenceOfType:
+  elementType: Node*                # AsnType | NamedType
+  sizeConstraint: Constraint*?
+
+SetOfType:
+  elementType: Node*                # AsnType | NamedType
+  sizeConstraint: Constraint*?
+
+ChoiceType:
+  alternatives: NamedType*[]
+  extensionAlternatives: NamedType*[]?
+
+EnumeratedType:
+  items: EnumerationItem*[]
+  extensible: bool
+
+EnumerationItem:
+  value: Node*                      # Ident | NamedNumber | Value
+
+NamedNumber:
+  name: Ident
+  value: Node*   # IntegerValue | DefinedValue
+
+NamedType:
+  name: Ident
+  type: AsnType*
+
+Constraint:
+  spec: Node*                       # ConstraintSpec
+  exception: ExceptionSpec*?
+
+ExceptionSpec:
+  identification: Node*             # SignedNumber | DefinedValue | AsnType:Value
+
+ElementSetSpec:
+  root: ElementSet*
+  extension: ExtensionSpec*?
+
+ExtensionSpec:
+  additionalElements: ElementSet*[]?
+
+ElementSet:
+  unions: Intersection*[]
+
+Intersection:
+  elements: Elements*[]
+
+Elements:
+  content: Node*   # Value | SizeConstraint | RangeConstraint | PatternConstraint
+
+Value:
+  content: Node*                      # IntegerValue | BooleanValue | StringValue | EnumeratedValue | ChoiceValue | ObjectIdentifierValue
+
+ObjectIdentifierValue:
+  components: OidComponent*[]
+
+OidComponent:
+  content: Node*                    # ValueLiteral | Ident | DefinedValue | AssignedOidComponent
+
+AssignedOidComponent:
+  name: Ident
+  assignedValue: Node*              # ValueLiteral | DefinedValue
+
+ValueLiteral:
+  tok: Token
+
+DefinedValue:
+  name: Ident
+  module: Ident?
+  parameters: ActualParameter*[]?
+
+Parameter:
+  name: Ident
+  governor: Node*?                  # AsnType | ObjectClass
+
+ObjectClass:
+  definition: Node*                 # DefinedObjectClass | ObjectClassDefn
+
+DefinedObjectClass:
+  module: Ident?
+  name: Ident
+
+ObjectClassDefn:
+  fields: FieldSpec*[]
+  withSyntax: WithSyntaxSpec*?
+
+Object:
+  definition: Node*                 # DefinedObject | ParameterizedObject
+
+FieldSpec:
+  name: Ident
+  specification: Node*             # TypeFieldSpec | FixedTypeValueFieldSpec | VariableTypeValueFieldSpec | ObjectFieldSpec | ObjectSetFieldSpec
+
+ObjectSetSpec:
+  root: ElementSet*?                # null if leading ELLIPSIS
+  extension: ExtensionSpec*?
+
+DefinedObject:
+  name: Ident
+
+ParameterizedObject:
+  object: DefinedObject*
+  parameters: ActualParameter*[]
+
+ActualParameter:
+  value: Node*            # AsnType | Value
+
+ObjectSet:
+  spec: ObjectSetSpec*
+
+WithSyntaxSpec:
+  tokens: SyntaxToken*[]
+
+SyntaxToken:
+  content: Node*                    # LiteralToken | FieldToken | OptionalGroup
+
+OptionalGroup:
+  tokens: SyntaxToken*[]
