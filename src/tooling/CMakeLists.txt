@@ -5,7 +5,7 @@ add_library(vanadium_tooling STATIC
 )
 
 target_include_directories(vanadium_tooling PUBLIC
-  ${CMAKE_CURRENT_SOURCE_DIR}/include
+  include
 )
 
 target_link_libraries(vanadium_tooling PRIVATE

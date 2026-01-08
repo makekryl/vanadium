@@ -3,7 +3,7 @@ add_executable(vanadium_astdump
 )
 
 target_include_directories(vanadium_astdump PRIVATE
-  ${CMAKE_CURRENT_SOURCE_DIR}/include
+  include
 )
 
 target_link_libraries(vanadium_astdump PRIVATE

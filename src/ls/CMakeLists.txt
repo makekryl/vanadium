@@ -10,10 +10,10 @@ add_library(vanadium_ls STATIC
 )
 
 target_include_directories(vanadium_ls PUBLIC
-  ${CMAKE_CURRENT_SOURCE_DIR}/interface
+  interface
 )
 target_include_directories(vanadium_ls PRIVATE
-  ${CMAKE_CURRENT_SOURCE_DIR}/include
+  include
 )
 
 target_link_libraries(vanadium_ls PRIVATE

@@ -3,7 +3,7 @@ add_library(vanadium_format STATIC
 )
 
 target_include_directories(vanadium_format PUBLIC
-  ${CMAKE_CURRENT_SOURCE_DIR}/include
+  include
 )
 
 # lib -- private

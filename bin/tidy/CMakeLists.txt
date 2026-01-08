@@ -3,7 +3,7 @@ add_executable(vanadium_tidy
 )
 
 target_include_directories(vanadium_tidy PRIVATE
-  ${CMAKE_CURRENT_SOURCE_DIR}/include
+  include
 )
 
 target_link_libraries(vanadium_tidy PRIVATE

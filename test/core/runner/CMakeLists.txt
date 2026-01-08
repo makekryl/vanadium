@@ -6,7 +6,7 @@ add_executable(vanadium_e2e_core
 )
 
 target_include_directories(vanadium_e2e_core PRIVATE
-  ${CMAKE_CURRENT_SOURCE_DIR}/include
+  include
 )
 
 target_link_libraries(vanadium_e2e_core PRIVATE
@@ -21,5 +21,5 @@ target_link_libraries(vanadium_e2e_core PRIVATE
 add_test(
   NAME vanadium_e2e_core
   COMMAND vanadium_e2e_core
-          --vanadium_testsuites_dir="${CMAKE_CURRENT_SOURCE_DIR}/../suites"
+          --vanadium_testsuites_dir="../suites"
 )

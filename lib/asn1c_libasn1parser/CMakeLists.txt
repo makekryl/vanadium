@@ -18,12 +18,12 @@ add_library(asn1c_libasn1parser STATIC
 )
 
 target_include_directories(asn1c_libasn1parser PUBLIC
-  ${CMAKE_CURRENT_SOURCE_DIR}/include
+  include
 )
 
 target_include_directories(asn1c_libasn1parser PRIVATE
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/asn1c/libasn1common
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/asn1c/libasn1parser
+  include/asn1c/libasn1common
+  include/asn1c/libasn1parser
 )
 
 target_compile_options(asn1c_libasn1parser PRIVATE

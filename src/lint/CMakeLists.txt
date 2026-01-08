@@ -6,7 +6,7 @@ add_library(vanadium_lint STATIC
 )
 
 target_include_directories(vanadium_lint PUBLIC
-  ${CMAKE_CURRENT_SOURCE_DIR}/include
+  include
 )
 
 target_link_libraries(vanadium_lint PUBLIC

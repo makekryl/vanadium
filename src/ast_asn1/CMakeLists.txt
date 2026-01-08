@@ -4,7 +4,7 @@ add_library(vanadium_asn1_ast STATIC
 )
 
 target_include_directories(vanadium_asn1_ast PUBLIC
-  ${CMAKE_CURRENT_SOURCE_DIR}/include
+  include
 )
 
 target_link_libraries(vanadium_asn1_ast PUBLIC
@@ -21,9 +21,9 @@ target_link_libraries(vanadium_asn1_ast PRIVATE
 add_gtest_executable(vanadium_asn1_ast)
 
 
-set(VANADIUM_ASN1_AST_ASTGEN_EXEC "${CMAKE_CURRENT_SOURCE_DIR}/tools/nodegen.py")
-set(VANADIUM_ASN1_AST_ASTGEN_SRC  "${CMAKE_CURRENT_SOURCE_DIR}/nodes.yml")
-set(VANADIUM_ASN1_AST_ASTGEN_DEST "${CMAKE_CURRENT_SOURCE_DIR}/include/vanadium/asn1/ast/gen")
+set(VANADIUM_ASN1_AST_ASTGEN_EXEC "tools/nodegen.py")
+set(VANADIUM_ASN1_AST_ASTGEN_SRC  "nodes.yml")
+set(VANADIUM_ASN1_AST_ASTGEN_DEST "include/vanadium/asn1/ast/gen")
 add_custom_command(
   OUTPUT ${VANADIUM_ASN1_AST_ASTGEN_DEST}
   COMMAND ${Python3_EXECUTABLE} ${VANADIUM_ASN1_AST_ASTGEN_EXEC}

@@ -4,7 +4,7 @@ add_library(vanadium_ast_xasn1 STATIC
 )
 
 target_include_directories(vanadium_ast_xasn1 PUBLIC
-  ${CMAKE_CURRENT_SOURCE_DIR}/include
+  include
 )
 
 target_link_libraries(vanadium_ast_xasn1 PUBLIC

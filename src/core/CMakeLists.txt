@@ -8,7 +8,7 @@ add_library(vanadium_core STATIC
 )
 
 target_include_directories(vanadium_core PUBLIC
-  ${CMAKE_CURRENT_SOURCE_DIR}/include
+  include
 )
 
 target_link_libraries(vanadium_core PUBLIC

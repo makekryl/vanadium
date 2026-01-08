@@ -17,6 +17,6 @@ add_library(vanadium_bin_version STATIC
 )
 
 target_include_directories(vanadium_bin_version PUBLIC
-  ${CMAKE_CURRENT_SOURCE_DIR}/include
+  include
 )
 
