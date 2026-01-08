@@ -88,12 +88,12 @@ asn1p_value_compare(const asn1p_value_t *a, const asn1p_value_t *b) {
 asn1p_value_t *
 asn1p_value_fromref(asn1p_ref_t *ref, int do_copy) {
 	if(ref) {
-		asn1p_value_t *v = calloc(1, sizeof *v);
+		asn1p_value_t *v = asn1p_mem_calloc(1, sizeof *v);
 		if(v) {
 			if(do_copy) {
 				v->value.reference = asn1p_ref_clone(ref);
 				if(v->value.reference == NULL) {
-					free(v);
+					asn1p_mem_free(v);
 					return NULL;
 				}
 			} else {
@@ -111,13 +111,13 @@ asn1p_value_fromref(asn1p_ref_t *ref, int do_copy) {
 asn1p_value_t *
 asn1p_value_fromconstr(asn1p_constraint_t *ct, int do_copy) {
 	if(ct) {
-		asn1p_value_t *v = calloc(1, sizeof *v);
+		asn1p_value_t *v = asn1p_mem_calloc(1, sizeof *v);
 		if(v) {
 			if(do_copy) {
 				v->value.constraint
 					= asn1p_constraint_clone(ct);
 				if(v->value.constraint == NULL) {
-					free(v);
+					asn1p_mem_free(v);
 					return NULL;
 				}
 			} else {
@@ -135,18 +135,18 @@ asn1p_value_fromconstr(asn1p_constraint_t *ct, int do_copy) {
 asn1p_value_t *
 asn1p_value_frombits(uint8_t *bits, int size_in_bits, int do_copy) {
 	if(bits) {
-		asn1p_value_t *v = calloc(1, sizeof *v);
+		asn1p_value_t *v = asn1p_mem_calloc(1, sizeof *v);
 		assert(size_in_bits >= 0);
 		if(v) {
 			if(do_copy) {
 				int size = ((size_in_bits + 7) >> 3);
 				void *p;
-				p = malloc(size + 1);
+				p = asn1p_mem_alloc(size + 1);
 				if(p) {
 					memcpy(p, bits, size);
 					((char *)p)[size] = '\0'; /* JIC */
 				} else {
-					free(v);
+					asn1p_mem_free(v);
 					return NULL;
 				}
 				v->value.binary_vector.bits = p;
@@ -166,16 +166,16 @@ asn1p_value_frombits(uint8_t *bits, int size_in_bits, int do_copy) {
 asn1p_value_t *
 asn1p_value_frombuf(char *buffer, int size, int do_copy) {
 	if(buffer) {
-		asn1p_value_t *v = calloc(1, sizeof *v);
+		asn1p_value_t *v = asn1p_mem_calloc(1, sizeof *v);
 		assert(size >= 0);
 		if(v) {
 			if(do_copy) {
-				void *p = malloc(size + 1);
+				void *p = asn1p_mem_alloc(size + 1);
 				if(p) {
 					memcpy(p, buffer, size);
 					((char *)p)[size] = '\0'; /* JIC */
 				} else {
-					free(v);
+					asn1p_mem_free(v);
 					return NULL;
 				}
 				v->value.string.buf = p;
@@ -194,7 +194,7 @@ asn1p_value_frombuf(char *buffer, int size, int do_copy) {
 
 asn1p_value_t *
 asn1p_value_fromdouble(double d) {
-	asn1p_value_t *v = calloc(1, sizeof *v);
+	asn1p_value_t *v = asn1p_mem_calloc(1, sizeof *v);
 	if(v) {
 		v->value.v_double = d;
 		v->type = ATV_REAL;
@@ -204,7 +204,7 @@ asn1p_value_fromdouble(double d) {
 
 asn1p_value_t *
 asn1p_value_fromint(asn1c_integer_t i) {
-	asn1p_value_t *v = calloc(1, sizeof *v);
+	asn1p_value_t *v = asn1p_mem_calloc(1, sizeof *v);
 	if(v) {
 		v->value.v_integer = i;
 		v->type = ATV_INTEGER;
@@ -214,7 +214,7 @@ asn1p_value_fromint(asn1c_integer_t i) {
 
 asn1p_value_t *
 asn1p_value_fromtype(asn1p_expr_t *expr) {
-	asn1p_value_t *v = calloc(1, sizeof *v);
+	asn1p_value_t *v = asn1p_mem_calloc(1, sizeof *v);
 	if(v) {
 		v->value.v_type = expr;
 		v->type = ATV_TYPE;
@@ -237,7 +237,7 @@ asn1p_value_clone_with_resolver(asn1p_value_t *v,
 		switch(v->type) {
 		case ATV_NOVALUE:
 		case ATV_NULL:
-			return calloc(1, sizeof(*clone));
+			return asn1p_mem_calloc(1, sizeof(*clone));
 		case ATV_REAL:
 			return asn1p_value_fromdouble(v->value.v_double);
 		case ATV_TYPE:
@@ -281,10 +281,10 @@ asn1p_value_clone_with_resolver(asn1p_value_t *v,
 			return asn1p_value_fromconstr(v->value.constraint, 1);
 		case ATV_CHOICE_IDENTIFIER: {
 			char *id = v->value.choice_identifier.identifier;
-			clone = calloc(1, sizeof(*clone));
+			clone = asn1p_mem_calloc(1, sizeof(*clone));
 			if(!clone) return NULL;
 			clone->type = v->type;
-			id = strdup(id);
+			id = asn1p_mem_strdup(id);
 			if(!id) { asn1p_value_free(clone); return NULL; }
 			clone->value.choice_identifier.identifier = id;
 			v = asn1p_value_clone(v->value.choice_identifier.value);
@@ -322,11 +322,11 @@ asn1p_value_free(asn1p_value_t *v) {
 		case ATV_STRING:
 		case ATV_UNPARSED:
 			assert(v->value.string.buf);
-			free(v->value.string.buf);
+			asn1p_mem_free(v->value.string.buf);
 			break;
 		case ATV_BITVECTOR:
 			assert(v->value.binary_vector.bits);
-			free(v->value.binary_vector.bits);
+			asn1p_mem_free(v->value.binary_vector.bits);
 			break;
 		case ATV_REFERENCED:
 			asn1p_ref_free(v->value.reference);
@@ -335,12 +335,12 @@ asn1p_value_free(asn1p_value_t *v) {
 			asn1p_constraint_free(v->value.constraint);
 			break;
 		case ATV_CHOICE_IDENTIFIER:
-			free(v->value.choice_identifier.identifier);
+			asn1p_mem_free(v->value.choice_identifier.identifier);
 			asn1p_value_free(v->value.choice_identifier.value);
 			break;
 		}
 		memset(v, 0, sizeof(*v));
-		free(v);
+		asn1p_mem_free(v);
 	}
 }
 

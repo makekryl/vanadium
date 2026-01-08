@@ -2,8 +2,10 @@
 %define api.prefix {asn1p_}
 
 %parse-param { asn1p_yctx_t *ctx }
+%parse-param { void **param }
 %parse-param { yyscan_t yyscanner }
-%lex-param   { yyscan_t yyscanner }
+//
+%lex-param { yyscan_t yyscanner }
 
 %code requires {
 typedef void *yyscan_t;
@@ -11,21 +13,8 @@ typedef void *yyscan_t;
 
 %code requires {
 typedef struct {
-  int line;
-  int column;
-  char *msg;
-} asn1p_yerr_t;
-
-typedef struct {
-  asn1p_t *outp;
-
-  asn1p_yerr_t *errors;
-  size_t errors_size;
-  size_t errors_capacity;
+  asn1p_errs_t *errors;
 } asn1p_yctx_t;
-
-void asn1p_yctx_init(asn1p_yctx_t *ctx);
-void asn1p_yctx_free(asn1p_yctx_t *ctx);
 }
 
 %{
@@ -38,6 +27,7 @@ void asn1p_yctx_free(asn1p_yctx_t *ctx);
 #include <assert.h>
 
 #include "asn1parser.h"
+#include "asn1p_alloc.h"
 
 #include "asn1p_y.h"
 #include "asn1p_l.h"
@@ -67,7 +57,7 @@ prefixed_fprintf(FILE *f, const char *fmt, ...) {
     return ret;
 }
 
-static int yyerror(void **param, yyscan_t scanner, const char *msg);
+static int yyerror(asn1p_yctx_t *ctx, void **param, yyscan_t scanner, const char *msg);
 
 void asn1p_lexer_hack_push_opaque_state(yyscan_t);
 void asn1p_lexer_hack_enable_with_syntax(yyscan_t);
@@ -86,14 +76,14 @@ extern int asn1p_as_pointer;
 static struct AssignedIdentifier *saved_aid;
 
 static asn1p_value_t *_convert_bitstring2binary(char *str, int base);
-static void _fixup_anonymous_identifier(asn1p_expr_t *expr, yyscan_t);
+static void _fixup_anonymous_identifier(const asn1p_yctx_t *ctx, asn1p_expr_t *expr, yyscan_t);
 
 static asn1p_module_t *currentModule;
 #define	NEW_EXPR()	(asn1p_expr_new(asn1p_get_lineno(yyscanner), currentModule))
 
 #define	checkmem(ptr)	do {						\
 		if(!(ptr))						\
-		return yyerror(param, yyscanner, "Memory failure");			\
+		return yyerror(ctx, param, yyscanner, "Memory failure");			\
 	} while(0)
 
 #define	CONSTRAINT_INSERT(root, constr_type, arg1, arg2) do {		\
@@ -126,6 +116,19 @@ static asn1p_module_t *currentModule;
         }                                                                      \
         assert(TQ_FIRST(&((from)->where)) == 0);                               \
     } while(0)
+
+
+char*
+asn1p_y_strdup(const asn1p_yctx_t *ctx, const char *s) {
+  size_t len = strlen(s) + 1;
+  void *newbuf = asn1p_mem_alloc(len);
+
+  if (!newbuf) {
+    return NULL;
+  }
+
+  return (char *) memcpy(newbuf, s, len);
+}
 
 %}
 
@@ -169,6 +172,20 @@ static asn1p_module_t *currentModule;
 		struct asn1p_type_tag_s tag;
 	} tv_nametag;
 };
+
+%destructor { asn1p_delete($$); } <a_grammar>
+%destructor { asn1p_module_free($$); } <a_module>
+%destructor { asn1p_expr_free($$); } <a_expr>
+%destructor { asn1p_constraint_free($$); } <a_constr>
+%destructor { asn1p_xports_free($$); } <a_xports>
+%destructor { asn1p_oid_free($$); } <a_oid>
+/* %destructor { asn1p_ref_free($$); } <a_ref> */
+%destructor { asn1p_wsyntx_free($$); } <a_wsynt>
+%destructor { asn1p_wsyntx_chunk_free($$); } <a_wchunk>
+%destructor { asn1p_value_free($$); } <a_value>
+%destructor { asn1p_paramlist_free($$); } <a_plist>
+%destructor { asn1p_mem_free($$); } <tv_str>
+%destructor { asn1p_mem_free($$.buf); } <tv_opaque>
 
 /*
  * Token types returned by scanner.
@@ -512,13 +529,13 @@ ObjectIdentifierBody:
 		$$ = asn1p_oid_new();
 		asn1p_oid_add_arc($$, &$1);
 		if($1.name)
-			free($1.name);
+			asn1p_mem_free($1.name);
 	}
 	| ObjectIdentifierBody ObjectIdentifierElement {
 		$$ = $1;
 		asn1p_oid_add_arc($$, &$2);
 		if($2.name)
-			free($2.name);
+			asn1p_mem_free($2.name);
 	}
 	;
 
@@ -589,7 +606,7 @@ ModuleDefinitionFlag:
 				$1, ASN_FILENAME, asn1p_get_lineno(yyscanner));
 		 	$$ = MSF_unk_INSTRUCTIONS;
 		}
-		free($1);
+		asn1p_mem_free($1);
 	}
 	;
 
@@ -675,7 +692,7 @@ Assignment:
 			"WARNING: ENCODING-CONTROL %s "
 			"specification at %s:%d ignored\n",
 			$2, ASN_FILENAME, asn1p_get_lineno(yyscanner));
-		free($2);
+		asn1p_mem_free($2);
 		$$ = 0;
 	}
 
@@ -683,7 +700,8 @@ Assignment:
 	 * Erroneous attemps
 	 */
 	| BasicString {
-		return yyerror(param, yyscanner,
+    $$ = NULL;
+		return yyerror(ctx, param, yyscanner,
 			"Attempt to redefine a standard basic string type, "
 			"please comment out or remove this type redefinition.");
 	}
@@ -701,7 +719,7 @@ optImports:
 ImportsDefinition:
 	TOK_IMPORTS optImportsBundleSet ';' {
 		if(!saved_aid && 0)
-			return yyerror(param, yyscanner, "Unterminated IMPORTS FROM, "
+			return yyerror(ctx, param, yyscanner, "Unterminated IMPORTS FROM, "
 					"expected semicolon ';'");
 		saved_aid = 0;
 		$$ = $2;
@@ -710,7 +728,8 @@ ImportsDefinition:
 	 * Some error cases.
 	 */
 	| TOK_IMPORTS TOK_FROM /* ... */ {
-		return yyerror(param, yyscanner, "Empty IMPORTS list");
+    $$ = NULL;
+		return yyerror(ctx, param, yyscanner, "Empty IMPORTS list");
 	}
 	;
 
@@ -937,7 +956,7 @@ ParameterArgumentList:
 		ret = asn1p_paramlist_add_param($$, $1.governor, $1.argument);
 		checkmem(ret == 0);
 		asn1p_ref_free($1.governor);
-		free($1.argument);
+		asn1p_mem_free($1.argument);
 	}
 	| ParameterArgumentList ',' ParameterArgumentName {
 		int ret;
@@ -945,7 +964,7 @@ ParameterArgumentList:
 		ret = asn1p_paramlist_add_param($$, $3.governor, $3.argument);
 		checkmem(ret == 0);
 		asn1p_ref_free($3.governor);
-		free($3.argument);
+		asn1p_mem_free($3.argument);
 	}
 	;
 
@@ -960,7 +979,7 @@ ParameterArgumentName:
 		ret = asn1p_ref_add_component($$.governor, $1, 0);
 		checkmem(ret == 0);
 		$$.argument = $3;
-		free($1);
+		asn1p_mem_free($1);
 	}
 	| TypeRefName ':' TypeRefName {
 		int ret;
@@ -968,7 +987,7 @@ ParameterArgumentName:
 		ret = asn1p_ref_add_component($$.governor, $1, 0);
 		checkmem(ret == 0);
 		$$.argument = $3;
-		free($1);
+		asn1p_mem_free($1);
 	}
 	| BasicTypeId ':' Identifier {
 		int ret;
@@ -1005,7 +1024,7 @@ ActualParameter:
 	| SimpleValue {
 		$$ = NEW_EXPR();
 		checkmem($$);
-		$$->Identifier = strdup("?");
+		$$->Identifier = asn1p_mem_strdup("?");
 		$$->expr_type = A1TC_REFERENCE;
 		$$->meta_type = AMT_VALUE;
 		$$->value = $1;
@@ -1013,7 +1032,7 @@ ActualParameter:
 	| DefinedValue {
 		$$ = NEW_EXPR();
 		checkmem($$);
-		$$->Identifier = strdup("?");
+		$$->Identifier = asn1p_mem_strdup("?");
 		$$->expr_type = A1TC_REFERENCE;
 		$$->meta_type = AMT_VALUE;
 		$$->value = $1;
@@ -1073,7 +1092,7 @@ ComponentType:
 		$$ = $1;
 		$2.flags |= $$->marker.flags;
 		$$->marker = $2;
-		_fixup_anonymous_identifier($$, yyscanner);
+		_fixup_anonymous_identifier(ctx, $$, yyscanner);
 	}
 	| TOK_COMPONENTS TOK_OF MaybeIndirectTaggedType {
 		$$ = NEW_EXPR();
@@ -1110,7 +1129,7 @@ AlternativeType:
 	}
 	| MaybeIndirectTaggedType {
 		$$ = $1;
-		_fixup_anonymous_identifier($$, yyscanner);
+		_fixup_anonymous_identifier(ctx, $$, yyscanner);
 	}
 	;
 
@@ -1269,7 +1288,7 @@ ExtensionAndException:
 	TOK_ThreeDots {
 		$$ = NEW_EXPR();
 		checkmem($$);
-		$$->Identifier = strdup("...");
+		$$->Identifier = asn1p_mem_strdup("...");
 		checkmem($$->Identifier);
 		$$->expr_type = A1TC_EXTENSIBLE;
 		$$->meta_type = AMT_TYPE;
@@ -1277,7 +1296,7 @@ ExtensionAndException:
 	| TOK_ThreeDots '!' DefinedValue {
 		$$ = NEW_EXPR();
 		checkmem($$);
-		$$->Identifier = strdup("...");
+		$$->Identifier = asn1p_mem_strdup("...");
 		checkmem($$->Identifier);
 		$$->value = $3;
 		$$->expr_type = A1TC_EXTENSIBLE;
@@ -1286,7 +1305,7 @@ ExtensionAndException:
 	| TOK_ThreeDots '!' SignedNumber {
 		$$ = NEW_EXPR();
 		checkmem($$);
-		$$->Identifier = strdup("...");
+		$$->Identifier = asn1p_mem_strdup("...");
 		$$->value = $3;
 		checkmem($$->Identifier);
 		$$->expr_type = A1TC_EXTENSIBLE;
@@ -1459,7 +1478,7 @@ ConcreteTypeDeclaration:
 		checkmem(ret == 0);
 		$$->expr_type = ASN_TYPE_ANY;
 		$$->meta_type = AMT_TYPE;
-		free($4);
+		asn1p_mem_free($4);
 	}
 	| TOK_INSTANCE TOK_OF ComplexTypeReference {
 		$$ = NEW_EXPR();
@@ -1482,14 +1501,14 @@ ComplexTypeReference:
 		checkmem($$);
 		ret = asn1p_ref_add_component($$, $1, RLT_UNKNOWN);
 		checkmem(ret == 0);
-		free($1);
+		asn1p_mem_free($1);
 	}
 	| TOK_capitalreference {
 		int ret;
 		$$ = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		checkmem($$);
 		ret = asn1p_ref_add_component($$, $1, RLT_CAPITALS);
-		free($1);
+		asn1p_mem_free($1);
 		checkmem(ret == 0);
 	}
 	| TOK_typereference '.' TypeRefName {
@@ -1500,8 +1519,8 @@ ComplexTypeReference:
 		checkmem(ret == 0);
 		ret = asn1p_ref_add_component($$, $3, RLT_UNKNOWN);
 		checkmem(ret == 0);
-		free($1);
-		free($3);
+		asn1p_mem_free($1);
+		asn1p_mem_free($3);
 	}
 	| TOK_capitalreference '.' TypeRefName {
 		int ret;
@@ -1511,14 +1530,14 @@ ComplexTypeReference:
 		checkmem(ret == 0);
 		ret = asn1p_ref_add_component($$, $3, RLT_UNKNOWN);
 		checkmem(ret == 0);
-		free($1);
-		free($3);
+		asn1p_mem_free($1);
+		asn1p_mem_free($3);
 	}
 	| TOK_capitalreference '.' ComplexTypeReferenceAmpList {
 		int ret;
 		$$ = $3;
 		ret = asn1p_ref_add_component($$, $1, RLT_CAPITALS);
-		free($1);
+		asn1p_mem_free($1);
 		checkmem(ret == 0);
 		/*
 		 * Move the last element infront.
@@ -1541,14 +1560,14 @@ ComplexTypeReferenceAmpList:
 		$$ = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		checkmem($$);
 		ret = asn1p_ref_add_component($$, $1.name, $1.lex_type);
-		free($1.name);
+		asn1p_mem_free($1.name);
 		checkmem(ret == 0);
 	}
 	| ComplexTypeReferenceAmpList '.' ComplexTypeReferenceElement {
 		int ret;
 		$$ = $1;
 		ret = asn1p_ref_add_component($$, $3.name, $3.lex_type);
-		free($3.name);
+		asn1p_mem_free($3.name);
 		checkmem(ret == 0);
 	}
 	;
@@ -1574,17 +1593,17 @@ FieldName:
 	TOK_typefieldreference {
 		$$ = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		asn1p_ref_add_component($$, $1, RLT_AmpUppercase);
-		free($1);
+		asn1p_mem_free($1);
 	}
 	| FieldName '.' TOK_typefieldreference {
 		$$ = $$;
 		asn1p_ref_add_component($$, $3, RLT_AmpUppercase);
-		free($3);
+		asn1p_mem_free($3);
 	}
 	| FieldName '.' TOK_valuefieldreference {
 		$$ = $$;
 		asn1p_ref_add_component($$, $3, RLT_Amplowercase);
-		free($3);
+		asn1p_mem_free($3);
 	}
 	;
 
@@ -1592,15 +1611,15 @@ DefinedObjectClass:
 	TOK_capitalreference {
 		$$ = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		asn1p_ref_add_component($$, $1, RLT_CAPITALS);
-		free($1);
+		asn1p_mem_free($1);
 	}
 /*
 	| TypeRefName '.' TOK_capitalreference {
 		$$ = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		asn1p_ref_add_component($$, $1, RLT_AmpUppercase);
 		asn1p_ref_add_component($$, $3, RLT_CAPITALS);
-		free($1);
-		free($3);
+		asn1p_mem_free($1);
+		asn1p_mem_free($3);
 	}
 */
 	;
@@ -1666,8 +1685,8 @@ DefinedValue:
 		checkmem(ret == 0);
 		$$ = asn1p_value_fromref(ref, 0);
 		checkmem($$);
-		free($1);
-		free($3);
+		asn1p_mem_free($1);
+		asn1p_mem_free($3);
 	}
 	;
 
@@ -1692,22 +1711,22 @@ RestrictedCharacterStringValue:
 Opaque:
     OpaqueFirstToken {
 		$$.len = $1.len + 1;
-		$$.buf = malloc(1 + $$.len + 1);
+		$$.buf = asn1p_mem_alloc(1 + $$.len + 1);
 		checkmem($$.buf);
 		$$.buf[0] = '{';
 		memcpy($$.buf + 1, $1.buf, $1.len);
 		$$.buf[$$.len] = '\0';
-		free($1.buf);
+		asn1p_mem_free($1.buf);
     }
 	| Opaque TOK_opaque {
 		int newsize = $1.len + $2.len;
-		char *p = malloc(newsize + 1);
+		char *p = asn1p_mem_alloc(newsize + 1);
 		checkmem(p);
 		memcpy(p         , $1.buf, $1.len);
 		memcpy(p + $1.len, $2.buf, $2.len);
 		p[newsize] = '\0';
-		free($1.buf);
-		free($2.buf);
+		asn1p_mem_free($1.buf);
+		asn1p_mem_free($2.buf);
 		$$.buf = p;
 		$$.len = newsize;
 	}
@@ -1784,11 +1803,9 @@ BasicString:
 	TOK_BMPString { $$ = ASN_STRING_BMPString; }
 	| TOK_GeneralString {
 		$$ = ASN_STRING_GeneralString;
-		fprintf(stderr, "WARNING: GeneralString is not fully supported\n");
 	}
 	| TOK_GraphicString {
 		$$ = ASN_STRING_GraphicString;
-		fprintf(stderr, "WARNING: GraphicString is not fully supported\n");
 	}
 	| TOK_IA5String { $$ = ASN_STRING_IA5String; }
 	| TOK_ISO646String { $$ = ASN_STRING_ISO646String; }
@@ -1796,14 +1813,12 @@ BasicString:
 	| TOK_PrintableString { $$ = ASN_STRING_PrintableString; }
 	| TOK_T61String {
 		$$ = ASN_STRING_T61String;
-		fprintf(stderr, "WARNING: T61String is not fully supported\n");
 	}
 	| TOK_TeletexString { $$ = ASN_STRING_TeletexString; }
 	| TOK_UniversalString { $$ = ASN_STRING_UniversalString; }
 	| TOK_UTF8String { $$ = ASN_STRING_UTF8String; }
 	| TOK_VideotexString {
 		$$ = ASN_STRING_VideotexString;
-		fprintf(stderr, "WARNING: VideotexString is not fully supported\n");
 	}
 	| TOK_VisibleString { $$ = ASN_STRING_VisibleString; }
 	| TOK_ObjectDescriptor { $$ = ASN_STRING_ObjectDescriptor; }
@@ -1962,7 +1977,7 @@ PatternConstraint:
 		ref = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		asn1p_ref_add_component(ref, $2, RLT_lowercase);
 		$$->value = asn1p_value_fromref(ref, 0);
-		free($2);
+		asn1p_mem_free($2);
 	}
 	;
 
@@ -1995,12 +2010,12 @@ BitStringValue:
 	TOK_bstring {
 		$$ = _convert_bitstring2binary($1, 'B');
 		checkmem($$);
-		free($1);
+		asn1p_mem_free($1);
 	}
 	| TOK_hstring {
 		$$ = _convert_bitstring2binary($1, 'H');
 		checkmem($$);
-		free($1);
+		asn1p_mem_free($1);
 	}
 	;
 
@@ -2038,15 +2053,17 @@ FullSpecification: '{' TypeConstraints '}' { $$ = $2; };
 PartialSpecification:
     '{' TOK_ThreeDots ',' TypeConstraints '}' {
         assert($4->type == ACT_CA_CSV);
-		$$ = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
+        $$ = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
         $$->type = ACT_CA_CSV;
-		asn1p_constraint_t *ct = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
-		checkmem($$);
-		ct->type = ACT_EL_EXT;
+        asn1p_constraint_t *ct = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
+        checkmem($$);
+        ct->type = ACT_EL_EXT;
         asn1p_constraint_insert($$, ct);
         for(unsigned i = 0; i < $4->el_count; i++) {
             asn1p_constraint_insert($$, $4->elements[i]);
+            $4->elements[i] = NULL;
         }
+        asn1p_constraint_free($4);
     };
 TypeConstraints:
     NamedConstraint {
@@ -2149,7 +2166,7 @@ SimpleTableConstraint:
 		ct->type = ACT_EL_VALUE;
 		ct->value = asn1p_value_fromref(ref, 0);
 		CONSTRAINT_INSERT($$, ACT_CA_CRC, ct, 0);
-		free($2);
+		asn1p_mem_free($2);
 	}
 	;
 
@@ -2181,18 +2198,18 @@ AtNotationList:
  */
 AtNotationElement:
 	'@' ComponentIdList {
-		char *p = malloc(strlen($2) + 2);
+		char *p = asn1p_mem_alloc(strlen($2) + 2);
 		int ret;
 		*p = '@';
 		strcpy(p + 1, $2);
 		$$ = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		ret = asn1p_ref_add_component($$, p, 0);
 		checkmem(ret == 0);
-		free(p);
-		free($2);
+		asn1p_mem_free(p);
+		asn1p_mem_free($2);
 	}
 	| '@' '.' ComponentIdList {
-		char *p = malloc(strlen($3) + 3);
+		char *p = asn1p_mem_alloc(strlen($3) + 3);
 		int ret;
 		p[0] = '@';
 		p[1] = '.';
@@ -2200,8 +2217,8 @@ AtNotationElement:
 		$$ = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		ret = asn1p_ref_add_component($$, p, 0);
 		checkmem(ret == 0);
-		free(p);
-		free($3);
+		asn1p_mem_free(p);
+		asn1p_mem_free($3);
 	}
 	;
 
@@ -2213,13 +2230,13 @@ ComponentIdList:
 	| ComponentIdList '.' Identifier {
 		int l1 = strlen($1);
 		int l3 = strlen($3);
-		$$ = malloc(l1 + 1 + l3 + 1);
+		$$ = asn1p_mem_alloc(l1 + 1 + l3 + 1);
 		memcpy($$, $1, l1);
 		$$[l1] = '.';
 		memcpy($$ + l1 + 1, $3, l3);
 		$$[l1 + 1 + l3] = '\0';
-		free($1);
-		free($3);
+		asn1p_mem_free($1);
+		asn1p_mem_free($3);
 	}
 	;
 
@@ -2334,11 +2351,11 @@ Enumerations:
         asn1p_expr_t *first_memb = TQ_FIRST(&($$->members));
         if(first_memb) {
             if(first_memb->expr_type == A1TC_EXTENSIBLE) {
-                return yyerror(param, yyscanner,
+                return yyerror(ctx, param, yyscanner,
                     "The ENUMERATION cannot start with extension (...).");
             }
         } else {
-            return yyerror(param, yyscanner,
+            return yyerror(ctx, param, yyscanner,
                 "The ENUMERATION list cannot be empty.");
         }
     }
@@ -2389,7 +2406,7 @@ UniverationElement:
 	| TOK_ThreeDots {
 		$$ = NEW_EXPR();
 		checkmem($$);
-		$$->Identifier = strdup("...");
+		$$->Identifier = asn1p_mem_strdup("...");
 		checkmem($$->Identifier);
 		$$->expr_type = A1TC_EXTENSIBLE;
 		$$->meta_type = AMT_VALUE;
@@ -2499,7 +2516,7 @@ IdentifierAsReference:
     Identifier {
 		$$ = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		asn1p_ref_add_component($$, $1, RLT_lowercase);
-		free($1);
+		asn1p_mem_free($1);
     };
 
 IdentifierAsValue:
@@ -2546,7 +2563,7 @@ _convert_bitstring2binary(char *str, int base) {
 
 	memlen = slen / (8 / baselen);	/* Conservative estimate */
 
-	bv_ptr = binary_vector = malloc(memlen + 1);
+	bv_ptr = binary_vector = asn1p_mem_alloc(memlen + 1);
 	if(bv_ptr == NULL)
 		/* ENOMEM */
 		return NULL;
@@ -2598,7 +2615,7 @@ _convert_bitstring2binary(char *str, int base) {
 
 	val = asn1p_value_frombits(binary_vector, bits, 0);
 	if(val == NULL) {
-		free(binary_vector);
+		asn1p_mem_free(binary_vector);
 	}
 
 	return val;
@@ -2610,7 +2627,7 @@ _convert_bitstring2binary(char *str, int base) {
  * the specification's compliance to modern ASN.1 standards.
  */
 static void
-_fixup_anonymous_identifier(asn1p_expr_t *expr, yyscan_t yyscanner) {
+_fixup_anonymous_identifier(const asn1p_yctx_t *ctx, asn1p_expr_t *expr, yyscan_t yyscanner) {
 	char *p;
 	assert(expr->Identifier == 0);
 
@@ -2631,7 +2648,7 @@ _fixup_anonymous_identifier(asn1p_expr_t *expr, yyscan_t yyscanner) {
 
 	if(!expr->Identifier)
 		expr->Identifier = "unnamed";
-	expr->Identifier = strdup(expr->Identifier);
+	expr->Identifier = asn1p_mem_strdup(expr->Identifier);
 	assert(expr->Identifier);
 	/* Make a lowercase identifier from the type name */
 	for(p = expr->Identifier; *p; p++) {
@@ -2647,18 +2664,45 @@ _fixup_anonymous_identifier(asn1p_expr_t *expr, yyscan_t yyscanner) {
 }
 
 static int
-yyerror(void **param, yyscan_t yyscanner, const char *msg) {
-	fprintf(stderr,
-		"ASN.1 grammar parse error "
-		"near %s:%d (token \"%s\"): %s\n",
-		ASN_FILENAME, asn1p_get_lineno(yyscanner), asn1p_get_text(yyscanner), msg);
-	return -1;
+yyerror(asn1p_yctx_t *ctx, void **param, yyscan_t yyscanner, const char *msg) {
+  if (ctx->errors->size == ctx->errors->capacity) {
+    const int newcap = (ctx->errors->capacity == 0) ? 4 : (ctx->errors->capacity * 2);
+    asn1p_err_t *newdata = asn1p_mem_realloc(ctx->errors->data,
+      ctx->errors->size * sizeof(ctx->errors->data[0]),
+      newcap * sizeof(ctx->errors->data[0]));
+    if (!newdata) {
+      // TODO: do something
+      return -2;
+    }
+    ctx->errors->data = newdata;
+    ctx->errors->capacity = newcap;
+  }
+
+  asn1p_err_t *err = &ctx->errors->data[ctx->errors->size++];
+  err->pos = 0;
+  err->msg = asn1p_mem_strdup(msg);
+
+  return -1;
 }
 
-void asn1p_yctx_init(asn1p_yctx_t *ctx) {
-
+int
+asn1p_errs_init(asn1p_errs_t *errs) {
+  memset(errs, 0, sizeof(*errs));
+  return 0;
 }
 
-void asn1p_yctx_free(asn1p_yctx_t *ctx) {
+void
+asn1p_errs_free(asn1p_errs_t *errs) {
+  int i;
 
+  if(!errs) {
+    return;
+  }
+
+  for(i = 0; i < errs->size; ++i) {
+    asn1p_mem_free(errs->data[i].msg);
+  }
+  asn1p_mem_free(errs->data);
+
+  memset(errs, 0, sizeof(*errs));
 }

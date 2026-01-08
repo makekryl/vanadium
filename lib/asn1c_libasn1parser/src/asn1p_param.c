@@ -13,7 +13,7 @@ asn1p_paramlist_t *
 asn1p_paramlist_new(int _lineno) {
 	asn1p_paramlist_t *pl;
 
-	pl = calloc(1, sizeof *pl);
+	pl = asn1p_mem_calloc(1, sizeof *pl);
 	if(pl) {
 		pl->_lineno = _lineno;
 	}
@@ -28,15 +28,15 @@ asn1p_paramlist_free(asn1p_paramlist_t *pl) {
 			int i = pl->params_count;
 			while(i--) {
 				asn1p_ref_free(pl->params[i].governor);
-				free(pl->params[i].argument);
+				asn1p_mem_free(pl->params[i].argument);
 				pl->params[i].governor = 0;
 				pl->params[i].argument = 0;
 			}
-			free(pl->params);
+			asn1p_mem_free(pl->params);
 			pl->params = 0;
 		}
 
-		free(pl);
+		asn1p_mem_free(pl);
 	}
 }
 
@@ -54,7 +54,8 @@ asn1p_paramlist_add_param(asn1p_paramlist_t *pl, asn1p_ref_t *gov, char *arg) {
 	if(pl->params_count == pl->params_size) {
 		int newsize = pl->params_size?pl->params_size<<2:4;
 		void *p;
-		p = realloc(pl->params,
+		p = asn1p_mem_realloc(pl->params,
+      pl->params_size * sizeof(pl->params[0]),
 			newsize * sizeof(pl->params[0]));
 		if(p) {
 			pl->params = p;
@@ -76,7 +77,7 @@ asn1p_paramlist_add_param(asn1p_paramlist_t *pl, asn1p_ref_t *gov, char *arg) {
 		pl->params[pl->params_count].governor = 0;
 	}
 
-	pl->params[pl->params_count].argument = strdup(arg);
+	pl->params[pl->params_count].argument = asn1p_mem_strdup(arg);
 	if(pl->params[pl->params_count].argument) {
 		pl->params_count++;
 		return 0;

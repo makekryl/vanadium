@@ -26,17 +26,19 @@ asn1p_oid_construct(asn1p_oid_arc_t *arc, int narcs) {
 
 asn1p_oid_t *
 asn1p_oid_new() {
-	return calloc(1, sizeof(asn1p_oid_t));
+	return asn1p_mem_calloc(1, sizeof(asn1p_oid_t));
 }
 
 int
 asn1p_oid_add_arc(asn1p_oid_t *oid, asn1p_oid_arc_t *template) {
 	void *p;
-	p = realloc(oid->arcs, (oid->arcs_count + 1) * sizeof(oid->arcs[0]));
+	p = asn1p_mem_realloc(oid->arcs,
+    (oid->arcs_count) * sizeof(oid->arcs[0]),
+    (oid->arcs_count + 1) * sizeof(oid->arcs[0]));
 	if(p) {
 		oid->arcs = p;
 		oid->arcs[oid->arcs_count].name
-				= template->name?strdup(template->name):0;
+				= template->name?asn1p_mem_strdup(template->name):0;
 		oid->arcs[oid->arcs_count].number = template->number;
 		oid->arcs_count++;
 		return 0;
@@ -50,11 +52,11 @@ asn1p_oid_free(asn1p_oid_t *oid) {
 	if(oid) {
 		if(oid->arcs) {
 			while(oid->arcs_count--) {
-				free(oid->arcs[oid->arcs_count].name);
+				asn1p_mem_free(oid->arcs[oid->arcs_count].name);
 			}
-			free(oid->arcs);
+			asn1p_mem_free(oid->arcs);
 		}
-		free(oid);
+		asn1p_mem_free(oid);
 	}
 }
 
@@ -62,10 +64,10 @@ asn1p_oid_arc_t *
 asn1p_oid_arc_new(const char *optName, asn1c_integer_t optNumber /* = -1 */) {
 	asn1p_oid_arc_t *arc;
 
-	arc = calloc(1, sizeof *arc);
+	arc = asn1p_mem_calloc(1, sizeof *arc);
 	if(arc) {
 		if(optName)
-			arc->name = strdup(optName);
+			arc->name = asn1p_mem_strdup(optName);
 		arc->number = optNumber;
 	}
 
@@ -75,8 +77,8 @@ asn1p_oid_arc_new(const char *optName, asn1c_integer_t optNumber /* = -1 */) {
 void
 asn1p_oid_arc_free(asn1p_oid_arc_t *arc) {
 	if(arc) {
-		free(arc->name);
-		free(arc);
+		asn1p_mem_free(arc->name);
+		asn1p_mem_free(arc);
 	}
 }
 

@@ -2122,14 +2122,16 @@ goto find_rule; \
 #define yymore() yymore_used_but_not_detected
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
-#line 1 "asn1p_l.l"
-#line 8 "asn1p_l.l"
+#line 1 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
+#define YY_NO_INPUT 1
+#line 11 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 
 #include <string.h>
 #include <errno.h>
 #include <assert.h>
 
 #include "asn1parser.h"
+#include "asn1p_alloc.h"
 
 #define YYSTYPE ASN1P_STYPE
 #include "asn1p_y.h"
@@ -2181,21 +2183,19 @@ static double          _lex_atod(const char *ptr, yyscan_t);
 		int prev_len = yylval_param->tv_opaque.len;	\
 		char *p;					\
 								\
-		p = malloc((tlen) + prev_len + 1);		\
+		p = asn1p_mem_alloc((tlen) + prev_len + 1);		\
 		if(p == NULL) return -1;			\
 								\
 		if(prev_text) memcpy(p, prev_text, prev_len);	\
 		memcpy(p + prev_len, text, tlen);		\
 		p[prev_len + (tlen)] = '\0';			\
 								\
-		free(yylval_param->tv_opaque.buf);			\
+		asn1p_mem_free(yylval_param->tv_opaque.buf);			\
 		yylval_param->tv_opaque.buf = p;			\
 		yylval_param->tv_opaque.len = (tlen) + prev_len;	\
 	} while(0)
 
-#line 2197 "asn1p_l.c"
-#define YY_NO_INPUT 1
-/* Performance penalty is OK */
+#line 2199 "asn1p_l.c"
 
 /* Newline */
 /* White-space */
@@ -2504,7 +2504,7 @@ YY_DECL
 		}
 
 	{
-#line 101 "asn1p_l.l"
+#line 99 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 
 
 #line 2511 "asn1p_l.c"
@@ -2583,7 +2583,7 @@ do_action:	/* This label is used only to access EOF actions. */
 	{ /* beginning of action switch */
 case 1:
 YY_RULE_SETUP
-#line 103 "asn1p_l.l"
+#line 101 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return UTF8_BOM;
 	YY_BREAK
 case 2:
@@ -2593,7 +2593,7 @@ YY_LINENO_REWIND_TO(yy_cp - 1);
 yyg->yy_c_buf_p = yy_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 105 "asn1p_l.l"
+#line 103 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 /* Immediately terminated long comment */
 	YY_BREAK
 case 3:
@@ -2601,25 +2601,25 @@ case 3:
 yyg->yy_c_buf_p = yy_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 106 "asn1p_l.l"
+#line 104 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 yy_push_state(idash_comment, yyscanner);	/* Incorrect, but acceptable */
 	YY_BREAK
 
 case 4:
 YY_RULE_SETUP
-#line 108 "asn1p_l.l"
+#line 106 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 yy_pop_state(yyscanner); /* Acceptable end of comment */
 	YY_BREAK
 
 case 5:
 YY_RULE_SETUP
-#line 111 "asn1p_l.l"
+#line 109 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 asn1p_as_pointer = 1;
 	YY_BREAK
 
 case 6:
 YY_RULE_SETUP
-#line 114 "asn1p_l.l"
+#line 112 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 {
         yy_pop_state(yyscanner);
         return TOK_ExtValue_BIT_STRING;
@@ -2628,52 +2628,52 @@ YY_RULE_SETUP
 
 case 7:
 YY_RULE_SETUP
-#line 120 "asn1p_l.l"
+#line 118 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 yy_push_state(dash_comment, yyscanner);
 	YY_BREAK
 
 case 8:
 /* rule 8 can match eol */
 YY_RULE_SETUP
-#line 123 "asn1p_l.l"
+#line 121 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 yy_pop_state(yyscanner);
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 125 "asn1p_l.l"
+#line 123 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 yy_pop_state(yyscanner);	/* End of comment */
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 126 "asn1p_l.l"
+#line 124 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 /* Eat single dash */
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 127 "asn1p_l.l"
+#line 125 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 /* Eat */
 	YY_BREAK
 
 case 12:
 YY_RULE_SETUP
-#line 130 "asn1p_l.l"
+#line 128 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 yy_push_state(cpp_comment, yyscanner);
 	YY_BREAK
 
 case 13:
 /* rule 13 can match eol */
 YY_RULE_SETUP
-#line 132 "asn1p_l.l"
+#line 130 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 /* Eat */
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 133 "asn1p_l.l"
+#line 131 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 yy_pop_state(yyscanner);
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 134 "asn1p_l.l"
+#line 132 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 /* Eat */
 	YY_BREAK
 
@@ -2686,20 +2686,20 @@ YY_RULE_SETUP
 
 case 16:
 YY_RULE_SETUP
-#line 146 "asn1p_l.l"
+#line 144 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 {
 			yy_push_state(opaque, yyscanner);
-			yylval_param->tv_opaque.buf = strdup(yytext);
+			yylval_param->tv_opaque.buf = asn1p_mem_strdup(yytext);
 			yylval_param->tv_opaque.len = yyleng;
 			return TOK_opaque;
 		}
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 153 "asn1p_l.l"
+#line 151 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 {
 			yy_pop_state(yyscanner);
-			yylval_param->tv_opaque.buf = strdup(yytext);
+			yylval_param->tv_opaque.buf = asn1p_mem_strdup(yytext);
 			yylval_param->tv_opaque.len = yyleng;
 			return TOK_opaque;
 		}
@@ -2707,16 +2707,16 @@ YY_RULE_SETUP
 case 18:
 /* rule 18 can match eol */
 YY_RULE_SETUP
-#line 160 "asn1p_l.l"
+#line 158 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 {
-			yylval_param->tv_opaque.buf = strdup(yytext);
+			yylval_param->tv_opaque.buf = asn1p_mem_strdup(yytext);
 			yylval_param->tv_opaque.len = yyleng;
 			return TOK_opaque;
 		}
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 166 "asn1p_l.l"
+#line 164 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 {
 			fprintf(stderr,
 				"ASN.1 Parser synchronization failure: "
@@ -2728,9 +2728,9 @@ YY_RULE_SETUP
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 175 "asn1p_l.l"
+#line 173 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 {
-			yylval_param->tv_opaque.buf = strdup(yytext);
+			yylval_param->tv_opaque.buf = asn1p_mem_strdup(yytext);
 			yylval_param->tv_opaque.len = yyleng;
 			return TOK_opaque;
 		}
@@ -2739,7 +2739,7 @@ YY_RULE_SETUP
 case 21:
 /* rule 21 can match eol */
 YY_RULE_SETUP
-#line 183 "asn1p_l.l"
+#line 181 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 {
 			yylval_param->tv_opaque.buf = 0;
 			yylval_param->tv_opaque.len = 0;
@@ -2750,18 +2750,18 @@ YY_RULE_SETUP
 
 case 22:
 YY_RULE_SETUP
-#line 191 "asn1p_l.l"
+#line 189 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 { QAPPEND(yytext, yyleng-1); }	/* Add a single quote */
 	YY_BREAK
 case 23:
 /* rule 23 can match eol */
 YY_RULE_SETUP
-#line 192 "asn1p_l.l"
+#line 190 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 { QAPPEND(yytext, yyleng); }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 194 "asn1p_l.l"
+#line 192 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 {
 			yy_pop_state(yyscanner);
 			/* Do not append last quote:
@@ -2782,7 +2782,7 @@ YY_RULE_SETUP
 
 case 25:
 YY_RULE_SETUP
-#line 213 "asn1p_l.l"
+#line 211 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 {
 			const char *s = "ENCODING-CONTROL";
 			const char *p = s + sizeof("ENCODING-CONTROL") - 2;
@@ -2792,54 +2792,54 @@ YY_RULE_SETUP
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 219 "asn1p_l.l"
+#line 217 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 unput('D'); unput('N'); unput('E'); yy_pop_state(yyscanner);
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 220 "asn1p_l.l"
+#line 218 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 221 "asn1p_l.l"
+#line 219 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 222 "asn1p_l.l"
+#line 220 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 /* Eat everything else */
 	YY_BREAK
 case 30:
 /* rule 30 can match eol */
 YY_RULE_SETUP
-#line 223 "asn1p_l.l"
+#line 221 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 
 	YY_BREAK
 
 case 31:
 /* rule 31 can match eol */
 YY_RULE_SETUP
-#line 226 "asn1p_l.l"
+#line 224 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 {
 		/* " \t\r\n" weren't allowed in ASN.1:1990. */
-		yylval_param->tv_str = strdup(yytext);
+		yylval_param->tv_str = asn1p_mem_strdup(yytext);
 		return TOK_hstring;
 	}
 	YY_BREAK
 case 32:
 /* rule 32 can match eol */
 YY_RULE_SETUP
-#line 232 "asn1p_l.l"
+#line 230 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 {
 		/* " \t\r\n" weren't allowed in ASN.1:1990. */
-		yylval_param->tv_str = strdup(yytext);
+		yylval_param->tv_str = asn1p_mem_strdup(yytext);
 		return TOK_bstring;
 	}
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 239 "asn1p_l.l"
+#line 237 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 {
 		yylval_param->a_int = _lex_atoi(yytext, yyscanner);
 		if(errno == ERANGE)
@@ -2849,7 +2849,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 246 "asn1p_l.l"
+#line 244 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 {
 		yylval_param->a_int = _lex_atoi(yytext, yyscanner);
 		if(errno == ERANGE)
@@ -2859,7 +2859,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 253 "asn1p_l.l"
+#line 251 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 {
 		yylval_param->a_int = _lex_atoi(yytext, yyscanner);
 		if(errno == ERANGE)
@@ -2869,7 +2869,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 260 "asn1p_l.l"
+#line 258 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 {
 		yylval_param->a_dbl = _lex_atod(yytext, yyscanner);
 		if(errno == ERANGE)
@@ -2879,17 +2879,17 @@ YY_RULE_SETUP
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 267 "asn1p_l.l"
+#line 265 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_ABSENT;
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 268 "asn1p_l.l"
+#line 266 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_ALL;
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 269 "asn1p_l.l"
+#line 267 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 {
 				/* Appeared in 1990, removed in 1997 */
 				if(TYPE_LIFETIME(1990, 1997))
@@ -2901,17 +2901,17 @@ YY_RULE_SETUP
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 277 "asn1p_l.l"
+#line 275 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_APPLICATION;
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 278 "asn1p_l.l"
+#line 276 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_AUTOMATIC;
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 279 "asn1p_l.l"
+#line 277 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 {
         if(asn1p_lexer_extended_values) {
             yy_push_state(extended_values, yyscanner);
@@ -2921,12 +2921,12 @@ YY_RULE_SETUP
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 285 "asn1p_l.l"
+#line 283 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_BIT;
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 286 "asn1p_l.l"
+#line 284 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 {
 				if(TYPE_LIFETIME(1994, 0))
 					return TOK_BMPString;
@@ -2935,57 +2935,57 @@ YY_RULE_SETUP
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 291 "asn1p_l.l"
+#line 289 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_BOOLEAN;
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 292 "asn1p_l.l"
+#line 290 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_BY;
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 293 "asn1p_l.l"
+#line 291 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_CHARACTER;
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 294 "asn1p_l.l"
+#line 292 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_CHOICE;
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 295 "asn1p_l.l"
+#line 293 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_CLASS;
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 296 "asn1p_l.l"
+#line 294 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_COMPONENT;
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 297 "asn1p_l.l"
+#line 295 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_COMPONENTS;
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 298 "asn1p_l.l"
+#line 296 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_CONSTRAINED;
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 299 "asn1p_l.l"
+#line 297 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_CONTAINING;
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 300 "asn1p_l.l"
+#line 298 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_DEFAULT;
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
-#line 301 "asn1p_l.l"
+#line 299 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 {
 				/* Appeared in 1990, removed in 1997 */
 				if(TYPE_LIFETIME(1990, 1997))
@@ -2998,27 +2998,27 @@ YY_RULE_SETUP
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 310 "asn1p_l.l"
+#line 308 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_DEFINITIONS;
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
-#line 311 "asn1p_l.l"
+#line 309 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_EMBEDDED;
 	YY_BREAK
 case 58:
 YY_RULE_SETUP
-#line 312 "asn1p_l.l"
+#line 310 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_ENCODED;
 	YY_BREAK
 case 59:
 YY_RULE_SETUP
-#line 313 "asn1p_l.l"
+#line 311 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_ENCODING_CONTROL;
 	YY_BREAK
 case 60:
 YY_RULE_SETUP
-#line 314 "asn1p_l.l"
+#line 312 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 {
 		    if(YYSTATE == extended_values) {
                 yy_pop_state(yyscanner);
@@ -3028,267 +3028,267 @@ YY_RULE_SETUP
 	YY_BREAK
 case 61:
 YY_RULE_SETUP
-#line 320 "asn1p_l.l"
+#line 318 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_ENUMERATED;
 	YY_BREAK
 case 62:
 YY_RULE_SETUP
-#line 321 "asn1p_l.l"
+#line 319 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_EXCEPT;
 	YY_BREAK
 case 63:
 YY_RULE_SETUP
-#line 322 "asn1p_l.l"
+#line 320 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_EXPLICIT;
 	YY_BREAK
 case 64:
 YY_RULE_SETUP
-#line 323 "asn1p_l.l"
+#line 321 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_EXPORTS;
 	YY_BREAK
 case 65:
 YY_RULE_SETUP
-#line 324 "asn1p_l.l"
+#line 322 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_EXTENSIBILITY;
 	YY_BREAK
 case 66:
 YY_RULE_SETUP
-#line 325 "asn1p_l.l"
+#line 323 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_EXTERNAL;
 	YY_BREAK
 case 67:
 YY_RULE_SETUP
-#line 326 "asn1p_l.l"
+#line 324 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_FALSE;
 	YY_BREAK
 case 68:
 YY_RULE_SETUP
-#line 327 "asn1p_l.l"
+#line 325 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_FROM;
 	YY_BREAK
 case 69:
 YY_RULE_SETUP
-#line 328 "asn1p_l.l"
+#line 326 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_GeneralizedTime;
 	YY_BREAK
 case 70:
 YY_RULE_SETUP
-#line 329 "asn1p_l.l"
+#line 327 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_GeneralString;
 	YY_BREAK
 case 71:
 YY_RULE_SETUP
-#line 330 "asn1p_l.l"
+#line 328 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_GraphicString;
 	YY_BREAK
 case 72:
 YY_RULE_SETUP
-#line 331 "asn1p_l.l"
+#line 329 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_IA5String;
 	YY_BREAK
 case 73:
 YY_RULE_SETUP
-#line 332 "asn1p_l.l"
+#line 330 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_IDENTIFIER;
 	YY_BREAK
 case 74:
 YY_RULE_SETUP
-#line 333 "asn1p_l.l"
+#line 331 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_IMPLICIT;
 	YY_BREAK
 case 75:
 YY_RULE_SETUP
-#line 334 "asn1p_l.l"
+#line 332 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_IMPLIED;
 	YY_BREAK
 case 76:
 YY_RULE_SETUP
-#line 335 "asn1p_l.l"
+#line 333 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_IMPORTS;
 	YY_BREAK
 case 77:
 YY_RULE_SETUP
-#line 336 "asn1p_l.l"
+#line 334 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_INCLUDES;
 	YY_BREAK
 case 78:
 YY_RULE_SETUP
-#line 337 "asn1p_l.l"
+#line 335 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_INSTANCE;
 	YY_BREAK
 case 79:
 YY_RULE_SETUP
-#line 338 "asn1p_l.l"
+#line 336 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_INSTRUCTIONS;
 	YY_BREAK
 case 80:
 YY_RULE_SETUP
-#line 339 "asn1p_l.l"
+#line 337 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_INTEGER;
 	YY_BREAK
 case 81:
 YY_RULE_SETUP
-#line 340 "asn1p_l.l"
+#line 338 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_INTERSECTION;
 	YY_BREAK
 case 82:
 YY_RULE_SETUP
-#line 341 "asn1p_l.l"
+#line 339 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_ISO646String;
 	YY_BREAK
 case 83:
 YY_RULE_SETUP
-#line 342 "asn1p_l.l"
+#line 340 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_MAX;
 	YY_BREAK
 case 84:
 YY_RULE_SETUP
-#line 343 "asn1p_l.l"
+#line 341 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_MIN;
 	YY_BREAK
 case 85:
 YY_RULE_SETUP
-#line 344 "asn1p_l.l"
+#line 342 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_MINUS_INFINITY;
 	YY_BREAK
 case 86:
 YY_RULE_SETUP
-#line 345 "asn1p_l.l"
+#line 343 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_NULL;
 	YY_BREAK
 case 87:
 YY_RULE_SETUP
-#line 346 "asn1p_l.l"
+#line 344 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_NumericString;
 	YY_BREAK
 case 88:
 YY_RULE_SETUP
-#line 347 "asn1p_l.l"
+#line 345 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_OBJECT;
 	YY_BREAK
 case 89:
 YY_RULE_SETUP
-#line 348 "asn1p_l.l"
+#line 346 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_ObjectDescriptor;
 	YY_BREAK
 case 90:
 YY_RULE_SETUP
-#line 349 "asn1p_l.l"
+#line 347 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_OCTET;
 	YY_BREAK
 case 91:
 YY_RULE_SETUP
-#line 350 "asn1p_l.l"
+#line 348 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_OF;
 	YY_BREAK
 case 92:
 YY_RULE_SETUP
-#line 351 "asn1p_l.l"
+#line 349 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_OPTIONAL;
 	YY_BREAK
 case 93:
 YY_RULE_SETUP
-#line 352 "asn1p_l.l"
+#line 350 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_PATTERN;
 	YY_BREAK
 case 94:
 YY_RULE_SETUP
-#line 353 "asn1p_l.l"
+#line 351 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_PDV;
 	YY_BREAK
 case 95:
 YY_RULE_SETUP
-#line 354 "asn1p_l.l"
+#line 352 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_PLUS_INFINITY;
 	YY_BREAK
 case 96:
 YY_RULE_SETUP
-#line 355 "asn1p_l.l"
+#line 353 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_PRESENT;
 	YY_BREAK
 case 97:
 YY_RULE_SETUP
-#line 356 "asn1p_l.l"
+#line 354 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_PrintableString;
 	YY_BREAK
 case 98:
 YY_RULE_SETUP
-#line 357 "asn1p_l.l"
+#line 355 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_PRIVATE;
 	YY_BREAK
 case 99:
 YY_RULE_SETUP
-#line 358 "asn1p_l.l"
+#line 356 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_REAL;
 	YY_BREAK
 case 100:
 YY_RULE_SETUP
-#line 359 "asn1p_l.l"
+#line 357 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_RELATIVE_OID;
 	YY_BREAK
 case 101:
 YY_RULE_SETUP
-#line 360 "asn1p_l.l"
+#line 358 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_SEQUENCE;
 	YY_BREAK
 case 102:
 YY_RULE_SETUP
-#line 361 "asn1p_l.l"
+#line 359 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_SET;
 	YY_BREAK
 case 103:
 YY_RULE_SETUP
-#line 362 "asn1p_l.l"
+#line 360 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_SIZE;
 	YY_BREAK
 case 104:
 YY_RULE_SETUP
-#line 363 "asn1p_l.l"
+#line 361 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_STRING;
 	YY_BREAK
 case 105:
 YY_RULE_SETUP
-#line 364 "asn1p_l.l"
+#line 362 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_SYNTAX;
 	YY_BREAK
 case 106:
 YY_RULE_SETUP
-#line 365 "asn1p_l.l"
+#line 363 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_T61String;
 	YY_BREAK
 case 107:
 YY_RULE_SETUP
-#line 366 "asn1p_l.l"
+#line 364 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_TAGS;
 	YY_BREAK
 case 108:
 YY_RULE_SETUP
-#line 367 "asn1p_l.l"
+#line 365 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_TeletexString;
 	YY_BREAK
 case 109:
 YY_RULE_SETUP
-#line 368 "asn1p_l.l"
+#line 366 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_TRUE;
 	YY_BREAK
 case 110:
 YY_RULE_SETUP
-#line 369 "asn1p_l.l"
+#line 367 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_UNION;
 	YY_BREAK
 case 111:
 YY_RULE_SETUP
-#line 370 "asn1p_l.l"
+#line 368 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_UNIQUE;
 	YY_BREAK
 case 112:
 YY_RULE_SETUP
-#line 371 "asn1p_l.l"
+#line 369 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_UNIVERSAL;
 	YY_BREAK
 case 113:
 YY_RULE_SETUP
-#line 372 "asn1p_l.l"
+#line 370 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 {
 				if(TYPE_LIFETIME(1994, 0))
 					return TOK_UniversalString;
@@ -3297,12 +3297,12 @@ YY_RULE_SETUP
 	YY_BREAK
 case 114:
 YY_RULE_SETUP
-#line 377 "asn1p_l.l"
+#line 375 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_UTCTime;
 	YY_BREAK
 case 115:
 YY_RULE_SETUP
-#line 378 "asn1p_l.l"
+#line 376 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 {
 				if(TYPE_LIFETIME(1994, 0))
 					return TOK_UTF8String;
@@ -3311,40 +3311,40 @@ YY_RULE_SETUP
 	YY_BREAK
 case 116:
 YY_RULE_SETUP
-#line 383 "asn1p_l.l"
+#line 381 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_VideotexString;
 	YY_BREAK
 case 117:
 YY_RULE_SETUP
-#line 384 "asn1p_l.l"
+#line 382 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_VisibleString;
 	YY_BREAK
 case 118:
 YY_RULE_SETUP
-#line 385 "asn1p_l.l"
+#line 383 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_WITH;
 	YY_BREAK
 case 119:
 YY_RULE_SETUP
-#line 388 "asn1p_l.l"
+#line 386 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 {
-		yylval_param->tv_str = strdup(yytext);
+		yylval_param->tv_str = asn1p_mem_strdup(yytext);
 		return TOK_typefieldreference;
 	}
 	YY_BREAK
 case 120:
 YY_RULE_SETUP
-#line 393 "asn1p_l.l"
+#line 391 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 {
-		yylval_param->tv_str = strdup(yytext);
+		yylval_param->tv_str = asn1p_mem_strdup(yytext);
 		return TOK_valuefieldreference;
 	}
 	YY_BREAK
 case 121:
 YY_RULE_SETUP
-#line 399 "asn1p_l.l"
+#line 397 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 {
-		yylval_param->tv_str = strdup(yytext);
+		yylval_param->tv_str = asn1p_mem_strdup(yytext);
 		return TOK_identifier;
 	}
 	YY_BREAK
@@ -3353,9 +3353,9 @@ YY_RULE_SETUP
 	 */
 case 122:
 YY_RULE_SETUP
-#line 407 "asn1p_l.l"
+#line 405 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 {
-		yylval_param->tv_str = strdup(yytext);
+		yylval_param->tv_str = asn1p_mem_strdup(yytext);
 		return TOK_capitalreference;
 	}
 	YY_BREAK
@@ -3366,80 +3366,80 @@ YY_RULE_SETUP
 	 */
 case 123:
 YY_RULE_SETUP
-#line 417 "asn1p_l.l"
+#line 415 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 {
-		yylval_param->tv_str = strdup(yytext);
+		yylval_param->tv_str = asn1p_mem_strdup(yytext);
 		return TOK_typereference;
 	}
 	YY_BREAK
 case 124:
 YY_RULE_SETUP
-#line 422 "asn1p_l.l"
+#line 420 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_PPEQ;
 	YY_BREAK
 case 125:
 YY_RULE_SETUP
-#line 424 "asn1p_l.l"
+#line 422 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_ThreeDots;
 	YY_BREAK
 case 126:
 YY_RULE_SETUP
-#line 425 "asn1p_l.l"
+#line 423 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_TwoDots;
 	YY_BREAK
 
 case 127:
 YY_RULE_SETUP
-#line 429 "asn1p_l.l"
+#line 427 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 {
-				yylval_param->tv_str = strdup(yytext);
+				yylval_param->tv_str = asn1p_mem_strdup(yytext);
 				return TOK_Literal;
 			}
 	YY_BREAK
 case 128:
 YY_RULE_SETUP
-#line 434 "asn1p_l.l"
+#line 432 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 {
-				yylval_param->tv_str = strdup(yytext);
+				yylval_param->tv_str = asn1p_mem_strdup(yytext);
 				return TOK_Literal;
 			}
 	YY_BREAK
 case 129:
 YY_RULE_SETUP
-#line 439 "asn1p_l.l"
+#line 437 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 {
 				yy_push_state(with_syntax, yyscanner);
-				yylval_param->tv_str = strdup(yytext);
+				yylval_param->tv_str = asn1p_mem_strdup(yytext);
 				return TOK_Literal;
 			}
 	YY_BREAK
 case 130:
 YY_RULE_SETUP
-#line 445 "asn1p_l.l"
+#line 443 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return '[';
 	YY_BREAK
 case 131:
 YY_RULE_SETUP
-#line 446 "asn1p_l.l"
+#line 444 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return ']';
 	YY_BREAK
 case 132:
 /* rule 132 can match eol */
 YY_RULE_SETUP
-#line 448 "asn1p_l.l"
+#line 446 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 {
-			yylval_param->tv_opaque.buf = strdup(yytext);
+			yylval_param->tv_opaque.buf = asn1p_mem_strdup(yytext);
 			yylval_param->tv_opaque.len = yyleng;
 			return TOK_whitespace;
 			}
 	YY_BREAK
 case 133:
 YY_RULE_SETUP
-#line 454 "asn1p_l.l"
+#line 452 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 {
 				yy_pop_state(yyscanner);
 				if(YYSTATE == with_syntax) {
-					yylval_param->tv_str = strdup(yytext);
+					yylval_param->tv_str = asn1p_mem_strdup(yytext);
 					return TOK_Literal;
 				} else {
 					return '}';
@@ -3450,13 +3450,13 @@ YY_RULE_SETUP
 case 134:
 /* rule 134 can match eol */
 YY_RULE_SETUP
-#line 467 "asn1p_l.l"
+#line 465 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 /* Ignore whitespace */
 	YY_BREAK
 case 135:
 /* rule 135 can match eol */
 YY_RULE_SETUP
-#line 470 "asn1p_l.l"
+#line 468 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 {
 		asn1c_integer_t v1 = -1, v2 = -1;
 		char *p;
@@ -3485,7 +3485,7 @@ YY_RULE_SETUP
 case 136:
 /* rule 136 can match eol */
 YY_RULE_SETUP
-#line 495 "asn1p_l.l"
+#line 493 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 {
 		asn1c_integer_t v1 = -1, v2 = -1, v3 = -1, v4 = -1;
 		char *p;
@@ -3531,23 +3531,23 @@ YY_RULE_SETUP
 	YY_BREAK
 case 137:
 YY_RULE_SETUP
-#line 539 "asn1p_l.l"
+#line 537 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_VBracketLeft;
 	YY_BREAK
 case 138:
 YY_RULE_SETUP
-#line 540 "asn1p_l.l"
+#line 538 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return TOK_VBracketRight;
 	YY_BREAK
 case 139:
 YY_RULE_SETUP
-#line 542 "asn1p_l.l"
+#line 540 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 return yytext[0];
 	YY_BREAK
 case 140:
 /* rule 140 can match eol */
 YY_RULE_SETUP
-#line 544 "asn1p_l.l"
+#line 542 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 {
 		if(TYPE_LIFETIME(1994, 0))
 			fprintf(stderr, "ERROR: ");
@@ -3561,7 +3561,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 141:
 YY_RULE_SETUP
-#line 555 "asn1p_l.l"
+#line 553 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 {
 		fprintf(stderr,
 			"Unexpected token at line %d: \"%s\"\n",
@@ -3584,7 +3584,7 @@ case YY_STATE_EOF(opaque):
 case YY_STATE_EOF(encoding_control):
 case YY_STATE_EOF(with_syntax):
 case YY_STATE_EOF(extended_values):
-#line 568 "asn1p_l.l"
+#line 566 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 {
 		while(YYSTATE != INITIAL)
 			yy_pop_state(yyscanner);
@@ -3593,7 +3593,7 @@ case YY_STATE_EOF(extended_values):
 	YY_BREAK
 case 142:
 YY_RULE_SETUP
-#line 575 "asn1p_l.l"
+#line 573 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 ECHO;
 	YY_BREAK
 #line 3600 "asn1p_l.c"
@@ -4800,7 +4800,7 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 575 "asn1p_l.l"
+#line 573 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 
 
 /*

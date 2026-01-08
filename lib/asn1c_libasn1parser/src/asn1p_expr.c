@@ -96,7 +96,7 @@ asn1p_expr_t *
 asn1p_expr_new(int _lineno, asn1p_module_t *mod) {
 	asn1p_expr_t *expr;
 
-	expr = calloc(1, sizeof *expr);
+	expr = asn1p_mem_calloc(1, sizeof *expr);
 	if(expr) {
 		TQ_INIT(&(expr->members));
 		expr->spec_index = -1;
@@ -198,7 +198,7 @@ asn1p_expr_clone_impl(asn1p_expr_t *expr, int skip_extensions, asn1p_expr_t *(*r
 	/*
 	 * Clone complex fields.
 	 */
-	CLCLONE(Identifier, strdup);
+	CLCLONE(Identifier, asn1p_mem_strdup);
 	CLCLONE(reference, asn1p_ref_clone);
 	CLVRCLONE(constraints, asn1p_constraint_clone_with_resolver);
 	CLVRCLONE(combined_constraints, asn1p_constraint_clone_with_resolver);
@@ -351,7 +351,7 @@ asn1p_expr_free(asn1p_expr_t *expr) {
 			asn1p_expr_free(tm);
 		}
 
-		free(expr->Identifier);
+		asn1p_mem_free(expr->Identifier);
 		asn1p_ref_free(expr->reference);
 		asn1p_constraint_free(expr->constraints);
 		asn1p_constraint_free(expr->combined_constraints);
@@ -366,7 +366,7 @@ asn1p_expr_free(asn1p_expr_t *expr) {
 				asn1p_expr_free(expr->specializations.pspec[pspec].rhs_pspecs);
 				asn1p_expr_free(expr->specializations.pspec[pspec].my_clone);
 			}
-			free(expr->specializations.pspec);
+			asn1p_mem_free(expr->specializations.pspec);
 		}
 		asn1p_ioc_table_free(expr->ioc_table);
 
@@ -374,7 +374,7 @@ asn1p_expr_free(asn1p_expr_t *expr) {
 			expr->data_free(expr->data);
 
 		memset(expr, 0, sizeof(*expr));
-		free(expr);
+		asn1p_mem_free(expr);
 	}
 }
 

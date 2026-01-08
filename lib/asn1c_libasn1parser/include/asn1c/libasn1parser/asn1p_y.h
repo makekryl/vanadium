@@ -53,27 +53,16 @@
 extern int asn1p_debug;
 #endif
 /* "%code requires" blocks.  */
-#line 8 "asn1p_y.y"
+#line 10 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
 
 typedef void *yyscan_t;
-#line 12 "asn1p_y.y"
+#line 14 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
 
 typedef struct {
-  int line;
-  int column;
-  char *msg;
-} asn1p_yerr_t;
-
-typedef struct {
-  asn1p_yerr_t *errors;
-  size_t errors_size;
-  size_t errors_capacity;
+  asn1p_errs_t *errors;
 } asn1p_yctx_t;
 
-void asn1p_yctx_init(asn1p_yctx_t *ctx);
-void asn1p_yctx_free(asn1p_yctx_t *ctx);
-
-#line 77 "../include/asn1c/libasn1parser/asn1p_y.h"
+#line 66 "../include/asn1c/libasn1parser/asn1p_y.h"
 
 /* Token kinds.  */
 #ifndef ASN1P_TOKENTYPE
@@ -199,7 +188,7 @@ void asn1p_yctx_free(asn1p_yctx_t *ctx);
 #if ! defined ASN1P_STYPE && ! defined ASN1P_STYPE_IS_DECLARED
 union ASN1P_STYPE
 {
-#line 136 "asn1p_y.y"
+#line 141 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
 
 	asn1p_t			*a_grammar;
 	asn1p_module_flags_e	 a_module_flags;
@@ -234,7 +223,7 @@ union ASN1P_STYPE
 		struct asn1p_type_tag_s tag;
 	} tv_nametag;
 
-#line 238 "../include/asn1c/libasn1parser/asn1p_y.h"
+#line 227 "../include/asn1c/libasn1parser/asn1p_y.h"
 
 };
 typedef union ASN1P_STYPE ASN1P_STYPE;
@@ -245,7 +234,7 @@ typedef union ASN1P_STYPE ASN1P_STYPE;
 
 
 
-int asn1p_parse (asn1p_yctx_t *ctx, yyscan_t yyscanner);
+int asn1p_parse (asn1p_yctx_t *ctx, void **param, yyscan_t yyscanner);
 
 
 #endif /* !YY_ASN1P_INCLUDE_ASN1C_LIBASN1PARSER_ASN1P_Y_H_INCLUDED  */

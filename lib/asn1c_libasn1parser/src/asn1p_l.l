@@ -1,8 +1,11 @@
 %option reentrant
 %option prefix="asn1p_"
 %option noyywrap
+%option stack
 %option yylineno
 %option bison-bridge
+%option	never-interactive
+%option	noinput
 
 %{
 
@@ -11,6 +14,7 @@
 #include <assert.h>
 
 #include "asn1parser.h"
+#include "asn1p_alloc.h"
 
 #define YYSTYPE ASN1P_STYPE
 #include "asn1p_y.h"
@@ -62,25 +66,19 @@ static double          _lex_atod(const char *ptr, yyscan_t);
 		int prev_len = yylval_param->tv_opaque.len;	\
 		char *p;					\
 								\
-		p = malloc((tlen) + prev_len + 1);		\
+		p = asn1p_mem_alloc((tlen) + prev_len + 1);		\
 		if(p == NULL) return -1;			\
 								\
 		if(prev_text) memcpy(p, prev_text, prev_len);	\
 		memcpy(p + prev_len, text, tlen);		\
 		p[prev_len + (tlen)] = '\0';			\
 								\
-		free(yylval_param->tv_opaque.buf);			\
+		asn1p_mem_free(yylval_param->tv_opaque.buf);			\
 		yylval_param->tv_opaque.buf = p;			\
 		yylval_param->tv_opaque.len = (tlen) + prev_len;	\
 	} while(0)
 
 %}
-
-%option	never-interactive
-%option	noinput
-%option	noyywrap stack
-/* Performance penalty is OK */
-%option yylineno
 
 %pointer
 
@@ -145,20 +143,20 @@ WSP	[\t\r\v\f\n ]
 
 	"{"	{
 			yy_push_state(opaque, yyscanner);
-			yylval_param->tv_opaque.buf = strdup(yytext);
+			yylval_param->tv_opaque.buf = asn1p_mem_strdup(yytext);
 			yylval_param->tv_opaque.len = yyleng;
 			return TOK_opaque;
 		}
 
 	"}"	{
 			yy_pop_state(yyscanner);
-			yylval_param->tv_opaque.buf = strdup(yytext);
+			yylval_param->tv_opaque.buf = asn1p_mem_strdup(yytext);
 			yylval_param->tv_opaque.len = yyleng;
 			return TOK_opaque;
 		}
 
 	[^{}:=]+	{
-			yylval_param->tv_opaque.buf = strdup(yytext);
+			yylval_param->tv_opaque.buf = asn1p_mem_strdup(yytext);
 			yylval_param->tv_opaque.len = yyleng;
 			return TOK_opaque;
 		}
@@ -173,7 +171,7 @@ WSP	[\t\r\v\f\n ]
 		}
 
 	[:=]	{
-			yylval_param->tv_opaque.buf = strdup(yytext);
+			yylval_param->tv_opaque.buf = asn1p_mem_strdup(yytext);
 			yylval_param->tv_opaque.len = yyleng;
 			return TOK_opaque;
 		}
@@ -225,13 +223,13 @@ WSP	[\t\r\v\f\n ]
 
 '[0-9A-F \t\r\v\f\n]+'H {
 		/* " \t\r\n" weren't allowed in ASN.1:1990. */
-		yylval_param->tv_str = strdup(yytext);
+		yylval_param->tv_str = asn1p_mem_strdup(yytext);
 		return TOK_hstring;
 	}
 
 '[01 \t\r\v\f\n]+'B	{
 		/* " \t\r\n" weren't allowed in ASN.1:1990. */
-		yylval_param->tv_str = strdup(yytext);
+		yylval_param->tv_str = asn1p_mem_strdup(yytext);
 		return TOK_bstring;
 	}
 
@@ -386,18 +384,18 @@ WITH			return TOK_WITH;
 
 
 <INITIAL,with_syntax>&[A-Z][A-Za-z0-9]*([-][A-Za-z0-9]+)*	{
-		yylval_param->tv_str = strdup(yytext);
+		yylval_param->tv_str = asn1p_mem_strdup(yytext);
 		return TOK_typefieldreference;
 	}
 
 <INITIAL,with_syntax>&[a-z][a-zA-Z0-9]*([-][a-zA-Z0-9]+)*	{
-		yylval_param->tv_str = strdup(yytext);
+		yylval_param->tv_str = asn1p_mem_strdup(yytext);
 		return TOK_valuefieldreference;
 	}
 
 
 [a-z][a-zA-Z0-9]*([-][a-zA-Z0-9]+)*	{
-		yylval_param->tv_str = strdup(yytext);
+		yylval_param->tv_str = asn1p_mem_strdup(yytext);
 		return TOK_identifier;
 	}
 
@@ -405,7 +403,7 @@ WITH			return TOK_WITH;
 	 * objectclassreference
 	 */
 <INITIAL,extended_values>[A-Z][A-Z0-9]*([-][A-Z0-9]+)*	{
-		yylval_param->tv_str = strdup(yytext);
+		yylval_param->tv_str = asn1p_mem_strdup(yytext);
 		return TOK_capitalreference;
 	}
 
@@ -415,7 +413,7 @@ WITH			return TOK_WITH;
 	 * with this token to produce true typereference.
 	 */
 [A-Z][A-Za-z0-9]*([-][A-Za-z0-9]+)*	{
-		yylval_param->tv_str = strdup(yytext);
+		yylval_param->tv_str = asn1p_mem_strdup(yytext);
 		return TOK_typereference;
 	}
 
@@ -427,18 +425,18 @@ WITH			return TOK_WITH;
 <with_syntax>{
 
 	[A-Z][A-Za-z0-9]*([-][A-Za-z0-9]+)*	{
-				yylval_param->tv_str = strdup(yytext);
+				yylval_param->tv_str = asn1p_mem_strdup(yytext);
 				return TOK_Literal;
 			}
 
 	","		{
-				yylval_param->tv_str = strdup(yytext);
+				yylval_param->tv_str = asn1p_mem_strdup(yytext);
 				return TOK_Literal;
 			}
 
 	"{"		{
 				yy_push_state(with_syntax, yyscanner);
-				yylval_param->tv_str = strdup(yytext);
+				yylval_param->tv_str = asn1p_mem_strdup(yytext);
 				return TOK_Literal;
 			}
 
@@ -446,7 +444,7 @@ WITH			return TOK_WITH;
 	"]"		return ']';
 
 	{WSP}+		{
-			yylval_param->tv_opaque.buf = strdup(yytext);
+			yylval_param->tv_opaque.buf = asn1p_mem_strdup(yytext);
 			yylval_param->tv_opaque.len = yyleng;
 			return TOK_whitespace;
 			}
@@ -454,7 +452,7 @@ WITH			return TOK_WITH;
 	"}"		{
 				yy_pop_state(yyscanner);
 				if(YYSTATE == with_syntax) {
-					yylval_param->tv_str = strdup(yytext);
+					yylval_param->tv_str = asn1p_mem_strdup(yytext);
 					return TOK_Literal;
 				} else {
 					return '}';

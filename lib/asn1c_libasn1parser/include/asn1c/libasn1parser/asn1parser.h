@@ -11,9 +11,8 @@
 #endif	/* HAVE_CONFIG_H */
 
 #include "asn1c/libasn1common/asn1_ref.h"
-#include "asn1c/libasn1common/asn1_buffer.h"
-#include "asn1c/libasn1common/asn1_namespace.h"
 
+#include "asn1p_alloc.h"
 #include "asn1p_integer.h"
 #include "asn1p_list.h"
 #include "asn1p_oid.h"		/* Object identifiers (OIDs) */
@@ -25,30 +24,24 @@
 #include "asn1p_class.h"	/* CLASS-related stuff */
 #include "asn1p_expr.h"		/* A single ASN.1 expression */
 
-/*
- * Parser flags.
- */
-enum asn1p_flags {
-    A1P_NOFLAGS,
-    /*
-     * Enable verbose debugging output from lexer and parser.
-     */
-    A1P_DEBUG_LEXER = 0x01,
-    A1P_DEBUG_PARSER = 0x02,
-    /*
-     * Unlock internal helper value types.
-     */
-    A1P_EXTENDED_VALUES = 0x04
-};
+typedef struct {
+  int pos;
+  char *msg;
+} asn1p_err_t;
+
+typedef struct {
+  asn1p_err_t *data;
+  size_t size;
+  size_t capacity;
+} asn1p_errs_t;
+
+int  asn1p_errs_init(asn1p_errs_t *);
+void asn1p_errs_free(asn1p_errs_t *);
 
 /*
  * Perform low-level parsing of ASN.1 module[s]
  * and return a list of module trees.
  */
-asn1p_t	*asn1p_parse_buffer(const char *buffer, int size /* = -1 */,
-	const char *debug_filename, int initial_lineno,
-	enum asn1p_flags);
-
-int asn1p_lex_destroy();
+asn1p_t	*asn1p_parse_buffer(const char *buffer, int size, asn1p_errs_t *errs);
 
 #endif	/* ASN1PARSER_H */

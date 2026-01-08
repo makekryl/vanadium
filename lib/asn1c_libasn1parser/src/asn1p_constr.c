@@ -34,7 +34,7 @@ asn1p_constraint_t *
 asn1p_constraint_new(int _lineno, asn1p_module_t *mod) {
 	asn1p_constraint_t *ct;
 
-	ct = calloc(1, sizeof(*ct));
+	ct = asn1p_mem_calloc(1, sizeof(*ct));
 	if(ct) {
 		ct->_lineno = _lineno;
 		ct->module = mod;
@@ -42,7 +42,6 @@ asn1p_constraint_new(int _lineno, asn1p_module_t *mod) {
 
 	return ct;
 }
-
 
 void
 asn1p_constraint_free(asn1p_constraint_t *ct) {
@@ -58,10 +57,10 @@ asn1p_constraint_free(asn1p_constraint_t *ct) {
 				asn1p_constraint_free(
 					ct->elements[ct->el_count]);
 			}
-			free(ct->elements);
+			asn1p_mem_free(ct->elements);
 		}
 
-		free(ct);
+		asn1p_mem_free(ct);
 	}
 }
 
@@ -122,7 +121,9 @@ asn1p_constraint_make_memory(asn1p_constraint_t *ct) {
 	if(ct->el_count == ct->el_size) {
 		unsigned int newsize = ct->el_size ? ct->el_size << 2 : 4;
 		void *p;
-		p = realloc(ct->elements, newsize * sizeof(ct->elements[0]));
+		p = asn1p_mem_realloc(ct->elements,
+      ct->el_size * sizeof(ct->elements[0]),
+      newsize * sizeof(ct->elements[0]));
 		if(p) {
 			ct->elements = p;
 			ct->el_size = newsize;

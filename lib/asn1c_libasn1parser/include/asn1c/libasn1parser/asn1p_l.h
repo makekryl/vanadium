@@ -720,7 +720,7 @@ extern int yylex \
 #undef yyTABLES_NAME
 #endif
 
-#line 575 "asn1p_l.l"
+#line 573 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_l.l"
 
 
 #line 727 "../include/asn1c/libasn1parser/asn1p_l.h"

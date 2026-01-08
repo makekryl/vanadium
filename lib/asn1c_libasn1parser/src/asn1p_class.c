@@ -9,7 +9,7 @@
 
 asn1p_ioc_table_t *
 asn1p_ioc_table_new() {
-    asn1p_ioc_table_t *it = calloc(1, sizeof(*it));
+    asn1p_ioc_table_t *it = asn1p_mem_calloc(1, sizeof(*it));
     assert(it);
     return it;
 }
@@ -19,7 +19,9 @@ asn1p_ioc_table_add(asn1p_ioc_table_t *it, asn1p_ioc_row_t *row) {
     assert(it);
 
     asn1p_ioc_row_t **new_rows =
-        realloc(it->row, (it->rows + 1) * sizeof(it->row[0]));
+        asn1p_mem_realloc(it->row,
+          (it->rows) * sizeof(it->row[0]),
+          (it->rows + 1) * sizeof(it->row[0]));
     assert(new_rows);
     it->row = new_rows;
     it->row[it->rows++] = row;
@@ -43,8 +45,8 @@ asn1p_ioc_table_free(asn1p_ioc_table_t *it) {
         for(size_t i = 0; i < it->rows; i++) {
             asn1p_ioc_row_delete(it->row[i]);
         }
-        free(it->row);
-        free(it);
+        asn1p_mem_free(it->row);
+        asn1p_mem_free(it);
     }
 }
 
@@ -82,15 +84,15 @@ asn1p_ioc_row_new(asn1p_expr_t *oclass) {
 
 	assert(oclass->expr_type == A1TC_CLASSDEF);
 
-	row = calloc(1, sizeof *row);
+	row = asn1p_mem_calloc(1, sizeof *row);
 	if(!row) return NULL;
 
 	TQ_FOR(field, &oclass->members, next)
 		columns++;
 
-	row->column = calloc(columns, sizeof *row->column);
+	row->column = asn1p_mem_calloc(columns, sizeof *row->column);
 	if(!row->column) {
-		free(row);
+		asn1p_mem_free(row);
 		return NULL;
 	}
 	row->columns = columns;
@@ -109,12 +111,12 @@ asn1p_ioc_row_t *
 asn1p_ioc_row_clone(asn1p_ioc_row_t *src, int base_idx) {
 	asn1p_ioc_row_t *row;
 
-	row = calloc(1, sizeof *row);
+	row = asn1p_mem_calloc(1, sizeof *row);
 	if(!row) return NULL;
 
-	row->column = calloc(src->columns, sizeof *src->column);
+	row->column = asn1p_mem_calloc(src->columns, sizeof *src->column);
 	if(!row->column) {
-		free(row);
+		asn1p_mem_free(row);
 		return NULL;
 	}
 	row->columns = src->columns;
@@ -147,9 +149,9 @@ asn1p_ioc_row_delete(asn1p_ioc_row_t *row) {
 				}
 				asn1p_expr_free(row->column[i].value);
 			}
-			free(row->column);
+			asn1p_mem_free(row->column);
 		}
-		free(row);
+		asn1p_mem_free(row);
 	}
 }
 
@@ -197,7 +199,7 @@ asn1p_wsyntx_chunk_t *
 asn1p_wsyntx_chunk_new() {
 	asn1p_wsyntx_chunk_t *wc;
 
-	wc = calloc(1, sizeof(*wc));
+	wc = asn1p_mem_calloc(1, sizeof(*wc));
 
 	return wc;
 }
@@ -209,12 +211,12 @@ asn1p_wsyntx_chunk_free(asn1p_wsyntx_chunk_t *wc) {
 		case WC_LITERAL:
 		case WC_WHITESPACE:
 		case WC_FIELD:
-			free(wc->content.token); break;
+			asn1p_mem_free(wc->content.token); break;
 		case WC_OPTIONALGROUP:
 			asn1p_wsyntx_free(wc->content.syntax);
 			break;
 		}
-		free(wc);
+		asn1p_mem_free(wc);
 	}
 }
 
@@ -229,7 +231,7 @@ asn1p_wsyntx_chunk_clone(asn1p_wsyntx_chunk_t *wc) {
 		case WC_LITERAL:
 		case WC_WHITESPACE:
 		case WC_FIELD:
-			nc->content.token = malloc(strlen(wc->content.token)+1);
+			nc->content.token = asn1p_mem_alloc(strlen(wc->content.token)+1);
 			strcpy(nc->content.token, wc->content.token);
 			break;
 		case WC_OPTIONALGROUP:
@@ -245,7 +247,7 @@ asn1p_wsyntx_t *
 asn1p_wsyntx_new() {
 	asn1p_wsyntx_t *wx;
 
-	wx = calloc(1, sizeof(*wx));
+	wx = asn1p_mem_calloc(1, sizeof(*wx));
 	if(wx) {
 		TQ_INIT(&(wx->chunks));
 	}
@@ -259,7 +261,7 @@ asn1p_wsyntx_free(asn1p_wsyntx_t *wx) {
 		asn1p_wsyntx_chunk_t *wc;
 		while((wc = TQ_REMOVE(&(wx->chunks), next)))
 			asn1p_wsyntx_chunk_free(wc);
-		free(wx);
+		asn1p_mem_free(wx);
 	}
 }
 

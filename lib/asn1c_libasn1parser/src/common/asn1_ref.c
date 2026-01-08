@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <assert.h>
 
+#include "asn1p_alloc.h"
 #include "asn1_ref.h"
 
 /*
@@ -13,7 +14,7 @@ asn1p_ref_t *
 asn1p_ref_new(int _lineno, struct asn1p_module_s *mod) {
 	asn1p_ref_t *ref;
 
-    ref = calloc(1, sizeof *ref);
+    ref = asn1p_mem_calloc(1, sizeof *ref);
     assert(ref);
     asn1p_ref_set_source(ref, mod, _lineno);
 
@@ -26,14 +27,14 @@ asn1p_ref_free(asn1p_ref_t *ref) {
 		if(ref->components) {
 			size_t i = ref->comp_count;
 			while(i--) {
-				free(ref->components[i].name);
+				asn1p_mem_free(ref->components[i].name);
 				ref->components[i].name = 0;
 			}
-			free(ref->components);
+			asn1p_mem_free(ref->components);
 			ref->components = 0;
 		}
 
-		free(ref);
+		asn1p_mem_free(ref);
 	}
 }
 
@@ -95,7 +96,8 @@ asn1p_ref_add_component(asn1p_ref_t *ref, const char *name, enum asn1p_ref_lex_t
 
 	if(ref->comp_count == ref->comp_size) {
 		int newsize = ref->comp_size?(ref->comp_size<<2):4;
-		void *p = realloc(ref->components,
+		void *p = asn1p_mem_realloc(ref->components,
+      ref->comp_size * sizeof(ref->components[0]),
 			newsize * sizeof(ref->components[0]));
 		if(p) {
 			ref->components = p;
@@ -112,7 +114,7 @@ asn1p_ref_add_component(asn1p_ref_t *ref, const char *name, enum asn1p_ref_lex_t
 		assert(lex_type == asn1p_ref_name2lextype(name));
 	}
 
-	ref->components[ref->comp_count].name = strdup(name);
+	ref->components[ref->comp_count].name = asn1p_mem_strdup(name);
 	ref->components[ref->comp_count].lex_type = lex_type;
 	if(ref->components[ref->comp_count].name) {
 		ref->comp_count++;
@@ -175,11 +177,11 @@ asn1p_ref_string(const asn1p_ref_t *ref) {
             snprintf(p, space, "%s%s", i ? "." : "", ref->components[i].name);
         if(ret < 0 || (size_t)ret >= space) {
             i--;
-            char *tmp = malloc(buf_size * 2 + 1);
+            char *tmp = asn1p_mem_alloc(buf_size * 2 + 1);
             assert(tmp);
             size_t p_offset = p - buf;
             memcpy(tmp, buf, (p - buf));
-            if(buf != static_buf) free(buf);
+            if(buf != static_buf) asn1p_mem_free(buf);
             buf_size *= 2;
             buf = tmp;
             p = tmp + p_offset;

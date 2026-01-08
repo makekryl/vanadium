@@ -1,10 +1,9 @@
 add_library(asn1c_libasn1parser STATIC
-  src/common/asn1_buffer.c
-  src/common/asn1_namespace.c
   src/common/asn1_ref.c
   src/common/genhash.c
 
   src/asn1parser.c
+  src/asn1p_alloc.c
   src/asn1p_y.c
   src/asn1p_l.c
   src/asn1p_module.c

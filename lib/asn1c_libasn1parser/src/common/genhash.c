@@ -39,15 +39,15 @@
  * genhash_t structure is reused to contain the pointers to the actual
  * hash buckets and LRU (Least Recently Used) list's head and tail.
  * Elements which were held inside genhash_t will be moved to the hash buckets.
- * 
+ *
  * Said above effectively means two modes of operation: TINY and NORMAL.
  * They can be distinguished by examining the h->numbuckets value, which
  * is 0 for TINY and greater for NORMAL mode.
- * 
+ *
  * In the TINY mode we use a lower part of the genhash_t structure
  * (lower 32 bytes from 64 bytes of genhash_t) to hold up to IH_VALUE (4)
  * key/value pairs.
- * 
+ *
  * In the NORMAL mode we use the lower part of the genhash_t structure
  * to hold a set of pointers, including a pointer to the hash buckets.
  * We agressively expand hash buckets size when adding new elements
@@ -61,6 +61,8 @@
 #include <stddef.h>
 #include <errno.h>
 #include "genhash.h"
+
+#include "asn1p_alloc.h"
 
 /* 1M entries, 4M RAM */
 #define	DEFAULT_MAXIMUM_HASH_BUCKETS_NUMBER	(1024 * 1024)
@@ -129,14 +131,14 @@ genhash_new(
 ) {
 	genhash_t *h;
 
-	h = (genhash_t *)malloc(sizeof(genhash_t));
+	h = (genhash_t *)asn1p_mem_alloc(sizeof(genhash_t));
 	if (!h)
 		return NULL;
 
 	memset(h, 0, sizeof(genhash_t));
 
 	genhash_reinit(h, keycmpf, keyhashf, keydestroyf, valuedestroyf);
-  
+
 	return h;
 }
 
@@ -155,7 +157,7 @@ genhash_reinit(
 	h->keyhashf = keyhashf;
 	h->keydestroyf = keydestroyf;
 	h->valuedestroyf = valuedestroyf;
-  
+
 	return 0;
 }
 
@@ -179,7 +181,7 @@ _remove_normal_hash_el(genhash_t *h, genhash_el *el) {
 	if (el->hash_prev) {
 		if((el->hash_prev->hash_next = el->hash_next))
 			el->hash_next->hash_prev = el->hash_prev;
-		
+
 	} else {
 		if((h->buckets[el->key_hash % h->numbuckets] = el->hash_next))
 			el->hash_next->hash_prev = NULL;
@@ -213,7 +215,7 @@ _remove_normal_hash_el(genhash_t *h, genhash_el *el) {
 		}
 	}
 
-	free(el);
+	asn1p_mem_free(el);
 	h->numelements--;
 
 	/* Remove key and value */
@@ -250,7 +252,7 @@ _genhash_normal_el_move2top(genhash_t *h, genhash_el *el) {
 			el->lru_next->lru_prev = el->lru_prev;
 		else
 			h->lru_tail = el->lru_prev;
-	
+
 		/* Append to the head */
 		el->lru_prev = NULL;
 		h->lru_head->lru_prev = el;
@@ -295,7 +297,7 @@ _expand_hash(genhash_t *h) {
 	/*
 	 * Allocate a new storage for buckets.
 	 */
-	newbuckets = malloc(newbuckets_count * sizeof(*newbuckets));
+	newbuckets = asn1p_mem_alloc(newbuckets_count * sizeof(*newbuckets));
 	if(newbuckets) {
 		memset(newbuckets, 0, newbuckets_count * sizeof(*newbuckets));
 	} else {
@@ -318,7 +320,7 @@ _expand_hash(genhash_t *h) {
 			newbuckets[bucket] = el;
 		}
 
-		free(h->buckets);
+		asn1p_mem_free(h->buckets);
 		h->buckets = newbuckets;
 		h->numbuckets = newbuckets_count;
 	} else {
@@ -334,12 +336,12 @@ _expand_hash(genhash_t *h) {
 
 		/* Pre-allocate hash elements (for "undo") */
 		for(i = 0; i < h->numelements; i++) {
-			els[i] = (genhash_el *)malloc(sizeof(genhash_el));
+			els[i] = (genhash_el *)asn1p_mem_alloc(sizeof(genhash_el));
 			if(els[i] == NULL) {
 				for(i = 0; i < h->numelements; i++)
 					if(els[i])
-						free(els[i]);
-				free(newbuckets);
+						asn1p_mem_free(els[i]);
+				asn1p_mem_free(newbuckets);
 				return -1;
 			}
 		}
@@ -393,7 +395,7 @@ _genhash_normal_add(genhash_t *h, genhash_el *el, void *key, void *value) {
 	genhash_el **bucket;
 
 	if(el == NULL) {
-		el = malloc(sizeof (*el));
+		el = asn1p_mem_alloc(sizeof (*el));
 		if(el == NULL) {
 			/* Errno will be set by malloc() */
 			return -1;
@@ -490,7 +492,7 @@ genhash_get(genhash_t *h, const void *key) {
 
 		for(walk = h->buckets[bucket];
 			walk; walk = walk->hash_next) {
-	
+
 			if (h->keycmpf(walk->key, key) == 0) {
 				_genhash_normal_el_move2top(h, walk);
 				return walk->value;
@@ -526,13 +528,13 @@ genhash_del(genhash_t *h, void *key) {
 			errno = ESRCH;
 			return -1;	/* not found */
 		}
-	
+
 		bucket = h->keyhashf(key) % h->numbuckets;
-	
+
 		for(walk = h->buckets[bucket]; walk; walk = walk->hash_next)
 			if(h->keycmpf(walk->key, key) == 0)
 				break;
-	
+
 		if(walk) {
 			_remove_normal_hash_el(h, walk);
 			return 0;
@@ -710,7 +712,7 @@ genhash_destroy(genhash_t *h) {
 	if(h) {
 		assert(h->iters == 0);	/* All iterators MUST be _done(). */
 		genhash_empty(h, 1, 1);
-		free(h);
+		asn1p_mem_free(h);
 	}
 }
 
@@ -742,14 +744,14 @@ genhash_empty(genhash_t *h, int freekeys, int freevalues) {
 			void *kd_arg = el->key;
 			void *vd_arg = el->value;
 			el_next = el->lru_next;
-			free(el);
+			asn1p_mem_free(el);
 
 			h->numelements --;
 
 			if (freekeys) h->keydestroyf(kd_arg);
 			if (freevalues) h->valuedestroyf(vd_arg);
 		}
-		free(h->buckets);
+		asn1p_mem_free(h->buckets);
 		h->numbuckets = 0;	/* Move back to TINY model */
 	}
 	memset(&h->un, 0, sizeof(h->un));

@@ -211,7 +211,6 @@ int genhash_iter(genhash_iter_t *iter, void */***/key, void */***/val);
  */
 void genhash_iter_done(genhash_iter_t *iter);
 
-
 /****************************************************************************/
 
 /*

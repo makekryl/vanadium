@@ -73,7 +73,7 @@
 #define yynerrs         asn1p_nerrs
 
 /* First part of user prologue.  */
-#line 29 "asn1p_y.y"
+#line 20 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
 
 
 #include <stdlib.h>
@@ -84,6 +84,7 @@
 #include <assert.h>
 
 #include "asn1parser.h"
+#include "asn1p_alloc.h"
 
 #include "asn1p_y.h"
 #include "asn1p_l.h"
@@ -113,7 +114,7 @@ prefixed_fprintf(FILE *f, const char *fmt, ...) {
     return ret;
 }
 
-static int yyerror(void **param, yyscan_t scanner, const char *msg);
+static int yyerror(asn1p_yctx_t *ctx, void **param, yyscan_t scanner, const char *msg);
 
 void asn1p_lexer_hack_push_opaque_state(yyscan_t);
 void asn1p_lexer_hack_enable_with_syntax(yyscan_t);
@@ -132,14 +133,14 @@ extern int asn1p_as_pointer;
 static struct AssignedIdentifier *saved_aid;
 
 static asn1p_value_t *_convert_bitstring2binary(char *str, int base);
-static void _fixup_anonymous_identifier(asn1p_expr_t *expr, yyscan_t);
+static void _fixup_anonymous_identifier(const asn1p_yctx_t *ctx, asn1p_expr_t *expr, yyscan_t);
 
 static asn1p_module_t *currentModule;
 #define	NEW_EXPR()	(asn1p_expr_new(asn1p_get_lineno(yyscanner), currentModule))
 
 #define	checkmem(ptr)	do {						\
 		if(!(ptr))						\
-		return yyerror(param, yyscanner, "Memory failure");			\
+		return yyerror(ctx, param, yyscanner, "Memory failure");			\
 	} while(0)
 
 #define	CONSTRAINT_INSERT(root, constr_type, arg1, arg2) do {		\
@@ -174,7 +175,20 @@ static asn1p_module_t *currentModule;
     } while(0)
 
 
-#line 178 "asn1p_y.c"
+char*
+asn1p_y_strdup(const asn1p_yctx_t *ctx, const char *s) {
+  size_t len = strlen(s) + 1;
+  void *newbuf = asn1p_mem_alloc(len);
+
+  if (!newbuf) {
+    return NULL;
+  }
+
+  return (char *) memcpy(newbuf, s, len);
+}
+
+
+#line 192 "asn1p_y.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -871,41 +885,41 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   435,   435,   438,   444,   449,   466,   466,   495,   496,
-     500,   503,   509,   515,   524,   528,   532,   542,   543,   552,
-     555,   564,   567,   570,   573,   577,   598,   599,   608,   621,
-     624,   641,   648,   662,   670,   669,   683,   696,   697,   700,
-     710,   716,   717,   720,   725,   732,   733,   737,   748,   753,
-     760,   766,   772,   782,   783,   795,   798,   801,   809,   814,
-     821,   827,   833,   842,   845,   865,   875,   895,   901,   917,
-     923,   931,   940,   951,   955,   963,   971,   979,   990,   995,
-    1002,  1003,  1011,  1019,  1042,  1043,  1046,  1051,  1055,  1063,
-    1070,  1076,  1083,  1089,  1094,  1101,  1106,  1109,  1116,  1126,
-    1127,  1131,  1138,  1148,  1158,  1169,  1179,  1190,  1200,  1211,
-    1223,  1224,  1231,  1230,  1239,  1243,  1250,  1254,  1257,  1261,
-    1267,  1275,  1284,  1295,  1298,  1305,  1328,  1351,  1375,  1382,
-    1401,  1402,  1405,  1406,  1412,  1418,  1424,  1434,  1444,  1450,
-    1462,  1477,  1485,  1493,  1504,  1515,  1537,  1545,  1554,  1558,
-    1563,  1572,  1577,  1582,  1590,  1613,  1623,  1624,  1625,  1625,
-    1633,  1638,  1643,  1648,  1649,  1650,  1651,  1655,  1656,  1674,
-    1678,  1683,  1691,  1700,  1715,  1716,  1722,  1723,  1724,  1725,
-    1726,  1727,  1728,  1729,  1730,  1731,  1732,  1733,  1734,  1741,
-    1742,  1743,  1747,  1753,  1758,  1763,  1768,  1773,  1782,  1783,
-    1787,  1791,  1792,  1793,  1794,  1795,  1799,  1800,  1801,  1802,
-    1806,  1807,  1814,  1814,  1815,  1815,  1819,  1820,  1824,  1825,
-    1829,  1830,  1831,  1835,  1841,  1842,  1851,  1851,  1853,  1856,
-    1860,  1861,  1867,  1878,  1879,  1885,  1886,  1892,  1893,  1900,
-    1901,  1907,  1908,  1919,  1925,  1931,  1932,  1934,  1935,  1936,
-    1941,  1946,  1951,  1956,  1968,  1977,  1978,  1984,  1985,  1990,
-    1993,  1998,  2006,  2012,  2024,  2027,  2033,  2034,  2034,  2035,
-    2037,  2050,  2055,  2061,  2075,  2076,  2080,  2083,  2086,  2094,
-    2095,  2096,  2101,  2100,  2112,  2121,  2122,  2123,  2124,  2127,
-    2130,  2139,  2155,  2161,  2167,  2181,  2192,  2208,  2211,  2231,
-    2235,  2239,  2243,  2250,  2255,  2261,  2270,  2275,  2282,  2290,
-    2300,  2305,  2312,  2320,  2330,  2345,  2350,  2357,  2364,  2372,
-    2380,  2387,  2398,  2402,  2409,  2440,  2441,  2445,  2452,  2458,
-    2459,  2460,  2461,  2465,  2466,  2467,  2471,  2475,  2483,  2484,
-    2490,  2497,  2504
+       0,   454,   454,   457,   463,   468,   485,   485,   514,   515,
+     519,   522,   528,   534,   543,   547,   551,   561,   562,   571,
+     574,   583,   586,   589,   592,   596,   617,   618,   627,   640,
+     643,   660,   667,   681,   689,   688,   702,   716,   717,   720,
+     730,   737,   738,   741,   746,   753,   754,   758,   769,   774,
+     781,   787,   793,   803,   804,   816,   819,   822,   830,   835,
+     842,   848,   854,   863,   866,   886,   896,   916,   922,   938,
+     944,   952,   961,   972,   976,   984,   992,  1000,  1011,  1016,
+    1023,  1024,  1032,  1040,  1063,  1064,  1067,  1072,  1076,  1084,
+    1091,  1097,  1104,  1110,  1115,  1122,  1127,  1130,  1137,  1147,
+    1148,  1152,  1159,  1169,  1179,  1190,  1200,  1211,  1221,  1232,
+    1244,  1245,  1252,  1251,  1260,  1264,  1271,  1275,  1278,  1282,
+    1288,  1296,  1305,  1316,  1319,  1326,  1349,  1372,  1396,  1403,
+    1422,  1423,  1426,  1427,  1433,  1439,  1445,  1455,  1465,  1471,
+    1483,  1498,  1506,  1514,  1525,  1536,  1558,  1566,  1575,  1579,
+    1584,  1593,  1598,  1603,  1611,  1634,  1644,  1645,  1646,  1646,
+    1654,  1659,  1664,  1669,  1670,  1671,  1672,  1676,  1677,  1695,
+    1699,  1704,  1712,  1721,  1736,  1737,  1743,  1744,  1745,  1746,
+    1747,  1748,  1749,  1750,  1751,  1752,  1753,  1754,  1755,  1762,
+    1763,  1764,  1768,  1774,  1779,  1784,  1789,  1794,  1803,  1804,
+    1807,  1810,  1811,  1812,  1813,  1814,  1817,  1818,  1819,  1820,
+    1823,  1824,  1831,  1831,  1832,  1832,  1836,  1837,  1841,  1842,
+    1846,  1847,  1848,  1852,  1858,  1859,  1868,  1868,  1870,  1873,
+    1877,  1878,  1884,  1895,  1896,  1902,  1903,  1909,  1910,  1917,
+    1918,  1924,  1925,  1936,  1942,  1948,  1949,  1951,  1952,  1953,
+    1958,  1963,  1968,  1973,  1985,  1994,  1995,  2001,  2002,  2007,
+    2010,  2015,  2023,  2029,  2041,  2044,  2050,  2051,  2051,  2052,
+    2054,  2069,  2074,  2080,  2094,  2095,  2099,  2102,  2105,  2113,
+    2114,  2115,  2120,  2119,  2131,  2140,  2141,  2142,  2143,  2146,
+    2149,  2158,  2174,  2180,  2186,  2200,  2211,  2227,  2230,  2250,
+    2254,  2258,  2262,  2269,  2274,  2280,  2289,  2294,  2301,  2309,
+    2319,  2324,  2331,  2339,  2349,  2364,  2369,  2376,  2383,  2391,
+    2399,  2406,  2417,  2421,  2428,  2459,  2460,  2464,  2471,  2477,
+    2478,  2479,  2480,  2484,  2485,  2486,  2490,  2494,  2502,  2503,
+    2509,  2516,  2523
 };
 #endif
 
@@ -1532,7 +1546,7 @@ enum { YYENOMEM = -2 };
       }                                                           \
     else                                                          \
       {                                                           \
-        yyerror (ctx, yyscanner, YY_("syntax error: cannot back up")); \
+        yyerror (ctx, param, yyscanner, YY_("syntax error: cannot back up")); \
         YYERROR;                                                  \
       }                                                           \
   while (0)
@@ -1565,7 +1579,7 @@ do {                                                                      \
     {                                                                     \
       YYFPRINTF (stderr, "%s ", Title);                                   \
       yy_symbol_print (stderr,                                            \
-                  Kind, Value, ctx, yyscanner); \
+                  Kind, Value, ctx, param, yyscanner); \
       YYFPRINTF (stderr, "\n");                                           \
     }                                                                     \
 } while (0)
@@ -1577,11 +1591,12 @@ do {                                                                      \
 
 static void
 yy_symbol_value_print (FILE *yyo,
-                       yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep, asn1p_yctx_t *ctx, yyscan_t yyscanner)
+                       yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep, asn1p_yctx_t *ctx, void **param, yyscan_t yyscanner)
 {
   FILE *yyoutput = yyo;
   YY_USE (yyoutput);
   YY_USE (ctx);
+  YY_USE (param);
   YY_USE (yyscanner);
   if (!yyvaluep)
     return;
@@ -1597,12 +1612,12 @@ yy_symbol_value_print (FILE *yyo,
 
 static void
 yy_symbol_print (FILE *yyo,
-                 yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep, asn1p_yctx_t *ctx, yyscan_t yyscanner)
+                 yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep, asn1p_yctx_t *ctx, void **param, yyscan_t yyscanner)
 {
   YYFPRINTF (yyo, "%s %s (",
              yykind < YYNTOKENS ? "token" : "nterm", yysymbol_name (yykind));
 
-  yy_symbol_value_print (yyo, yykind, yyvaluep, ctx, yyscanner);
+  yy_symbol_value_print (yyo, yykind, yyvaluep, ctx, param, yyscanner);
   YYFPRINTF (yyo, ")");
 }
 
@@ -1636,7 +1651,7 @@ do {                                                            \
 
 static void
 yy_reduce_print (yy_state_t *yyssp, YYSTYPE *yyvsp,
-                 int yyrule, asn1p_yctx_t *ctx, yyscan_t yyscanner)
+                 int yyrule, asn1p_yctx_t *ctx, void **param, yyscan_t yyscanner)
 {
   int yylno = yyrline[yyrule];
   int yynrhs = yyr2[yyrule];
@@ -1649,7 +1664,7 @@ yy_reduce_print (yy_state_t *yyssp, YYSTYPE *yyvsp,
       YYFPRINTF (stderr, "   $%d = ", yyi + 1);
       yy_symbol_print (stderr,
                        YY_ACCESSING_SYMBOL (+yyssp[yyi + 1 - yynrhs]),
-                       &yyvsp[(yyi + 1) - (yynrhs)], ctx, yyscanner);
+                       &yyvsp[(yyi + 1) - (yynrhs)], ctx, param, yyscanner);
       YYFPRINTF (stderr, "\n");
     }
 }
@@ -1657,7 +1672,7 @@ yy_reduce_print (yy_state_t *yyssp, YYSTYPE *yyvsp,
 # define YY_REDUCE_PRINT(Rule)          \
 do {                                    \
   if (yydebug)                          \
-    yy_reduce_print (yyssp, yyvsp, Rule, ctx, yyscanner); \
+    yy_reduce_print (yyssp, yyvsp, Rule, ctx, param, yyscanner); \
 } while (0)
 
 /* Nonzero means print parse trace.  It is left uninitialized so that
@@ -1698,17 +1713,748 @@ int yydebug;
 
 static void
 yydestruct (const char *yymsg,
-            yysymbol_kind_t yykind, YYSTYPE *yyvaluep, asn1p_yctx_t *ctx, yyscan_t yyscanner)
+            yysymbol_kind_t yykind, YYSTYPE *yyvaluep, asn1p_yctx_t *ctx, void **param, yyscan_t yyscanner)
 {
   YY_USE (yyvaluep);
   YY_USE (ctx);
+  YY_USE (param);
   YY_USE (yyscanner);
   if (!yymsg)
     yymsg = "Deleting";
   YY_SYMBOL_PRINT (yymsg, yykind, yyvaluep, yylocationp);
 
   YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN
-  YY_USE (yykind);
+  switch (yykind)
+    {
+    case YYSYMBOL_TOK_whitespace: /* TOK_whitespace  */
+#line 188 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_mem_free(((*yyvaluep).tv_opaque).buf); }
+#line 1733 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_TOK_opaque: /* TOK_opaque  */
+#line 188 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_mem_free(((*yyvaluep).tv_opaque).buf); }
+#line 1739 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_TOK_bstring: /* TOK_bstring  */
+#line 187 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_mem_free(((*yyvaluep).tv_str)); }
+#line 1745 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_TOK_cstring: /* TOK_cstring  */
+#line 188 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_mem_free(((*yyvaluep).tv_opaque).buf); }
+#line 1751 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_TOK_hstring: /* TOK_hstring  */
+#line 187 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_mem_free(((*yyvaluep).tv_str)); }
+#line 1757 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_TOK_identifier: /* "identifier"  */
+#line 187 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_mem_free(((*yyvaluep).tv_str)); }
+#line 1763 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_TOK_typereference: /* TOK_typereference  */
+#line 187 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_mem_free(((*yyvaluep).tv_str)); }
+#line 1769 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_TOK_capitalreference: /* TOK_capitalreference  */
+#line 187 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_mem_free(((*yyvaluep).tv_str)); }
+#line 1775 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_TOK_typefieldreference: /* TOK_typefieldreference  */
+#line 187 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_mem_free(((*yyvaluep).tv_str)); }
+#line 1781 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_TOK_valuefieldreference: /* TOK_valuefieldreference  */
+#line 187 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_mem_free(((*yyvaluep).tv_str)); }
+#line 1787 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_TOK_Literal: /* TOK_Literal  */
+#line 187 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_mem_free(((*yyvaluep).tv_str)); }
+#line 1793 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_112_concrete_TypeDeclaration_: /* "concrete TypeDeclaration"  */
+#line 178 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_expr_free(((*yyvaluep).a_expr)); }
+#line 1799 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_ModuleList: /* ModuleList  */
+#line 176 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_delete(((*yyvaluep).a_grammar)); }
+#line 1805 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_ModuleDefinition: /* ModuleDefinition  */
+#line 177 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_module_free(((*yyvaluep).a_module)); }
+#line 1811 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_optObjectIdentifier: /* optObjectIdentifier  */
+#line 181 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_oid_free(((*yyvaluep).a_oid)); }
+#line 1817 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_ObjectIdentifier: /* ObjectIdentifier  */
+#line 181 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_oid_free(((*yyvaluep).a_oid)); }
+#line 1823 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_ObjectIdentifierBody: /* ObjectIdentifierBody  */
+#line 181 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_oid_free(((*yyvaluep).a_oid)); }
+#line 1829 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_optModuleBody: /* optModuleBody  */
+#line 177 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_module_free(((*yyvaluep).a_module)); }
+#line 1835 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_ModuleBody: /* ModuleBody  */
+#line 177 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_module_free(((*yyvaluep).a_module)); }
+#line 1841 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_AssignmentList: /* AssignmentList  */
+#line 177 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_module_free(((*yyvaluep).a_module)); }
+#line 1847 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_Assignment: /* Assignment  */
+#line 177 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_module_free(((*yyvaluep).a_module)); }
+#line 1853 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_optImports: /* optImports  */
+#line 177 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_module_free(((*yyvaluep).a_module)); }
+#line 1859 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_ImportsDefinition: /* ImportsDefinition  */
+#line 177 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_module_free(((*yyvaluep).a_module)); }
+#line 1865 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_optImportsBundleSet: /* optImportsBundleSet  */
+#line 177 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_module_free(((*yyvaluep).a_module)); }
+#line 1871 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_ImportsBundleSet: /* ImportsBundleSet  */
+#line 177 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_module_free(((*yyvaluep).a_module)); }
+#line 1877 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_ImportsBundle: /* ImportsBundle  */
+#line 180 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_xports_free(((*yyvaluep).a_xports)); }
+#line 1883 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_ImportsList: /* ImportsList  */
+#line 180 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_xports_free(((*yyvaluep).a_xports)); }
+#line 1889 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_ImportsElement: /* ImportsElement  */
+#line 178 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_expr_free(((*yyvaluep).a_expr)); }
+#line 1895 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_optExports: /* optExports  */
+#line 177 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_module_free(((*yyvaluep).a_module)); }
+#line 1901 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_ExportsDefinition: /* ExportsDefinition  */
+#line 180 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_xports_free(((*yyvaluep).a_xports)); }
+#line 1907 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_ExportsBody: /* ExportsBody  */
+#line 180 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_xports_free(((*yyvaluep).a_xports)); }
+#line 1913 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_ExportsElement: /* ExportsElement  */
+#line 178 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_expr_free(((*yyvaluep).a_expr)); }
+#line 1919 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_ValueSet: /* ValueSet  */
+#line 179 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_constraint_free(((*yyvaluep).a_constr)); }
+#line 1925 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_ValueSetTypeAssignment: /* ValueSetTypeAssignment  */
+#line 178 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_expr_free(((*yyvaluep).a_expr)); }
+#line 1931 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_DefinedType: /* DefinedType  */
+#line 178 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_expr_free(((*yyvaluep).a_expr)); }
+#line 1937 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_DataTypeReference: /* DataTypeReference  */
+#line 178 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_expr_free(((*yyvaluep).a_expr)); }
+#line 1943 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_ParameterArgumentList: /* ParameterArgumentList  */
+#line 186 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_paramlist_free(((*yyvaluep).a_plist)); }
+#line 1949 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_ActualParameterList: /* ActualParameterList  */
+#line 178 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_expr_free(((*yyvaluep).a_expr)); }
+#line 1955 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_ActualParameter: /* ActualParameter  */
+#line 178 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_expr_free(((*yyvaluep).a_expr)); }
+#line 1961 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_optComponentTypeLists: /* optComponentTypeLists  */
+#line 178 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_expr_free(((*yyvaluep).a_expr)); }
+#line 1967 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_ComponentTypeLists: /* ComponentTypeLists  */
+#line 178 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_expr_free(((*yyvaluep).a_expr)); }
+#line 1973 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_ComponentType: /* ComponentType  */
+#line 178 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_expr_free(((*yyvaluep).a_expr)); }
+#line 1979 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_AlternativeTypeLists: /* AlternativeTypeLists  */
+#line 178 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_expr_free(((*yyvaluep).a_expr)); }
+#line 1985 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_AlternativeType: /* AlternativeType  */
+#line 178 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_expr_free(((*yyvaluep).a_expr)); }
+#line 1991 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_ObjectClass: /* ObjectClass  */
+#line 178 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_expr_free(((*yyvaluep).a_expr)); }
+#line 1997 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_FieldSpec: /* FieldSpec  */
+#line 178 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_expr_free(((*yyvaluep).a_expr)); }
+#line 2003 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_ClassField: /* ClassField  */
+#line 178 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_expr_free(((*yyvaluep).a_expr)); }
+#line 2009 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_optWithSyntax: /* optWithSyntax  */
+#line 183 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_wsyntx_free(((*yyvaluep).a_wsynt)); }
+#line 2015 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_WithSyntax: /* WithSyntax  */
+#line 183 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_wsyntx_free(((*yyvaluep).a_wsynt)); }
+#line 2021 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_WithSyntaxList: /* WithSyntaxList  */
+#line 183 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_wsyntx_free(((*yyvaluep).a_wsynt)); }
+#line 2027 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_WithSyntaxToken: /* WithSyntaxToken  */
+#line 184 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_wsyntx_chunk_free(((*yyvaluep).a_wchunk)); }
+#line 2033 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_ExtensionAndException: /* ExtensionAndException  */
+#line 178 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_expr_free(((*yyvaluep).a_expr)); }
+#line 2039 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_Type: /* Type  */
+#line 178 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_expr_free(((*yyvaluep).a_expr)); }
+#line 2045 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_TaggedType: /* TaggedType  */
+#line 178 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_expr_free(((*yyvaluep).a_expr)); }
+#line 2051 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_DefinedUntaggedType: /* DefinedUntaggedType  */
+#line 178 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_expr_free(((*yyvaluep).a_expr)); }
+#line 2057 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_UntaggedType: /* UntaggedType  */
+#line 178 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_expr_free(((*yyvaluep).a_expr)); }
+#line 2063 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_MaybeIndirectTaggedType: /* MaybeIndirectTaggedType  */
+#line 178 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_expr_free(((*yyvaluep).a_expr)); }
+#line 2069 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_MaybeIndirectTypeDeclaration: /* MaybeIndirectTypeDeclaration  */
+#line 178 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_expr_free(((*yyvaluep).a_expr)); }
+#line 2075 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_TypeDeclaration: /* TypeDeclaration  */
+#line 178 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_expr_free(((*yyvaluep).a_expr)); }
+#line 2081 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_ConcreteTypeDeclaration: /* ConcreteTypeDeclaration  */
+#line 178 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_expr_free(((*yyvaluep).a_expr)); }
+#line 2087 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_ValueAssignment: /* ValueAssignment  */
+#line 178 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_expr_free(((*yyvaluep).a_expr)); }
+#line 2093 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_Value: /* Value  */
+#line 185 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_value_free(((*yyvaluep).a_value)); }
+#line 2099 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_SimpleValue: /* SimpleValue  */
+#line 185 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_value_free(((*yyvaluep).a_value)); }
+#line 2105 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_DefinedValue: /* DefinedValue  */
+#line 185 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_value_free(((*yyvaluep).a_value)); }
+#line 2111 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_RestrictedCharacterStringValue: /* RestrictedCharacterStringValue  */
+#line 185 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_value_free(((*yyvaluep).a_value)); }
+#line 2117 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_Opaque: /* Opaque  */
+#line 188 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_mem_free(((*yyvaluep).tv_opaque).buf); }
+#line 2123 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_OpaqueFirstToken: /* OpaqueFirstToken  */
+#line 188 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_mem_free(((*yyvaluep).tv_opaque).buf); }
+#line 2129 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_BuiltinType: /* BuiltinType  */
+#line 178 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_expr_free(((*yyvaluep).a_expr)); }
+#line 2135 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_optConstraint: /* optConstraint  */
+#line 179 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_constraint_free(((*yyvaluep).a_constr)); }
+#line 2141 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_optManyConstraints: /* optManyConstraints  */
+#line 179 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_constraint_free(((*yyvaluep).a_constr)); }
+#line 2147 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_optSizeOrConstraint: /* optSizeOrConstraint  */
+#line 179 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_constraint_free(((*yyvaluep).a_constr)); }
+#line 2153 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_Constraint: /* Constraint  */
+#line 179 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_constraint_free(((*yyvaluep).a_constr)); }
+#line 2159 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_ManyConstraints: /* ManyConstraints  */
+#line 179 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_constraint_free(((*yyvaluep).a_constr)); }
+#line 2165 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_ConstraintSpec: /* ConstraintSpec  */
+#line 179 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_constraint_free(((*yyvaluep).a_constr)); }
+#line 2171 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_SubtypeConstraint: /* SubtypeConstraint  */
+#line 179 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_constraint_free(((*yyvaluep).a_constr)); }
+#line 2177 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_ElementSetSpecs: /* ElementSetSpecs  */
+#line 179 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_constraint_free(((*yyvaluep).a_constr)); }
+#line 2183 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_ElementSetSpec: /* ElementSetSpec  */
+#line 179 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_constraint_free(((*yyvaluep).a_constr)); }
+#line 2189 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_Unions: /* Unions  */
+#line 179 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_constraint_free(((*yyvaluep).a_constr)); }
+#line 2195 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_Intersections: /* Intersections  */
+#line 179 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_constraint_free(((*yyvaluep).a_constr)); }
+#line 2201 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_IntersectionElements: /* IntersectionElements  */
+#line 179 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_constraint_free(((*yyvaluep).a_constr)); }
+#line 2207 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_Elements: /* Elements  */
+#line 179 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_constraint_free(((*yyvaluep).a_constr)); }
+#line 2213 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_SubtypeElements: /* SubtypeElements  */
+#line 179 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_constraint_free(((*yyvaluep).a_constr)); }
+#line 2219 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_PermittedAlphabet: /* PermittedAlphabet  */
+#line 179 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_constraint_free(((*yyvaluep).a_constr)); }
+#line 2225 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_SizeConstraint: /* SizeConstraint  */
+#line 179 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_constraint_free(((*yyvaluep).a_constr)); }
+#line 2231 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_PatternConstraint: /* PatternConstraint  */
+#line 179 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_constraint_free(((*yyvaluep).a_constr)); }
+#line 2237 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_ValueRange: /* ValueRange  */
+#line 179 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_constraint_free(((*yyvaluep).a_constr)); }
+#line 2243 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_LowerEndValue: /* LowerEndValue  */
+#line 185 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_value_free(((*yyvaluep).a_value)); }
+#line 2249 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_UpperEndValue: /* UpperEndValue  */
+#line 185 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_value_free(((*yyvaluep).a_value)); }
+#line 2255 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_SingleValue: /* SingleValue  */
+#line 185 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_value_free(((*yyvaluep).a_value)); }
+#line 2261 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_BitStringValue: /* BitStringValue  */
+#line 185 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_value_free(((*yyvaluep).a_value)); }
+#line 2267 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_ContainedSubtype: /* ContainedSubtype  */
+#line 185 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_value_free(((*yyvaluep).a_value)); }
+#line 2273 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_InnerTypeConstraints: /* InnerTypeConstraints  */
+#line 179 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_constraint_free(((*yyvaluep).a_constr)); }
+#line 2279 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_SingleTypeConstraint: /* SingleTypeConstraint  */
+#line 179 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_constraint_free(((*yyvaluep).a_constr)); }
+#line 2285 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_MultipleTypeConstraints: /* MultipleTypeConstraints  */
+#line 179 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_constraint_free(((*yyvaluep).a_constr)); }
+#line 2291 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_FullSpecification: /* FullSpecification  */
+#line 179 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_constraint_free(((*yyvaluep).a_constr)); }
+#line 2297 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_PartialSpecification: /* PartialSpecification  */
+#line 179 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_constraint_free(((*yyvaluep).a_constr)); }
+#line 2303 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_TypeConstraints: /* TypeConstraints  */
+#line 179 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_constraint_free(((*yyvaluep).a_constr)); }
+#line 2309 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_NamedConstraint: /* NamedConstraint  */
+#line 179 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_constraint_free(((*yyvaluep).a_constr)); }
+#line 2315 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_GeneralConstraint: /* GeneralConstraint  */
+#line 179 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_constraint_free(((*yyvaluep).a_constr)); }
+#line 2321 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_UserDefinedConstraint: /* UserDefinedConstraint  */
+#line 179 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_constraint_free(((*yyvaluep).a_constr)); }
+#line 2327 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_ContentsConstraint: /* ContentsConstraint  */
+#line 179 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_constraint_free(((*yyvaluep).a_constr)); }
+#line 2333 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_TableConstraint: /* TableConstraint  */
+#line 179 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_constraint_free(((*yyvaluep).a_constr)); }
+#line 2339 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_SimpleTableConstraint: /* SimpleTableConstraint  */
+#line 179 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_constraint_free(((*yyvaluep).a_constr)); }
+#line 2345 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_ComponentRelationConstraint: /* ComponentRelationConstraint  */
+#line 179 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_constraint_free(((*yyvaluep).a_constr)); }
+#line 2351 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_AtNotationList: /* AtNotationList  */
+#line 179 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_constraint_free(((*yyvaluep).a_constr)); }
+#line 2357 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_ComponentIdList: /* ComponentIdList  */
+#line 187 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_mem_free(((*yyvaluep).tv_str)); }
+#line 2363 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_IdentifierList: /* IdentifierList  */
+#line 178 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_expr_free(((*yyvaluep).a_expr)); }
+#line 2369 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_IdentifierElement: /* IdentifierElement  */
+#line 178 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_expr_free(((*yyvaluep).a_expr)); }
+#line 2375 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_NamedNumberList: /* NamedNumberList  */
+#line 178 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_expr_free(((*yyvaluep).a_expr)); }
+#line 2381 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_NamedNumber: /* NamedNumber  */
+#line 178 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_expr_free(((*yyvaluep).a_expr)); }
+#line 2387 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_NamedBitList: /* NamedBitList  */
+#line 178 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_expr_free(((*yyvaluep).a_expr)); }
+#line 2393 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_NamedBit: /* NamedBit  */
+#line 178 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_expr_free(((*yyvaluep).a_expr)); }
+#line 2399 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_Enumerations: /* Enumerations  */
+#line 178 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_expr_free(((*yyvaluep).a_expr)); }
+#line 2405 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_UniverationList: /* UniverationList  */
+#line 178 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_expr_free(((*yyvaluep).a_expr)); }
+#line 2411 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_UniverationElement: /* UniverationElement  */
+#line 178 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_expr_free(((*yyvaluep).a_expr)); }
+#line 2417 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_SignedNumber: /* SignedNumber  */
+#line 185 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_value_free(((*yyvaluep).a_value)); }
+#line 2423 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_RealValue: /* RealValue  */
+#line 185 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_value_free(((*yyvaluep).a_value)); }
+#line 2429 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_TypeRefName: /* TypeRefName  */
+#line 187 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_mem_free(((*yyvaluep).tv_str)); }
+#line 2435 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_optIdentifier: /* optIdentifier  */
+#line 187 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_mem_free(((*yyvaluep).tv_str)); }
+#line 2441 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_Identifier: /* Identifier  */
+#line 187 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_mem_free(((*yyvaluep).tv_str)); }
+#line 2447 "asn1p_y.c"
+        break;
+
+    case YYSYMBOL_IdentifierAsValue: /* IdentifierAsValue  */
+#line 185 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
+            { asn1p_value_free(((*yyvaluep).a_value)); }
+#line 2453 "asn1p_y.c"
+        break;
+
+      default:
+        break;
+    }
   YY_IGNORE_MAYBE_UNINITIALIZED_END
 }
 
@@ -1722,7 +2468,7 @@ yydestruct (const char *yymsg,
 `----------*/
 
 int
-yyparse (asn1p_yctx_t *ctx, yyscan_t yyscanner)
+yyparse (asn1p_yctx_t *ctx, void **param, yyscan_t yyscanner)
 {
 /* Lookahead token kind.  */
 int yychar;
@@ -1977,48 +2723,48 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* ParsedGrammar: "UTF-8 byte order mark" ModuleList  */
-#line 435 "asn1p_y.y"
+#line 454 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                             {
 		*(void **)param = (yyvsp[0].a_grammar);
 	}
-#line 1985 "asn1p_y.c"
+#line 2731 "asn1p_y.c"
     break;
 
   case 3: /* ParsedGrammar: ModuleList  */
-#line 438 "asn1p_y.y"
+#line 457 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                      {
 		*(void **)param = (yyvsp[0].a_grammar);
 	}
-#line 1993 "asn1p_y.c"
+#line 2739 "asn1p_y.c"
     break;
 
   case 4: /* ModuleList: ModuleDefinition  */
-#line 444 "asn1p_y.y"
+#line 463 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                          {
 		(yyval.a_grammar) = asn1p_new();
 		checkmem((yyval.a_grammar));
 		TQ_ADD(&((yyval.a_grammar)->modules), (yyvsp[0].a_module), mod_next);
 	}
-#line 2003 "asn1p_y.c"
+#line 2749 "asn1p_y.c"
     break;
 
   case 5: /* ModuleList: ModuleList ModuleDefinition  */
-#line 449 "asn1p_y.y"
+#line 468 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                       {
 		(yyval.a_grammar) = (yyvsp[-1].a_grammar);
 		TQ_ADD(&((yyval.a_grammar)->modules), (yyvsp[0].a_module), mod_next);
 	}
-#line 2012 "asn1p_y.c"
+#line 2758 "asn1p_y.c"
     break;
 
   case 6: /* $@1: %empty  */
-#line 466 "asn1p_y.y"
+#line 485 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                     { currentModule = asn1p_module_new(); }
-#line 2018 "asn1p_y.c"
+#line 2764 "asn1p_y.c"
     break;
 
   case 7: /* ModuleDefinition: TypeRefName $@1 optObjectIdentifier TOK_DEFINITIONS optModuleDefinitionFlags TOK_PPEQ TOK_BEGIN optModuleBody TOK_END  */
-#line 471 "asn1p_y.y"
+#line 490 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                         {
 
 		(yyval.a_module) = currentModule;
@@ -2036,150 +2782,150 @@ yyreduce:
 		(yyval.a_module)->module_oid = (yyvsp[-6].a_oid);
 		(yyval.a_module)->module_flags = (yyvsp[-4].a_module_flags);
 	}
-#line 2040 "asn1p_y.c"
+#line 2786 "asn1p_y.c"
     break;
 
   case 8: /* optObjectIdentifier: %empty  */
-#line 495 "asn1p_y.y"
+#line 514 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
         { (yyval.a_oid) = 0; }
-#line 2046 "asn1p_y.c"
+#line 2792 "asn1p_y.c"
     break;
 
   case 9: /* optObjectIdentifier: ObjectIdentifier  */
-#line 496 "asn1p_y.y"
+#line 515 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                            { (yyval.a_oid) = (yyvsp[0].a_oid); }
-#line 2052 "asn1p_y.c"
+#line 2798 "asn1p_y.c"
     break;
 
   case 10: /* ObjectIdentifier: '{' ObjectIdentifierBody '}'  */
-#line 500 "asn1p_y.y"
+#line 519 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                      {
 		(yyval.a_oid) = (yyvsp[-1].a_oid);
 	}
-#line 2060 "asn1p_y.c"
+#line 2806 "asn1p_y.c"
     break;
 
   case 11: /* ObjectIdentifier: '{' '}'  */
-#line 503 "asn1p_y.y"
+#line 522 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                   {
 		(yyval.a_oid) = 0;
 	}
-#line 2068 "asn1p_y.c"
+#line 2814 "asn1p_y.c"
     break;
 
   case 12: /* ObjectIdentifierBody: ObjectIdentifierElement  */
-#line 509 "asn1p_y.y"
+#line 528 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                 {
 		(yyval.a_oid) = asn1p_oid_new();
 		asn1p_oid_add_arc((yyval.a_oid), &(yyvsp[0].a_oid_arc));
 		if((yyvsp[0].a_oid_arc).name)
-			free((yyvsp[0].a_oid_arc).name);
+			asn1p_mem_free((yyvsp[0].a_oid_arc).name);
 	}
-#line 2079 "asn1p_y.c"
+#line 2825 "asn1p_y.c"
     break;
 
   case 13: /* ObjectIdentifierBody: ObjectIdentifierBody ObjectIdentifierElement  */
-#line 515 "asn1p_y.y"
+#line 534 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                        {
 		(yyval.a_oid) = (yyvsp[-1].a_oid);
 		asn1p_oid_add_arc((yyval.a_oid), &(yyvsp[0].a_oid_arc));
 		if((yyvsp[0].a_oid_arc).name)
-			free((yyvsp[0].a_oid_arc).name);
+			asn1p_mem_free((yyvsp[0].a_oid_arc).name);
 	}
-#line 2090 "asn1p_y.c"
+#line 2836 "asn1p_y.c"
     break;
 
   case 14: /* ObjectIdentifierElement: Identifier  */
-#line 524 "asn1p_y.y"
+#line 543 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                    {					/* iso */
 		(yyval.a_oid_arc).name = (yyvsp[0].tv_str);
 		(yyval.a_oid_arc).number = -1;
 	}
-#line 2099 "asn1p_y.c"
+#line 2845 "asn1p_y.c"
     break;
 
   case 15: /* ObjectIdentifierElement: Identifier '(' "number" ')'  */
-#line 528 "asn1p_y.y"
+#line 547 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                         {		/* iso(1) */
 		(yyval.a_oid_arc).name = (yyvsp[-3].tv_str);
 		(yyval.a_oid_arc).number = (yyvsp[-1].a_int);
 	}
-#line 2108 "asn1p_y.c"
+#line 2854 "asn1p_y.c"
     break;
 
   case 16: /* ObjectIdentifierElement: "number"  */
-#line 532 "asn1p_y.y"
+#line 551 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                      {					/* 1 */
 		(yyval.a_oid_arc).name = 0;
 		(yyval.a_oid_arc).number = (yyvsp[0].a_int);
 	}
-#line 2117 "asn1p_y.c"
+#line 2863 "asn1p_y.c"
     break;
 
   case 17: /* optModuleDefinitionFlags: %empty  */
-#line 542 "asn1p_y.y"
+#line 561 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
         { (yyval.a_module_flags) = MSF_NOFLAGS; }
-#line 2123 "asn1p_y.c"
+#line 2869 "asn1p_y.c"
     break;
 
   case 18: /* optModuleDefinitionFlags: ModuleDefinitionFlags  */
-#line 543 "asn1p_y.y"
+#line 562 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                 {
 		(yyval.a_module_flags) = (yyvsp[0].a_module_flags);
 	}
-#line 2131 "asn1p_y.c"
+#line 2877 "asn1p_y.c"
     break;
 
   case 19: /* ModuleDefinitionFlags: ModuleDefinitionFlag  */
-#line 552 "asn1p_y.y"
+#line 571 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                              {
 		(yyval.a_module_flags) = (yyvsp[0].a_module_flags);
 	}
-#line 2139 "asn1p_y.c"
+#line 2885 "asn1p_y.c"
     break;
 
   case 20: /* ModuleDefinitionFlags: ModuleDefinitionFlags ModuleDefinitionFlag  */
-#line 555 "asn1p_y.y"
+#line 574 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                      {
 		(yyval.a_module_flags) = (yyvsp[-1].a_module_flags) | (yyvsp[0].a_module_flags);
 	}
-#line 2147 "asn1p_y.c"
+#line 2893 "asn1p_y.c"
     break;
 
   case 21: /* ModuleDefinitionFlag: TOK_EXPLICIT TOK_TAGS  */
-#line 564 "asn1p_y.y"
+#line 583 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                               {
 		(yyval.a_module_flags) = MSF_EXPLICIT_TAGS;
 	}
-#line 2155 "asn1p_y.c"
+#line 2901 "asn1p_y.c"
     break;
 
   case 22: /* ModuleDefinitionFlag: TOK_IMPLICIT TOK_TAGS  */
-#line 567 "asn1p_y.y"
+#line 586 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                 {
 		(yyval.a_module_flags) = MSF_IMPLICIT_TAGS;
 	}
-#line 2163 "asn1p_y.c"
+#line 2909 "asn1p_y.c"
     break;
 
   case 23: /* ModuleDefinitionFlag: TOK_AUTOMATIC TOK_TAGS  */
-#line 570 "asn1p_y.y"
+#line 589 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                  {
 		(yyval.a_module_flags) = MSF_AUTOMATIC_TAGS;
 	}
-#line 2171 "asn1p_y.c"
+#line 2917 "asn1p_y.c"
     break;
 
   case 24: /* ModuleDefinitionFlag: TOK_EXTENSIBILITY TOK_IMPLIED  */
-#line 573 "asn1p_y.y"
+#line 592 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                         {
 		(yyval.a_module_flags) = MSF_EXTENSIBILITY_IMPLIED;
 	}
-#line 2179 "asn1p_y.c"
+#line 2925 "asn1p_y.c"
     break;
 
   case 25: /* ModuleDefinitionFlag: TOK_capitalreference TOK_INSTRUCTIONS  */
-#line 577 "asn1p_y.y"
+#line 596 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                 {
 		/* X.680Amd1 specifies TAG and XER */
 		if(strcmp((yyvsp[-1].tv_str), "TAG") == 0) {
@@ -2193,27 +2939,27 @@ yyreduce:
 				(yyvsp[-1].tv_str), ASN_FILENAME, asn1p_get_lineno(yyscanner));
 		 	(yyval.a_module_flags) = MSF_unk_INSTRUCTIONS;
 		}
-		free((yyvsp[-1].tv_str));
+		asn1p_mem_free((yyvsp[-1].tv_str));
 	}
-#line 2199 "asn1p_y.c"
+#line 2945 "asn1p_y.c"
     break;
 
   case 26: /* optModuleBody: %empty  */
-#line 598 "asn1p_y.y"
+#line 617 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
         { (yyval.a_module) = 0; }
-#line 2205 "asn1p_y.c"
+#line 2951 "asn1p_y.c"
     break;
 
   case 27: /* optModuleBody: ModuleBody  */
-#line 599 "asn1p_y.y"
+#line 618 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                      {
 		(yyval.a_module) = (yyvsp[0].a_module);
 	}
-#line 2213 "asn1p_y.c"
+#line 2959 "asn1p_y.c"
     break;
 
   case 28: /* ModuleBody: optExports optImports AssignmentList  */
-#line 608 "asn1p_y.y"
+#line 627 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                              {
 		(yyval.a_module) = asn1p_module_new();
 		AL_IMPORT((yyval.a_module), exports, (yyvsp[-2].a_module), xp_next);
@@ -2224,19 +2970,19 @@ yyreduce:
 		asn1p_module_free((yyvsp[-1].a_module));
 		asn1p_module_free((yyvsp[0].a_module));
 	}
-#line 2228 "asn1p_y.c"
+#line 2974 "asn1p_y.c"
     break;
 
   case 29: /* AssignmentList: Assignment  */
-#line 621 "asn1p_y.y"
+#line 640 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                    {
 		(yyval.a_module) = (yyvsp[0].a_module);
 	}
-#line 2236 "asn1p_y.c"
+#line 2982 "asn1p_y.c"
     break;
 
   case 30: /* AssignmentList: AssignmentList Assignment  */
-#line 624 "asn1p_y.y"
+#line 643 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                     {
 		if((yyvsp[-1].a_module)) {
 			(yyval.a_module) = (yyvsp[-1].a_module);
@@ -2247,11 +2993,11 @@ yyreduce:
         asn1p_module_move_members((yyval.a_module), (yyvsp[0].a_module));
 		asn1p_module_free((yyvsp[0].a_module));
 	}
-#line 2251 "asn1p_y.c"
+#line 2997 "asn1p_y.c"
     break;
 
   case 31: /* Assignment: DataTypeReference  */
-#line 641 "asn1p_y.y"
+#line 660 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                           {
 		(yyval.a_module) = asn1p_module_new();
 		checkmem((yyval.a_module));
@@ -2259,11 +3005,11 @@ yyreduce:
 		assert((yyvsp[0].a_expr)->meta_type != AMT_INVALID);
 		asn1p_module_member_add((yyval.a_module), (yyvsp[0].a_expr));
 	}
-#line 2263 "asn1p_y.c"
+#line 3009 "asn1p_y.c"
     break;
 
   case 32: /* Assignment: ValueAssignment  */
-#line 648 "asn1p_y.y"
+#line 667 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                           {
 		(yyval.a_module) = asn1p_module_new();
 		checkmem((yyval.a_module));
@@ -2271,11 +3017,11 @@ yyreduce:
 		assert((yyvsp[0].a_expr)->meta_type != AMT_INVALID);
 		asn1p_module_member_add((yyval.a_module), (yyvsp[0].a_expr));
 	}
-#line 2275 "asn1p_y.c"
+#line 3021 "asn1p_y.c"
     break;
 
   case 33: /* Assignment: ValueSetTypeAssignment  */
-#line 662 "asn1p_y.y"
+#line 681 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                  {
 		(yyval.a_module) = asn1p_module_new();
 		checkmem((yyval.a_module));
@@ -2283,103 +3029,105 @@ yyreduce:
 		assert((yyvsp[0].a_expr)->meta_type != AMT_INVALID);
 		asn1p_module_member_add((yyval.a_module), (yyvsp[0].a_expr));
 	}
-#line 2287 "asn1p_y.c"
+#line 3033 "asn1p_y.c"
     break;
 
   case 34: /* $@2: %empty  */
-#line 670 "asn1p_y.y"
+#line 689 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                 { asn1p_lexer_hack_push_encoding_control(yyscanner); }
-#line 2293 "asn1p_y.c"
+#line 3039 "asn1p_y.c"
     break;
 
   case 35: /* Assignment: TOK_ENCODING_CONTROL TOK_capitalreference $@2  */
-#line 671 "asn1p_y.y"
+#line 690 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                         {
 		fprintf(stderr,
 			"WARNING: ENCODING-CONTROL %s "
 			"specification at %s:%d ignored\n",
 			(yyvsp[-1].tv_str), ASN_FILENAME, asn1p_get_lineno(yyscanner));
-		free((yyvsp[-1].tv_str));
+		asn1p_mem_free((yyvsp[-1].tv_str));
 		(yyval.a_module) = 0;
 	}
-#line 2306 "asn1p_y.c"
+#line 3052 "asn1p_y.c"
     break;
 
   case 36: /* Assignment: BasicString  */
-#line 683 "asn1p_y.y"
+#line 702 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                       {
-		return yyerror(param, yyscanner,
+    (yyval.a_module) = NULL;
+		return yyerror(ctx, param, yyscanner,
 			"Attempt to redefine a standard basic string type, "
 			"please comment out or remove this type redefinition.");
 	}
-#line 2316 "asn1p_y.c"
+#line 3063 "asn1p_y.c"
     break;
 
   case 37: /* optImports: %empty  */
-#line 696 "asn1p_y.y"
+#line 716 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
         { (yyval.a_module) = 0; }
-#line 2322 "asn1p_y.c"
+#line 3069 "asn1p_y.c"
     break;
 
   case 39: /* ImportsDefinition: TOK_IMPORTS optImportsBundleSet ';'  */
-#line 700 "asn1p_y.y"
+#line 720 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                             {
 		if(!saved_aid && 0)
-			return yyerror(param, yyscanner, "Unterminated IMPORTS FROM, "
+			return yyerror(ctx, param, yyscanner, "Unterminated IMPORTS FROM, "
 					"expected semicolon ';'");
 		saved_aid = 0;
 		(yyval.a_module) = (yyvsp[-1].a_module);
 	}
-#line 2334 "asn1p_y.c"
+#line 3081 "asn1p_y.c"
     break;
 
   case 40: /* ImportsDefinition: TOK_IMPORTS TOK_FROM  */
-#line 710 "asn1p_y.y"
+#line 730 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                          {
-		return yyerror(param, yyscanner, "Empty IMPORTS list");
+    (yyval.a_module) = NULL;
+		return yyerror(ctx, param, yyscanner, "Empty IMPORTS list");
 	}
-#line 2342 "asn1p_y.c"
+#line 3090 "asn1p_y.c"
     break;
 
   case 41: /* optImportsBundleSet: %empty  */
-#line 716 "asn1p_y.y"
+#line 737 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
         { (yyval.a_module) = asn1p_module_new(); }
-#line 2348 "asn1p_y.c"
+#line 3096 "asn1p_y.c"
     break;
 
   case 43: /* ImportsBundleSet: ImportsBundle  */
-#line 720 "asn1p_y.y"
+#line 741 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                       {
 		(yyval.a_module) = asn1p_module_new();
 		checkmem((yyval.a_module));
 		TQ_ADD(&((yyval.a_module)->imports), (yyvsp[0].a_xports), xp_next);
 	}
-#line 2358 "asn1p_y.c"
+#line 3106 "asn1p_y.c"
     break;
 
   case 44: /* ImportsBundleSet: ImportsBundleSet ImportsBundle  */
-#line 725 "asn1p_y.y"
+#line 746 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                          {
 		(yyval.a_module) = (yyvsp[-1].a_module);
 		TQ_ADD(&((yyval.a_module)->imports), (yyvsp[0].a_xports), xp_next);
 	}
-#line 2367 "asn1p_y.c"
+#line 3115 "asn1p_y.c"
     break;
 
   case 45: /* AssignedIdentifier: %empty  */
-#line 732 "asn1p_y.y"
+#line 753 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
         { memset(&(yyval.a_aid), 0, sizeof((yyval.a_aid))); }
-#line 2373 "asn1p_y.c"
+#line 3121 "asn1p_y.c"
     break;
 
   case 46: /* AssignedIdentifier: ObjectIdentifier  */
-#line 733 "asn1p_y.y"
+#line 754 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                            { (yyval.a_aid).oid = (yyvsp[0].a_oid); }
-#line 2379 "asn1p_y.c"
+#line 3127 "asn1p_y.c"
     break;
 
   case 47: /* ImportsBundle: ImportsList TOK_FROM TypeRefName AssignedIdentifier  */
-#line 737 "asn1p_y.y"
+#line 758 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                             {
 		(yyval.a_xports) = (yyvsp[-3].a_xports);
 		(yyval.a_xports)->fromModuleName = (yyvsp[-1].tv_str);
@@ -2388,69 +3136,69 @@ yyreduce:
 		saved_aid = (yyval.a_xports)->identifier.oid ? 0 : &((yyval.a_xports)->identifier);
 		checkmem((yyval.a_xports));
 	}
-#line 2392 "asn1p_y.c"
+#line 3140 "asn1p_y.c"
     break;
 
   case 48: /* ImportsList: ImportsElement  */
-#line 748 "asn1p_y.y"
+#line 769 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                        {
 		(yyval.a_xports) = asn1p_xports_new();
 		checkmem((yyval.a_xports));
 		TQ_ADD(&((yyval.a_xports)->xp_members), (yyvsp[0].a_expr), next);
 	}
-#line 2402 "asn1p_y.c"
+#line 3150 "asn1p_y.c"
     break;
 
   case 49: /* ImportsList: ImportsList ',' ImportsElement  */
-#line 753 "asn1p_y.y"
+#line 774 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                          {
 		(yyval.a_xports) = (yyvsp[-2].a_xports);
 		TQ_ADD(&((yyval.a_xports)->xp_members), (yyvsp[0].a_expr), next);
 	}
-#line 2411 "asn1p_y.c"
+#line 3159 "asn1p_y.c"
     break;
 
   case 50: /* ImportsElement: TypeRefName  */
-#line 760 "asn1p_y.y"
+#line 781 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                     {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
 		(yyval.a_expr)->Identifier = (yyvsp[0].tv_str);
 		(yyval.a_expr)->expr_type = A1TC_REFERENCE;
 	}
-#line 2422 "asn1p_y.c"
+#line 3170 "asn1p_y.c"
     break;
 
   case 51: /* ImportsElement: TypeRefName '{' '}'  */
-#line 766 "asn1p_y.y"
+#line 787 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                               {		/* Completely equivalent to above */
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
 		(yyval.a_expr)->Identifier = (yyvsp[-2].tv_str);
 		(yyval.a_expr)->expr_type = A1TC_REFERENCE;
 	}
-#line 2433 "asn1p_y.c"
+#line 3181 "asn1p_y.c"
     break;
 
   case 52: /* ImportsElement: Identifier  */
-#line 772 "asn1p_y.y"
+#line 793 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                      {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
 		(yyval.a_expr)->Identifier = (yyvsp[0].tv_str);
 		(yyval.a_expr)->expr_type = A1TC_REFERENCE;
 	}
-#line 2444 "asn1p_y.c"
+#line 3192 "asn1p_y.c"
     break;
 
   case 53: /* optExports: %empty  */
-#line 782 "asn1p_y.y"
+#line 803 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
         { (yyval.a_module) = 0; }
-#line 2450 "asn1p_y.c"
+#line 3198 "asn1p_y.c"
     break;
 
   case 54: /* optExports: ExportsDefinition  */
-#line 783 "asn1p_y.y"
+#line 804 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                             {
 		(yyval.a_module) = asn1p_module_new();
 		checkmem((yyval.a_module));
@@ -2460,95 +3208,95 @@ yyreduce:
 			/* "EXPORTS ALL;" */
 		}
 	}
-#line 2464 "asn1p_y.c"
+#line 3212 "asn1p_y.c"
     break;
 
   case 55: /* ExportsDefinition: TOK_EXPORTS ExportsBody ';'  */
-#line 795 "asn1p_y.y"
+#line 816 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                     {
 		(yyval.a_xports) = (yyvsp[-1].a_xports);
 	}
-#line 2472 "asn1p_y.c"
+#line 3220 "asn1p_y.c"
     break;
 
   case 56: /* ExportsDefinition: TOK_EXPORTS TOK_ALL ';'  */
-#line 798 "asn1p_y.y"
+#line 819 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                   {
 		(yyval.a_xports) = 0;
 	}
-#line 2480 "asn1p_y.c"
+#line 3228 "asn1p_y.c"
     break;
 
   case 57: /* ExportsDefinition: TOK_EXPORTS ';'  */
-#line 801 "asn1p_y.y"
+#line 822 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                           {
 		/* Empty EXPORTS clause effectively prohibits export. */
 		(yyval.a_xports) = asn1p_xports_new();
 		checkmem((yyval.a_xports));
 	}
-#line 2490 "asn1p_y.c"
+#line 3238 "asn1p_y.c"
     break;
 
   case 58: /* ExportsBody: ExportsElement  */
-#line 809 "asn1p_y.y"
+#line 830 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                        {
 		(yyval.a_xports) = asn1p_xports_new();
 		assert((yyval.a_xports));
 		TQ_ADD(&((yyval.a_xports)->xp_members), (yyvsp[0].a_expr), next);
 	}
-#line 2500 "asn1p_y.c"
+#line 3248 "asn1p_y.c"
     break;
 
   case 59: /* ExportsBody: ExportsBody ',' ExportsElement  */
-#line 814 "asn1p_y.y"
+#line 835 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                          {
 		(yyval.a_xports) = (yyvsp[-2].a_xports);
 		TQ_ADD(&((yyval.a_xports)->xp_members), (yyvsp[0].a_expr), next);
 	}
-#line 2509 "asn1p_y.c"
+#line 3257 "asn1p_y.c"
     break;
 
   case 60: /* ExportsElement: TypeRefName  */
-#line 821 "asn1p_y.y"
+#line 842 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                     {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
 		(yyval.a_expr)->Identifier = (yyvsp[0].tv_str);
 		(yyval.a_expr)->expr_type = A1TC_EXPORTVAR;
 	}
-#line 2520 "asn1p_y.c"
+#line 3268 "asn1p_y.c"
     break;
 
   case 61: /* ExportsElement: TypeRefName '{' '}'  */
-#line 827 "asn1p_y.y"
+#line 848 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                               {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
 		(yyval.a_expr)->Identifier = (yyvsp[-2].tv_str);
 		(yyval.a_expr)->expr_type = A1TC_EXPORTVAR;
 	}
-#line 2531 "asn1p_y.c"
+#line 3279 "asn1p_y.c"
     break;
 
   case 62: /* ExportsElement: Identifier  */
-#line 833 "asn1p_y.y"
+#line 854 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                      {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
 		(yyval.a_expr)->Identifier = (yyvsp[0].tv_str);
 		(yyval.a_expr)->expr_type = A1TC_EXPORTVAR;
 	}
-#line 2542 "asn1p_y.c"
+#line 3290 "asn1p_y.c"
     break;
 
   case 63: /* ValueSet: '{' ElementSetSpecs '}'  */
-#line 842 "asn1p_y.y"
+#line 863 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                   { (yyval.a_constr) = (yyvsp[-1].a_constr); }
-#line 2548 "asn1p_y.c"
+#line 3296 "asn1p_y.c"
     break;
 
   case 64: /* ValueSetTypeAssignment: TypeRefName Type TOK_PPEQ ValueSet  */
-#line 845 "asn1p_y.y"
+#line 866 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                            {
 		(yyval.a_expr) = (yyvsp[-2].a_expr);
 		assert((yyval.a_expr)->Identifier == 0);
@@ -2556,11 +3304,11 @@ yyreduce:
 		(yyval.a_expr)->meta_type = AMT_VALUESET;
 		(yyval.a_expr)->constraints = (yyvsp[0].a_constr);
 	}
-#line 2560 "asn1p_y.c"
+#line 3308 "asn1p_y.c"
     break;
 
   case 65: /* DefinedType: ComplexTypeReference  */
-#line 865 "asn1p_y.y"
+#line 886 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                              {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -2568,11 +3316,11 @@ yyreduce:
 		(yyval.a_expr)->expr_type = A1TC_REFERENCE;
 		(yyval.a_expr)->meta_type = AMT_TYPEREF;
 	}
-#line 2572 "asn1p_y.c"
+#line 3320 "asn1p_y.c"
     break;
 
   case 66: /* DefinedType: ComplexTypeReference '{' ActualParameterList '}'  */
-#line 875 "asn1p_y.y"
+#line 896 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                            {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -2581,53 +3329,53 @@ yyreduce:
 		(yyval.a_expr)->expr_type = A1TC_REFERENCE;
 		(yyval.a_expr)->meta_type = AMT_TYPEREF;
 	}
-#line 2585 "asn1p_y.c"
+#line 3333 "asn1p_y.c"
     break;
 
   case 67: /* DataTypeReference: TypeRefName TOK_PPEQ Type  */
-#line 895 "asn1p_y.y"
+#line 916 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                   {
 		(yyval.a_expr) = (yyvsp[0].a_expr);
 		(yyval.a_expr)->Identifier = (yyvsp[-2].tv_str);
 		assert((yyval.a_expr)->expr_type);
 		assert((yyval.a_expr)->meta_type);
 	}
-#line 2596 "asn1p_y.c"
+#line 3344 "asn1p_y.c"
     break;
 
   case 68: /* DataTypeReference: TypeRefName TOK_PPEQ ObjectClass  */
-#line 901 "asn1p_y.y"
+#line 922 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                            {
 		(yyval.a_expr) = (yyvsp[0].a_expr);
 		(yyval.a_expr)->Identifier = (yyvsp[-2].tv_str);
 		assert((yyval.a_expr)->expr_type == A1TC_CLASSDEF);
 		assert((yyval.a_expr)->meta_type == AMT_OBJECTCLASS);
 	}
-#line 2607 "asn1p_y.c"
+#line 3355 "asn1p_y.c"
     break;
 
   case 69: /* DataTypeReference: TypeRefName '{' ParameterArgumentList '}' TOK_PPEQ Type  */
-#line 917 "asn1p_y.y"
+#line 938 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                                   {
 		(yyval.a_expr) = (yyvsp[0].a_expr);
 		(yyval.a_expr)->Identifier = (yyvsp[-5].tv_str);
 		(yyval.a_expr)->lhs_params = (yyvsp[-3].a_plist);
 	}
-#line 2617 "asn1p_y.c"
+#line 3365 "asn1p_y.c"
     break;
 
   case 70: /* DataTypeReference: TypeRefName '{' ParameterArgumentList '}' TOK_PPEQ ObjectClass  */
-#line 923 "asn1p_y.y"
+#line 944 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                                          {
 		(yyval.a_expr) = (yyvsp[0].a_expr);
 		(yyval.a_expr)->Identifier = (yyvsp[-5].tv_str);
 		(yyval.a_expr)->lhs_params = (yyvsp[-3].a_plist);
 	}
-#line 2627 "asn1p_y.c"
+#line 3375 "asn1p_y.c"
     break;
 
   case 71: /* ParameterArgumentList: ParameterArgumentName  */
-#line 931 "asn1p_y.y"
+#line 952 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                               {
 		int ret;
 		(yyval.a_plist) = asn1p_paramlist_new(asn1p_get_lineno(yyscanner));
@@ -2635,61 +3383,61 @@ yyreduce:
 		ret = asn1p_paramlist_add_param((yyval.a_plist), (yyvsp[0].a_parg).governor, (yyvsp[0].a_parg).argument);
 		checkmem(ret == 0);
 		asn1p_ref_free((yyvsp[0].a_parg).governor);
-		free((yyvsp[0].a_parg).argument);
+		asn1p_mem_free((yyvsp[0].a_parg).argument);
 	}
-#line 2641 "asn1p_y.c"
+#line 3389 "asn1p_y.c"
     break;
 
   case 72: /* ParameterArgumentList: ParameterArgumentList ',' ParameterArgumentName  */
-#line 940 "asn1p_y.y"
+#line 961 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                           {
 		int ret;
 		(yyval.a_plist) = (yyvsp[-2].a_plist);
 		ret = asn1p_paramlist_add_param((yyval.a_plist), (yyvsp[0].a_parg).governor, (yyvsp[0].a_parg).argument);
 		checkmem(ret == 0);
 		asn1p_ref_free((yyvsp[0].a_parg).governor);
-		free((yyvsp[0].a_parg).argument);
+		asn1p_mem_free((yyvsp[0].a_parg).argument);
 	}
-#line 2654 "asn1p_y.c"
+#line 3402 "asn1p_y.c"
     break;
 
   case 73: /* ParameterArgumentName: TypeRefName  */
-#line 951 "asn1p_y.y"
+#line 972 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                     {
 		(yyval.a_parg).governor = NULL;
 		(yyval.a_parg).argument = (yyvsp[0].tv_str);
 	}
-#line 2663 "asn1p_y.c"
+#line 3411 "asn1p_y.c"
     break;
 
   case 74: /* ParameterArgumentName: TypeRefName ':' Identifier  */
-#line 955 "asn1p_y.y"
+#line 976 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                      {
 		int ret;
 		(yyval.a_parg).governor = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		ret = asn1p_ref_add_component((yyval.a_parg).governor, (yyvsp[-2].tv_str), 0);
 		checkmem(ret == 0);
 		(yyval.a_parg).argument = (yyvsp[0].tv_str);
-		free((yyvsp[-2].tv_str));
+		asn1p_mem_free((yyvsp[-2].tv_str));
 	}
-#line 2676 "asn1p_y.c"
+#line 3424 "asn1p_y.c"
     break;
 
   case 75: /* ParameterArgumentName: TypeRefName ':' TypeRefName  */
-#line 963 "asn1p_y.y"
+#line 984 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                       {
 		int ret;
 		(yyval.a_parg).governor = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		ret = asn1p_ref_add_component((yyval.a_parg).governor, (yyvsp[-2].tv_str), 0);
 		checkmem(ret == 0);
 		(yyval.a_parg).argument = (yyvsp[0].tv_str);
-		free((yyvsp[-2].tv_str));
+		asn1p_mem_free((yyvsp[-2].tv_str));
 	}
-#line 2689 "asn1p_y.c"
+#line 3437 "asn1p_y.c"
     break;
 
   case 76: /* ParameterArgumentName: BasicTypeId ':' Identifier  */
-#line 971 "asn1p_y.y"
+#line 992 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                      {
 		int ret;
 		(yyval.a_parg).governor = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
@@ -2698,11 +3446,11 @@ yyreduce:
 		checkmem(ret == 0);
 		(yyval.a_parg).argument = (yyvsp[0].tv_str);
 	}
-#line 2702 "asn1p_y.c"
+#line 3450 "asn1p_y.c"
     break;
 
   case 77: /* ParameterArgumentName: BasicTypeId ':' TypeRefName  */
-#line 979 "asn1p_y.y"
+#line 1000 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                       {
 		int ret;
 		(yyval.a_parg).governor = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
@@ -2711,108 +3459,108 @@ yyreduce:
 		checkmem(ret == 0);
 		(yyval.a_parg).argument = (yyvsp[0].tv_str);
 	}
-#line 2715 "asn1p_y.c"
+#line 3463 "asn1p_y.c"
     break;
 
   case 78: /* ActualParameterList: ActualParameter  */
-#line 990 "asn1p_y.y"
+#line 1011 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                         {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
 		asn1p_expr_add((yyval.a_expr), (yyvsp[0].a_expr));
 	}
-#line 2725 "asn1p_y.c"
+#line 3473 "asn1p_y.c"
     break;
 
   case 79: /* ActualParameterList: ActualParameterList ',' ActualParameter  */
-#line 995 "asn1p_y.y"
+#line 1016 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                   {
 		(yyval.a_expr) = (yyvsp[-2].a_expr);
 		asn1p_expr_add((yyval.a_expr), (yyvsp[0].a_expr));
 	}
-#line 2734 "asn1p_y.c"
+#line 3482 "asn1p_y.c"
     break;
 
   case 81: /* ActualParameter: SimpleValue  */
-#line 1003 "asn1p_y.y"
+#line 1024 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                       {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
-		(yyval.a_expr)->Identifier = strdup("?");
+		(yyval.a_expr)->Identifier = asn1p_mem_strdup("?");
 		(yyval.a_expr)->expr_type = A1TC_REFERENCE;
 		(yyval.a_expr)->meta_type = AMT_VALUE;
 		(yyval.a_expr)->value = (yyvsp[0].a_value);
 	}
-#line 2747 "asn1p_y.c"
+#line 3495 "asn1p_y.c"
     break;
 
   case 82: /* ActualParameter: DefinedValue  */
-#line 1011 "asn1p_y.y"
+#line 1032 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                        {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
-		(yyval.a_expr)->Identifier = strdup("?");
+		(yyval.a_expr)->Identifier = asn1p_mem_strdup("?");
 		(yyval.a_expr)->expr_type = A1TC_REFERENCE;
 		(yyval.a_expr)->meta_type = AMT_VALUE;
 		(yyval.a_expr)->value = (yyvsp[0].a_value);
 	}
-#line 2760 "asn1p_y.c"
+#line 3508 "asn1p_y.c"
     break;
 
   case 83: /* ActualParameter: ValueSet  */
-#line 1019 "asn1p_y.y"
+#line 1040 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                    {
 		(yyval.a_expr) = NEW_EXPR();
 		(yyval.a_expr)->expr_type = A1TC_VALUESET;
 		(yyval.a_expr)->meta_type = AMT_VALUESET;
 		(yyval.a_expr)->constraints = (yyvsp[0].a_constr);
 	}
-#line 2771 "asn1p_y.c"
+#line 3519 "asn1p_y.c"
     break;
 
   case 84: /* optComponentTypeLists: %empty  */
-#line 1042 "asn1p_y.y"
+#line 1063 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
         { (yyval.a_expr) = NEW_EXPR(); }
-#line 2777 "asn1p_y.c"
+#line 3525 "asn1p_y.c"
     break;
 
   case 85: /* optComponentTypeLists: ComponentTypeLists  */
-#line 1043 "asn1p_y.y"
+#line 1064 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                              { (yyval.a_expr) = (yyvsp[0].a_expr); }
-#line 2783 "asn1p_y.c"
+#line 3531 "asn1p_y.c"
     break;
 
   case 86: /* ComponentTypeLists: ComponentType  */
-#line 1046 "asn1p_y.y"
+#line 1067 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                       {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
 		asn1p_expr_add((yyval.a_expr), (yyvsp[0].a_expr));
 	}
-#line 2793 "asn1p_y.c"
+#line 3541 "asn1p_y.c"
     break;
 
   case 87: /* ComponentTypeLists: ComponentTypeLists ',' ComponentType  */
-#line 1051 "asn1p_y.y"
+#line 1072 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                {
 		(yyval.a_expr) = (yyvsp[-2].a_expr);
 		asn1p_expr_add((yyval.a_expr), (yyvsp[0].a_expr));
 	}
-#line 2802 "asn1p_y.c"
+#line 3550 "asn1p_y.c"
     break;
 
   case 88: /* ComponentTypeLists: ComponentTypeLists ',' TOK_VBracketLeft ComponentTypeLists TOK_VBracketRight  */
-#line 1055 "asn1p_y.y"
+#line 1076 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                                                        {
 		(yyval.a_expr) = (yyvsp[-4].a_expr);
 		asn1p_expr_add_many((yyval.a_expr), (yyvsp[-1].a_expr));
 		asn1p_expr_free((yyvsp[-1].a_expr));
 	}
-#line 2812 "asn1p_y.c"
+#line 3560 "asn1p_y.c"
     break;
 
   case 89: /* ComponentType: Identifier MaybeIndirectTaggedType optMarker  */
-#line 1063 "asn1p_y.y"
+#line 1084 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                      {
 		(yyval.a_expr) = (yyvsp[-1].a_expr);
 		assert((yyval.a_expr)->Identifier == 0);
@@ -2820,22 +3568,22 @@ yyreduce:
 		(yyvsp[0].a_marker).flags |= (yyval.a_expr)->marker.flags;
 		(yyval.a_expr)->marker = (yyvsp[0].a_marker);
 	}
-#line 2824 "asn1p_y.c"
+#line 3572 "asn1p_y.c"
     break;
 
   case 90: /* ComponentType: MaybeIndirectTaggedType optMarker  */
-#line 1070 "asn1p_y.y"
+#line 1091 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                             {
 		(yyval.a_expr) = (yyvsp[-1].a_expr);
 		(yyvsp[0].a_marker).flags |= (yyval.a_expr)->marker.flags;
 		(yyval.a_expr)->marker = (yyvsp[0].a_marker);
-		_fixup_anonymous_identifier((yyval.a_expr), yyscanner);
+		_fixup_anonymous_identifier(ctx, (yyval.a_expr), yyscanner);
 	}
-#line 2835 "asn1p_y.c"
+#line 3583 "asn1p_y.c"
     break;
 
   case 91: /* ComponentType: TOK_COMPONENTS TOK_OF MaybeIndirectTaggedType  */
-#line 1076 "asn1p_y.y"
+#line 1097 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                         {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -2843,65 +3591,65 @@ yyreduce:
 		(yyval.a_expr)->expr_type = A1TC_COMPONENTS_OF;
 		asn1p_expr_add((yyval.a_expr), (yyvsp[0].a_expr));
 	}
-#line 2847 "asn1p_y.c"
+#line 3595 "asn1p_y.c"
     break;
 
   case 92: /* ComponentType: ExtensionAndException  */
-#line 1083 "asn1p_y.y"
+#line 1104 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                 {
 		(yyval.a_expr) = (yyvsp[0].a_expr);
 	}
-#line 2855 "asn1p_y.c"
+#line 3603 "asn1p_y.c"
     break;
 
   case 93: /* AlternativeTypeLists: AlternativeType  */
-#line 1089 "asn1p_y.y"
+#line 1110 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                         {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
 		asn1p_expr_add((yyval.a_expr), (yyvsp[0].a_expr));
 	}
-#line 2865 "asn1p_y.c"
+#line 3613 "asn1p_y.c"
     break;
 
   case 94: /* AlternativeTypeLists: AlternativeTypeLists ',' AlternativeType  */
-#line 1094 "asn1p_y.y"
+#line 1115 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                    {
 		(yyval.a_expr) = (yyvsp[-2].a_expr);
 		asn1p_expr_add((yyval.a_expr), (yyvsp[0].a_expr));
 	}
-#line 2874 "asn1p_y.c"
+#line 3622 "asn1p_y.c"
     break;
 
   case 95: /* AlternativeType: Identifier MaybeIndirectTaggedType  */
-#line 1101 "asn1p_y.y"
+#line 1122 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                            {
 		(yyval.a_expr) = (yyvsp[0].a_expr);
 		assert((yyval.a_expr)->Identifier == 0);
 		(yyval.a_expr)->Identifier = (yyvsp[-1].tv_str);
 	}
-#line 2884 "asn1p_y.c"
+#line 3632 "asn1p_y.c"
     break;
 
   case 96: /* AlternativeType: ExtensionAndException  */
-#line 1106 "asn1p_y.y"
+#line 1127 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                 {
 		(yyval.a_expr) = (yyvsp[0].a_expr);
 	}
-#line 2892 "asn1p_y.c"
+#line 3640 "asn1p_y.c"
     break;
 
   case 97: /* AlternativeType: MaybeIndirectTaggedType  */
-#line 1109 "asn1p_y.y"
+#line 1130 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                   {
 		(yyval.a_expr) = (yyvsp[0].a_expr);
-		_fixup_anonymous_identifier((yyval.a_expr), yyscanner);
+		_fixup_anonymous_identifier(ctx, (yyval.a_expr), yyscanner);
 	}
-#line 2901 "asn1p_y.c"
+#line 3649 "asn1p_y.c"
     break;
 
   case 98: /* ObjectClass: TOK_CLASS '{' FieldSpec '}' optWithSyntax  */
-#line 1116 "asn1p_y.y"
+#line 1137 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                   {
 		(yyval.a_expr) = (yyvsp[-2].a_expr);
 		checkmem((yyval.a_expr));
@@ -2909,23 +3657,23 @@ yyreduce:
 		assert((yyval.a_expr)->expr_type == A1TC_CLASSDEF);
 		assert((yyval.a_expr)->meta_type == AMT_OBJECTCLASS);
 	}
-#line 2913 "asn1p_y.c"
+#line 3661 "asn1p_y.c"
     break;
 
   case 99: /* optUNIQUE: %empty  */
-#line 1126 "asn1p_y.y"
+#line 1147 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
         { (yyval.a_int) = 0; }
-#line 2919 "asn1p_y.c"
+#line 3667 "asn1p_y.c"
     break;
 
   case 100: /* optUNIQUE: TOK_UNIQUE  */
-#line 1127 "asn1p_y.y"
+#line 1148 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                      { (yyval.a_int) = 1; }
-#line 2925 "asn1p_y.c"
+#line 3673 "asn1p_y.c"
     break;
 
   case 101: /* FieldSpec: ClassField  */
-#line 1131 "asn1p_y.y"
+#line 1152 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                    {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -2933,20 +3681,20 @@ yyreduce:
 		(yyval.a_expr)->meta_type = AMT_OBJECTCLASS;
 		asn1p_expr_add((yyval.a_expr), (yyvsp[0].a_expr));
 	}
-#line 2937 "asn1p_y.c"
+#line 3685 "asn1p_y.c"
     break;
 
   case 102: /* FieldSpec: FieldSpec ',' ClassField  */
-#line 1138 "asn1p_y.y"
+#line 1159 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                    {
 		(yyval.a_expr) = (yyvsp[-2].a_expr);
 		asn1p_expr_add((yyval.a_expr), (yyvsp[0].a_expr));
 	}
-#line 2946 "asn1p_y.c"
+#line 3694 "asn1p_y.c"
     break;
 
   case 103: /* ClassField: TOK_typefieldreference optMarker  */
-#line 1148 "asn1p_y.y"
+#line 1169 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                          {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -2955,11 +3703,11 @@ yyreduce:
 		(yyval.a_expr)->expr_type = A1TC_CLASSFIELD_TFS;	/* TypeFieldSpec */
 		(yyval.a_expr)->marker = (yyvsp[0].a_marker);
 	}
-#line 2959 "asn1p_y.c"
+#line 3707 "asn1p_y.c"
     break;
 
   case 104: /* ClassField: TOK_valuefieldreference Type optUNIQUE optMarker  */
-#line 1158 "asn1p_y.y"
+#line 1179 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                            {
 		(yyval.a_expr) = NEW_EXPR();
 		(yyval.a_expr)->Identifier = (yyvsp[-3].tv_str);
@@ -2969,11 +3717,11 @@ yyreduce:
 		(yyval.a_expr)->marker = (yyvsp[0].a_marker);
 		asn1p_expr_add((yyval.a_expr), (yyvsp[-2].a_expr));
 	}
-#line 2973 "asn1p_y.c"
+#line 3721 "asn1p_y.c"
     break;
 
   case 105: /* ClassField: TOK_valuefieldreference FieldName optMarker  */
-#line 1169 "asn1p_y.y"
+#line 1190 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                       {
 		(yyval.a_expr) = NEW_EXPR();
 		(yyval.a_expr)->Identifier = (yyvsp[-2].tv_str);
@@ -2982,11 +3730,11 @@ yyreduce:
 		(yyval.a_expr)->reference = (yyvsp[-1].a_ref);
 		(yyval.a_expr)->marker = (yyvsp[0].a_marker);
 	}
-#line 2986 "asn1p_y.c"
+#line 3734 "asn1p_y.c"
     break;
 
   case 106: /* ClassField: TOK_valuefieldreference DefinedObjectClass optMarker  */
-#line 1179 "asn1p_y.y"
+#line 1200 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                                {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -2996,11 +3744,11 @@ yyreduce:
 		(yyval.a_expr)->expr_type = A1TC_CLASSFIELD_OFS;
 		(yyval.a_expr)->marker = (yyvsp[0].a_marker);
 	}
-#line 3000 "asn1p_y.c"
+#line 3748 "asn1p_y.c"
     break;
 
   case 107: /* ClassField: TOK_typefieldreference FieldName optMarker  */
-#line 1190 "asn1p_y.y"
+#line 1211 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                      {
 		(yyval.a_expr) = NEW_EXPR();
 		(yyval.a_expr)->Identifier = (yyvsp[-2].tv_str);
@@ -3009,11 +3757,11 @@ yyreduce:
 		(yyval.a_expr)->reference = (yyvsp[-1].a_ref);
 		(yyval.a_expr)->marker = (yyvsp[0].a_marker);
 	}
-#line 3013 "asn1p_y.c"
+#line 3761 "asn1p_y.c"
     break;
 
   case 108: /* ClassField: TOK_typefieldreference Type optMarker  */
-#line 1200 "asn1p_y.y"
+#line 1221 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                 {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -3023,11 +3771,11 @@ yyreduce:
 		asn1p_expr_add((yyval.a_expr), (yyvsp[-1].a_expr));
 		(yyval.a_expr)->marker = (yyvsp[0].a_marker);
 	}
-#line 3027 "asn1p_y.c"
+#line 3775 "asn1p_y.c"
     break;
 
   case 109: /* ClassField: TOK_typefieldreference DefinedObjectClass optMarker  */
-#line 1211 "asn1p_y.y"
+#line 1232 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                               {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -3037,141 +3785,141 @@ yyreduce:
 		(yyval.a_expr)->expr_type = A1TC_CLASSFIELD_OSFS;
 		(yyval.a_expr)->marker = (yyvsp[0].a_marker);
 	}
-#line 3041 "asn1p_y.c"
+#line 3789 "asn1p_y.c"
     break;
 
   case 110: /* optWithSyntax: %empty  */
-#line 1223 "asn1p_y.y"
+#line 1244 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
         { (yyval.a_wsynt) = 0; }
-#line 3047 "asn1p_y.c"
+#line 3795 "asn1p_y.c"
     break;
 
   case 111: /* optWithSyntax: WithSyntax  */
-#line 1224 "asn1p_y.y"
+#line 1245 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                      {
 		(yyval.a_wsynt) = (yyvsp[0].a_wsynt);
 	}
-#line 3055 "asn1p_y.c"
+#line 3803 "asn1p_y.c"
     break;
 
   case 112: /* $@3: %empty  */
-#line 1231 "asn1p_y.y"
+#line 1252 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                 { asn1p_lexer_hack_enable_with_syntax(yyscanner); }
-#line 3061 "asn1p_y.c"
+#line 3809 "asn1p_y.c"
     break;
 
   case 113: /* WithSyntax: TOK_WITH TOK_SYNTAX '{' $@3 WithSyntaxList '}'  */
-#line 1233 "asn1p_y.y"
+#line 1254 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                     {
 		(yyval.a_wsynt) = (yyvsp[-1].a_wsynt);
 	}
-#line 3069 "asn1p_y.c"
+#line 3817 "asn1p_y.c"
     break;
 
   case 114: /* WithSyntaxList: WithSyntaxToken  */
-#line 1239 "asn1p_y.y"
+#line 1260 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                         {
 		(yyval.a_wsynt) = asn1p_wsyntx_new();
 		TQ_ADD(&((yyval.a_wsynt)->chunks), (yyvsp[0].a_wchunk), next);
 	}
-#line 3078 "asn1p_y.c"
+#line 3826 "asn1p_y.c"
     break;
 
   case 115: /* WithSyntaxList: WithSyntaxList WithSyntaxToken  */
-#line 1243 "asn1p_y.y"
+#line 1264 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                          {
 		(yyval.a_wsynt) = (yyvsp[-1].a_wsynt);
 		TQ_ADD(&((yyval.a_wsynt)->chunks), (yyvsp[0].a_wchunk), next);
 	}
-#line 3087 "asn1p_y.c"
+#line 3835 "asn1p_y.c"
     break;
 
   case 116: /* WithSyntaxToken: TOK_whitespace  */
-#line 1250 "asn1p_y.y"
+#line 1271 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                        {
 		(yyval.a_wchunk) = asn1p_wsyntx_chunk_fromstring((yyvsp[0].tv_opaque).buf, 0);
 		(yyval.a_wchunk)->type = WC_WHITESPACE;
 	}
-#line 3096 "asn1p_y.c"
+#line 3844 "asn1p_y.c"
     break;
 
   case 117: /* WithSyntaxToken: TOK_Literal  */
-#line 1254 "asn1p_y.y"
+#line 1275 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                       {
 		(yyval.a_wchunk) = asn1p_wsyntx_chunk_fromstring((yyvsp[0].tv_str), 0);
 	}
-#line 3104 "asn1p_y.c"
+#line 3852 "asn1p_y.c"
     break;
 
   case 118: /* WithSyntaxToken: PrimitiveFieldReference  */
-#line 1257 "asn1p_y.y"
+#line 1278 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                   {
 		(yyval.a_wchunk) = asn1p_wsyntx_chunk_fromstring((yyvsp[0].a_refcomp).name, 0);
 		(yyval.a_wchunk)->type = WC_FIELD;
 	}
-#line 3113 "asn1p_y.c"
+#line 3861 "asn1p_y.c"
     break;
 
   case 119: /* WithSyntaxToken: '[' WithSyntaxList ']'  */
-#line 1261 "asn1p_y.y"
+#line 1282 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                  {
 		(yyval.a_wchunk) = asn1p_wsyntx_chunk_fromsyntax((yyvsp[-1].a_wsynt));
 	}
-#line 3121 "asn1p_y.c"
+#line 3869 "asn1p_y.c"
     break;
 
   case 120: /* ExtensionAndException: "..."  */
-#line 1267 "asn1p_y.y"
+#line 1288 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                       {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
-		(yyval.a_expr)->Identifier = strdup("...");
+		(yyval.a_expr)->Identifier = asn1p_mem_strdup("...");
 		checkmem((yyval.a_expr)->Identifier);
 		(yyval.a_expr)->expr_type = A1TC_EXTENSIBLE;
 		(yyval.a_expr)->meta_type = AMT_TYPE;
 	}
-#line 3134 "asn1p_y.c"
+#line 3882 "asn1p_y.c"
     break;
 
   case 121: /* ExtensionAndException: "..." '!' DefinedValue  */
-#line 1275 "asn1p_y.y"
+#line 1296 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                          {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
-		(yyval.a_expr)->Identifier = strdup("...");
+		(yyval.a_expr)->Identifier = asn1p_mem_strdup("...");
 		checkmem((yyval.a_expr)->Identifier);
 		(yyval.a_expr)->value = (yyvsp[0].a_value);
 		(yyval.a_expr)->expr_type = A1TC_EXTENSIBLE;
 		(yyval.a_expr)->meta_type = AMT_TYPE;
 	}
-#line 3148 "asn1p_y.c"
+#line 3896 "asn1p_y.c"
     break;
 
   case 122: /* ExtensionAndException: "..." '!' SignedNumber  */
-#line 1284 "asn1p_y.y"
+#line 1305 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                          {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
-		(yyval.a_expr)->Identifier = strdup("...");
+		(yyval.a_expr)->Identifier = asn1p_mem_strdup("...");
 		(yyval.a_expr)->value = (yyvsp[0].a_value);
 		checkmem((yyval.a_expr)->Identifier);
 		(yyval.a_expr)->expr_type = A1TC_EXTENSIBLE;
 		(yyval.a_expr)->meta_type = AMT_TYPE;
 	}
-#line 3162 "asn1p_y.c"
+#line 3910 "asn1p_y.c"
     break;
 
   case 124: /* TaggedType: optTag UntaggedType  */
-#line 1298 "asn1p_y.y"
+#line 1319 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                         {
         (yyval.a_expr) = (yyvsp[0].a_expr);
         (yyval.a_expr)->tag = (yyvsp[-1].a_tag);
     }
-#line 3171 "asn1p_y.c"
+#line 3919 "asn1p_y.c"
     break;
 
   case 125: /* DefinedUntaggedType: DefinedType optManyConstraints  */
-#line 1305 "asn1p_y.y"
+#line 1326 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                        {
 		(yyval.a_expr) = (yyvsp[-1].a_expr);
 		/*
@@ -3192,11 +3940,11 @@ yyreduce:
 			}
 		}
 	}
-#line 3196 "asn1p_y.c"
+#line 3944 "asn1p_y.c"
     break;
 
   case 126: /* UntaggedType: TypeDeclaration optManyConstraints  */
-#line 1328 "asn1p_y.y"
+#line 1349 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                            {
 		(yyval.a_expr) = (yyvsp[-1].a_expr);
 		/*
@@ -3217,11 +3965,11 @@ yyreduce:
 			}
 		}
 	}
-#line 3221 "asn1p_y.c"
+#line 3969 "asn1p_y.c"
     break;
 
   case 127: /* MaybeIndirectTaggedType: optTag MaybeIndirectTypeDeclaration optManyConstraints  */
-#line 1351 "asn1p_y.y"
+#line 1372 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                            {
 		(yyval.a_expr) = (yyvsp[-1].a_expr);
 		(yyval.a_expr)->tag = (yyvsp[-2].a_tag);
@@ -3243,20 +3991,20 @@ yyreduce:
 			}
 		}
 	}
-#line 3247 "asn1p_y.c"
+#line 3995 "asn1p_y.c"
     break;
 
   case 128: /* NSTD_IndirectMarker: %empty  */
-#line 1375 "asn1p_y.y"
+#line 1396 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
         {
 		(yyval.a_int) = asn1p_as_pointer ? EM_INDIRECT : 0;
 		asn1p_as_pointer = 0;
 	}
-#line 3256 "asn1p_y.c"
+#line 4004 "asn1p_y.c"
     break;
 
   case 129: /* MaybeIndirectTypeDeclaration: NSTD_IndirectMarker TypeDeclaration  */
-#line 1382 "asn1p_y.y"
+#line 1403 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                         {
         (yyval.a_expr) = (yyvsp[0].a_expr);
 		(yyval.a_expr)->marker.flags |= (yyvsp[-1].a_int);
@@ -3273,44 +4021,44 @@ yyreduce:
 			);
 		}
     }
-#line 3277 "asn1p_y.c"
+#line 4025 "asn1p_y.c"
     break;
 
   case 133: /* ConcreteTypeDeclaration: TOK_CHOICE '{' AlternativeTypeLists '}'  */
-#line 1406 "asn1p_y.y"
+#line 1427 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                   {
 		(yyval.a_expr) = (yyvsp[-1].a_expr);
 		assert((yyval.a_expr)->expr_type == A1TC_INVALID);
 		(yyval.a_expr)->expr_type = ASN_CONSTR_CHOICE;
 		(yyval.a_expr)->meta_type = AMT_TYPE;
 	}
-#line 3288 "asn1p_y.c"
+#line 4036 "asn1p_y.c"
     break;
 
   case 134: /* ConcreteTypeDeclaration: TOK_SEQUENCE '{' optComponentTypeLists '}'  */
-#line 1412 "asn1p_y.y"
+#line 1433 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                      {
 		(yyval.a_expr) = (yyvsp[-1].a_expr);
 		assert((yyval.a_expr)->expr_type == A1TC_INVALID);
 		(yyval.a_expr)->expr_type = ASN_CONSTR_SEQUENCE;
 		(yyval.a_expr)->meta_type = AMT_TYPE;
 	}
-#line 3299 "asn1p_y.c"
+#line 4047 "asn1p_y.c"
     break;
 
   case 135: /* ConcreteTypeDeclaration: TOK_SET '{' optComponentTypeLists '}'  */
-#line 1418 "asn1p_y.y"
+#line 1439 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                 {
 		(yyval.a_expr) = (yyvsp[-1].a_expr);
 		assert((yyval.a_expr)->expr_type == A1TC_INVALID);
 		(yyval.a_expr)->expr_type = ASN_CONSTR_SET;
 		(yyval.a_expr)->meta_type = AMT_TYPE;
 	}
-#line 3310 "asn1p_y.c"
+#line 4058 "asn1p_y.c"
     break;
 
   case 136: /* ConcreteTypeDeclaration: TOK_SEQUENCE optSizeOrConstraint TOK_OF optIdentifier optTag MaybeIndirectTypeDeclaration  */
-#line 1424 "asn1p_y.y"
+#line 1445 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                                                                     {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -3321,11 +4069,11 @@ yyreduce:
 		(yyvsp[0].a_expr)->tag = (yyvsp[-1].a_tag);
 		asn1p_expr_add((yyval.a_expr), (yyvsp[0].a_expr));
 	}
-#line 3325 "asn1p_y.c"
+#line 4073 "asn1p_y.c"
     break;
 
   case 137: /* ConcreteTypeDeclaration: TOK_SET optSizeOrConstraint TOK_OF optIdentifier optTag MaybeIndirectTypeDeclaration  */
-#line 1434 "asn1p_y.y"
+#line 1455 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                                                                {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -3336,22 +4084,22 @@ yyreduce:
 		(yyvsp[0].a_expr)->tag = (yyvsp[-1].a_tag);
 		asn1p_expr_add((yyval.a_expr), (yyvsp[0].a_expr));
 	}
-#line 3340 "asn1p_y.c"
+#line 4088 "asn1p_y.c"
     break;
 
   case 138: /* ConcreteTypeDeclaration: TOK_ANY  */
-#line 1444 "asn1p_y.y"
+#line 1465 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                         {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
 		(yyval.a_expr)->expr_type = ASN_TYPE_ANY;
 		(yyval.a_expr)->meta_type = AMT_TYPE;
 	}
-#line 3351 "asn1p_y.c"
+#line 4099 "asn1p_y.c"
     break;
 
   case 139: /* ConcreteTypeDeclaration: TOK_ANY TOK_DEFINED TOK_BY Identifier  */
-#line 1450 "asn1p_y.y"
+#line 1471 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                         {
 		int ret;
 		(yyval.a_expr) = NEW_EXPR();
@@ -3362,13 +4110,13 @@ yyreduce:
 		checkmem(ret == 0);
 		(yyval.a_expr)->expr_type = ASN_TYPE_ANY;
 		(yyval.a_expr)->meta_type = AMT_TYPE;
-		free((yyvsp[0].tv_str));
+		asn1p_mem_free((yyvsp[0].tv_str));
 	}
-#line 3368 "asn1p_y.c"
+#line 4116 "asn1p_y.c"
     break;
 
   case 140: /* ConcreteTypeDeclaration: TOK_INSTANCE TOK_OF ComplexTypeReference  */
-#line 1462 "asn1p_y.y"
+#line 1483 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                    {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -3376,37 +4124,37 @@ yyreduce:
 		(yyval.a_expr)->expr_type = A1TC_INSTANCE;
 		(yyval.a_expr)->meta_type = AMT_TYPE;
 	}
-#line 3380 "asn1p_y.c"
+#line 4128 "asn1p_y.c"
     break;
 
   case 141: /* ComplexTypeReference: TOK_typereference  */
-#line 1477 "asn1p_y.y"
+#line 1498 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                           {
 		int ret;
 		(yyval.a_ref) = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		checkmem((yyval.a_ref));
 		ret = asn1p_ref_add_component((yyval.a_ref), (yyvsp[0].tv_str), RLT_UNKNOWN);
 		checkmem(ret == 0);
-		free((yyvsp[0].tv_str));
+		asn1p_mem_free((yyvsp[0].tv_str));
 	}
-#line 3393 "asn1p_y.c"
+#line 4141 "asn1p_y.c"
     break;
 
   case 142: /* ComplexTypeReference: TOK_capitalreference  */
-#line 1485 "asn1p_y.y"
+#line 1506 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                {
 		int ret;
 		(yyval.a_ref) = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		checkmem((yyval.a_ref));
 		ret = asn1p_ref_add_component((yyval.a_ref), (yyvsp[0].tv_str), RLT_CAPITALS);
-		free((yyvsp[0].tv_str));
+		asn1p_mem_free((yyvsp[0].tv_str));
 		checkmem(ret == 0);
 	}
-#line 3406 "asn1p_y.c"
+#line 4154 "asn1p_y.c"
     break;
 
   case 143: /* ComplexTypeReference: TOK_typereference '.' TypeRefName  */
-#line 1493 "asn1p_y.y"
+#line 1514 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                             {
 		int ret;
 		(yyval.a_ref) = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
@@ -3415,14 +4163,14 @@ yyreduce:
 		checkmem(ret == 0);
 		ret = asn1p_ref_add_component((yyval.a_ref), (yyvsp[0].tv_str), RLT_UNKNOWN);
 		checkmem(ret == 0);
-		free((yyvsp[-2].tv_str));
-		free((yyvsp[0].tv_str));
+		asn1p_mem_free((yyvsp[-2].tv_str));
+		asn1p_mem_free((yyvsp[0].tv_str));
 	}
-#line 3422 "asn1p_y.c"
+#line 4170 "asn1p_y.c"
     break;
 
   case 144: /* ComplexTypeReference: TOK_capitalreference '.' TypeRefName  */
-#line 1504 "asn1p_y.y"
+#line 1525 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                {
 		int ret;
 		(yyval.a_ref) = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
@@ -3431,19 +4179,19 @@ yyreduce:
 		checkmem(ret == 0);
 		ret = asn1p_ref_add_component((yyval.a_ref), (yyvsp[0].tv_str), RLT_UNKNOWN);
 		checkmem(ret == 0);
-		free((yyvsp[-2].tv_str));
-		free((yyvsp[0].tv_str));
+		asn1p_mem_free((yyvsp[-2].tv_str));
+		asn1p_mem_free((yyvsp[0].tv_str));
 	}
-#line 3438 "asn1p_y.c"
+#line 4186 "asn1p_y.c"
     break;
 
   case 145: /* ComplexTypeReference: TOK_capitalreference '.' ComplexTypeReferenceAmpList  */
-#line 1515 "asn1p_y.y"
+#line 1536 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                                {
 		int ret;
 		(yyval.a_ref) = (yyvsp[0].a_ref);
 		ret = asn1p_ref_add_component((yyval.a_ref), (yyvsp[-2].tv_str), RLT_CAPITALS);
-		free((yyvsp[-2].tv_str));
+		asn1p_mem_free((yyvsp[-2].tv_str));
 		checkmem(ret == 0);
 		/*
 		 * Move the last element infront.
@@ -3458,94 +4206,94 @@ yyreduce:
 			(yyval.a_ref)->components[0] = tmp_comp;
 		}
 	}
-#line 3462 "asn1p_y.c"
+#line 4210 "asn1p_y.c"
     break;
 
   case 146: /* ComplexTypeReferenceAmpList: ComplexTypeReferenceElement  */
-#line 1537 "asn1p_y.y"
+#line 1558 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                     {
 		int ret;
 		(yyval.a_ref) = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		checkmem((yyval.a_ref));
 		ret = asn1p_ref_add_component((yyval.a_ref), (yyvsp[0].a_refcomp).name, (yyvsp[0].a_refcomp).lex_type);
-		free((yyvsp[0].a_refcomp).name);
+		asn1p_mem_free((yyvsp[0].a_refcomp).name);
 		checkmem(ret == 0);
 	}
-#line 3475 "asn1p_y.c"
+#line 4223 "asn1p_y.c"
     break;
 
   case 147: /* ComplexTypeReferenceAmpList: ComplexTypeReferenceAmpList '.' ComplexTypeReferenceElement  */
-#line 1545 "asn1p_y.y"
+#line 1566 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                                       {
 		int ret;
 		(yyval.a_ref) = (yyvsp[-2].a_ref);
 		ret = asn1p_ref_add_component((yyval.a_ref), (yyvsp[0].a_refcomp).name, (yyvsp[0].a_refcomp).lex_type);
-		free((yyvsp[0].a_refcomp).name);
+		asn1p_mem_free((yyvsp[0].a_refcomp).name);
 		checkmem(ret == 0);
 	}
-#line 3487 "asn1p_y.c"
+#line 4235 "asn1p_y.c"
     break;
 
   case 149: /* PrimitiveFieldReference: TOK_typefieldreference  */
-#line 1558 "asn1p_y.y"
+#line 1579 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                {
 		(yyval.a_refcomp).lex_type = RLT_AmpUppercase;
 		(yyval.a_refcomp).name = (yyvsp[0].tv_str);
 	}
-#line 3496 "asn1p_y.c"
+#line 4244 "asn1p_y.c"
     break;
 
   case 150: /* PrimitiveFieldReference: TOK_valuefieldreference  */
-#line 1563 "asn1p_y.y"
+#line 1584 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                   {
 		(yyval.a_refcomp).lex_type = RLT_Amplowercase;
 		(yyval.a_refcomp).name = (yyvsp[0].tv_str);
 	}
-#line 3505 "asn1p_y.c"
+#line 4253 "asn1p_y.c"
     break;
 
   case 151: /* FieldName: TOK_typefieldreference  */
-#line 1572 "asn1p_y.y"
+#line 1593 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                {
 		(yyval.a_ref) = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		asn1p_ref_add_component((yyval.a_ref), (yyvsp[0].tv_str), RLT_AmpUppercase);
-		free((yyvsp[0].tv_str));
+		asn1p_mem_free((yyvsp[0].tv_str));
 	}
-#line 3515 "asn1p_y.c"
+#line 4263 "asn1p_y.c"
     break;
 
   case 152: /* FieldName: FieldName '.' TOK_typefieldreference  */
-#line 1577 "asn1p_y.y"
+#line 1598 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                {
 		(yyval.a_ref) = (yyval.a_ref);
 		asn1p_ref_add_component((yyval.a_ref), (yyvsp[0].tv_str), RLT_AmpUppercase);
-		free((yyvsp[0].tv_str));
+		asn1p_mem_free((yyvsp[0].tv_str));
 	}
-#line 3525 "asn1p_y.c"
+#line 4273 "asn1p_y.c"
     break;
 
   case 153: /* FieldName: FieldName '.' TOK_valuefieldreference  */
-#line 1582 "asn1p_y.y"
+#line 1603 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                 {
 		(yyval.a_ref) = (yyval.a_ref);
 		asn1p_ref_add_component((yyval.a_ref), (yyvsp[0].tv_str), RLT_Amplowercase);
-		free((yyvsp[0].tv_str));
+		asn1p_mem_free((yyvsp[0].tv_str));
 	}
-#line 3535 "asn1p_y.c"
+#line 4283 "asn1p_y.c"
     break;
 
   case 154: /* DefinedObjectClass: TOK_capitalreference  */
-#line 1590 "asn1p_y.y"
+#line 1611 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                              {
 		(yyval.a_ref) = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		asn1p_ref_add_component((yyval.a_ref), (yyvsp[0].tv_str), RLT_CAPITALS);
-		free((yyvsp[0].tv_str));
+		asn1p_mem_free((yyvsp[0].tv_str));
 	}
-#line 3545 "asn1p_y.c"
+#line 4293 "asn1p_y.c"
     break;
 
   case 155: /* ValueAssignment: Identifier Type TOK_PPEQ Value  */
-#line 1613 "asn1p_y.y"
+#line 1634 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                        {
 		(yyval.a_expr) = (yyvsp[-2].a_expr);
 		assert((yyval.a_expr)->Identifier == NULL);
@@ -3553,57 +4301,57 @@ yyreduce:
 		(yyval.a_expr)->meta_type = AMT_VALUE;
 		(yyval.a_expr)->value = (yyvsp[0].a_value);
 	}
-#line 3557 "asn1p_y.c"
+#line 4305 "asn1p_y.c"
     break;
 
   case 158: /* $@4: %empty  */
-#line 1625 "asn1p_y.y"
+#line 1646 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
               { asn1p_lexer_hack_push_opaque_state(yyscanner); }
-#line 3563 "asn1p_y.c"
+#line 4311 "asn1p_y.c"
     break;
 
   case 159: /* Value: '{' $@4 Opaque  */
-#line 1625 "asn1p_y.y"
+#line 1646 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                                         {
 		(yyval.a_value) = asn1p_value_frombuf((yyvsp[0].tv_opaque).buf, (yyvsp[0].tv_opaque).len, 0);
 		checkmem((yyval.a_value));
 		(yyval.a_value)->type = ATV_UNPARSED;
 	}
-#line 3573 "asn1p_y.c"
+#line 4321 "asn1p_y.c"
     break;
 
   case 160: /* SimpleValue: TOK_NULL  */
-#line 1633 "asn1p_y.y"
+#line 1654 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                  {
 		(yyval.a_value) = asn1p_value_fromint(0);
 		checkmem((yyval.a_value));
 		(yyval.a_value)->type = ATV_NULL;
 	}
-#line 3583 "asn1p_y.c"
+#line 4331 "asn1p_y.c"
     break;
 
   case 161: /* SimpleValue: TOK_FALSE  */
-#line 1638 "asn1p_y.y"
+#line 1659 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                     {
 		(yyval.a_value) = asn1p_value_fromint(0);
 		checkmem((yyval.a_value));
 		(yyval.a_value)->type = ATV_FALSE;
 	}
-#line 3593 "asn1p_y.c"
+#line 4341 "asn1p_y.c"
     break;
 
   case 162: /* SimpleValue: TOK_TRUE  */
-#line 1643 "asn1p_y.y"
+#line 1664 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                    {
 		(yyval.a_value) = asn1p_value_fromint(1);
 		checkmem((yyval.a_value));
 		(yyval.a_value)->type = ATV_TRUE;
 	}
-#line 3603 "asn1p_y.c"
+#line 4351 "asn1p_y.c"
     break;
 
   case 168: /* DefinedValue: TypeRefName '.' Identifier  */
-#line 1656 "asn1p_y.y"
+#line 1677 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                      {
 		asn1p_ref_t *ref;
 		int ret;
@@ -3615,351 +4363,347 @@ yyreduce:
 		checkmem(ret == 0);
 		(yyval.a_value) = asn1p_value_fromref(ref, 0);
 		checkmem((yyval.a_value));
-		free((yyvsp[-2].tv_str));
-		free((yyvsp[0].tv_str));
+		asn1p_mem_free((yyvsp[-2].tv_str));
+		asn1p_mem_free((yyvsp[0].tv_str));
 	}
-#line 3622 "asn1p_y.c"
+#line 4370 "asn1p_y.c"
     break;
 
   case 169: /* RestrictedCharacterStringValue: TOK_cstring  */
-#line 1674 "asn1p_y.y"
+#line 1695 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                     {
 		(yyval.a_value) = asn1p_value_frombuf((yyvsp[0].tv_opaque).buf, (yyvsp[0].tv_opaque).len, 0);
 		checkmem((yyval.a_value));
 	}
-#line 3631 "asn1p_y.c"
+#line 4379 "asn1p_y.c"
     break;
 
   case 170: /* RestrictedCharacterStringValue: TOK_tuple  */
-#line 1678 "asn1p_y.y"
+#line 1699 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                     {
 		(yyval.a_value) = asn1p_value_fromint((yyvsp[0].a_int));
 		checkmem((yyval.a_value));
 		(yyval.a_value)->type = ATV_TUPLE;
 	}
-#line 3641 "asn1p_y.c"
+#line 4389 "asn1p_y.c"
     break;
 
   case 171: /* RestrictedCharacterStringValue: TOK_quadruple  */
-#line 1683 "asn1p_y.y"
+#line 1704 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                         {
 		(yyval.a_value) = asn1p_value_fromint((yyvsp[0].a_int));
 		checkmem((yyval.a_value));
 		(yyval.a_value)->type = ATV_QUADRUPLE;
 	}
-#line 3651 "asn1p_y.c"
+#line 4399 "asn1p_y.c"
     break;
 
   case 172: /* Opaque: OpaqueFirstToken  */
-#line 1691 "asn1p_y.y"
+#line 1712 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                      {
 		(yyval.tv_opaque).len = (yyvsp[0].tv_opaque).len + 1;
-		(yyval.tv_opaque).buf = malloc(1 + (yyval.tv_opaque).len + 1);
+		(yyval.tv_opaque).buf = asn1p_mem_alloc(1 + (yyval.tv_opaque).len + 1);
 		checkmem((yyval.tv_opaque).buf);
 		(yyval.tv_opaque).buf[0] = '{';
 		memcpy((yyval.tv_opaque).buf + 1, (yyvsp[0].tv_opaque).buf, (yyvsp[0].tv_opaque).len);
 		(yyval.tv_opaque).buf[(yyval.tv_opaque).len] = '\0';
-		free((yyvsp[0].tv_opaque).buf);
+		asn1p_mem_free((yyvsp[0].tv_opaque).buf);
     }
-#line 3665 "asn1p_y.c"
+#line 4413 "asn1p_y.c"
     break;
 
   case 173: /* Opaque: Opaque TOK_opaque  */
-#line 1700 "asn1p_y.y"
+#line 1721 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                             {
 		int newsize = (yyvsp[-1].tv_opaque).len + (yyvsp[0].tv_opaque).len;
-		char *p = malloc(newsize + 1);
+		char *p = asn1p_mem_alloc(newsize + 1);
 		checkmem(p);
 		memcpy(p         , (yyvsp[-1].tv_opaque).buf, (yyvsp[-1].tv_opaque).len);
 		memcpy(p + (yyvsp[-1].tv_opaque).len, (yyvsp[0].tv_opaque).buf, (yyvsp[0].tv_opaque).len);
 		p[newsize] = '\0';
-		free((yyvsp[-1].tv_opaque).buf);
-		free((yyvsp[0].tv_opaque).buf);
+		asn1p_mem_free((yyvsp[-1].tv_opaque).buf);
+		asn1p_mem_free((yyvsp[0].tv_opaque).buf);
 		(yyval.tv_opaque).buf = p;
 		(yyval.tv_opaque).len = newsize;
 	}
-#line 3682 "asn1p_y.c"
+#line 4430 "asn1p_y.c"
     break;
 
   case 175: /* OpaqueFirstToken: Identifier  */
-#line 1716 "asn1p_y.y"
+#line 1737 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                  {
         (yyval.tv_opaque).len = strlen((yyvsp[0].tv_str));
         (yyval.tv_opaque).buf = (yyvsp[0].tv_str);
     }
-#line 3691 "asn1p_y.c"
+#line 4439 "asn1p_y.c"
     break;
 
   case 176: /* BasicTypeId: TOK_BOOLEAN  */
-#line 1722 "asn1p_y.y"
+#line 1743 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                     { (yyval.a_type) = ASN_BASIC_BOOLEAN; }
-#line 3697 "asn1p_y.c"
+#line 4445 "asn1p_y.c"
     break;
 
   case 177: /* BasicTypeId: TOK_NULL  */
-#line 1723 "asn1p_y.y"
+#line 1744 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                    { (yyval.a_type) = ASN_BASIC_NULL; }
-#line 3703 "asn1p_y.c"
+#line 4451 "asn1p_y.c"
     break;
 
   case 178: /* BasicTypeId: TOK_REAL  */
-#line 1724 "asn1p_y.y"
+#line 1745 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                    { (yyval.a_type) = ASN_BASIC_REAL; }
-#line 3709 "asn1p_y.c"
+#line 4457 "asn1p_y.c"
     break;
 
   case 179: /* BasicTypeId: TOK_OCTET TOK_STRING  */
-#line 1725 "asn1p_y.y"
+#line 1746 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                { (yyval.a_type) = ASN_BASIC_OCTET_STRING; }
-#line 3715 "asn1p_y.c"
+#line 4463 "asn1p_y.c"
     break;
 
   case 180: /* BasicTypeId: TOK_OBJECT TOK_IDENTIFIER  */
-#line 1726 "asn1p_y.y"
+#line 1747 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                     { (yyval.a_type) = ASN_BASIC_OBJECT_IDENTIFIER; }
-#line 3721 "asn1p_y.c"
+#line 4469 "asn1p_y.c"
     break;
 
   case 181: /* BasicTypeId: TOK_RELATIVE_OID  */
-#line 1727 "asn1p_y.y"
+#line 1748 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                            { (yyval.a_type) = ASN_BASIC_RELATIVE_OID; }
-#line 3727 "asn1p_y.c"
+#line 4475 "asn1p_y.c"
     break;
 
   case 182: /* BasicTypeId: TOK_EXTERNAL  */
-#line 1728 "asn1p_y.y"
+#line 1749 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                        { (yyval.a_type) = ASN_BASIC_EXTERNAL; }
-#line 3733 "asn1p_y.c"
+#line 4481 "asn1p_y.c"
     break;
 
   case 183: /* BasicTypeId: TOK_EMBEDDED TOK_PDV  */
-#line 1729 "asn1p_y.y"
+#line 1750 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                { (yyval.a_type) = ASN_BASIC_EMBEDDED_PDV; }
-#line 3739 "asn1p_y.c"
+#line 4487 "asn1p_y.c"
     break;
 
   case 184: /* BasicTypeId: TOK_CHARACTER TOK_STRING  */
-#line 1730 "asn1p_y.y"
+#line 1751 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                    { (yyval.a_type) = ASN_BASIC_CHARACTER_STRING; }
-#line 3745 "asn1p_y.c"
+#line 4493 "asn1p_y.c"
     break;
 
   case 185: /* BasicTypeId: TOK_UTCTime  */
-#line 1731 "asn1p_y.y"
+#line 1752 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                       { (yyval.a_type) = ASN_BASIC_UTCTime; }
-#line 3751 "asn1p_y.c"
+#line 4499 "asn1p_y.c"
     break;
 
   case 186: /* BasicTypeId: TOK_GeneralizedTime  */
-#line 1732 "asn1p_y.y"
+#line 1753 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                               { (yyval.a_type) = ASN_BASIC_GeneralizedTime; }
-#line 3757 "asn1p_y.c"
+#line 4505 "asn1p_y.c"
     break;
 
   case 189: /* BasicTypeId_UniverationCompatible: TOK_INTEGER  */
-#line 1741 "asn1p_y.y"
+#line 1762 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                     { (yyval.a_type) = ASN_BASIC_INTEGER; }
-#line 3763 "asn1p_y.c"
+#line 4511 "asn1p_y.c"
     break;
 
   case 190: /* BasicTypeId_UniverationCompatible: TOK_ENUMERATED  */
-#line 1742 "asn1p_y.y"
+#line 1763 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                          { (yyval.a_type) = ASN_BASIC_ENUMERATED; }
-#line 3769 "asn1p_y.c"
+#line 4517 "asn1p_y.c"
     break;
 
   case 191: /* BasicTypeId_UniverationCompatible: TOK_BIT TOK_STRING  */
-#line 1743 "asn1p_y.y"
+#line 1764 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                              { (yyval.a_type) = ASN_BASIC_BIT_STRING; }
-#line 3775 "asn1p_y.c"
+#line 4523 "asn1p_y.c"
     break;
 
   case 192: /* BuiltinType: BasicTypeId  */
-#line 1747 "asn1p_y.y"
+#line 1768 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                     {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
 		(yyval.a_expr)->expr_type = (yyvsp[0].a_type);
 		(yyval.a_expr)->meta_type = AMT_TYPE;
 	}
-#line 3786 "asn1p_y.c"
+#line 4534 "asn1p_y.c"
     break;
 
   case 193: /* BuiltinType: TOK_INTEGER '{' NamedNumberList '}'  */
-#line 1753 "asn1p_y.y"
+#line 1774 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                           {
         (yyval.a_expr) = (yyvsp[-1].a_expr);
         (yyval.a_expr)->expr_type = ASN_BASIC_INTEGER;
         (yyval.a_expr)->meta_type = AMT_TYPE;
     }
-#line 3796 "asn1p_y.c"
+#line 4544 "asn1p_y.c"
     break;
 
   case 194: /* BuiltinType: TOK_ENUMERATED '{' Enumerations '}'  */
-#line 1758 "asn1p_y.y"
+#line 1779 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                           {
         (yyval.a_expr) = (yyvsp[-1].a_expr);
         (yyval.a_expr)->expr_type = ASN_BASIC_ENUMERATED;
         (yyval.a_expr)->meta_type = AMT_TYPE;
     }
-#line 3806 "asn1p_y.c"
+#line 4554 "asn1p_y.c"
     break;
 
   case 195: /* BuiltinType: TOK_BIT TOK_STRING '{' NamedBitList '}'  */
-#line 1763 "asn1p_y.y"
+#line 1784 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                               {
         (yyval.a_expr) = (yyvsp[-1].a_expr);
         (yyval.a_expr)->expr_type = ASN_BASIC_BIT_STRING;
         (yyval.a_expr)->meta_type = AMT_TYPE;
     }
-#line 3816 "asn1p_y.c"
+#line 4564 "asn1p_y.c"
     break;
 
   case 196: /* BuiltinType: TOK_ExtValue_BIT_STRING '{' IdentifierList '}'  */
-#line 1768 "asn1p_y.y"
+#line 1789 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                      {
         (yyval.a_expr) = (yyvsp[-1].a_expr);
         (yyval.a_expr)->expr_type = ASN_BASIC_BIT_STRING;
         (yyval.a_expr)->meta_type = AMT_TYPE;
     }
-#line 3826 "asn1p_y.c"
+#line 4574 "asn1p_y.c"
     break;
 
   case 197: /* BuiltinType: TOK_ExtValue_BIT_STRING '{' '}'  */
-#line 1773 "asn1p_y.y"
+#line 1794 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                       {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
         (yyval.a_expr)->expr_type = ASN_BASIC_BIT_STRING;
         (yyval.a_expr)->meta_type = AMT_TYPE;
     }
-#line 3837 "asn1p_y.c"
+#line 4585 "asn1p_y.c"
     break;
 
   case 198: /* BasicString: TOK_BMPString  */
-#line 1782 "asn1p_y.y"
+#line 1803 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                       { (yyval.a_type) = ASN_STRING_BMPString; }
-#line 3843 "asn1p_y.c"
+#line 4591 "asn1p_y.c"
     break;
 
   case 199: /* BasicString: TOK_GeneralString  */
-#line 1783 "asn1p_y.y"
+#line 1804 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                             {
 		(yyval.a_type) = ASN_STRING_GeneralString;
-		fprintf(stderr, "WARNING: GeneralString is not fully supported\n");
 	}
-#line 3852 "asn1p_y.c"
+#line 4599 "asn1p_y.c"
     break;
 
   case 200: /* BasicString: TOK_GraphicString  */
-#line 1787 "asn1p_y.y"
+#line 1807 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                             {
 		(yyval.a_type) = ASN_STRING_GraphicString;
-		fprintf(stderr, "WARNING: GraphicString is not fully supported\n");
 	}
-#line 3861 "asn1p_y.c"
+#line 4607 "asn1p_y.c"
     break;
 
   case 201: /* BasicString: TOK_IA5String  */
-#line 1791 "asn1p_y.y"
+#line 1810 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                         { (yyval.a_type) = ASN_STRING_IA5String; }
-#line 3867 "asn1p_y.c"
+#line 4613 "asn1p_y.c"
     break;
 
   case 202: /* BasicString: TOK_ISO646String  */
-#line 1792 "asn1p_y.y"
+#line 1811 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                            { (yyval.a_type) = ASN_STRING_ISO646String; }
-#line 3873 "asn1p_y.c"
+#line 4619 "asn1p_y.c"
     break;
 
   case 203: /* BasicString: TOK_NumericString  */
-#line 1793 "asn1p_y.y"
+#line 1812 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                             { (yyval.a_type) = ASN_STRING_NumericString; }
-#line 3879 "asn1p_y.c"
+#line 4625 "asn1p_y.c"
     break;
 
   case 204: /* BasicString: TOK_PrintableString  */
-#line 1794 "asn1p_y.y"
+#line 1813 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                               { (yyval.a_type) = ASN_STRING_PrintableString; }
-#line 3885 "asn1p_y.c"
+#line 4631 "asn1p_y.c"
     break;
 
   case 205: /* BasicString: TOK_T61String  */
-#line 1795 "asn1p_y.y"
+#line 1814 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                         {
 		(yyval.a_type) = ASN_STRING_T61String;
-		fprintf(stderr, "WARNING: T61String is not fully supported\n");
 	}
-#line 3894 "asn1p_y.c"
+#line 4639 "asn1p_y.c"
     break;
 
   case 206: /* BasicString: TOK_TeletexString  */
-#line 1799 "asn1p_y.y"
+#line 1817 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                             { (yyval.a_type) = ASN_STRING_TeletexString; }
-#line 3900 "asn1p_y.c"
+#line 4645 "asn1p_y.c"
     break;
 
   case 207: /* BasicString: TOK_UniversalString  */
-#line 1800 "asn1p_y.y"
+#line 1818 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                               { (yyval.a_type) = ASN_STRING_UniversalString; }
-#line 3906 "asn1p_y.c"
+#line 4651 "asn1p_y.c"
     break;
 
   case 208: /* BasicString: TOK_UTF8String  */
-#line 1801 "asn1p_y.y"
+#line 1819 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                          { (yyval.a_type) = ASN_STRING_UTF8String; }
-#line 3912 "asn1p_y.c"
+#line 4657 "asn1p_y.c"
     break;
 
   case 209: /* BasicString: TOK_VideotexString  */
-#line 1802 "asn1p_y.y"
+#line 1820 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                              {
 		(yyval.a_type) = ASN_STRING_VideotexString;
-		fprintf(stderr, "WARNING: VideotexString is not fully supported\n");
 	}
-#line 3921 "asn1p_y.c"
+#line 4665 "asn1p_y.c"
     break;
 
   case 210: /* BasicString: TOK_VisibleString  */
-#line 1806 "asn1p_y.y"
+#line 1823 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                             { (yyval.a_type) = ASN_STRING_VisibleString; }
-#line 3927 "asn1p_y.c"
+#line 4671 "asn1p_y.c"
     break;
 
   case 211: /* BasicString: TOK_ObjectDescriptor  */
-#line 1807 "asn1p_y.y"
+#line 1824 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                { (yyval.a_type) = ASN_STRING_ObjectDescriptor; }
-#line 3933 "asn1p_y.c"
+#line 4677 "asn1p_y.c"
     break;
 
   case 216: /* optConstraint: %empty  */
-#line 1819 "asn1p_y.y"
+#line 1836 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
         { (yyval.a_constr) = 0; }
-#line 3939 "asn1p_y.c"
+#line 4683 "asn1p_y.c"
     break;
 
   case 218: /* optManyConstraints: %empty  */
-#line 1824 "asn1p_y.y"
+#line 1841 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
         { (yyval.a_constr) = 0; }
-#line 3945 "asn1p_y.c"
+#line 4689 "asn1p_y.c"
     break;
 
   case 220: /* optSizeOrConstraint: %empty  */
-#line 1829 "asn1p_y.y"
+#line 1846 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
         { (yyval.a_constr) = 0; }
-#line 3951 "asn1p_y.c"
+#line 4695 "asn1p_y.c"
     break;
 
   case 223: /* Constraint: '(' ConstraintSpec ')'  */
-#line 1835 "asn1p_y.y"
+#line 1852 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                            {
 		CONSTRAINT_INSERT((yyval.a_constr), ACT_CA_SET, (yyvsp[-1].a_constr), 0);
     }
-#line 3959 "asn1p_y.c"
+#line 4703 "asn1p_y.c"
     break;
 
   case 225: /* ManyConstraints: ManyConstraints Constraint  */
-#line 1842 "asn1p_y.y"
+#line 1859 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                      {
         if((yyvsp[0].a_constr)->type == ACT_CA_SET && (yyvsp[0].a_constr)->el_count == 1) {
             CONSTRAINT_INSERT((yyval.a_constr), ACT_CA_SET, (yyvsp[-1].a_constr), (yyvsp[0].a_constr)->elements[0]);
@@ -3967,31 +4711,31 @@ yyreduce:
             CONSTRAINT_INSERT((yyval.a_constr), ACT_CA_SET, (yyvsp[-1].a_constr), (yyvsp[0].a_constr));
         }
 	}
-#line 3971 "asn1p_y.c"
+#line 4715 "asn1p_y.c"
     break;
 
   case 229: /* ElementSetSpecs: "..."  */
-#line 1856 "asn1p_y.y"
+#line 1873 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                        {
 		(yyval.a_constr) = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
 		(yyval.a_constr)->type = ACT_EL_EXT;
 	}
-#line 3980 "asn1p_y.c"
+#line 4724 "asn1p_y.c"
     break;
 
   case 231: /* ElementSetSpecs: ElementSetSpec ',' "..."  */
-#line 1861 "asn1p_y.y"
+#line 1878 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                       {
        asn1p_constraint_t *ct;
        ct = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
        ct->type = ACT_EL_EXT;
        CONSTRAINT_INSERT((yyval.a_constr), ACT_CA_CSV, (yyvsp[-2].a_constr), ct);
    }
-#line 3991 "asn1p_y.c"
+#line 4735 "asn1p_y.c"
     break;
 
   case 232: /* ElementSetSpecs: ElementSetSpec ',' "..." ',' ElementSetSpec  */
-#line 1867 "asn1p_y.y"
+#line 1884 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                          {
        asn1p_constraint_t *ct;
        ct = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
@@ -4000,43 +4744,43 @@ yyreduce:
        ct = (yyval.a_constr);
        CONSTRAINT_INSERT((yyval.a_constr), ACT_CA_CSV, ct, (yyvsp[0].a_constr));
    }
-#line 4004 "asn1p_y.c"
+#line 4748 "asn1p_y.c"
     break;
 
   case 234: /* ElementSetSpec: TOK_ALL TOK_EXCEPT Elements  */
-#line 1879 "asn1p_y.y"
+#line 1896 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                       {
 		CONSTRAINT_INSERT((yyval.a_constr), ACT_CA_AEX, (yyvsp[0].a_constr), 0);
 	}
-#line 4012 "asn1p_y.c"
+#line 4756 "asn1p_y.c"
     break;
 
   case 236: /* Unions: Unions UnionMark Intersections  */
-#line 1886 "asn1p_y.y"
+#line 1903 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                          {
 		CONSTRAINT_INSERT((yyval.a_constr), ACT_CA_UNI, (yyvsp[-2].a_constr), (yyvsp[0].a_constr));
 	}
-#line 4020 "asn1p_y.c"
+#line 4764 "asn1p_y.c"
     break;
 
   case 238: /* Intersections: Intersections IntersectionMark IntersectionElements  */
-#line 1893 "asn1p_y.y"
+#line 1910 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                                {
 		CONSTRAINT_INSERT((yyval.a_constr), ACT_CA_INT, (yyvsp[-2].a_constr), (yyvsp[0].a_constr));
 	}
-#line 4028 "asn1p_y.c"
+#line 4772 "asn1p_y.c"
     break;
 
   case 240: /* IntersectionElements: Elements TOK_EXCEPT Elements  */
-#line 1901 "asn1p_y.y"
+#line 1918 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                        {
 		CONSTRAINT_INSERT((yyval.a_constr), ACT_CA_EXC, (yyvsp[-2].a_constr), (yyvsp[0].a_constr));
 	}
-#line 4036 "asn1p_y.c"
+#line 4780 "asn1p_y.c"
     break;
 
   case 242: /* Elements: '(' ElementSetSpec ')'  */
-#line 1908 "asn1p_y.y"
+#line 1925 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                              {
         int ret;
         (yyval.a_constr) = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
@@ -4045,59 +4789,59 @@ yyreduce:
         ret = asn1p_constraint_insert((yyval.a_constr), (yyvsp[-1].a_constr));
         checkmem(ret == 0);
     }
-#line 4049 "asn1p_y.c"
+#line 4793 "asn1p_y.c"
     break;
 
   case 243: /* SubtypeElements: SingleValue  */
-#line 1919 "asn1p_y.y"
+#line 1936 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                     {
 		(yyval.a_constr) = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
 		checkmem((yyval.a_constr));
 		(yyval.a_constr)->type = ACT_EL_VALUE;
 		(yyval.a_constr)->value = (yyvsp[0].a_value);
 	}
-#line 4060 "asn1p_y.c"
+#line 4804 "asn1p_y.c"
     break;
 
   case 244: /* SubtypeElements: ContainedSubtype  */
-#line 1925 "asn1p_y.y"
+#line 1942 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                            {
 		(yyval.a_constr) = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
 		checkmem((yyval.a_constr));
 		(yyval.a_constr)->type = ACT_EL_TYPE;
 		(yyval.a_constr)->containedSubtype = (yyvsp[0].a_value);
 	}
-#line 4071 "asn1p_y.c"
+#line 4815 "asn1p_y.c"
     break;
 
   case 250: /* PermittedAlphabet: TOK_FROM Constraint  */
-#line 1941 "asn1p_y.y"
+#line 1958 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                             {
 		CONSTRAINT_INSERT((yyval.a_constr), ACT_CT_FROM, (yyvsp[0].a_constr), 0);
 	}
-#line 4079 "asn1p_y.c"
+#line 4823 "asn1p_y.c"
     break;
 
   case 251: /* SizeConstraint: TOK_SIZE Constraint  */
-#line 1946 "asn1p_y.y"
+#line 1963 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                             {
 		CONSTRAINT_INSERT((yyval.a_constr), ACT_CT_SIZE, (yyvsp[0].a_constr), 0);
 	}
-#line 4087 "asn1p_y.c"
+#line 4831 "asn1p_y.c"
     break;
 
   case 252: /* PatternConstraint: TOK_PATTERN TOK_cstring  */
-#line 1951 "asn1p_y.y"
+#line 1968 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                 {
 		(yyval.a_constr) = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
 		(yyval.a_constr)->type = ACT_CT_PATTERN;
 		(yyval.a_constr)->value = asn1p_value_frombuf((yyvsp[0].tv_opaque).buf, (yyvsp[0].tv_opaque).len, 0);
 	}
-#line 4097 "asn1p_y.c"
+#line 4841 "asn1p_y.c"
     break;
 
   case 253: /* PatternConstraint: TOK_PATTERN Identifier  */
-#line 1956 "asn1p_y.y"
+#line 1973 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                  {
 		asn1p_ref_t *ref;
 		(yyval.a_constr) = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
@@ -4105,13 +4849,13 @@ yyreduce:
 		ref = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		asn1p_ref_add_component(ref, (yyvsp[0].tv_str), RLT_lowercase);
 		(yyval.a_constr)->value = asn1p_value_fromref(ref, 0);
-		free((yyvsp[0].tv_str));
+		asn1p_mem_free((yyvsp[0].tv_str));
 	}
-#line 4111 "asn1p_y.c"
+#line 4855 "asn1p_y.c"
     break;
 
   case 254: /* ValueRange: LowerEndValue ConstraintRangeSpec UpperEndValue  */
-#line 1968 "asn1p_y.y"
+#line 1985 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                     {
 		(yyval.a_constr) = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
 		checkmem((yyval.a_constr));
@@ -4119,129 +4863,131 @@ yyreduce:
 		(yyval.a_constr)->range_start = (yyvsp[-2].a_value);
 		(yyval.a_constr)->range_stop = (yyvsp[0].a_value);
     }
-#line 4123 "asn1p_y.c"
+#line 4867 "asn1p_y.c"
     break;
 
   case 256: /* LowerEndValue: TOK_MIN  */
-#line 1978 "asn1p_y.y"
+#line 1995 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
               {
 		(yyval.a_value) = asn1p_value_fromint(-123);
 		(yyval.a_value)->type = ATV_MIN;
     }
-#line 4132 "asn1p_y.c"
+#line 4876 "asn1p_y.c"
     break;
 
   case 258: /* UpperEndValue: TOK_MAX  */
-#line 1985 "asn1p_y.y"
+#line 2002 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
               {
 		(yyval.a_value) = asn1p_value_fromint(321);
 		(yyval.a_value)->type = ATV_MAX;
     }
-#line 4141 "asn1p_y.c"
+#line 4885 "asn1p_y.c"
     break;
 
   case 260: /* BitStringValue: TOK_bstring  */
-#line 1993 "asn1p_y.y"
+#line 2010 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                     {
 		(yyval.a_value) = _convert_bitstring2binary((yyvsp[0].tv_str), 'B');
 		checkmem((yyval.a_value));
-		free((yyvsp[0].tv_str));
+		asn1p_mem_free((yyvsp[0].tv_str));
 	}
-#line 4151 "asn1p_y.c"
+#line 4895 "asn1p_y.c"
     break;
 
   case 261: /* BitStringValue: TOK_hstring  */
-#line 1998 "asn1p_y.y"
+#line 2015 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                       {
 		(yyval.a_value) = _convert_bitstring2binary((yyvsp[0].tv_str), 'H');
 		checkmem((yyval.a_value));
-		free((yyvsp[0].tv_str));
+		asn1p_mem_free((yyvsp[0].tv_str));
 	}
-#line 4161 "asn1p_y.c"
+#line 4905 "asn1p_y.c"
     break;
 
   case 262: /* ContainedSubtype: TOK_INCLUDES Type  */
-#line 2006 "asn1p_y.y"
+#line 2023 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                       {
 		(yyval.a_value) = asn1p_value_fromtype((yyvsp[0].a_expr));
 		checkmem((yyval.a_value));
 		asn1p_expr_free((yyvsp[0].a_expr));
     }
-#line 4171 "asn1p_y.c"
+#line 4915 "asn1p_y.c"
     break;
 
   case 263: /* ContainedSubtype: DefinedUntaggedType  */
-#line 2012 "asn1p_y.y"
+#line 2029 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                           {
 		(yyval.a_value) = asn1p_value_fromtype((yyvsp[0].a_expr));
 		checkmem((yyval.a_value));
 		asn1p_expr_free((yyvsp[0].a_expr));
     }
-#line 4181 "asn1p_y.c"
+#line 4925 "asn1p_y.c"
     break;
 
   case 264: /* InnerTypeConstraints: TOK_WITH TOK_COMPONENT SingleTypeConstraint  */
-#line 2024 "asn1p_y.y"
+#line 2041 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                     {
 		CONSTRAINT_INSERT((yyval.a_constr), ACT_CT_WCOMP, (yyvsp[0].a_constr), 0);
 	}
-#line 4189 "asn1p_y.c"
+#line 4933 "asn1p_y.c"
     break;
 
   case 265: /* InnerTypeConstraints: TOK_WITH TOK_COMPONENTS MultipleTypeConstraints  */
-#line 2027 "asn1p_y.y"
+#line 2044 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                           {
         assert((yyvsp[0].a_constr)->type == ACT_CA_CSV);
         (yyvsp[0].a_constr)->type = ACT_CT_WCOMPS;
         (yyval.a_constr) = (yyvsp[0].a_constr);
 	}
-#line 4199 "asn1p_y.c"
+#line 4943 "asn1p_y.c"
     break;
 
   case 269: /* FullSpecification: '{' TypeConstraints '}'  */
-#line 2035 "asn1p_y.y"
+#line 2052 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                            { (yyval.a_constr) = (yyvsp[-1].a_constr); }
-#line 4205 "asn1p_y.c"
+#line 4949 "asn1p_y.c"
     break;
 
   case 270: /* PartialSpecification: '{' "..." ',' TypeConstraints '}'  */
-#line 2037 "asn1p_y.y"
+#line 2054 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                               {
         assert((yyvsp[-1].a_constr)->type == ACT_CA_CSV);
-		(yyval.a_constr) = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
+        (yyval.a_constr) = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
         (yyval.a_constr)->type = ACT_CA_CSV;
-		asn1p_constraint_t *ct = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
-		checkmem((yyval.a_constr));
-		ct->type = ACT_EL_EXT;
+        asn1p_constraint_t *ct = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
+        checkmem((yyval.a_constr));
+        ct->type = ACT_EL_EXT;
         asn1p_constraint_insert((yyval.a_constr), ct);
         for(unsigned i = 0; i < (yyvsp[-1].a_constr)->el_count; i++) {
             asn1p_constraint_insert((yyval.a_constr), (yyvsp[-1].a_constr)->elements[i]);
+            (yyvsp[-1].a_constr)->elements[i] = NULL;
         }
+        asn1p_constraint_free((yyvsp[-1].a_constr));
     }
-#line 4222 "asn1p_y.c"
+#line 4968 "asn1p_y.c"
     break;
 
   case 271: /* TypeConstraints: NamedConstraint  */
-#line 2050 "asn1p_y.y"
+#line 2069 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                     {
         (yyval.a_constr) = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
         (yyval.a_constr)->type = ACT_CA_CSV;
         asn1p_constraint_insert((yyval.a_constr), (yyvsp[0].a_constr));
     }
-#line 4232 "asn1p_y.c"
+#line 4978 "asn1p_y.c"
     break;
 
   case 272: /* TypeConstraints: TypeConstraints ',' NamedConstraint  */
-#line 2055 "asn1p_y.y"
+#line 2074 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                           {
         (yyval.a_constr) = (yyvsp[-2].a_constr);
         asn1p_constraint_insert((yyval.a_constr), (yyvsp[0].a_constr));
 	}
-#line 4241 "asn1p_y.c"
+#line 4987 "asn1p_y.c"
     break;
 
   case 273: /* NamedConstraint: IdentifierAsValue optConstraint optPresenceConstraint  */
-#line 2061 "asn1p_y.y"
+#line 2080 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                               {
         (yyval.a_constr) = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
         checkmem((yyval.a_constr));
@@ -4250,53 +4996,53 @@ yyreduce:
         if((yyvsp[-1].a_constr)) asn1p_constraint_insert((yyval.a_constr), (yyvsp[-1].a_constr));
         (yyval.a_constr)->presence = (yyvsp[0].a_pres);
     }
-#line 4254 "asn1p_y.c"
+#line 5000 "asn1p_y.c"
     break;
 
   case 274: /* optPresenceConstraint: %empty  */
-#line 2075 "asn1p_y.y"
+#line 2094 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
         { (yyval.a_pres) = ACPRES_DEFAULT; }
-#line 4260 "asn1p_y.c"
+#line 5006 "asn1p_y.c"
     break;
 
   case 275: /* optPresenceConstraint: PresenceConstraint  */
-#line 2076 "asn1p_y.y"
+#line 2095 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                              { (yyval.a_pres) = (yyvsp[0].a_pres); }
-#line 4266 "asn1p_y.c"
+#line 5012 "asn1p_y.c"
     break;
 
   case 276: /* PresenceConstraint: TOK_PRESENT  */
-#line 2080 "asn1p_y.y"
+#line 2099 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                     {
 		(yyval.a_pres) = ACPRES_PRESENT;
 	}
-#line 4274 "asn1p_y.c"
+#line 5020 "asn1p_y.c"
     break;
 
   case 277: /* PresenceConstraint: TOK_ABSENT  */
-#line 2083 "asn1p_y.y"
+#line 2102 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                      {
 		(yyval.a_pres) = ACPRES_ABSENT;
 	}
-#line 4282 "asn1p_y.c"
+#line 5028 "asn1p_y.c"
     break;
 
   case 278: /* PresenceConstraint: TOK_OPTIONAL  */
-#line 2086 "asn1p_y.y"
+#line 2105 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                        {
 		(yyval.a_pres) = ACPRES_OPTIONAL;
 	}
-#line 4290 "asn1p_y.c"
+#line 5036 "asn1p_y.c"
     break;
 
   case 282: /* $@5: %empty  */
-#line 2101 "asn1p_y.y"
+#line 2120 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                 { asn1p_lexer_hack_push_opaque_state(yyscanner); }
-#line 4296 "asn1p_y.c"
+#line 5042 "asn1p_y.c"
     break;
 
   case 283: /* UserDefinedConstraint: TOK_CONSTRAINED TOK_BY '{' $@5 Opaque  */
-#line 2101 "asn1p_y.y"
+#line 2120 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                                                     {
 		(yyval.a_constr) = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
 		checkmem((yyval.a_constr));
@@ -4305,62 +5051,62 @@ yyreduce:
 		checkmem((yyval.a_constr)->value);
 		(yyval.a_constr)->value->type = ATV_UNPARSED;
 	}
-#line 4309 "asn1p_y.c"
+#line 5055 "asn1p_y.c"
     break;
 
   case 284: /* ContentsConstraint: TOK_CONTAINING Type  */
-#line 2112 "asn1p_y.y"
+#line 2131 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                             {
 		(yyval.a_constr) = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
 		(yyval.a_constr)->type = ACT_CT_CTNG;
 		(yyval.a_constr)->value = asn1p_value_fromtype((yyvsp[0].a_expr));
 		asn1p_expr_free((yyvsp[0].a_expr));
 	}
-#line 4320 "asn1p_y.c"
+#line 5066 "asn1p_y.c"
     break;
 
   case 285: /* ConstraintRangeSpec: ".."  */
-#line 2121 "asn1p_y.y"
+#line 2140 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                 { (yyval.a_ctype) = ACT_EL_RANGE; }
-#line 4326 "asn1p_y.c"
+#line 5072 "asn1p_y.c"
     break;
 
   case 286: /* ConstraintRangeSpec: ".." '<'  */
-#line 2122 "asn1p_y.y"
+#line 2141 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                 { (yyval.a_ctype) = ACT_EL_RLRANGE; }
-#line 4332 "asn1p_y.c"
+#line 5078 "asn1p_y.c"
     break;
 
   case 287: /* ConstraintRangeSpec: '<' ".."  */
-#line 2123 "asn1p_y.y"
+#line 2142 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                 { (yyval.a_ctype) = ACT_EL_LLRANGE; }
-#line 4338 "asn1p_y.c"
+#line 5084 "asn1p_y.c"
     break;
 
   case 288: /* ConstraintRangeSpec: '<' ".." '<'  */
-#line 2124 "asn1p_y.y"
+#line 2143 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                 { (yyval.a_ctype) = ACT_EL_ULRANGE; }
-#line 4344 "asn1p_y.c"
+#line 5090 "asn1p_y.c"
     break;
 
   case 289: /* TableConstraint: SimpleTableConstraint  */
-#line 2127 "asn1p_y.y"
+#line 2146 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                               {
 		(yyval.a_constr) = (yyvsp[0].a_constr);
 	}
-#line 4352 "asn1p_y.c"
+#line 5098 "asn1p_y.c"
     break;
 
   case 290: /* TableConstraint: ComponentRelationConstraint  */
-#line 2130 "asn1p_y.y"
+#line 2149 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                       {
 		(yyval.a_constr) = (yyvsp[0].a_constr);
 	}
-#line 4360 "asn1p_y.c"
+#line 5106 "asn1p_y.c"
     break;
 
   case 291: /* SimpleTableConstraint: '{' TypeRefName '}'  */
-#line 2139 "asn1p_y.y"
+#line 2158 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                             {
 		asn1p_ref_t *ref = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		asn1p_constraint_t *ct;
@@ -4372,32 +5118,32 @@ yyreduce:
 		ct->type = ACT_EL_VALUE;
 		ct->value = asn1p_value_fromref(ref, 0);
 		CONSTRAINT_INSERT((yyval.a_constr), ACT_CA_CRC, ct, 0);
-		free((yyvsp[-1].tv_str));
+		asn1p_mem_free((yyvsp[-1].tv_str));
 	}
-#line 4378 "asn1p_y.c"
+#line 5124 "asn1p_y.c"
     break;
 
   case 292: /* ComponentRelationConstraint: SimpleTableConstraint '{' AtNotationList '}'  */
-#line 2155 "asn1p_y.y"
+#line 2174 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                      {
 		CONSTRAINT_INSERT((yyval.a_constr), ACT_CA_CRC, (yyvsp[-3].a_constr), (yyvsp[-1].a_constr));
 	}
-#line 4386 "asn1p_y.c"
+#line 5132 "asn1p_y.c"
     break;
 
   case 293: /* AtNotationList: AtNotationElement  */
-#line 2161 "asn1p_y.y"
+#line 2180 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                           {
 		(yyval.a_constr) = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
 		checkmem((yyval.a_constr));
 		(yyval.a_constr)->type = ACT_EL_VALUE;
 		(yyval.a_constr)->value = asn1p_value_fromref((yyvsp[0].a_ref), 0);
 	}
-#line 4397 "asn1p_y.c"
+#line 5143 "asn1p_y.c"
     break;
 
   case 294: /* AtNotationList: AtNotationList ',' AtNotationElement  */
-#line 2167 "asn1p_y.y"
+#line 2186 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                {
 		asn1p_constraint_t *ct;
 		ct = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
@@ -4406,29 +5152,29 @@ yyreduce:
 		ct->value = asn1p_value_fromref((yyvsp[0].a_ref), 0);
 		CONSTRAINT_INSERT((yyval.a_constr), ACT_CA_CSV, (yyvsp[-2].a_constr), ct);
 	}
-#line 4410 "asn1p_y.c"
+#line 5156 "asn1p_y.c"
     break;
 
   case 295: /* AtNotationElement: '@' ComponentIdList  */
-#line 2181 "asn1p_y.y"
+#line 2200 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                             {
-		char *p = malloc(strlen((yyvsp[0].tv_str)) + 2);
+		char *p = asn1p_mem_alloc(strlen((yyvsp[0].tv_str)) + 2);
 		int ret;
 		*p = '@';
 		strcpy(p + 1, (yyvsp[0].tv_str));
 		(yyval.a_ref) = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		ret = asn1p_ref_add_component((yyval.a_ref), p, 0);
 		checkmem(ret == 0);
-		free(p);
-		free((yyvsp[0].tv_str));
+		asn1p_mem_free(p);
+		asn1p_mem_free((yyvsp[0].tv_str));
 	}
-#line 4426 "asn1p_y.c"
+#line 5172 "asn1p_y.c"
     break;
 
   case 296: /* AtNotationElement: '@' '.' ComponentIdList  */
-#line 2192 "asn1p_y.y"
+#line 2211 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                   {
-		char *p = malloc(strlen((yyvsp[0].tv_str)) + 3);
+		char *p = asn1p_mem_alloc(strlen((yyvsp[0].tv_str)) + 3);
 		int ret;
 		p[0] = '@';
 		p[1] = '.';
@@ -4436,90 +5182,90 @@ yyreduce:
 		(yyval.a_ref) = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		ret = asn1p_ref_add_component((yyval.a_ref), p, 0);
 		checkmem(ret == 0);
-		free(p);
-		free((yyvsp[0].tv_str));
+		asn1p_mem_free(p);
+		asn1p_mem_free((yyvsp[0].tv_str));
 	}
-#line 4443 "asn1p_y.c"
+#line 5189 "asn1p_y.c"
     break;
 
   case 297: /* ComponentIdList: Identifier  */
-#line 2208 "asn1p_y.y"
+#line 2227 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                    {
 		(yyval.tv_str) = (yyvsp[0].tv_str);
 	}
-#line 4451 "asn1p_y.c"
+#line 5197 "asn1p_y.c"
     break;
 
   case 298: /* ComponentIdList: ComponentIdList '.' Identifier  */
-#line 2211 "asn1p_y.y"
+#line 2230 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                          {
 		int l1 = strlen((yyvsp[-2].tv_str));
 		int l3 = strlen((yyvsp[0].tv_str));
-		(yyval.tv_str) = malloc(l1 + 1 + l3 + 1);
+		(yyval.tv_str) = asn1p_mem_alloc(l1 + 1 + l3 + 1);
 		memcpy((yyval.tv_str), (yyvsp[-2].tv_str), l1);
 		(yyval.tv_str)[l1] = '.';
 		memcpy((yyval.tv_str) + l1 + 1, (yyvsp[0].tv_str), l3);
 		(yyval.tv_str)[l1 + 1 + l3] = '\0';
-		free((yyvsp[-2].tv_str));
-		free((yyvsp[0].tv_str));
+		asn1p_mem_free((yyvsp[-2].tv_str));
+		asn1p_mem_free((yyvsp[0].tv_str));
 	}
-#line 4467 "asn1p_y.c"
+#line 5213 "asn1p_y.c"
     break;
 
   case 299: /* optMarker: %empty  */
-#line 2231 "asn1p_y.y"
+#line 2250 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
         {
 		(yyval.a_marker).flags = EM_NOMARK;
 		(yyval.a_marker).default_value = 0;
 	}
-#line 4476 "asn1p_y.c"
+#line 5222 "asn1p_y.c"
     break;
 
   case 300: /* optMarker: Marker  */
-#line 2235 "asn1p_y.y"
+#line 2254 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                  { (yyval.a_marker) = (yyvsp[0].a_marker); }
-#line 4482 "asn1p_y.c"
+#line 5228 "asn1p_y.c"
     break;
 
   case 301: /* Marker: TOK_OPTIONAL  */
-#line 2239 "asn1p_y.y"
+#line 2258 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                      {
 		(yyval.a_marker).flags = EM_OPTIONAL | EM_INDIRECT;
 		(yyval.a_marker).default_value = 0;
 	}
-#line 4491 "asn1p_y.c"
+#line 5237 "asn1p_y.c"
     break;
 
   case 302: /* Marker: TOK_DEFAULT Value  */
-#line 2243 "asn1p_y.y"
+#line 2262 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                             {
 		(yyval.a_marker).flags = EM_DEFAULT;
 		(yyval.a_marker).default_value = (yyvsp[0].a_value);
 	}
-#line 4500 "asn1p_y.c"
+#line 5246 "asn1p_y.c"
     break;
 
   case 303: /* IdentifierList: IdentifierElement  */
-#line 2250 "asn1p_y.y"
+#line 2269 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                       {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
 		asn1p_expr_add((yyval.a_expr), (yyvsp[0].a_expr));
     }
-#line 4510 "asn1p_y.c"
+#line 5256 "asn1p_y.c"
     break;
 
   case 304: /* IdentifierList: IdentifierList ',' IdentifierElement  */
-#line 2255 "asn1p_y.y"
+#line 2274 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                            {
 		(yyval.a_expr) = (yyvsp[-2].a_expr);
 		asn1p_expr_add((yyval.a_expr), (yyvsp[0].a_expr));
     }
-#line 4519 "asn1p_y.c"
+#line 5265 "asn1p_y.c"
     break;
 
   case 305: /* IdentifierElement: Identifier  */
-#line 2261 "asn1p_y.y"
+#line 2280 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -4527,30 +5273,30 @@ yyreduce:
 		(yyval.a_expr)->meta_type = AMT_VALUE;
 		(yyval.a_expr)->Identifier = (yyvsp[0].tv_str);
     }
-#line 4531 "asn1p_y.c"
+#line 5277 "asn1p_y.c"
     break;
 
   case 306: /* NamedNumberList: NamedNumber  */
-#line 2270 "asn1p_y.y"
+#line 2289 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                     {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
 		asn1p_expr_add((yyval.a_expr), (yyvsp[0].a_expr));
 	}
-#line 4541 "asn1p_y.c"
+#line 5287 "asn1p_y.c"
     break;
 
   case 307: /* NamedNumberList: NamedNumberList ',' NamedNumber  */
-#line 2275 "asn1p_y.y"
+#line 2294 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                           {
 		(yyval.a_expr) = (yyvsp[-2].a_expr);
 		asn1p_expr_add((yyval.a_expr), (yyvsp[0].a_expr));
 	}
-#line 4550 "asn1p_y.c"
+#line 5296 "asn1p_y.c"
     break;
 
   case 308: /* NamedNumber: Identifier '(' SignedNumber ')'  */
-#line 2282 "asn1p_y.y"
+#line 2301 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                         {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -4559,11 +5305,11 @@ yyreduce:
 		(yyval.a_expr)->Identifier = (yyvsp[-3].tv_str);
 		(yyval.a_expr)->value = (yyvsp[-1].a_value);
 	}
-#line 4563 "asn1p_y.c"
+#line 5309 "asn1p_y.c"
     break;
 
   case 309: /* NamedNumber: Identifier '(' DefinedValue ')'  */
-#line 2290 "asn1p_y.y"
+#line 2309 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                           {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -4572,30 +5318,30 @@ yyreduce:
 		(yyval.a_expr)->Identifier = (yyvsp[-3].tv_str);
 		(yyval.a_expr)->value = (yyvsp[-1].a_value);
 	}
-#line 4576 "asn1p_y.c"
+#line 5322 "asn1p_y.c"
     break;
 
   case 310: /* NamedBitList: NamedBit  */
-#line 2300 "asn1p_y.y"
+#line 2319 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                  {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
 		asn1p_expr_add((yyval.a_expr), (yyvsp[0].a_expr));
 	}
-#line 4586 "asn1p_y.c"
+#line 5332 "asn1p_y.c"
     break;
 
   case 311: /* NamedBitList: NamedBitList ',' NamedBit  */
-#line 2305 "asn1p_y.y"
+#line 2324 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                     {
 		(yyval.a_expr) = (yyvsp[-2].a_expr);
 		asn1p_expr_add((yyval.a_expr), (yyvsp[0].a_expr));
 	}
-#line 4595 "asn1p_y.c"
+#line 5341 "asn1p_y.c"
     break;
 
   case 312: /* NamedBit: Identifier '(' "number" ')'  */
-#line 2312 "asn1p_y.y"
+#line 2331 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                       {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -4604,11 +5350,11 @@ yyreduce:
 		(yyval.a_expr)->Identifier = (yyvsp[-3].tv_str);
 		(yyval.a_expr)->value = asn1p_value_fromint((yyvsp[-1].a_int));
 	}
-#line 4608 "asn1p_y.c"
+#line 5354 "asn1p_y.c"
     break;
 
   case 313: /* NamedBit: Identifier '(' DefinedValue ')'  */
-#line 2320 "asn1p_y.y"
+#line 2339 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                           {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -4617,48 +5363,48 @@ yyreduce:
 		(yyval.a_expr)->Identifier = (yyvsp[-3].tv_str);
 		(yyval.a_expr)->value = (yyvsp[-1].a_value);
 	}
-#line 4621 "asn1p_y.c"
+#line 5367 "asn1p_y.c"
     break;
 
   case 314: /* Enumerations: UniverationList  */
-#line 2330 "asn1p_y.y"
+#line 2349 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                     {
 		(yyval.a_expr) = (yyvsp[0].a_expr);
         asn1p_expr_t *first_memb = TQ_FIRST(&((yyval.a_expr)->members));
         if(first_memb) {
             if(first_memb->expr_type == A1TC_EXTENSIBLE) {
-                return yyerror(param, yyscanner,
+                return yyerror(ctx, param, yyscanner,
                     "The ENUMERATION cannot start with extension (...).");
             }
         } else {
-            return yyerror(param, yyscanner,
+            return yyerror(ctx, param, yyscanner,
                 "The ENUMERATION list cannot be empty.");
         }
     }
-#line 4639 "asn1p_y.c"
+#line 5385 "asn1p_y.c"
     break;
 
   case 315: /* UniverationList: UniverationElement  */
-#line 2345 "asn1p_y.y"
+#line 2364 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                            {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
 		asn1p_expr_add((yyval.a_expr), (yyvsp[0].a_expr));
 	}
-#line 4649 "asn1p_y.c"
+#line 5395 "asn1p_y.c"
     break;
 
   case 316: /* UniverationList: UniverationList ',' UniverationElement  */
-#line 2350 "asn1p_y.y"
+#line 2369 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                                  {
 		(yyval.a_expr) = (yyvsp[-2].a_expr);
 		asn1p_expr_add((yyval.a_expr), (yyvsp[0].a_expr));
 	}
-#line 4658 "asn1p_y.c"
+#line 5404 "asn1p_y.c"
     break;
 
   case 317: /* UniverationElement: Identifier  */
-#line 2357 "asn1p_y.y"
+#line 2376 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                    {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -4666,11 +5412,11 @@ yyreduce:
 		(yyval.a_expr)->meta_type = AMT_VALUE;
 		(yyval.a_expr)->Identifier = (yyvsp[0].tv_str);
 	}
-#line 4670 "asn1p_y.c"
+#line 5416 "asn1p_y.c"
     break;
 
   case 318: /* UniverationElement: Identifier '(' SignedNumber ')'  */
-#line 2364 "asn1p_y.y"
+#line 2383 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                           {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -4679,11 +5425,11 @@ yyreduce:
 		(yyval.a_expr)->Identifier = (yyvsp[-3].tv_str);
 		(yyval.a_expr)->value = (yyvsp[-1].a_value);
 	}
-#line 4683 "asn1p_y.c"
+#line 5429 "asn1p_y.c"
     break;
 
   case 319: /* UniverationElement: Identifier '(' DefinedValue ')'  */
-#line 2372 "asn1p_y.y"
+#line 2391 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                           {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -4692,11 +5438,11 @@ yyreduce:
 		(yyval.a_expr)->Identifier = (yyvsp[-3].tv_str);
 		(yyval.a_expr)->value = (yyvsp[-1].a_value);
 	}
-#line 4696 "asn1p_y.c"
+#line 5442 "asn1p_y.c"
     break;
 
   case 320: /* UniverationElement: SignedNumber  */
-#line 2380 "asn1p_y.y"
+#line 2399 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                        {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
@@ -4704,182 +5450,182 @@ yyreduce:
 		(yyval.a_expr)->meta_type = AMT_VALUE;
 		(yyval.a_expr)->value = (yyvsp[0].a_value);
 	}
-#line 4708 "asn1p_y.c"
+#line 5454 "asn1p_y.c"
     break;
 
   case 321: /* UniverationElement: "..."  */
-#line 2387 "asn1p_y.y"
+#line 2406 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                         {
 		(yyval.a_expr) = NEW_EXPR();
 		checkmem((yyval.a_expr));
-		(yyval.a_expr)->Identifier = strdup("...");
+		(yyval.a_expr)->Identifier = asn1p_mem_strdup("...");
 		checkmem((yyval.a_expr)->Identifier);
 		(yyval.a_expr)->expr_type = A1TC_EXTENSIBLE;
 		(yyval.a_expr)->meta_type = AMT_VALUE;
 	}
-#line 4721 "asn1p_y.c"
+#line 5467 "asn1p_y.c"
     break;
 
   case 322: /* SignedNumber: "number"  */
-#line 2398 "asn1p_y.y"
+#line 2417 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                    {
 		(yyval.a_value) = asn1p_value_fromint((yyvsp[0].a_int));
 		checkmem((yyval.a_value));
 	}
-#line 4730 "asn1p_y.c"
+#line 5476 "asn1p_y.c"
     break;
 
   case 323: /* SignedNumber: "negative number"  */
-#line 2402 "asn1p_y.y"
+#line 2421 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                               {
 		(yyval.a_value) = asn1p_value_fromint((yyvsp[0].a_int));
 		checkmem((yyval.a_value));
 	}
-#line 4739 "asn1p_y.c"
+#line 5485 "asn1p_y.c"
     break;
 
   case 324: /* RealValue: TOK_realnumber  */
-#line 2409 "asn1p_y.y"
+#line 2428 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                        {
 		(yyval.a_value) = asn1p_value_fromdouble((yyvsp[0].a_dbl));
 		checkmem((yyval.a_value));
 	}
-#line 4748 "asn1p_y.c"
+#line 5494 "asn1p_y.c"
     break;
 
   case 325: /* optTag: %empty  */
-#line 2440 "asn1p_y.y"
+#line 2459 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
         { memset(&(yyval.a_tag), 0, sizeof((yyval.a_tag))); }
-#line 4754 "asn1p_y.c"
+#line 5500 "asn1p_y.c"
     break;
 
   case 326: /* optTag: Tag  */
-#line 2441 "asn1p_y.y"
+#line 2460 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
               { (yyval.a_tag) = (yyvsp[0].a_tag); }
-#line 4760 "asn1p_y.c"
+#line 5506 "asn1p_y.c"
     break;
 
   case 327: /* Tag: TagTypeValue TagPlicit  */
-#line 2445 "asn1p_y.y"
+#line 2464 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                {
 		(yyval.a_tag) = (yyvsp[-1].a_tag);
 		(yyval.a_tag).tag_mode = (yyvsp[0].a_tag).tag_mode;
 	}
-#line 4769 "asn1p_y.c"
+#line 5515 "asn1p_y.c"
     break;
 
   case 328: /* TagTypeValue: '[' TagClass "number" ']'  */
-#line 2452 "asn1p_y.y"
+#line 2471 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                     {
 		(yyval.a_tag) = (yyvsp[-2].a_tag);
 		(yyval.a_tag).tag_value = (yyvsp[-1].a_int);
 	}
-#line 4778 "asn1p_y.c"
+#line 5524 "asn1p_y.c"
     break;
 
   case 329: /* TagClass: %empty  */
-#line 2458 "asn1p_y.y"
+#line 2477 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
         { (yyval.a_tag).tag_class = TC_CONTEXT_SPECIFIC; }
-#line 4784 "asn1p_y.c"
+#line 5530 "asn1p_y.c"
     break;
 
   case 330: /* TagClass: TOK_UNIVERSAL  */
-#line 2459 "asn1p_y.y"
+#line 2478 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                         { (yyval.a_tag).tag_class = TC_UNIVERSAL; }
-#line 4790 "asn1p_y.c"
+#line 5536 "asn1p_y.c"
     break;
 
   case 331: /* TagClass: TOK_APPLICATION  */
-#line 2460 "asn1p_y.y"
+#line 2479 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                           { (yyval.a_tag).tag_class = TC_APPLICATION; }
-#line 4796 "asn1p_y.c"
+#line 5542 "asn1p_y.c"
     break;
 
   case 332: /* TagClass: TOK_PRIVATE  */
-#line 2461 "asn1p_y.y"
+#line 2480 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                       { (yyval.a_tag).tag_class = TC_PRIVATE; }
-#line 4802 "asn1p_y.c"
+#line 5548 "asn1p_y.c"
     break;
 
   case 333: /* TagPlicit: %empty  */
-#line 2465 "asn1p_y.y"
+#line 2484 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
         { (yyval.a_tag).tag_mode = TM_DEFAULT; }
-#line 4808 "asn1p_y.c"
+#line 5554 "asn1p_y.c"
     break;
 
   case 334: /* TagPlicit: TOK_IMPLICIT  */
-#line 2466 "asn1p_y.y"
+#line 2485 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                        { (yyval.a_tag).tag_mode = TM_IMPLICIT; }
-#line 4814 "asn1p_y.c"
+#line 5560 "asn1p_y.c"
     break;
 
   case 335: /* TagPlicit: TOK_EXPLICIT  */
-#line 2467 "asn1p_y.y"
+#line 2486 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                        { (yyval.a_tag).tag_mode = TM_EXPLICIT; }
-#line 4820 "asn1p_y.c"
+#line 5566 "asn1p_y.c"
     break;
 
   case 336: /* TypeRefName: TOK_typereference  */
-#line 2471 "asn1p_y.y"
+#line 2490 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                           {
 		checkmem((yyvsp[0].tv_str));
 		(yyval.tv_str) = (yyvsp[0].tv_str);
 	}
-#line 4829 "asn1p_y.c"
+#line 5575 "asn1p_y.c"
     break;
 
   case 337: /* TypeRefName: TOK_capitalreference  */
-#line 2475 "asn1p_y.y"
+#line 2494 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                                {
 		checkmem((yyvsp[0].tv_str));
 		(yyval.tv_str) = (yyvsp[0].tv_str);
 	}
-#line 4838 "asn1p_y.c"
+#line 5584 "asn1p_y.c"
     break;
 
   case 338: /* optIdentifier: %empty  */
-#line 2483 "asn1p_y.y"
+#line 2502 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
         { (yyval.tv_str) = 0; }
-#line 4844 "asn1p_y.c"
+#line 5590 "asn1p_y.c"
     break;
 
   case 339: /* optIdentifier: Identifier  */
-#line 2484 "asn1p_y.y"
+#line 2503 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                      {
 		(yyval.tv_str) = (yyvsp[0].tv_str);
 	}
-#line 4852 "asn1p_y.c"
+#line 5598 "asn1p_y.c"
     break;
 
   case 340: /* Identifier: "identifier"  */
-#line 2490 "asn1p_y.y"
+#line 2509 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                        {
 		checkmem((yyvsp[0].tv_str));
 		(yyval.tv_str) = (yyvsp[0].tv_str);
 	}
-#line 4861 "asn1p_y.c"
+#line 5607 "asn1p_y.c"
     break;
 
   case 341: /* IdentifierAsReference: Identifier  */
-#line 2497 "asn1p_y.y"
+#line 2516 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                {
 		(yyval.a_ref) = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		asn1p_ref_add_component((yyval.a_ref), (yyvsp[0].tv_str), RLT_lowercase);
-		free((yyvsp[0].tv_str));
+		asn1p_mem_free((yyvsp[0].tv_str));
     }
-#line 4871 "asn1p_y.c"
+#line 5617 "asn1p_y.c"
     break;
 
   case 342: /* IdentifierAsValue: IdentifierAsReference  */
-#line 2504 "asn1p_y.y"
+#line 2523 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
                           {
 		(yyval.a_value) = asn1p_value_fromref((yyvsp[0].a_ref), 0);
     }
-#line 4879 "asn1p_y.c"
+#line 5625 "asn1p_y.c"
     break;
 
 
-#line 4883 "asn1p_y.c"
+#line 5629 "asn1p_y.c"
 
       default: break;
     }
@@ -4926,7 +5672,7 @@ yyerrlab:
   if (!yyerrstatus)
     {
       ++yynerrs;
-      yyerror (ctx, yyscanner, YY_("syntax error"));
+      yyerror (ctx, param, yyscanner, YY_("syntax error"));
     }
 
   if (yyerrstatus == 3)
@@ -4943,7 +5689,7 @@ yyerrlab:
       else
         {
           yydestruct ("Error: discarding",
-                      yytoken, &yylval, ctx, yyscanner);
+                      yytoken, &yylval, ctx, param, yyscanner);
           yychar = ASN1P_EMPTY;
         }
     }
@@ -4999,7 +5745,7 @@ yyerrlab1:
 
 
       yydestruct ("Error: popping",
-                  YY_ACCESSING_SYMBOL (yystate), yyvsp, ctx, yyscanner);
+                  YY_ACCESSING_SYMBOL (yystate), yyvsp, ctx, param, yyscanner);
       YYPOPSTACK (1);
       yystate = *yyssp;
       YY_STACK_PRINT (yyss, yyssp);
@@ -5037,7 +5783,7 @@ yyabortlab:
 | yyexhaustedlab -- YYNOMEM (memory exhaustion) comes here.  |
 `-----------------------------------------------------------*/
 yyexhaustedlab:
-  yyerror (ctx, yyscanner, YY_("memory exhausted"));
+  yyerror (ctx, param, yyscanner, YY_("memory exhausted"));
   yyresult = 2;
   goto yyreturnlab;
 
@@ -5052,7 +5798,7 @@ yyreturnlab:
          user semantic actions for why this is necessary.  */
       yytoken = YYTRANSLATE (yychar);
       yydestruct ("Cleanup: discarding lookahead",
-                  yytoken, &yylval, ctx, yyscanner);
+                  yytoken, &yylval, ctx, param, yyscanner);
     }
   /* Do not reclaim the symbols of the rule whose action triggered
      this YYABORT or YYACCEPT.  */
@@ -5061,7 +5807,7 @@ yyreturnlab:
   while (yyssp != yyss)
     {
       yydestruct ("Cleanup: popping",
-                  YY_ACCESSING_SYMBOL (+*yyssp), yyvsp, ctx, yyscanner);
+                  YY_ACCESSING_SYMBOL (+*yyssp), yyvsp, ctx, param, yyscanner);
       YYPOPSTACK (1);
     }
 #ifndef yyoverflow
@@ -5072,7 +5818,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 2508 "asn1p_y.y"
+#line 2527 "/workspaces/vanadium/lib/asn1c_libasn1parser/src/asn1p_y.y"
 
 
 
@@ -5112,7 +5858,7 @@ _convert_bitstring2binary(char *str, int base) {
 
 	memlen = slen / (8 / baselen);	/* Conservative estimate */
 
-	bv_ptr = binary_vector = malloc(memlen + 1);
+	bv_ptr = binary_vector = asn1p_mem_alloc(memlen + 1);
 	if(bv_ptr == NULL)
 		/* ENOMEM */
 		return NULL;
@@ -5164,7 +5910,7 @@ _convert_bitstring2binary(char *str, int base) {
 
 	val = asn1p_value_frombits(binary_vector, bits, 0);
 	if(val == NULL) {
-		free(binary_vector);
+		asn1p_mem_free(binary_vector);
 	}
 
 	return val;
@@ -5176,7 +5922,7 @@ _convert_bitstring2binary(char *str, int base) {
  * the specification's compliance to modern ASN.1 standards.
  */
 static void
-_fixup_anonymous_identifier(asn1p_expr_t *expr, yyscan_t yyscanner) {
+_fixup_anonymous_identifier(const asn1p_yctx_t *ctx, asn1p_expr_t *expr, yyscan_t yyscanner) {
 	char *p;
 	assert(expr->Identifier == 0);
 
@@ -5197,7 +5943,7 @@ _fixup_anonymous_identifier(asn1p_expr_t *expr, yyscan_t yyscanner) {
 
 	if(!expr->Identifier)
 		expr->Identifier = "unnamed";
-	expr->Identifier = strdup(expr->Identifier);
+	expr->Identifier = asn1p_mem_strdup(expr->Identifier);
 	assert(expr->Identifier);
 	/* Make a lowercase identifier from the type name */
 	for(p = expr->Identifier; *p; p++) {
@@ -5213,18 +5959,45 @@ _fixup_anonymous_identifier(asn1p_expr_t *expr, yyscan_t yyscanner) {
 }
 
 static int
-yyerror(void **param, yyscan_t yyscanner, const char *msg) {
-	fprintf(stderr,
-		"ASN.1 grammar parse error "
-		"near %s:%d (token \"%s\"): %s\n",
-		ASN_FILENAME, asn1p_get_lineno(yyscanner), asn1p_get_text(yyscanner), msg);
-	return -1;
+yyerror(asn1p_yctx_t *ctx, void **param, yyscan_t yyscanner, const char *msg) {
+  if (ctx->errors->size == ctx->errors->capacity) {
+    const int newcap = (ctx->errors->capacity == 0) ? 4 : (ctx->errors->capacity * 2);
+    asn1p_err_t *newdata = asn1p_mem_realloc(ctx->errors->data,
+      ctx->errors->size * sizeof(ctx->errors->data[0]),
+      newcap * sizeof(ctx->errors->data[0]));
+    if (!newdata) {
+      // TODO: do something
+      return -2;
+    }
+    ctx->errors->data = newdata;
+    ctx->errors->capacity = newcap;
+  }
+
+  asn1p_err_t *err = &ctx->errors->data[ctx->errors->size++];
+  err->pos = 0;
+  err->msg = asn1p_mem_strdup(msg);
+
+  return -1;
 }
 
-void asn1p_yctx_init(asn1p_yctx_t *ctx) {
-
+int
+asn1p_errs_init(asn1p_errs_t *errs) {
+  memset(errs, 0, sizeof(*errs));
+  return 0;
 }
 
-void asn1p_yctx_free(asn1p_yctx_t *ctx) {
+void
+asn1p_errs_free(asn1p_errs_t *errs) {
+  int i;
 
+  if(!errs) {
+    return;
+  }
+
+  for(i = 0; i < errs->size; ++i) {
+    asn1p_mem_free(errs->data[i].msg);
+  }
+  asn1p_mem_free(errs->data);
+
+  memset(errs, 0, sizeof(*errs));
 }

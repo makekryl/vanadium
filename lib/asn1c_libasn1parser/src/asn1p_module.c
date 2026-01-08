@@ -11,7 +11,7 @@ asn1p_module_t *
 asn1p_module_new() {
 	asn1p_module_t *mod;
 
-	mod = calloc(1, sizeof *mod);
+	mod = asn1p_mem_calloc(1, sizeof *mod);
 	if(mod) {
 		TQ_INIT(&(mod->exports));
 		TQ_INIT(&(mod->imports));
@@ -32,8 +32,8 @@ asn1p_module_free(asn1p_module_t *mod) {
 		asn1p_expr_t *expr;
 		asn1p_xports_t *xports;
 
-		free(mod->ModuleName);
-		free(mod->source_file_name);
+		asn1p_mem_free(mod->ModuleName);
+		asn1p_mem_free(mod->source_file_name);
 
 		asn1p_oid_free(mod->module_oid);
 
@@ -49,14 +49,14 @@ asn1p_module_free(asn1p_module_t *mod) {
         genhash_destroy(mod->members_hash);
         mod->members_hash = NULL;
 
-		free(mod);
+		asn1p_mem_free(mod);
 	}
 }
 
 asn1p_t *
 asn1p_new() {
 	asn1p_t *asn;
-	asn = calloc(1, sizeof(*asn));
+	asn = asn1p_mem_calloc(1, sizeof(*asn));
 	if(asn) {
 		TQ_INIT(&(asn->modules));
 	}
@@ -70,7 +70,7 @@ asn1p_delete(asn1p_t *asn) {
 		asn1p_module_t *mod;
 		while((mod = TQ_REMOVE(&(asn->modules), mod_next)))
 			asn1p_module_free(mod);
-		free(asn);
+		asn1p_mem_free(asn);
 	}
 }
 
