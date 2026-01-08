@@ -28,7 +28,6 @@ typedef struct {
 typedef struct {
   asn1p_err_t *data;
   size_t size;
-  size_t capacity;
 } asn1p_errs_t;
 
 int  asn1p_errs_init(asn1p_errs_t *);

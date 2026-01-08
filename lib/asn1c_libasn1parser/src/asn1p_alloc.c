@@ -9,6 +9,10 @@ void asn1p_mem_use_allocator(asn1p_allocator_t allocator) {
   asn1p_current_allocator = allocator;
 }
 
+asn1p_allocator_t asn1p_mem_get_allocator() {
+  return asn1p_current_allocator;
+}
+
 
 void* asn1p_mem_alloc(size_t size) {
   return asn1p_current_allocator.alloc(asn1p_current_allocator.ctx, size);

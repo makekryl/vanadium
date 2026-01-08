@@ -5,7 +5,7 @@
 #pragma GCC diagnostic ignored "-Wwritable-strings"
 
 extern "C" {
-#include "asn1parser.h"  // IWYU pragma: keep
+#include "asn1parser.h"  // IWYU pragma: export
 }
 
 #pragma GCC diagnostic pop

@@ -2665,18 +2665,16 @@ _fixup_anonymous_identifier(const asn1p_yctx_t *ctx, asn1p_expr_t *expr, yyscan_
 
 static int
 yyerror(asn1p_yctx_t *ctx, void **param, yyscan_t yyscanner, const char *msg) {
-  if (ctx->errors->size == ctx->errors->capacity) {
-    const int newcap = (ctx->errors->capacity == 0) ? 4 : (ctx->errors->capacity * 2);
-    asn1p_err_t *newdata = asn1p_mem_realloc(ctx->errors->data,
-      ctx->errors->size * sizeof(ctx->errors->data[0]),
-      newcap * sizeof(ctx->errors->data[0]));
-    if (!newdata) {
-      // TODO: do something
-      return -2;
-    }
-    ctx->errors->data = newdata;
-    ctx->errors->capacity = newcap;
+  const int newsize = ctx->errors->size + 1;
+  asn1p_err_t *newdata = asn1p_mem_realloc(ctx->errors->data,
+    ctx->errors->size * sizeof(ctx->errors->data[0]),
+    newsize * sizeof(ctx->errors->data[0]));
+  if (!newdata) {
+    // TODO: do something
+    return -2;
   }
+  ctx->errors->data = newdata;
+  ctx->errors->size = newsize;
 
   asn1p_err_t *err = &ctx->errors->data[ctx->errors->size++];
   err->pos = 0;
