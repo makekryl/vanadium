@@ -1,6 +1,5 @@
 add_subdirectory(ast)
-add_subdirectory(ast_xasn1)
-add_subdirectory(ast_asn1)
+add_subdirectory(asn1)
 
 add_subdirectory(core)
 add_subdirectory(tooling)

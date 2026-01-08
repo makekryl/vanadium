@@ -8,5 +8,5 @@ target_include_directories(vanadium_astdump PRIVATE
 
 target_link_libraries(vanadium_astdump PRIVATE
   vanadium_ast
-  vanadium_ast_xasn1
+  vanadium_asn1_xast
 )
