@@ -3,10 +3,12 @@
 
 #include "vanadium/asn1/ast/Asn1cAstWrapper.h"
 
+using namespace vanadium::asn1::ast;
+
 TEST(Asn1cAstWrapper, ParseSuccess) {
   vanadium::lib::Arena arena;
 
-  auto res = vanadium::asn::ast::Asn1cAstWrapper::Parse(arena, R"(
+  auto res = Asn1cAstWrapper::Parse(arena, R"(
     MyModule DEFINITIONS ::=
     BEGIN
 
@@ -33,7 +35,7 @@ TEST(Asn1cAstWrapper, ParseSuccess) {
 TEST(Asn1cAstWrapper, ParseFailure) {
   vanadium::lib::Arena arena;
 
-  auto res = vanadium::asn::ast::Asn1cAstWrapper::Parse(arena, R"(
+  auto res = Asn1cAstWrapper::Parse(arena, R"(
     MyModule DEFINITIONS ::=
     BEGIN
 

@@ -8,7 +8,7 @@
 #include <utility>
 #include <vector>
 
-namespace vanadium::asn::ast {
+namespace vanadium::asn1::ast {
 
 namespace {
 void WithArenaAsn1cAllocator(lib::Arena& arena, std::invocable auto f) {
@@ -80,4 +80,4 @@ std::expected<Asn1cAstWrapper, std::vector<Asn1cSyntaxError>> Asn1cAstWrapper::P
   return Asn1cAstWrapper{ast, arena};
 }
 
-}  // namespace vanadium::asn::ast
+}  // namespace vanadium::asn1::ast

@@ -9,7 +9,7 @@
 
 using asn1p_t = struct asn1p_s;
 
-namespace vanadium::asn::ast {
+namespace vanadium::asn1::ast {
 
 using pos_t = std::uint32_t;
 
@@ -43,4 +43,4 @@ class Asn1cAstWrapper {
   lib::Arena* arena_;
 };
 
-}  // namespace vanadium::asn::ast
+}  // namespace vanadium::asn1::ast
