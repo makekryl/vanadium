@@ -23,11 +23,14 @@ Arena::Arena(Arena&& other) noexcept
       bytes_used_(std::exchange(other.bytes_used_, 0)) {}
 
 Arena& Arena::operator=(Arena&& other) noexcept {
+  Arena tmp(std::move(other));
+
   using std::swap;
-  swap(active_, other.active_);
-  swap(cleanup_list_, other.cleanup_list_);
-  swap(bytes_allocated_, other.bytes_allocated_);
-  swap(bytes_used_, other.bytes_used_);
+  swap(active_, tmp.active_);
+  swap(cleanup_list_, tmp.cleanup_list_);
+  swap(bytes_allocated_, tmp.bytes_allocated_);
+  swap(bytes_used_, tmp.bytes_used_);
+
   return *this;
 }
 

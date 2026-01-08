@@ -18,7 +18,8 @@ class HeapArray {
   }
 
   HeapArray& operator=(HeapArray other) {
-    swap(*this, other);
+    HeapArray tmp(std::move(other));
+    swap(*this, tmp);
     return *this;
   }
 
