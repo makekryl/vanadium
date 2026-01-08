@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vanadium/ast/ASTNodes.h>
+#include <vanadium/lib/FunctionRef.h>
 
 #include <memory>
 #include <optional>
@@ -8,7 +9,6 @@
 #include <vector>
 
 #include "Context.h"
-#include "FunctionRef.h"
 #include "Program.h"
 #include "Rule.h"
 

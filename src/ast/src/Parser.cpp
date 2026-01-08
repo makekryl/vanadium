@@ -1,12 +1,13 @@
 #include "vanadium/ast/Parser.h"
 
+#include <vanadium/lib/StaticSet.h>
+
 #include <cctype>
 #include <cstring>
 #include <format>
 #include <magic_enum/magic_enum.hpp>
 #include <utility>
 
-#include "StaticSet.h"
 #include "vanadium/ast/AST.h"
 #include "vanadium/ast/ASTNodes.h"
 #include "vanadium/ast/Scanner.h"

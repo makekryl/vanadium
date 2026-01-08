@@ -1,10 +1,11 @@
 #pragma once
 
+#include <vanadium/lib/Arena.h>
+#include <vanadium/lib/StaticSet.h>
+
 #include <string_view>
 #include <type_traits>
 
-#include "Arena.h"
-#include "StaticSet.h"
 #include "vanadium/ast/AST.h"
 #include "vanadium/ast/ASTNodes.h"
 #include "vanadium/ast/ASTTypes.h"

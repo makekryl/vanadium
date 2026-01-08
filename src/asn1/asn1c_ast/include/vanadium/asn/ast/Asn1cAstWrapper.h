@@ -1,11 +1,11 @@
 #pragma once
 
+#include <vanadium/lib/Arena.h>
+
 #include <cstdint>
 #include <expected>
 #include <string_view>
 #include <vector>
-
-#include "Arena.h"
 
 using asn1p_t = struct asn1p_s;
 

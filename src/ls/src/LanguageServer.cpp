@@ -1,5 +1,6 @@
 #include "LanguageServer.h"
 
+#include <vanadium/lib/Metaprogramming.h>
 #include <vanadium/lib/jsonrpc/Server.h>
 #include <vanadium/lib/lserver/Connection.h>
 
@@ -11,7 +12,6 @@
 #include "LanguageServerContext.h"
 #include "LanguageServerLogger.h"
 #include "LanguageServerMethods.h"
-#include "Metaprogramming.h"
 
 namespace vanadium::ls {
 

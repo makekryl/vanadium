@@ -3,6 +3,10 @@
 #include <oneapi/tbb/spin_mutex.h>
 #include <vanadium/ast/AST.h>
 #include <vanadium/ast/ASTNodes.h>
+#include <vanadium/lib/Arena.h>
+#include <vanadium/lib/Bitset.h>
+#include <vanadium/lib/DelimitedStringView.h>
+#include <vanadium/lib/FunctionRef.h>
 
 #include <ranges>
 #include <string>
@@ -11,10 +15,6 @@
 #include <unordered_set>
 #include <vector>
 
-#include "Arena.h"
-#include "Bitset.h"
-#include "DelimitedStringView.h"
-#include "FunctionRef.h"
 #include "Semantic.h"
 #include "TypeChecker.h"
 

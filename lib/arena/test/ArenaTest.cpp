@@ -3,7 +3,7 @@
 #include <cstddef>
 #include <type_traits>
 
-#include "Arena.h"
+#include "vanadium/lib/Arena.h"
 
 using namespace ::testing;
 

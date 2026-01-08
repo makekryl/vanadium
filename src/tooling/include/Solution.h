@@ -1,11 +1,12 @@
 #pragma once
 
+#include <vanadium/lib/Error.h>
+#include <vanadium/lib/FunctionRef.h>
+
 #include <expected>
 #include <ranges>
 
-#include "Error.h"
 #include "Filesystem.h"
-#include "FunctionRef.h"
 #include "Program.h"
 #include "Project.h"
 

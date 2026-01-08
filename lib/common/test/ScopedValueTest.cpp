@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "ScopedValue.h"
+#include "vanadium/lib/ScopedValue.h"
 
 using namespace vanadium::lib;
 

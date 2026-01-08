@@ -1,9 +1,10 @@
 #include "vanadium/ast/Scanner.h"
 
+#include <vanadium/lib/StaticMap.h>
+
 #include <cctype>
 #include <string_view>
 
-#include "StaticMap.h"
 #include "vanadium/ast/ASTNodes.h"
 #include "vanadium/ast/ASTTypes.h"
 

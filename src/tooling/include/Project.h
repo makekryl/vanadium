@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vanadium/lib/Error.h>
+
 #include <expected>
 #include <optional>
 #include <rfl/toml/read.hpp>
@@ -7,7 +9,6 @@
 #include <string_view>
 #include <unordered_map>
 
-#include "Error.h"
 #include "Filesystem.h"
 
 namespace vanadium {

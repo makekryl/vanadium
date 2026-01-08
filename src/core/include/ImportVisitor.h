@@ -1,6 +1,7 @@
 #pragma once
 
-#include "Metaprogramming.h"
+#include <vanadium/lib/Metaprogramming.h>
+
 #include "Program.h"
 
 namespace vanadium::core::semantic {

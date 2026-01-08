@@ -2,6 +2,8 @@
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/ASTTypes.h>
 #include <vanadium/ast/utils/ASTUtils.h>
+#include <vanadium/lib/Bitset.h>
+#include <vanadium/lib/DelimitedStringView.h>
 
 #include <algorithm>
 #include <cassert>
@@ -13,8 +15,6 @@
 #include <unordered_set>
 #include <vector>
 
-#include "Bitset.h"
-#include "DelimitedStringView.h"
 #include "Program.h"
 #include "Semantic.h"
 

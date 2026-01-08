@@ -1,10 +1,11 @@
 #include "Asn1Scanner.h"
 
+#include <vanadium/lib/StaticMap.h>
+
 #include <cctype>
 #include <string_view>
 
 #include "Asn1AST.h"
-#include "StaticMap.h"
 
 namespace vanadium::asn1::ast {
 namespace parser {

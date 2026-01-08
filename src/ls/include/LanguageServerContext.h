@@ -2,6 +2,8 @@
 
 #include <tbb/enumerable_thread_specific.h>
 #include <tbb/task_arena.h>
+#include <vanadium/lib/Arena.h>
+#include <vanadium/lib/Metaprogramming.h>
 #include <vanadium/lib/lserver/Connection.h>
 
 #include <string>
@@ -9,11 +11,9 @@
 #include <unordered_map>
 #include <utility>
 
-#include "Arena.h"
 #include "LanguageServerSession.h"
 #include "LanguageServerSolution.h"
 #include "Linter.h"
-#include "Metaprogramming.h"
 #include "Program.h"
 #include "Solution.h"
 

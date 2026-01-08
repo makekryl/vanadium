@@ -3,14 +3,14 @@
 #include <vanadium/ast/AST.h>
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/Parser.h>
+#include <vanadium/lib/Arena.h>
+#include <vanadium/lib/StaticMap.h>
 
 #include <print>
 
-#include "Arena.h"
 #include "BuiltinsSuperbases.h"
 #include "Program.h"
 #include "Semantic.h"
-#include "StaticMap.h"
 #include "TypeChecker.h"
 
 namespace vanadium::core {

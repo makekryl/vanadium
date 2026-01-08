@@ -2,8 +2,8 @@
 
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/ASTTypes.h>
+#include <vanadium/lib/EnumFlags.h>
 
-#include "EnumFlags.h"
 #include "Semantic.h"
 
 namespace vanadium::core {

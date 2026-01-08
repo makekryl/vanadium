@@ -1,13 +1,13 @@
 #pragma once
 
+#include <vanadium/lib/FunctionRef.h>
+
 #include <algorithm>
 #include <cstdint>
 #include <iterator>
 #include <string>
 #include <string_view>
 #include <vector>
-
-#include "FunctionRef.h"
 
 namespace vanadium::ast {
 

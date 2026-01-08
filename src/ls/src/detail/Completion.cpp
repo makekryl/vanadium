@@ -4,17 +4,17 @@
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/ASTTypes.h>
 #include <vanadium/ast/utils/ASTUtils.h>
+#include <vanadium/lib/Arena.h>
+#include <vanadium/lib/Metaprogramming.h>
 
 #include <algorithm>
 #include <glaze/json.hpp>
 #include <string_view>
 #include <variant>
 
-#include "Arena.h"
 #include "LSProtocol.h"
 #include "LanguageServerConv.h"
 #include "LanguageServerLogger.h"
-#include "Metaprogramming.h"
 #include "Program.h"
 #include "Semantic.h"
 #include "Solution.h"

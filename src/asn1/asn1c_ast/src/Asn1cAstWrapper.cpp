@@ -1,13 +1,12 @@
 #include "vanadium/asn/ast/Asn1cAstWrapper.h"
 
 #include <asn1c/libasn1parser/asn1parser_cxx.h>
+#include <vanadium/lib/Arena.h>
 
 #include <concepts>
 #include <expected>
 #include <utility>
 #include <vector>
-
-#include "Arena.h"
 
 namespace vanadium::asn::ast {
 

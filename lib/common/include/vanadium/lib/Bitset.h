@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <limits>
 
-#include "HeapArray.h"
+#include "vanadium/lib/HeapArray.h"
 
 namespace vanadium::lib {
 

@@ -6,6 +6,8 @@
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/Parser.h>
 #include <vanadium/ast/utils/ASTUtils.h>
+#include <vanadium/lib/Arena.h>
+#include <vanadium/lib/Bitset.h>
 
 #include <algorithm>
 #include <cassert>
@@ -18,9 +20,7 @@
 #include <type_traits>
 #include <unordered_map>
 
-#include "Arena.h"
 #include "Asn1Transparser.h"
-#include "Bitset.h"
 #include "ImportVisitor.h"
 #include "Semantic.h"
 #include "TypeChecker.h"
