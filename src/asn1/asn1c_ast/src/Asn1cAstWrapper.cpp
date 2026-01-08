@@ -1,4 +1,4 @@
-#include "vanadium/asn/ast/Asn1cAstWrapper.h"
+#include "vanadium/asn1/ast/Asn1cAstWrapper.h"
 
 #include <asn1c/libasn1parser/asn1parser_cxx.h>
 #include <vanadium/lib/Arena.h>

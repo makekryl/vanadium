@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <vanadium/lib/Arena.h>
 
-#include "vanadium/asn/ast/Asn1cAstWrapper.h"
+#include "vanadium/asn1/ast/Asn1cAstWrapper.h"
 
 TEST(Asn1cAstWrapper, ParseSuccess) {
   vanadium::lib::Arena arena;
