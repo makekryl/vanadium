@@ -3,6 +3,7 @@
 #include <oneapi/tbb/parallel_for_each.h>
 #include <oneapi/tbb/spin_mutex.h>
 #include <oneapi/tbb/task_group.h>
+#include <vanadium/asn1/ast/Asn1ModuleBasket.h>
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/Parser.h>
 #include <vanadium/ast/utils/ASTUtils.h>
@@ -20,16 +21,20 @@
 #include <type_traits>
 #include <unordered_map>
 
-#include "Asn1Transparser.h"
 #include "ImportVisitor.h"
 #include "Semantic.h"
 #include "TypeChecker.h"
+#include "vanadium/ast/AST.h"
 
 namespace vanadium::core {
 
 namespace {
 inline AnalysisState::Value& operator|=(AnalysisState::Value& lhs, AnalysisState::Value rhs) {
   return lhs = static_cast<AnalysisState::Value>(lhs | rhs);
+}
+
+bool IsAsnModule(const SourceFile& sf) {
+  return sf.path.ends_with(".asn");
 }
 }  // namespace
 
@@ -77,16 +82,25 @@ void Program::UpdateFile(const std::string& path, const FileReadFn& read) {
   }
 
   read(path, sf.src);
-  sf.ast = (path.ends_with(".asn") ? asn1::ast::Parse : ast::Parse)(sf.arena, sf.src);
-  sf.ast.root->file = &sf;
+  if (!IsAsnModule(sf)) {
+    sf.ast = ast::Parse(sf.arena, sf.src);
+    sf.ast.root->file = &sf;
 
-  AttachFile(sf);
+    AttachFile(sf);
+  } else {
+    // Attach is postponed until all other modules are parsed
+    asn_modules_.Update(&sf, sf.src);
+  }
 }
 
 void Program::DropFile(const std::string& path) {
   auto& sf = files_[path];
 
   DetachFile(sf);
+
+  if (IsAsnModule(sf)) {
+    // asnModules_.Drop((void*) &sf);
+  }
 
   files_.erase(path);
 }
@@ -154,6 +168,14 @@ void Program::DetachFile(SourceFile& sf) {
   }
 }
 
+void Program::RefreshAsn1Modules() {
+  asn_modules_.RefreshTargetAST<SourceFile>([&](SourceFile* sf, ast::AST ast) {
+    sf->ast = std::move(ast);
+    sf->ast.root->file = sf;
+    AttachFile(*sf);
+  });
+}
+
 void Program::AddReference(Program* program) {
   explicit_references_.emplace(program);
   program->dependents_.emplace(this);
@@ -163,6 +185,8 @@ void Program::SealReferences() {
   const auto bind_ref = [&, pthis = this](this auto&& self, Program* referenced_program) -> void {
     pthis->references_.emplace(referenced_program);
     referenced_program->dependents_.emplace(pthis);
+
+    // pthis->asnModules_.AddReference(&referenced_program->asnModules_);
 
     for (auto* tref : referenced_program->explicit_references_) {
       self(tref);
@@ -399,6 +423,7 @@ void Program::Crossbind(SourceFile& sf, ExternallyResolvedGroup& ext_group) {
 }
 
 void Program::Analyze() {
+  RefreshAsn1Modules();
   tbb::parallel_for_each(files_ | std::views::values, [&](SourceFile& sf) {
     auto& module = *sf.module;
 

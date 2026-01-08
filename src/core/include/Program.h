@@ -1,6 +1,7 @@
 #pragma once
 
 #include <oneapi/tbb/spin_mutex.h>
+#include <vanadium/asn1/ast/Asn1ModuleBasket.h>
 #include <vanadium/ast/AST.h>
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/lib/Arena.h>
@@ -208,6 +209,8 @@ class Program {
   void AttachFile(SourceFile&);
   void DetachFile(SourceFile&);
 
+  void RefreshAsn1Modules();
+
   void Crossbind(SourceFile&, ExternallyResolvedGroup&);
   void Analyze();
 
@@ -215,6 +218,7 @@ class Program {
   tbb::speculative_spin_mutex files_mutex_;
 
   std::unordered_map<std::string_view, ModuleDescriptor*> modules_;
+  asn1::ast::Asn1ModuleBasket asn_modules_;
 
   std::unordered_set<Program*> explicit_references_;
   std::unordered_set<Program*> references_;
