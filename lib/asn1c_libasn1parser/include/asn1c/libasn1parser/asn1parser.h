@@ -6,10 +6,6 @@
 
 #include <stdint.h>  //
 
-#ifdef	HAVE_CONFIG_H
-#include "config.h"
-#endif	/* HAVE_CONFIG_H */
-
 #include "asn1c/libasn1common/asn1_ref.h"
 
 #include "asn1p_alloc.h"
