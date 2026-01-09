@@ -5,7 +5,7 @@
 
 static thread_local asn1p_allocator_t asn1p_current_allocator = {};
 
-void asn1p_mem_use_allocator(asn1p_allocator_t allocator) {
+void asn1p_mem_set_allocator(asn1p_allocator_t allocator) {
   asn1p_current_allocator = allocator;
 }
 

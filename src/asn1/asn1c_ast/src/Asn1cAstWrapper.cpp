@@ -13,7 +13,7 @@ namespace vanadium::asn1::ast {
 namespace {
 void WithArenaAsn1cAllocator(lib::Arena& arena, std::invocable auto f) {
   auto previous_allocator = asn1p_mem_get_allocator();
-  asn1p_mem_use_allocator(asn1p_allocator_t{
+  asn1p_mem_set_allocator(asn1p_allocator_t{
       .ctx = reinterpret_cast<void*>(&arena),
       .alloc = [](void* ctx, std::size_t size) -> void* {
         return reinterpret_cast<vanadium::lib::Arena*>(ctx)->AllocBuffer(size);
@@ -21,7 +21,7 @@ void WithArenaAsn1cAllocator(lib::Arena& arena, std::invocable auto f) {
       .free = [](void* ctx, void* p) {},
   });
   f();
-  asn1p_mem_use_allocator(previous_allocator);
+  asn1p_mem_set_allocator(previous_allocator);
 }
 }  // namespace
 
