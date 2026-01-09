@@ -35,12 +35,15 @@ class Asn1cAstWrapper {
   const asn1p_t& operator*() const {
     return *ast_;
   }
-
-  static std::expected<Asn1cAstWrapper, std::vector<Asn1cSyntaxError>> Parse(lib::Arena&, std::string_view);
+  [[nodiscard]] const asn1p_t* Get() const {
+    return ast_;
+  }
 
  private:
   asn1p_t* ast_;
   lib::Arena* arena_;
 };
+
+std::expected<Asn1cAstWrapper, std::vector<Asn1cSyntaxError>> Parse(lib::Arena&, std::string_view);
 
 }  // namespace vanadium::asn1::ast

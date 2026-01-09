@@ -1,18 +1,35 @@
 #include "vanadium/asn1/ast/Asn1ModuleBasket.h"
 
+#include <oneapi/tbb/parallel_for_each.h>
 #include <vanadium/asn1/ast/Asn1cAstWrapper.h>
-#include <vanadium/ast/AST.h>
+#include <vanadium/ast/ASTTypes.h>
 #include <vanadium/lib/Arena.h>
 #include <vanadium/lib/FunctionRef.h>
 
-#include <ranges>
+#include <mutex>
 #include <string_view>
 #include <unordered_map>
 #include <vector>
 
 namespace vanadium::asn1::ast {
 
-void Asn1ModuleBasket::UpdateImpl(void* key, std::string_view src) {
+namespace {
+std::vector<pos_t> CollectLineStarts(std::string_view src) {
+  std::vector<pos_t> line_starts;
+  line_starts.clear();
+  for (std::size_t i = 0; i < src.size(); ++i) {
+    if (src[i] == '\n') {
+      line_starts.push_back(i + 1);
+    }
+  }
+  return line_starts;
+}
+}  // namespace
+
+void Asn1ModuleBasket::UpdateImpl(OpaqueKey* key, std::string_view src) {
+  static std::mutex mu;
+  std::lock_guard l(mu);
+
   auto [it, inserted] = items_.try_emplace(key);
   auto& item = it->second;
 
@@ -21,7 +38,8 @@ void Asn1ModuleBasket::UpdateImpl(void* key, std::string_view src) {
   }
 
   item.src = src;
-  if (auto result = Asn1cAstWrapper::Parse(item.arena, src)) {
+  item.lines = ttcn3_ast::LineMapping(CollectLineStarts(src));
+  if (auto result = Parse(item.arena, src)) {
     item.ast = std::move(*result);
     item.errors.clear();
   } else {
@@ -31,14 +49,16 @@ void Asn1ModuleBasket::UpdateImpl(void* key, std::string_view src) {
   item.dirty = true;
 }
 
-void Asn1ModuleBasket::RefreshTargetASTImpl(lib::FunctionRef<void(void*, ttcn3_ast::AST)> accept) {
-  for (auto& [key, item] : items_) {
+void Asn1ModuleBasket::RefreshTargetASTImpl(const Refresher<OpaqueKey>& refresher) {
+  tbb::parallel_for_each(items_, [&](auto& entry) {
+    auto& [key, item] = entry;
+
     if (!item.dirty) {
-      continue;
+      return;
     }
 
-    accept(key, TransformAST(item));
-  }
+    refresher.accept(key, TransformAST(item, refresher.provide_arena(key)));
+  });
 }
 
 Asn1ModuleBasketItem* Asn1ModuleBasket::FindModule(std::string_view name) {
@@ -51,19 +71,6 @@ Asn1ModuleBasketItem* Asn1ModuleBasket::FindModule(std::string_view name) {
     }
   }
   return nullptr;
-}
-
-ttcn3_ast::AST Asn1ModuleBasket::TransformAST(Asn1ModuleBasketItem& item) {
-  return {
-      .src = item.src, .root = nullptr, .lines = {}, .errors = {},
-      // .errors = item.errors | std::views::transform([](const auto& err) {
-      //             return ttcn3_ast::SyntaxError{
-      //                 .range = {.begin = err.pos, .end = err.pos},
-      //                 .description = err.message,
-      //             };
-      //           }) |
-      //           std::ranges::to<std::vector>(),
-  };
 }
 
 }  // namespace vanadium::asn1::ast

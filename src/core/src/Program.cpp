@@ -4,6 +4,7 @@
 #include <oneapi/tbb/spin_mutex.h>
 #include <oneapi/tbb/task_group.h>
 #include <vanadium/asn1/ast/Asn1ModuleBasket.h>
+#include <vanadium/ast/AST.h>
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/Parser.h>
 #include <vanadium/ast/utils/ASTUtils.h>
@@ -24,7 +25,6 @@
 #include "ImportVisitor.h"
 #include "Semantic.h"
 #include "TypeChecker.h"
-#include "vanadium/ast/AST.h"
 
 namespace vanadium::core {
 
@@ -169,10 +169,24 @@ void Program::DetachFile(SourceFile& sf) {
 }
 
 void Program::RefreshAsn1Modules() {
-  asn_modules_.RefreshTargetAST<SourceFile>([&](SourceFile* sf, ast::AST ast) {
-    sf->ast = std::move(ast);
-    sf->ast.root->file = sf;
-    AttachFile(*sf);
+  asn_modules_.RefreshTargetAST<SourceFile>({
+      .prepare =
+          [&](SourceFile* sf) {
+            // todo: this is a copypaste from Program::UpdateFile
+            DetachFile(*sf);
+            sf->module = std::nullopt;
+            sf->semantic_errors.clear();
+            sf->arena.Reset();
+          },
+      .provide_arena = [&](SourceFile* sf) -> lib::Arena& {
+        return sf->arena;
+      },
+      .accept =
+          [&](SourceFile* sf, ast::AST ast) {
+            sf->ast = std::move(ast);
+            sf->ast.root->file = sf;
+            AttachFile(*sf);
+          },
   });
 }
 

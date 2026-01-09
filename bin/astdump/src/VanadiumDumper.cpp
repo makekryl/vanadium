@@ -7,6 +7,9 @@
 
 #include "Asn1Transparser.h"
 #include "TextDumper.h"
+#include "vanadium/asn1/ast/Asn1ModuleBasket.h"
+#include "vanadium/ast/AST.h"
+#include "vanadium/lib/Arena.h"
 
 namespace {
 std::optional<std::string> ReadFile(const char* path) {
@@ -17,6 +20,25 @@ std::optional<std::string> ReadFile(const char* path) {
     return buf.str();
   }
   return std::nullopt;
+}
+
+vanadium::ast::AST ParseUsingAsn1c(vanadium::lib::Arena& arena, std::string_view src) {
+  vanadium::ast::AST ast;
+
+  vanadium::asn1::ast::Asn1ModuleBasket basket;
+  basket.Update<void>(nullptr, src);
+  basket.RefreshTargetAST<void>({
+      .prepare = [&](void*) {},
+      .provide_arena = [&](void*) -> vanadium::lib::Arena& {
+        return arena;
+      },
+      .accept =
+          [&](void*, vanadium::ast::AST ttcnast) {
+            ast = std::move(ttcnast);
+          },
+  });
+
+  return ast;
 }
 }  // namespace
 
@@ -34,7 +56,8 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
-  const auto parse_fn = filename.ends_with(".asn") ? vanadium::asn1::ast::Parse : vanadium::ast::Parse;
+  const auto parse_fn =
+      filename.ends_with(".asn") ? /*vanadium::asn1::ast::Transparse*/ ParseUsingAsn1c : vanadium::ast::Parse;
 
   vanadium::lib::Arena arena;
   auto ast = parse_fn(arena, *src);
