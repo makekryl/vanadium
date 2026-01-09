@@ -26,7 +26,7 @@ void Asn1ModuleBasket::UpdateImpl(void* key, std::string_view src) {
     item.errors.clear();
   } else {
     item.ast = std::nullopt;
-    item.errors = result.error();
+    item.errors = std::move(result.error());
   }
   item.dirty = true;
 }
