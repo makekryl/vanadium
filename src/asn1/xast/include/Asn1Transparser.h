@@ -87,7 +87,7 @@ class Transparser {
 
 }  // namespace parser
 
-inline ttcn_ast::AST Parse(lib::Arena& arena, std::string_view src) {
+inline ttcn_ast::AST Transparse(lib::Arena& arena, std::string_view src) {
   parser::Transparser parser(arena, src);
   auto [root, new_src] = parser.ParseRoot();
   return {
