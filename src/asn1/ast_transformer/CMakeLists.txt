@@ -11,6 +11,7 @@ target_link_libraries(vanadium_asn1_ast_transformer PUBLIC
   vanadium_lib_arena
   vanadium_asn1_asn1c_ast
   vanadium_ast
+  magic_enum
 )
 
 add_gtest_executable(vanadium_asn1_ast_transformer)

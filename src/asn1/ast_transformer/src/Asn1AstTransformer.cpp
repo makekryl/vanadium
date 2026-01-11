@@ -7,9 +7,11 @@
 #include <vanadium/lib/Arena.h>
 #include <vanadium/lib/FunctionRef.h>
 
+#include <optional>
 #include <print>
 
 #include "asn1c/libasn1parser/asn1p_expr.h"
+#include "magic_enum/magic_enum.hpp"
 
 namespace vanadium::asn1::ast {
 
@@ -55,36 +57,99 @@ class AstTransformer {
   ttcn3_ast::nodes::Module* TransformModule(const asn1p_module_t* mod) {
     return NewNode<ttcn3_ast::nodes::Module>([&](ttcn3_ast::nodes::Module& m) {
       m.nrange = {.begin = 0, .end = static_cast<ttcn3_ast::pos_t>(src_.length())};
-      m.name.emplace();
-      m.name->nrange = {.begin = 0, .end = 5};
+      m.name.emplace().nrange = {.begin = 0, .end = 5};
 
       asn1p_expr_t* tc;
       TQ_FOR(tc, &(mod->members), next) {
-        if (auto* def_node = TransformExpr(tc); def_node != nullptr) {
+        if (auto* dn = TransformExpr<true>(tc); dn != nullptr) {
           m.defs.push_back(NewNode<ttcn3_ast::nodes::Definition>([&](ttcn3_ast::nodes::Definition& def) {
-            def.def = def_node;
-            def_node->parent = &def;
+            def.def = dn;
+            dn->parent = &def;
           }));
         }
       }
     });
   }
 
+  template <bool Outermost = false>
   ttcn3_ast::Node* TransformExpr(const asn1p_expr_t* expr) {
+    std::println("'{}': {} / {}", expr->Identifier, magic_enum::enum_name(expr->meta_type),
+                 magic_enum::enum_name(expr->expr_type));
     switch (expr->expr_type) {
       case ASN_CONSTR_SEQUENCE:
-        return TransformSequence(expr);
+        if constexpr (Outermost) {
+          return TransformSequence(ttcn3_ast::TokenKind::RECORD, expr);
+        } else {
+          return TransformInnerSequence(ttcn3_ast::TokenKind::RECORD, expr);
+        }
+      case ASN_CONSTR_CHOICE:
+        if constexpr (Outermost) {
+          return TransformSequence(ttcn3_ast::TokenKind::UNION, expr);
+        } else {
+          return TransformInnerSequence(ttcn3_ast::TokenKind::UNION, expr);
+        }
+      case ASN_BASIC_INTEGER:
+        return TransformBuiltinTypeRef(expr);
       default:
         return nullptr;
     }
   }
 
-  ttcn3_ast::nodes::StructTypeDecl* TransformSequence(const asn1p_expr_t* expr) {
+  ttcn3_ast::nodes::StructTypeDecl* TransformSequence(ttcn3_ast::TokenKind kind, const asn1p_expr_t* expr) {
     return NewNode<ttcn3_ast::nodes::StructTypeDecl>([&](ttcn3_ast::nodes::StructTypeDecl& m) {
+      m.kind = Tok(kind);
+
+      m.name.emplace().nrange = ConvertRange(expr->_Identifier_Range);
+
+      asn1p_expr_t* se;
+      TQ_FOR(se, &(expr->members), next) {
+        if (auto* dn = TransformComponent(se); dn != nullptr) {
+          m.fields.push_back(dn);
+        }
+      }
+    });
+  }
+
+  ttcn3_ast::nodes::StructSpec* TransformInnerSequence(ttcn3_ast::TokenKind kind, const asn1p_expr_t* expr) {
+    return NewNode<ttcn3_ast::nodes::StructSpec>([&](ttcn3_ast::nodes::StructSpec& m) {
       m.kind = Tok(ttcn3_ast::TokenKind::RECORD);
 
-      m.name.emplace();
-      m.name->nrange = ConvertRange(expr->_Identifier_Range);
+      asn1p_expr_t* se;
+      TQ_FOR(se, &(expr->members), next) {
+        if (auto* dn = TransformComponent(se); dn != nullptr) {
+          m.fields.push_back(dn);
+        }
+      }
+    });
+  }
+
+  ttcn3_ast::nodes::Field* TransformComponent(const asn1p_expr_t* se) {
+    auto* c = TransformExpr(se);
+    if (!c) {
+      return nullptr;
+    }
+
+    return NewNode<ttcn3_ast::nodes::Field>([&](ttcn3_ast::nodes::Field& m) {
+      m.name.emplace().nrange = ConvertRange(se->_Identifier_Range);
+
+      if ((se->marker.flags & asn1p_expr_s::asn1p_expr_marker_s::EM_DEFAULT) ==
+          asn1p_expr_s::asn1p_expr_marker_s::EM_DEFAULT) {
+        // safe_printf(" DEFAULT ");
+        // asn1print_value(se->marker.default_value, flags);
+      } else if ((se->marker.flags & asn1p_expr_s::asn1p_expr_marker_s::EM_OPTIONAL) ==
+                 asn1p_expr_s::asn1p_expr_marker_s::EM_OPTIONAL) {
+        m.optional = true;
+      }
+
+      m.type = c->As<ttcn3_ast::nodes::TypeSpec>();
+    });
+  }
+
+  ttcn3_ast::nodes::RefSpec* TransformBuiltinTypeRef(const asn1p_expr_t* se) {
+    return NewNode<ttcn3_ast::nodes::RefSpec>([&](ttcn3_ast::nodes::RefSpec& m) {
+      m.x = NewNode<ttcn3_ast::nodes::Ident>([&](ttcn3_ast::nodes::Ident& ident) {
+        ident.nrange = {1, 5};
+      });
     });
   }
 
