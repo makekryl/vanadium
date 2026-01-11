@@ -104,6 +104,7 @@ typedef enum asn1p_expr_type {
 	ASN_EXPR_TYPE_MAX
 } asn1p_expr_type_e;
 
+#include "asn1p_src_range.h"
 #include "asn1p_expr_str.h"
 #include "asn1p_expr2uclass.h"
 
@@ -119,6 +120,7 @@ typedef struct asn1p_expr_s {
 	 * Human readable name.
 	 */
 	char *Identifier;
+  asn1p_src_range_t _Identifier_Range;
 
 	/*
 	 * Meta type of the expression (type, value, value set, etc).

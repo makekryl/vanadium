@@ -168,28 +168,6 @@ void Program::DetachFile(SourceFile& sf) {
   }
 }
 
-void Program::RefreshAsn1Modules() {
-  asn_modules_.RefreshTargetAST<SourceFile>({
-      .prepare =
-          [&](SourceFile* sf) {
-            // todo: this is a copypaste from Program::UpdateFile
-            DetachFile(*sf);
-            sf->module = std::nullopt;
-            sf->semantic_errors.clear();
-            sf->arena.Reset();
-          },
-      .provide_arena = [&](SourceFile* sf) -> lib::Arena& {
-        return sf->arena;
-      },
-      .accept =
-          [&](SourceFile* sf, ast::AST ast) {
-            sf->ast = std::move(ast);
-            sf->ast.root->file = sf;
-            AttachFile(*sf);
-          },
-  });
-}
-
 void Program::AddReference(Program* program) {
   explicit_references_.emplace(program);
   program->dependents_.emplace(this);
@@ -437,7 +415,20 @@ void Program::Crossbind(SourceFile& sf, ExternallyResolvedGroup& ext_group) {
 }
 
 void Program::Analyze() {
-  RefreshAsn1Modules();
+  tbb::parallel_for_each(asn_modules_.DirtyKeys<SourceFile>(), [&](SourceFile* sf) {
+    // todo: this is a copypaste from Program::UpdateFile
+    DetachFile(*sf);
+    sf->module = std::nullopt;
+    sf->semantic_errors.clear();
+    sf->arena.Reset();
+
+    sf->ast = asn_modules_.Transform(sf, sf->arena);
+    sf->ast.root->file = sf;
+    AttachFile(*sf);
+
+    // todo: clean dirty flag
+  });
+
   tbb::parallel_for_each(files_ | std::views::values, [&](SourceFile& sf) {
     auto& module = *sf.module;
 

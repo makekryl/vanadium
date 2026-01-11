@@ -4,8 +4,18 @@
 %option stack
 %option yylineno
 %option bison-bridge
+%option bison-locations
 %option	never-interactive
 %option	noinput
+%option extra-type="asn1p_lctx_t *"
+
+%top {
+#include <stdint.h>
+
+typedef struct {
+  uint32_t current_offset;
+} asn1p_lctx_t;
+}
 
 %{
 
@@ -16,8 +26,12 @@
 #include "asn1parser.h"
 #include "asn1p_alloc.h"
 
-#define YYSTYPE ASN1P_STYPE
 #include "asn1p_y.h"
+
+#define YY_USER_ACTION \
+    yylloc_param->begin = yyextra->current_offset; \
+    yyextra->current_offset += yyleng; \
+    yylloc_param->end = yyextra->current_offset;
 
 void asn1p_lexer_hack_push_opaque_state(yyscan_t);		/* Used in .y */
 void asn1p_lexer_hack_enable_with_syntax(yyscan_t);		/* Used in .y */

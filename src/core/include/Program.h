@@ -209,8 +209,6 @@ class Program {
   void AttachFile(SourceFile&);
   void DetachFile(SourceFile&);
 
-  void RefreshAsn1Modules();
-
   void Crossbind(SourceFile&, ExternallyResolvedGroup&);
   void Analyze();
 

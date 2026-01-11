@@ -4,13 +4,11 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <assert.h>
-#include <errno.h>
 #include <threads.h>
 
 #include "asn1parser.h"
 #include "asn1p_list.h"
 
-#define YYSTYPE ASN1P_STYPE
 #include "asn1p_y.h"
 #include "asn1p_l.h"
 
@@ -21,15 +19,16 @@ static int _asn1p_fix_modules(asn1p_t *a, const char *fname);
  */
 asn1p_t *
 asn1p_parse_buffer(const char *buffer, int size, asn1p_errs_t *errs) {
-  asn1p_yctx_t ctx = { .errors = errs };
+  asn1p_yctx_t yctx = { .errors = errs };
+  asn1p_lctx_t lctx = {0};
   asn1p_t *a = NULL;
   //
   yyscan_t scanner;
   YY_BUFFER_STATE ybuf;
 	int ret;
 
-  if (asn1p_lex_init(&scanner) != 0) {
-    assert(0 && "asn1p_lex_init");
+  if (asn1p_lex_init_extra(&lctx, &scanner) != 0) {
+    assert(0 && "asn1p_lex_init_extra");
   	return NULL;
   }
 
@@ -40,7 +39,7 @@ asn1p_parse_buffer(const char *buffer, int size, asn1p_errs_t *errs) {
 		return 0;
 	}
 
-  ret = asn1p_parse(&ctx, &a, scanner);
+  ret = asn1p_parse(&yctx, &a, scanner);
 
   asn1p__delete_buffer(ybuf, scanner);
   asn1p_lex_destroy(scanner);

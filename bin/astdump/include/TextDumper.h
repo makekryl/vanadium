@@ -38,6 +38,7 @@ class TextASTDumper {
       padding -= range->end > 0 ? std::size_t(std::log10(double(range->end))) + 1 : 1;
       padding -= 1;
     }
+    padding = std::min(padding, 128UL);
     for (std::size_t i = 0; i < padding; i++) {
       out_ << ' ';
     }
@@ -47,6 +48,9 @@ class TextASTDumper {
   }
 
   void WriteValue(std::string_view value) {
+    if (value.length() > 8192) {
+      value = "(bad value)";
+    }
     out_ << "\e[0;96m" << value << "\e[0m";
   }
 

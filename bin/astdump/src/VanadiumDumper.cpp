@@ -27,18 +27,7 @@ vanadium::ast::AST ParseUsingAsn1c(vanadium::lib::Arena& arena, std::string_view
 
   vanadium::asn1::ast::Asn1ModuleBasket basket;
   basket.Update<void>(nullptr, src);
-  basket.RefreshTargetAST<void>({
-      .prepare = [&](void*) {},
-      .provide_arena = [&](void*) -> vanadium::lib::Arena& {
-        return arena;
-      },
-      .accept =
-          [&](void*, vanadium::ast::AST ttcnast) {
-            ast = std::move(ttcnast);
-          },
-  });
-
-  return ast;
+  return basket.Transform<void>(nullptr, arena);
 }
 }  // namespace
 

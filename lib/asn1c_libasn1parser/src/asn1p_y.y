@@ -1,6 +1,9 @@
 %define api.pure full
 %define api.prefix {asn1p_}
 
+%locations
+%define api.location.type {asn1p_src_range_t}
+
 %parse-param { asn1p_yctx_t *ctx }
 %parse-param { void **param }
 %parse-param { yyscan_t yyscanner }
@@ -9,6 +12,9 @@
 
 %code requires {
 typedef void *yyscan_t;
+
+#define YYSTYPE ASN1P_STYPE
+#define YYLTYPE ASN1P_LTYPE
 }
 
 %code requires {
@@ -35,6 +41,16 @@ typedef struct {
 #define YYDEBUG 1
 #define YYFPRINTF   prefixed_fprintf
 
+#define YYLLOC_DEFAULT(Current, Rhs, N) \
+    do { \
+        if (N > 0) { \
+            (Current).begin = YYRHSLOC(Rhs, 1).begin; \
+            (Current).end   = YYRHSLOC(Rhs, N).end; \
+        } else { \
+            (Current).begin = (Current).end = YYRHSLOC(Rhs, 0).end; \
+        } \
+    } while (0)
+
 /*
  * Prefix parser debug with "PARSER: " for easier human eye scanning.
  */
@@ -57,7 +73,7 @@ prefixed_fprintf(FILE *f, const char *fmt, ...) {
     return ret;
 }
 
-static int yyerror(asn1p_yctx_t *ctx, void **param, yyscan_t scanner, const char *msg);
+static int yyerror(YYLTYPE *, asn1p_yctx_t *ctx, void **param, yyscan_t scanner, const char *msg);
 
 void asn1p_lexer_hack_push_opaque_state(yyscan_t);
 void asn1p_lexer_hack_enable_with_syntax(yyscan_t);
@@ -83,7 +99,7 @@ static asn1p_module_t *currentModule;
 
 #define	checkmem(ptr)	do {						\
 		if(!(ptr))						\
-		return yyerror(ctx, param, yyscanner, "Memory failure");			\
+		return yyerror(&yyloc, ctx, param, yyscanner, "Memory failure");			\
 	} while(0)
 
 #define	CONSTRAINT_INSERT(root, constr_type, arg1, arg2) do {		\
@@ -701,7 +717,7 @@ Assignment:
 	 */
 	| BasicString {
     $$ = NULL;
-		return yyerror(ctx, param, yyscanner,
+		return yyerror(&yyloc, ctx, param, yyscanner,
 			"Attempt to redefine a standard basic string type, "
 			"please comment out or remove this type redefinition.");
 	}
@@ -719,7 +735,7 @@ optImports:
 ImportsDefinition:
 	TOK_IMPORTS optImportsBundleSet ';' {
 		if(!saved_aid && 0)
-			return yyerror(ctx, param, yyscanner, "Unterminated IMPORTS FROM, "
+			return yyerror(&yyloc, ctx, param, yyscanner, "Unterminated IMPORTS FROM, "
 					"expected semicolon ';'");
 		saved_aid = 0;
 		$$ = $2;
@@ -729,7 +745,7 @@ ImportsDefinition:
 	 */
 	| TOK_IMPORTS TOK_FROM /* ... */ {
     $$ = NULL;
-		return yyerror(ctx, param, yyscanner, "Empty IMPORTS list");
+		return yyerror(&yyloc, ctx, param, yyscanner, "Empty IMPORTS list");
 	}
 	;
 
@@ -781,19 +797,19 @@ ImportsElement:
 	TypeRefName {
 		$$ = NEW_EXPR();
 		checkmem($$);
-		$$->Identifier = $1;
+		$$->Identifier = $1; $$->_Identifier_Range = @1;
 		$$->expr_type = A1TC_REFERENCE;
 	}
 	| TypeRefName '{' '}' {		/* Completely equivalent to above */
 		$$ = NEW_EXPR();
 		checkmem($$);
-		$$->Identifier = $1;
+		$$->Identifier = $1; $$->_Identifier_Range = @1;
 		$$->expr_type = A1TC_REFERENCE;
 	}
 	| Identifier {
 		$$ = NEW_EXPR();
 		checkmem($$);
-		$$->Identifier = $1;
+		$$->Identifier = $1; $$->_Identifier_Range = @1;
 		$$->expr_type = A1TC_REFERENCE;
 	}
 	;
@@ -842,19 +858,19 @@ ExportsElement:
 	TypeRefName {
 		$$ = NEW_EXPR();
 		checkmem($$);
-		$$->Identifier = $1;
+		$$->Identifier = $1; $$->_Identifier_Range = @1;
 		$$->expr_type = A1TC_EXPORTVAR;
 	}
 	| TypeRefName '{' '}' {
 		$$ = NEW_EXPR();
 		checkmem($$);
-		$$->Identifier = $1;
+		$$->Identifier = $1; $$->_Identifier_Range = @1;
 		$$->expr_type = A1TC_EXPORTVAR;
 	}
 	| Identifier {
 		$$ = NEW_EXPR();
 		checkmem($$);
-		$$->Identifier = $1;
+		$$->Identifier = $1; $$->_Identifier_Range = @1;
 		$$->expr_type = A1TC_EXPORTVAR;
 	}
 	;
@@ -866,7 +882,7 @@ ValueSetTypeAssignment:
 	TypeRefName Type TOK_PPEQ ValueSet {
 		$$ = $2;
 		assert($$->Identifier == 0);
-		$$->Identifier = $1;
+		$$->Identifier = $1; $$->_Identifier_Range = @1;
 		$$->meta_type = AMT_VALUESET;
 		$$->constraints = $4;
 	}
@@ -915,13 +931,13 @@ DataTypeReference:
 	 */
 	TypeRefName TOK_PPEQ Type {
 		$$ = $3;
-		$$->Identifier = $1;
+		$$->Identifier = $1; $$->_Identifier_Range = @1;
 		assert($$->expr_type);
 		assert($$->meta_type);
 	}
 	| TypeRefName TOK_PPEQ ObjectClass {
 		$$ = $3;
-		$$->Identifier = $1;
+		$$->Identifier = $1; $$->_Identifier_Range = @1;
 		assert($$->expr_type == A1TC_CLASSDEF);
 		assert($$->meta_type == AMT_OBJECTCLASS);
 	}
@@ -937,13 +953,13 @@ DataTypeReference:
 	 */
 	| TypeRefName '{' ParameterArgumentList '}' TOK_PPEQ Type {
 		$$ = $6;
-		$$->Identifier = $1;
+		$$->Identifier = $1; $$->_Identifier_Range = @1;
 		$$->lhs_params = $3;
 	}
 	/* Parameterized CLASS declaration */
 	| TypeRefName '{' ParameterArgumentList '}' TOK_PPEQ ObjectClass {
 		$$ = $6;
-		$$->Identifier = $1;
+		$$->Identifier = $1; $$->_Identifier_Range = @1;
 		$$->lhs_params = $3;
 	}
 	;
@@ -1084,7 +1100,7 @@ ComponentType:
 	Identifier MaybeIndirectTaggedType optMarker {
 		$$ = $2;
 		assert($$->Identifier == 0);
-		$$->Identifier = $1;
+		$$->Identifier = $1; $$->_Identifier_Range = @1;
 		$3.flags |= $$->marker.flags;
 		$$->marker = $3;
 	}
@@ -1122,7 +1138,7 @@ AlternativeType:
 	Identifier MaybeIndirectTaggedType {
 		$$ = $2;
 		assert($$->Identifier == 0);
-		$$->Identifier = $1;
+		$$->Identifier = $1; $$->_Identifier_Range = @1;
 	}
 	| ExtensionAndException {
 		$$ = $1;
@@ -1169,7 +1185,7 @@ ClassField:
 	TOK_typefieldreference optMarker {
 		$$ = NEW_EXPR();
 		checkmem($$);
-		$$->Identifier = $1;
+		$$->Identifier = $1; $$->_Identifier_Range = @1;
 		$$->meta_type = AMT_OBJECTFIELD;
 		$$->expr_type = A1TC_CLASSFIELD_TFS;	/* TypeFieldSpec */
 		$$->marker = $2;
@@ -1178,7 +1194,7 @@ ClassField:
 	/* FixedTypeValueFieldSpec ::= valuefieldreference Type UNIQUE ? ValueOptionalitySpec ? */
 	| TOK_valuefieldreference Type optUNIQUE optMarker {
 		$$ = NEW_EXPR();
-		$$->Identifier = $1;
+		$$->Identifier = $1; $$->_Identifier_Range = @1;
 		$$->meta_type = AMT_OBJECTFIELD;
 		$$->expr_type = A1TC_CLASSFIELD_FTVFS;	/* FixedTypeValueFieldSpec */
 		$$->unique = $3;
@@ -1189,7 +1205,7 @@ ClassField:
 	/* VariableTypeValueFieldSpec ::= valuefieldreference FieldName ValueOptionalitySpec ? */
 	| TOK_valuefieldreference FieldName optMarker {
 		$$ = NEW_EXPR();
-		$$->Identifier = $1;
+		$$->Identifier = $1; $$->_Identifier_Range = @1;
 		$$->meta_type = AMT_OBJECTFIELD;
 		$$->expr_type = A1TC_CLASSFIELD_VTVFS;
 		$$->reference = $2;
@@ -1200,7 +1216,7 @@ ClassField:
 	| TOK_valuefieldreference DefinedObjectClass optMarker {
 		$$ = NEW_EXPR();
 		checkmem($$);
-		$$->Identifier = $1;
+		$$->Identifier = $1; $$->_Identifier_Range = @1;
 		$$->reference = $2;
 		$$->meta_type = AMT_OBJECTFIELD;
 		$$->expr_type = A1TC_CLASSFIELD_OFS;
@@ -1210,7 +1226,7 @@ ClassField:
 	/* VariableTypeValueSetFieldSpec ::= valuesetfieldreference FieldName ValueOptionalitySpec ? */
 	| TOK_typefieldreference FieldName optMarker {
 		$$ = NEW_EXPR();
-		$$->Identifier = $1;
+		$$->Identifier = $1; $$->_Identifier_Range = @1;
 		$$->meta_type = AMT_OBJECTFIELD;
 		$$->expr_type = A1TC_CLASSFIELD_VTVSFS;
 		$$->reference = $2;
@@ -1221,7 +1237,7 @@ ClassField:
 	| TOK_typefieldreference Type optMarker {
 		$$ = NEW_EXPR();
 		checkmem($$);
-		$$->Identifier = $1;
+		$$->Identifier = $1; $$->_Identifier_Range = @1;
 		$$->meta_type = AMT_OBJECTFIELD;
 		$$->expr_type = A1TC_CLASSFIELD_FTVSFS;
 		asn1p_expr_add($$, $2);
@@ -1232,7 +1248,7 @@ ClassField:
 	| TOK_typefieldreference DefinedObjectClass optMarker {
 		$$ = NEW_EXPR();
 		checkmem($$);
-		$$->Identifier = $1;
+		$$->Identifier = $1; $$->_Identifier_Range = @1;
 		$$->reference = $2;
 		$$->meta_type = AMT_OBJECTFIELD;
 		$$->expr_type = A1TC_CLASSFIELD_OSFS;
@@ -1448,7 +1464,7 @@ ConcreteTypeDeclaration:
 		$$->constraints = $2;
 		$$->expr_type = ASN_CONSTR_SEQUENCE_OF;
 		$$->meta_type = AMT_TYPE;
-		$6->Identifier = $4;
+		$6->Identifier = $4; $6->_Identifier_Range = @4;
 		$6->tag = $5;
 		asn1p_expr_add($$, $6);
 	}
@@ -1458,7 +1474,7 @@ ConcreteTypeDeclaration:
 		$$->constraints = $2;
 		$$->expr_type = ASN_CONSTR_SET_OF;
 		$$->meta_type = AMT_TYPE;
-		$6->Identifier = $4;
+		$6->Identifier = $4; $6->_Identifier_Range = @4;
 		$6->tag = $5;
 		asn1p_expr_add($$, $6);
 	}
@@ -1634,7 +1650,7 @@ ValueAssignment:
 	Identifier Type TOK_PPEQ Value {
 		$$ = $2;
 		assert($$->Identifier == NULL);
-		$$->Identifier = $1;
+		$$->Identifier = $1; $$->_Identifier_Range = @1;
 		$$->meta_type = AMT_VALUE;
 		$$->value = $4;
 	}
@@ -2282,7 +2298,7 @@ IdentifierElement:
 		checkmem($$);
 		$$->expr_type = A1TC_UNIVERVAL;
 		$$->meta_type = AMT_VALUE;
-		$$->Identifier = $1;
+		$$->Identifier = $1; $$->_Identifier_Range = @1;
     }
 
 NamedNumberList:
@@ -2303,7 +2319,7 @@ NamedNumber:
 		checkmem($$);
 		$$->expr_type = A1TC_UNIVERVAL;
 		$$->meta_type = AMT_VALUE;
-		$$->Identifier = $1;
+		$$->Identifier = $1; $$->_Identifier_Range = @1;
 		$$->value = $3;
 	}
 	| Identifier '(' DefinedValue ')' {
@@ -2311,7 +2327,7 @@ NamedNumber:
 		checkmem($$);
 		$$->expr_type = A1TC_UNIVERVAL;
 		$$->meta_type = AMT_VALUE;
-		$$->Identifier = $1;
+		$$->Identifier = $1; $$->_Identifier_Range = @1;
 		$$->value = $3;
 	};
 
@@ -2333,7 +2349,7 @@ NamedBit:
 		checkmem($$);
 		$$->expr_type = A1TC_UNIVERVAL;
 		$$->meta_type = AMT_VALUE;
-		$$->Identifier = $1;
+		$$->Identifier = $1; $$->_Identifier_Range = @1;
 		$$->value = asn1p_value_fromint($3);
 	}
 	| Identifier '(' DefinedValue ')' {
@@ -2341,7 +2357,7 @@ NamedBit:
 		checkmem($$);
 		$$->expr_type = A1TC_UNIVERVAL;
 		$$->meta_type = AMT_VALUE;
-		$$->Identifier = $1;
+		$$->Identifier = $1; $$->_Identifier_Range = @1;
 		$$->value = $3;
 	};
 
@@ -2351,11 +2367,11 @@ Enumerations:
         asn1p_expr_t *first_memb = TQ_FIRST(&($$->members));
         if(first_memb) {
             if(first_memb->expr_type == A1TC_EXTENSIBLE) {
-                return yyerror(ctx, param, yyscanner,
+                return yyerror(&yyloc, ctx, param, yyscanner,
                     "The ENUMERATION cannot start with extension (...).");
             }
         } else {
-            return yyerror(ctx, param, yyscanner,
+            return yyerror(&yyloc, ctx, param, yyscanner,
                 "The ENUMERATION list cannot be empty.");
         }
     }
@@ -2378,14 +2394,14 @@ UniverationElement:
 		checkmem($$);
 		$$->expr_type = A1TC_UNIVERVAL;
 		$$->meta_type = AMT_VALUE;
-		$$->Identifier = $1;
+		$$->Identifier = $1; $$->_Identifier_Range = @1;
 	}
 	| Identifier '(' SignedNumber ')' {
 		$$ = NEW_EXPR();
 		checkmem($$);
 		$$->expr_type = A1TC_UNIVERVAL;
 		$$->meta_type = AMT_VALUE;
-		$$->Identifier = $1;
+		$$->Identifier = $1; $$->_Identifier_Range = @1;
 		$$->value = $3;
 	}
 	| Identifier '(' DefinedValue ')' {
@@ -2393,7 +2409,7 @@ UniverationElement:
 		checkmem($$);
 		$$->expr_type = A1TC_UNIVERVAL;
 		$$->meta_type = AMT_VALUE;
-		$$->Identifier = $1;
+		$$->Identifier = $1; $$->_Identifier_Range = @1;
 		$$->value = $3;
 	}
 	| SignedNumber {
@@ -2664,7 +2680,7 @@ _fixup_anonymous_identifier(const asn1p_yctx_t *ctx, asn1p_expr_t *expr, yyscan_
 }
 
 static int
-yyerror(asn1p_yctx_t *ctx, void **param, yyscan_t yyscanner, const char *msg) {
+yyerror(YYLTYPE *, asn1p_yctx_t *ctx, void **param, yyscan_t yyscanner, const char *msg) {
   asn1p_err_t *newdata = asn1p_mem_realloc(ctx->errors->data,
     ctx->errors->size * sizeof(ctx->errors->data[0]),
     (ctx->errors->size + 1) * sizeof(ctx->errors->data[0]));
