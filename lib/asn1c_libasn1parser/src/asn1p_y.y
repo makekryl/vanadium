@@ -2226,7 +2226,7 @@ AtNotationElement:
 		*p = '@';
 		strcpy(p + 1, $2);
 		$$ = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
-		ret = asn1p_ref_add_component($$, p, (asn1p_src_range_t){0}, 0);
+		ret = asn1p_ref_add_component($$, p, @2, 0);
 		checkmem(ret == 0);
 		asn1p_mem_free(p);
 		asn1p_mem_free($2);
@@ -2238,7 +2238,7 @@ AtNotationElement:
 		p[1] = '.';
 		strcpy(p + 2, $3);
 		$$ = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
-		ret = asn1p_ref_add_component($$, p, (asn1p_src_range_t){0}, 0);
+		ret = asn1p_ref_add_component($$, p, @3, 0);
 		checkmem(ret == 0);
 		asn1p_mem_free(p);
 		asn1p_mem_free($3);
