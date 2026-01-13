@@ -13,8 +13,13 @@ namespace vanadium::asn1::ast {
 
 using pos_t = std::uint32_t;
 
+struct Asn1cSourceRange {
+  pos_t begin;
+  pos_t end;
+};
+
 struct Asn1cSyntaxError {
-  pos_t pos;
+  Asn1cSourceRange range;
   std::string message;
 };
 

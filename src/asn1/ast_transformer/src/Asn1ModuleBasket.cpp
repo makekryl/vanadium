@@ -65,31 +65,34 @@ Asn1ModuleBasketItem* Asn1ModuleBasket::FindModule(std::string_view name) {
 ttcn3_ast::AST Asn1ModuleBasket::TransformImpl(OpaqueKey* key, lib::Arena& arena) {
   const auto& item = items_.at(key);
 
+  std::vector<ttcn3_ast::SyntaxError> errors;
+  errors.reserve(item.errors.size());
+  //
+  for (const auto& err : item.errors) {
+    errors.emplace_back(ttcn3_ast::SyntaxError{
+        .range = {.begin = err.range.begin, .end = err.range.end},
+        .description = err.message,
+    });
+  }
+
   if (!item.ast) {
-    std::string errstr;
-    for (const auto& err : item.errors) {
-      errstr += err.message + ", ";
-    }
-    std::println(stderr, "bad module: '{}': {}", item.src.substr(0, 20), errstr);
     return {
         .src = item.src,
-        .root = arena.Alloc<ttcn3_ast::RootNode>(),
+        .root =
+            [&] {
+              auto* n = arena.Alloc<ttcn3_ast::RootNode>();
+              n->nrange = {};
+              return n;
+            }(),
         .lines = item.lines,
-        .errors = {},
+        .errors = std::move(errors),
     };
   }
 
   auto transformed_ast = TransformAsn1Ast(item.ast->Get(), item.src, arena);
 
-  std::vector<ttcn3_ast::SyntaxError> errors;
-  errors.reserve(item.errors.size() + transformed_ast.errors.size());
+  errors.reserve(errors.size() + transformed_ast.errors.size());
   //
-  for (const auto& err : item.errors) {
-    errors.emplace_back(ttcn3_ast::SyntaxError{
-        .range = {.begin = err.pos, .end = err.pos},
-        .description = err.message,
-    });
-  }
   for (auto& err : transformed_ast.errors) {
     errors.emplace_back(ttcn3_ast::SyntaxError{
         .range = err.range,

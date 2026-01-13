@@ -22,7 +22,7 @@
 #include "asn1p_expr.h"		/* A single ASN.1 expression */
 
 typedef struct {
-  uint32_t pos;
+  asn1p_src_range_t range;
   char *msg;
 } asn1p_err_t;
 

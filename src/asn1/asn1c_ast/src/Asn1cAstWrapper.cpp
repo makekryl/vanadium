@@ -65,7 +65,10 @@ std::expected<Asn1cAstWrapper, std::vector<Asn1cSyntaxError>> Parse(lib::Arena& 
 
     std::vector<Asn1cSyntaxError> v(errs.size);
     for (int i = 0; i < errs.size; i++) {
-      v[i].pos = errs.data[i].pos;
+      v[i].range = {
+          .begin = errs.data[i].range.begin,
+          .end = errs.data[i].range.end,
+      };
       v[i].message = std::string(errs.data[i].msg);
     }
 

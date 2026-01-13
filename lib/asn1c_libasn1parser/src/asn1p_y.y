@@ -2680,7 +2680,7 @@ _fixup_anonymous_identifier(const asn1p_yctx_t *ctx, asn1p_expr_t *expr, yyscan_
 }
 
 static int
-yyerror(YYLTYPE *, asn1p_yctx_t *ctx, void **param, yyscan_t yyscanner, const char *msg) {
+yyerror(YYLTYPE *loc, asn1p_yctx_t *ctx, void **param, yyscan_t yyscanner, const char *msg) {
   asn1p_err_t *newdata = asn1p_mem_realloc(ctx->errors->data,
     ctx->errors->size * sizeof(ctx->errors->data[0]),
     (ctx->errors->size + 1) * sizeof(ctx->errors->data[0]));
@@ -2691,7 +2691,7 @@ yyerror(YYLTYPE *, asn1p_yctx_t *ctx, void **param, yyscan_t yyscanner, const ch
   ctx->errors->data = newdata;
 
   asn1p_err_t *err = &ctx->errors->data[ctx->errors->size++];
-  err->pos = 0;
+  err->range = *loc;
   err->msg = asn1p_mem_strdup(msg);
 
   return -1;
