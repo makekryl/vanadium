@@ -1132,6 +1132,13 @@ AlternativeTypeLists:
 		$$ = $1;
 		asn1p_expr_add($$, $3);
 	}
+  // https://github.com/brchiu/asn1c/commit/3d76a0399b065c722db814082f0ddd4dae060a22
+  // https://github.com/mouse07410/asn1c/commit/8baade521a167576204f403beee07acd029bd31e
+	| AlternativeTypeLists ',' TOK_VBracketLeft AlternativeTypeLists TOK_VBracketRight {
+    $$ = $1;
+    asn1p_expr_add_many($$, $4);
+		asn1p_expr_free($4);
+	}
 	;
 
 AlternativeType:
