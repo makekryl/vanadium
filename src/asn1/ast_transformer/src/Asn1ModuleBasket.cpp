@@ -39,7 +39,7 @@ void Asn1ModuleBasket::UpdateImpl(OpaqueKey* key, std::string_view src) {
   }
 
   item.src = src;
-  item.lines = ttcn3_ast::LineMapping(CollectLineStarts(src));
+  item.lines = ttcn_ast::LineMapping(CollectLineStarts(src));
   if (auto result = Parse(item.arena, src)) {
     item.ast = std::move(*result);
     item.errors.clear();
@@ -62,14 +62,14 @@ Asn1ModuleBasketItem* Asn1ModuleBasket::FindModule(std::string_view name) {
   return nullptr;
 }
 
-ttcn3_ast::AST Asn1ModuleBasket::TransformImpl(OpaqueKey* key, lib::Arena& arena) {
+ttcn_ast::AST Asn1ModuleBasket::TransformImpl(OpaqueKey* key, lib::Arena& arena) {
   const auto& item = items_.at(key);
 
-  std::vector<ttcn3_ast::SyntaxError> errors;
+  std::vector<ttcn_ast::SyntaxError> errors;
   errors.reserve(item.errors.size());
   //
   for (const auto& err : item.errors) {
-    errors.emplace_back(ttcn3_ast::SyntaxError{
+    errors.emplace_back(ttcn_ast::SyntaxError{
         .range = {.begin = err.range.begin, .end = err.range.end},
         .description = err.message,
     });
@@ -82,7 +82,7 @@ ttcn3_ast::AST Asn1ModuleBasket::TransformImpl(OpaqueKey* key, lib::Arena& arena
         .src = item.src,
         .root =
             [&] {
-              auto* n = arena.Alloc<ttcn3_ast::RootNode>();
+              auto* n = arena.Alloc<ttcn_ast::RootNode>();
               n->nrange = {};
               return n;
             }(),
@@ -96,7 +96,7 @@ ttcn3_ast::AST Asn1ModuleBasket::TransformImpl(OpaqueKey* key, lib::Arena& arena
   errors.reserve(errors.size() + transformed_ast.errors.size());
   //
   for (auto& err : transformed_ast.errors) {
-    errors.emplace_back(ttcn3_ast::SyntaxError{
+    errors.emplace_back(ttcn_ast::SyntaxError{
         .range = err.range,
         .description = std::move(err.message),
     });

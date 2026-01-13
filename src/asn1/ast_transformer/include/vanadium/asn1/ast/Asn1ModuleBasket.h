@@ -14,11 +14,11 @@
 namespace vanadium::asn1::ast {
 
 // NOLINTNEXTLINE(readability-identifier-naming)
-namespace ttcn3_ast = vanadium::ast;
+namespace ttcn_ast = vanadium::ast;
 
 struct Asn1ModuleBasketItem {
   std::string_view src;
-  ttcn3_ast::LineMapping lines;
+  ttcn_ast::LineMapping lines;
 
   lib::Arena arena;
   std::optional<Asn1cAstWrapper> ast;
@@ -35,7 +35,7 @@ class Asn1ModuleBasket {
   }
 
   template <typename TKey>
-  ttcn3_ast::AST Transform(TKey* key, lib::Arena& arena) {
+  ttcn_ast::AST Transform(TKey* key, lib::Arena& arena) {
     return TransformImpl(key, arena);
   }
 
@@ -60,10 +60,10 @@ class Asn1ModuleBasket {
   using OpaqueKey = void;
 
   void UpdateImpl(OpaqueKey* key, std::string_view src);
-  ttcn3_ast::AST TransformImpl(OpaqueKey* key, lib::Arena& arena);
+  ttcn_ast::AST TransformImpl(OpaqueKey* key, lib::Arena& arena);
 
   Asn1ModuleBasketItem* FindModule(std::string_view name);
-  ttcn3_ast::AST TransformAST(Asn1ModuleBasketItem& item, lib::Arena& arena);
+  ttcn_ast::AST TransformAST(Asn1ModuleBasketItem& item, lib::Arena& arena);
 
   std::unordered_map<OpaqueKey*, Asn1ModuleBasketItem> items_;
   std::unordered_map<std::string_view, Asn1ModuleBasketItem*> modules_;
