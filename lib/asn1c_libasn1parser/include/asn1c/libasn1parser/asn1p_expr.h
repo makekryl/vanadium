@@ -104,7 +104,7 @@ typedef enum asn1p_expr_type {
 	ASN_EXPR_TYPE_MAX
 } asn1p_expr_type_e;
 
-#include "asn1p_src_range.h"
+#include "asn1c/libasn1common/asn1p_src_range.h"
 #include "asn1p_expr_str.h"
 #include "asn1p_expr2uclass.h"
 

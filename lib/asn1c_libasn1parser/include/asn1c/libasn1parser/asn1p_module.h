@@ -49,6 +49,8 @@ typedef struct asn1p_module_s {
 	 */
 	char *ModuleName;   /* Must be the first field */
 
+  asn1p_src_range_t _ModuleName_Range;
+
 	/*
 	 * Name of the source file.
 	 */

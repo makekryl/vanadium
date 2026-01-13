@@ -415,7 +415,7 @@ void Program::Crossbind(SourceFile& sf, ExternallyResolvedGroup& ext_group) {
 }
 
 void Program::Analyze() {
-  tbb::parallel_for_each(asn_modules_.DirtyKeys<SourceFile>(), [&](SourceFile* sf) {
+  tbb::parallel_for_each(asn_modules_.Keys<SourceFile>(), [&](SourceFile* sf) {
     // todo: this is a copypaste from Program::UpdateFile
     DetachFile(*sf);
     sf->module = std::nullopt;

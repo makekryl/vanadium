@@ -516,7 +516,7 @@ ModuleDefinition:
 			/* There's a chance that a module is just plain empty */
 		}
 
-		$$->ModuleName = $1;
+		$$->ModuleName = $1; $$->_ModuleName_Range = @1;
 		$$->module_oid = $3;
 		$$->module_flags = $5;
 	}
@@ -992,7 +992,7 @@ ParameterArgumentName:
 	| TypeRefName ':' Identifier {
 		int ret;
 		$$.governor = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
-		ret = asn1p_ref_add_component($$.governor, $1, 0);
+		ret = asn1p_ref_add_component($$.governor, $1, @1, 0);
 		checkmem(ret == 0);
 		$$.argument = $3;
 		asn1p_mem_free($1);
@@ -1000,7 +1000,7 @@ ParameterArgumentName:
 	| TypeRefName ':' TypeRefName {
 		int ret;
 		$$.governor = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
-		ret = asn1p_ref_add_component($$.governor, $1, 0);
+		ret = asn1p_ref_add_component($$.governor, $1, @1, 0);
 		checkmem(ret == 0);
 		$$.argument = $3;
 		asn1p_mem_free($1);
@@ -1009,7 +1009,7 @@ ParameterArgumentName:
 		int ret;
 		$$.governor = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		ret = asn1p_ref_add_component($$.governor,
-			ASN_EXPR_TYPE2STR($1), 1);
+			ASN_EXPR_TYPE2STR($1), @1, 1);
 		checkmem(ret == 0);
 		$$.argument = $3;
 	}
@@ -1017,7 +1017,7 @@ ParameterArgumentName:
 		int ret;
 		$$.governor = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		ret = asn1p_ref_add_component($$.governor,
-			ASN_EXPR_TYPE2STR($1), 1);
+			ASN_EXPR_TYPE2STR($1), @1, 1);
 		checkmem(ret == 0);
 		$$.argument = $3;
 	}
@@ -1497,7 +1497,7 @@ ConcreteTypeDeclaration:
 		checkmem($$);
 		$$->reference = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		ret = asn1p_ref_add_component($$->reference,
-			$4, RLT_lowercase);
+			$4, @4, RLT_lowercase);
 		checkmem(ret == 0);
 		$$->expr_type = ASN_TYPE_ANY;
 		$$->meta_type = AMT_TYPE;
@@ -1522,7 +1522,7 @@ ComplexTypeReference:
 		int ret;
 		$$ = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		checkmem($$);
-		ret = asn1p_ref_add_component($$, $1, RLT_UNKNOWN);
+		ret = asn1p_ref_add_component($$, $1, @1, RLT_UNKNOWN);
 		checkmem(ret == 0);
 		asn1p_mem_free($1);
 	}
@@ -1530,7 +1530,7 @@ ComplexTypeReference:
 		int ret;
 		$$ = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		checkmem($$);
-		ret = asn1p_ref_add_component($$, $1, RLT_CAPITALS);
+		ret = asn1p_ref_add_component($$, $1, @1, RLT_CAPITALS);
 		asn1p_mem_free($1);
 		checkmem(ret == 0);
 	}
@@ -1538,9 +1538,9 @@ ComplexTypeReference:
 		int ret;
 		$$ = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		checkmem($$);
-		ret = asn1p_ref_add_component($$, $1, RLT_UNKNOWN);
+		ret = asn1p_ref_add_component($$, $1, @1, RLT_UNKNOWN);
 		checkmem(ret == 0);
-		ret = asn1p_ref_add_component($$, $3, RLT_UNKNOWN);
+		ret = asn1p_ref_add_component($$, $3, @3, RLT_UNKNOWN);
 		checkmem(ret == 0);
 		asn1p_mem_free($1);
 		asn1p_mem_free($3);
@@ -1549,9 +1549,9 @@ ComplexTypeReference:
 		int ret;
 		$$ = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		checkmem($$);
-		ret = asn1p_ref_add_component($$, $1, RLT_UNKNOWN);
+		ret = asn1p_ref_add_component($$, $1, @1, RLT_UNKNOWN);
 		checkmem(ret == 0);
-		ret = asn1p_ref_add_component($$, $3, RLT_UNKNOWN);
+		ret = asn1p_ref_add_component($$, $3, @3, RLT_UNKNOWN);
 		checkmem(ret == 0);
 		asn1p_mem_free($1);
 		asn1p_mem_free($3);
@@ -1559,7 +1559,7 @@ ComplexTypeReference:
 	| TOK_capitalreference '.' ComplexTypeReferenceAmpList {
 		int ret;
 		$$ = $3;
-		ret = asn1p_ref_add_component($$, $1, RLT_CAPITALS);
+		ret = asn1p_ref_add_component($$, $1, @1, RLT_CAPITALS);
 		asn1p_mem_free($1);
 		checkmem(ret == 0);
 		/*
@@ -1582,14 +1582,14 @@ ComplexTypeReferenceAmpList:
 		int ret;
 		$$ = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		checkmem($$);
-		ret = asn1p_ref_add_component($$, $1.name, $1.lex_type);
+		ret = asn1p_ref_add_component($$, $1.name, $1._name_range, $1.lex_type);
 		asn1p_mem_free($1.name);
 		checkmem(ret == 0);
 	}
 	| ComplexTypeReferenceAmpList '.' ComplexTypeReferenceElement {
 		int ret;
 		$$ = $1;
-		ret = asn1p_ref_add_component($$, $3.name, $3.lex_type);
+		ret = asn1p_ref_add_component($$, $3.name, $3._name_range, $3.lex_type);
 		asn1p_mem_free($3.name);
 		checkmem(ret == 0);
 	}
@@ -1615,17 +1615,17 @@ FieldName:
 	/* "&Type1" */
 	TOK_typefieldreference {
 		$$ = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
-		asn1p_ref_add_component($$, $1, RLT_AmpUppercase);
+		asn1p_ref_add_component($$, $1, @1, RLT_AmpUppercase);
 		asn1p_mem_free($1);
 	}
 	| FieldName '.' TOK_typefieldreference {
 		$$ = $$;
-		asn1p_ref_add_component($$, $3, RLT_AmpUppercase);
+		asn1p_ref_add_component($$, $3, @3, RLT_AmpUppercase);
 		asn1p_mem_free($3);
 	}
 	| FieldName '.' TOK_valuefieldreference {
 		$$ = $$;
-		asn1p_ref_add_component($$, $3, RLT_Amplowercase);
+		asn1p_ref_add_component($$, $3, @3, RLT_Amplowercase);
 		asn1p_mem_free($3);
 	}
 	;
@@ -1633,14 +1633,14 @@ FieldName:
 DefinedObjectClass:
 	TOK_capitalreference {
 		$$ = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
-		asn1p_ref_add_component($$, $1, RLT_CAPITALS);
+		asn1p_ref_add_component($$, $1, @1, RLT_CAPITALS);
 		asn1p_mem_free($1);
 	}
 /*
 	| TypeRefName '.' TOK_capitalreference {
 		$$ = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
-		asn1p_ref_add_component($$, $1, RLT_AmpUppercase);
-		asn1p_ref_add_component($$, $3, RLT_CAPITALS);
+		asn1p_ref_add_component($$, $1, @1, RLT_AmpUppercase);
+		asn1p_ref_add_component($$, $3, @3, RLT_CAPITALS);
 		asn1p_mem_free($1);
 		asn1p_mem_free($3);
 	}
@@ -1702,9 +1702,9 @@ DefinedValue:
 		int ret;
 		ref = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		checkmem(ref);
-		ret = asn1p_ref_add_component(ref, $1, RLT_UNKNOWN);
+		ret = asn1p_ref_add_component(ref, $1, @1, RLT_UNKNOWN);
 		checkmem(ret == 0);
-		ret = asn1p_ref_add_component(ref, $3, RLT_lowercase);
+		ret = asn1p_ref_add_component(ref, $3, @3, RLT_lowercase);
 		checkmem(ret == 0);
 		$$ = asn1p_value_fromref(ref, 0);
 		checkmem($$);
@@ -1998,7 +1998,7 @@ PatternConstraint:
 		$$ = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
 		$$->type = ACT_CT_PATTERN;
 		ref = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
-		asn1p_ref_add_component(ref, $2, RLT_lowercase);
+		asn1p_ref_add_component(ref, $2, @2, RLT_lowercase);
 		$$->value = asn1p_value_fromref(ref, 0);
 		asn1p_mem_free($2);
 	}
@@ -2182,7 +2182,7 @@ SimpleTableConstraint:
 		asn1p_ref_t *ref = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
 		asn1p_constraint_t *ct;
 		int ret;
-		ret = asn1p_ref_add_component(ref, $2, 0);
+		ret = asn1p_ref_add_component(ref, $2, @2, 0);
 		checkmem(ret == 0);
 		ct = asn1p_constraint_new(asn1p_get_lineno(yyscanner), currentModule);
 		checkmem($$);
@@ -2226,7 +2226,7 @@ AtNotationElement:
 		*p = '@';
 		strcpy(p + 1, $2);
 		$$ = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
-		ret = asn1p_ref_add_component($$, p, 0);
+		ret = asn1p_ref_add_component($$, p, (asn1p_src_range_t){0}, 0);
 		checkmem(ret == 0);
 		asn1p_mem_free(p);
 		asn1p_mem_free($2);
@@ -2238,7 +2238,7 @@ AtNotationElement:
 		p[1] = '.';
 		strcpy(p + 2, $3);
 		$$ = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
-		ret = asn1p_ref_add_component($$, p, 0);
+		ret = asn1p_ref_add_component($$, p, (asn1p_src_range_t){0}, 0);
 		checkmem(ret == 0);
 		asn1p_mem_free(p);
 		asn1p_mem_free($3);
@@ -2538,7 +2538,7 @@ Identifier:
 IdentifierAsReference:
     Identifier {
 		$$ = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
-		asn1p_ref_add_component($$, $1, RLT_lowercase);
+		asn1p_ref_add_component($$, $1, @1, RLT_lowercase);
 		asn1p_mem_free($1);
     };
 

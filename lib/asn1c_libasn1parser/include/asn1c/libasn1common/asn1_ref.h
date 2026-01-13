@@ -5,6 +5,7 @@
 #define	ASN1_REFERENCE_H
 
 #include <stddef.h>
+#include "asn1p_src_range.h"
 
 struct asn1p_module_s;
 
@@ -38,6 +39,7 @@ typedef struct asn1p_ref_s {
 	struct asn1p_ref_component_s {
 		enum asn1p_ref_lex_type_e lex_type;	/* Inferred lexical type of the identifier */
 		char *name;	/* An identifier */
+    asn1p_src_range_t _name_range;
 	} *components;
 
 	size_t comp_count;	/* Number of the components in the reference name. */
@@ -79,6 +81,6 @@ const char *asn1p_ref_string(const asn1p_ref_t *);
  * -1/ENOMEM:	Memory allocation failed
  */
 int asn1p_ref_add_component(asn1p_ref_t *,
-	const char *name, enum asn1p_ref_lex_type_e);
+	const char *name, asn1p_src_range_t range, enum asn1p_ref_lex_type_e);
 
 #endif	/* ASN1_REFERENCE_H */

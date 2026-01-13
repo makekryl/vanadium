@@ -86,7 +86,7 @@ asn1p_ref_name2lextype(const char *name) {
 }
 
 int
-asn1p_ref_add_component(asn1p_ref_t *ref, const char *name, enum asn1p_ref_lex_type_e lex_type) {
+asn1p_ref_add_component(asn1p_ref_t *ref, const char *name, asn1p_src_range_t range, enum asn1p_ref_lex_type_e lex_type) {
 
 	if(!ref || !name
 	|| (int)lex_type < RLT_UNKNOWN || lex_type >= RLT_MAX) {
@@ -115,6 +115,7 @@ asn1p_ref_add_component(asn1p_ref_t *ref, const char *name, enum asn1p_ref_lex_t
 	}
 
 	ref->components[ref->comp_count].name = asn1p_mem_strdup(name);
+	ref->components[ref->comp_count]._name_range = range;
 	ref->components[ref->comp_count].lex_type = lex_type;
 	if(ref->components[ref->comp_count].name) {
 		ref->comp_count++;
@@ -133,6 +134,7 @@ asn1p_ref_clone(asn1p_ref_t *ref) {
 		for(size_t i = 0; i < ref->comp_count; i++) {
 			if(asn1p_ref_add_component(newref,
 				ref->components[i].name,
+				ref->components[i]._name_range,
 				ref->components[i].lex_type
 			)) {
 				asn1p_ref_free(newref);

@@ -26,7 +26,7 @@ DEFINITIONS ::=
 BEGIN
 
 TestType { FieldType } ::= SEQUENCE {
-  val FieldType
+  tfield FieldType
 }
 
 TestChoice ::= SEQUENCE {

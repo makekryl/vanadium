@@ -75,6 +75,8 @@ ttcn3_ast::AST Asn1ModuleBasket::TransformImpl(OpaqueKey* key, lib::Arena& arena
     });
   }
 
+  std::println(stderr, "TransformImpl(errs.size={}, ?ast={})", errors.size(), !!item.ast);
+
   if (!item.ast) {
     return {
         .src = item.src,

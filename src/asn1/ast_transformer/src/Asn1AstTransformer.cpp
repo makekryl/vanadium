@@ -4,42 +4,45 @@
 #include <vanadium/ast/AST.h>
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/ASTTypes.h>
+#include <vanadium/ast/Scanner.h>
 #include <vanadium/lib/Arena.h>
 #include <vanadium/lib/FunctionRef.h>
+#include <vanadium/lib/StaticMap.h>
 
 #include <optional>
 #include <print>
+#include <string_view>
 
 #include "asn1c/libasn1parser/asn1p_expr.h"
 #include "magic_enum/magic_enum.hpp"
 
 namespace vanadium::asn1::ast {
 
+namespace {
+constexpr auto kBuiltinTypeMapping = lib::MakeStaticMap<asn1p_expr_type_e, std::string_view>({
+    {ASN_BASIC_NULL, "NULL"},
+    {ASN_BASIC_OBJECT_IDENTIFIER, "objid"},
+    {ASN_BASIC_INTEGER, "integer"},
+    {ASN_BASIC_REAL, "float"},
+    {ASN_BASIC_BOOLEAN, "boolean"},
+    {ASN_BASIC_BIT_STRING, "bitstring"},
+    {ASN_BASIC_OCTET_STRING, "octetstring"},
+    {ASN_BASIC_CHARACTER_STRING, "charstring"},
+});
+}
+
 class AstTransformer {
  public:
-  AstTransformer(const asn1p_t* ast, std::string_view src, lib::Arena& arena) : ast_(ast), src_(src), arena_(arena) {}
+  AstTransformer(const asn1p_t* ast, std::string_view src, lib::Arena& arena)
+      : ast_(ast), original_src_(src), arena_(arena) {
+    adjusted_src_.reserve(original_src_.length() + 256);
+    adjusted_src_.append(original_src_);
+  }
 
   TransformedAsn1Ast Transform() {
     auto* root = TransformRoot();
-
-    const auto source_len = src_.length();
-    auto new_src = arena_.AllocStringBuffer(source_len + 1 + CalcVerSequenceRange(max_ver_ + 1).begin);
-    new_src[source_len] = 0;
-    std::ranges::copy(src_, new_src.begin());
-
-    auto insertion_point = new_src.begin() + source_len + 1;
-    //
-    for (std::uint32_t i = 1; i <= max_ver_; i++) {
-      std::ranges::copy(kVerPrefix, insertion_point);
-      insertion_point += kVerPrefixSize;
-
-      const auto result = std::to_chars(insertion_point.base(), new_src.end().base(), i);
-      const auto length = result.ptr - insertion_point.base();
-      insertion_point += length;
-    }
-
     return {
-        .adjusted_src = std::string_view{new_src},
+        .adjusted_src = *arena_.Alloc<std::string>(std::move(adjusted_src_)),
         .root = root,
         .errors = {},
     };
@@ -49,19 +52,19 @@ class AstTransformer {
   ttcn3_ast::RootNode* TransformRoot() {
     const auto* mod = TQ_FIRST(&(ast_->modules));
     return NewNode<ttcn3_ast::RootNode>([&](ttcn3_ast::RootNode& m) {
-      m.nrange = {.begin = 0, .end = static_cast<ttcn3_ast::pos_t>(src_.length())};
+      m.nrange = {.begin = 0, .end = static_cast<ttcn3_ast::pos_t>(original_src_.length())};
       m.nodes.push_back(TransformModule(mod));
     });
   }
 
   ttcn3_ast::nodes::Module* TransformModule(const asn1p_module_t* mod) {
     return NewNode<ttcn3_ast::nodes::Module>([&](ttcn3_ast::nodes::Module& m) {
-      m.nrange = {.begin = 0, .end = static_cast<ttcn3_ast::pos_t>(src_.length())};
-      m.name.emplace().nrange = {.begin = 0, .end = 5};
+      m.nrange = {.begin = 0, .end = static_cast<ttcn3_ast::pos_t>(original_src_.length())};
+      m.name.emplace().nrange = ConsumeRange(mod->_ModuleName_Range);
 
       asn1p_expr_t* tc;
       TQ_FOR(tc, &(mod->members), next) {
-        if (auto* dn = TransformExpr<true>(tc); dn != nullptr) {
+        if (auto* dn = TransformOutermostExpr(tc); dn != nullptr) {
           m.defs.push_back(NewNode<ttcn3_ast::nodes::Definition>([&](ttcn3_ast::nodes::Definition& def) {
             def.def = dn;
             dn->parent = &def;
@@ -71,35 +74,94 @@ class AstTransformer {
     });
   }
 
-  template <bool Outermost = false>
-  ttcn3_ast::Node* TransformExpr(const asn1p_expr_t* expr) {
-    std::println("'{}': {} / {}", expr->Identifier, magic_enum::enum_name(expr->meta_type),
+  ttcn3_ast::Node* TransformOutermostExpr(const asn1p_expr_t* expr) {
+    std::println(stderr, "[OUTER] '{}': {} / {}", expr->Identifier, magic_enum::enum_name(expr->meta_type),
                  magic_enum::enum_name(expr->expr_type));
-    switch (expr->expr_type) {
-      case ASN_CONSTR_SEQUENCE:
-        if constexpr (Outermost) {
-          return TransformSequence(ttcn3_ast::TokenKind::RECORD, expr);
-        } else {
-          return TransformInnerSequence(ttcn3_ast::TokenKind::RECORD, expr);
-        }
-      case ASN_CONSTR_CHOICE:
-        if constexpr (Outermost) {
-          return TransformSequence(ttcn3_ast::TokenKind::UNION, expr);
-        } else {
-          return TransformInnerSequence(ttcn3_ast::TokenKind::UNION, expr);
-        }
-      case ASN_BASIC_INTEGER:
-        return TransformBuiltinTypeRef(expr);
+    switch (expr->meta_type) {
+      case AMT_VALUE:
+        return TransformValueDeclaration(expr);
       default:
-        return nullptr;
+        return TransformExpr<true>(expr);
     }
   }
 
-  ttcn3_ast::nodes::StructTypeDecl* TransformSequence(ttcn3_ast::TokenKind kind, const asn1p_expr_t* expr) {
+  template <bool Outermost = false>
+  ttcn3_ast::Node* TransformExpr(const asn1p_expr_t* expr) {
+    std::println(stderr, "'{}': {} / {}", expr->Identifier, magic_enum::enum_name(expr->meta_type),
+                 magic_enum::enum_name(expr->expr_type));
+    switch (expr->expr_type) {
+#define TRANSFORM_STRUCT_CASE(ASN1C_EXPR_TYPE, TTCN_STRUCT_KIND)                 \
+  case ASN1C_EXPR_TYPE:                                                          \
+    if constexpr (Outermost) {                                                   \
+      return TransformStruct(ttcn3_ast::TokenKind::TTCN_STRUCT_KIND, expr);      \
+    } else {                                                                     \
+      return TransformInnerStruct(ttcn3_ast::TokenKind::TTCN_STRUCT_KIND, expr); \
+    }
+      TRANSFORM_STRUCT_CASE(ASN_CONSTR_SEQUENCE, RECORD)
+      TRANSFORM_STRUCT_CASE(ASN_CONSTR_SET, SET)
+      TRANSFORM_STRUCT_CASE(ASN_CONSTR_CHOICE, UNION)
+#undef TRANSFORM_STRUCT_CASE
+
+      case A1TC_REFERENCE:
+        return NewNode<ttcn3_ast::nodes::RefSpec>([&](ttcn3_ast::nodes::RefSpec& m) {
+          m.x = TransformTypeExpr(expr->reference);
+        });
+
+      default:
+        return NewNode<ttcn3_ast::nodes::RefSpec>([&](ttcn3_ast::nodes::RefSpec& m) {
+          m.x = TransformBuiltinTypeExpr(expr);
+        });
+    }
+  }
+
+  ttcn3_ast::nodes::RefSpec* TransformTypeReference(const asn1p_ref_t* ref) {
+    return NewNode<ttcn3_ast::nodes::RefSpec>([&](ttcn3_ast::nodes::RefSpec& m) {
+      m.x = TransformTypeExpr(ref);
+    });
+  }
+
+  ttcn3_ast::nodes::Expr* TransformTypeExpr(const asn1p_ref_t* ref) {
+    if (ref->comp_count == 1) {
+      return NewNode<ttcn3_ast::nodes::Ident>([&](ttcn3_ast::nodes::Ident& ident) {
+        ident.nrange = ConsumeRange(ref->components[0]._name_range);
+      });
+    }
+
+    auto* se = NewNode<ttcn3_ast::nodes::SelectorExpr>([&](ttcn3_ast::nodes::SelectorExpr& m) {
+
+    });
+  }
+
+  ttcn3_ast::nodes::Expr* TransformBuiltinTypeExpr(const asn1p_expr_t* expr) {
+    if (const auto& ttcn_typename = kBuiltinTypeMapping.get(expr->expr_type); ttcn_typename) {
+      return NewNode<ttcn3_ast::nodes::Ident>([&](ttcn3_ast::nodes::Ident& ident) {
+        ident.nrange = AppendSource(std::string(*ttcn_typename));  // TODO: oh shi...
+      });
+    }
+    return nullptr;
+  }
+
+  ttcn3_ast::nodes::ValueDecl* TransformValueDeclaration(const asn1p_expr_t* expr) {
+    return NewNode<ttcn3_ast::nodes::ValueDecl>([&](ttcn3_ast::nodes::ValueDecl& m) {
+      if (expr->expr_type == A1TC_REFERENCE) {
+        m.type = TransformTypeExpr(expr->reference);
+      } else if (auto* builtin_type_expr = TransformBuiltinTypeExpr(expr); builtin_type_expr) {
+        m.type = builtin_type_expr;
+      }
+      m.kind = arena_.Alloc<ttcn3_ast::Token>(Tok(ttcn3_ast::TokenKind::CONST));
+
+      m.decls.push_back(NewNode<ttcn3_ast::nodes::Declarator>([&](ttcn3_ast::nodes::Declarator& d) {
+        d.name.emplace().nrange = ConsumeRange(expr->_Identifier_Range);
+      }));
+    });
+  }
+
+  ttcn3_ast::nodes::StructTypeDecl* TransformStruct(ttcn3_ast::TokenKind kind /* RECORD/SET/UNION */,
+                                                    const asn1p_expr_t* expr) {
     return NewNode<ttcn3_ast::nodes::StructTypeDecl>([&](ttcn3_ast::nodes::StructTypeDecl& m) {
       m.kind = Tok(kind);
 
-      m.name.emplace().nrange = ConvertRange(expr->_Identifier_Range);
+      m.name.emplace().nrange = ConsumeRange(expr->_Identifier_Range);
 
       asn1p_expr_t* se;
       TQ_FOR(se, &(expr->members), next) {
@@ -110,9 +172,10 @@ class AstTransformer {
     });
   }
 
-  ttcn3_ast::nodes::StructSpec* TransformInnerSequence(ttcn3_ast::TokenKind kind, const asn1p_expr_t* expr) {
+  ttcn3_ast::nodes::StructSpec* TransformInnerStruct(ttcn3_ast::TokenKind kind /* RECORD/SET/UNION */,
+                                                     const asn1p_expr_t* expr) {
     return NewNode<ttcn3_ast::nodes::StructSpec>([&](ttcn3_ast::nodes::StructSpec& m) {
-      m.kind = Tok(ttcn3_ast::TokenKind::RECORD);
+      m.kind = Tok(kind);
 
       asn1p_expr_t* se;
       TQ_FOR(se, &(expr->members), next) {
@@ -130,7 +193,7 @@ class AstTransformer {
     }
 
     return NewNode<ttcn3_ast::nodes::Field>([&](ttcn3_ast::nodes::Field& m) {
-      m.name.emplace().nrange = ConvertRange(se->_Identifier_Range);
+      m.name.emplace().nrange = ConsumeRange(se->_Identifier_Range);
 
       if ((se->marker.flags & asn1p_expr_s::asn1p_expr_marker_s::EM_DEFAULT) ==
           asn1p_expr_s::asn1p_expr_marker_s::EM_DEFAULT) {
@@ -142,14 +205,6 @@ class AstTransformer {
       }
 
       m.type = c->As<ttcn3_ast::nodes::TypeSpec>();
-    });
-  }
-
-  ttcn3_ast::nodes::RefSpec* TransformBuiltinTypeRef(const asn1p_expr_t* se) {
-    return NewNode<ttcn3_ast::nodes::RefSpec>([&](ttcn3_ast::nodes::RefSpec& m) {
-      m.x = NewNode<ttcn3_ast::nodes::Ident>([&](ttcn3_ast::nodes::Ident& ident) {
-        ident.nrange = {1, 5};
-      });
     });
   }
 
@@ -174,35 +229,44 @@ class AstTransformer {
     return {.kind = kind, .range = {}};
   }
 
-  static ttcn3_ast::Range ConvertRange(const asn1p_src_range_t& range) {
-    return {.begin = range.begin, .end = range.end};
+  ttcn3_ast::Range ConsumeRange(const asn1p_src_range_t& range) {
+    ttcn3_ast::Range ttcn_range{.begin = range.begin, .end = range.end};
+
+    auto token = ttcn_range.String(adjusted_src_);
+    std::replace(adjusted_src_.begin() + ttcn_range.begin, adjusted_src_.begin() + ttcn_range.end, '-', '_');
+
+    if (ttcn3_ast::parser::IsKeyword(token)) {
+      adjusted_src_[ttcn_range.end] = '_';
+      ++ttcn_range.end;
+    }
+
+    return ttcn_range;
   }
 
-  static constexpr std::string_view kVerPrefix{"ver"};
-  static constexpr ttcn3_ast::pos_t kVerPrefixSize{kVerPrefix.size()};
-  static ttcn3_ast::Range CalcVerSequenceRange(std::uint32_t N) {
-    ttcn3_ast::pos_t pos = 1;
+  std::unordered_map<std::string, ttcn3_ast::Range> appended_ranges_;
+  ttcn3_ast::Range AppendSource(std::string s) {
+    // TODO: optimize, but all strings should fall in the SSO buffer anyway
+    // keeping an unordered_map is not good though
 
-    std::uint32_t power = 1;
-    std::uint32_t digits = 1;
-    while ((power * 10) <= N) {
-      pos += (9 * power) * (kVerPrefixSize + digits);
-      power *= 10;
-      digits++;
+    if (auto it = appended_ranges_.find(s); it != appended_ranges_.end()) {
+      return it->second;
     }
-    pos += (N - power) * (kVerPrefixSize + digits);
 
-    return {
-        .begin = pos,
-        .end = kVerPrefixSize + digits,
-    };
-  };
+    ttcn3_ast::Range range{.begin = static_cast<ttcn3_ast::pos_t>(adjusted_src_.length())};
+    range.end = range.begin + static_cast<ttcn3_ast::pos_t>(s.length());
+
+    adjusted_src_.append(s);
+
+    appended_ranges_.emplace(std::move(s), range);
+
+    return range;
+  }
 
   ttcn3_ast::Node* last_node_{nullptr};
-  std::uint32_t max_ver_{1};
 
   const asn1p_t* ast_;
-  std::string_view src_;
+  std::string adjusted_src_;
+  std::string_view original_src_;
   lib::Arena& arena_;
 };
 
