@@ -1,10 +1,11 @@
 #include "Solution.h"
 
+#include <vanadium/core/Program.h>
+
 #include <expected>
 #include <print>
 
 #include "Filesystem.h"
-#include "Program.h"
 #include "Project.h"
 
 namespace vanadium::tooling {

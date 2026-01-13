@@ -1,4 +1,4 @@
-#include "utils/SemanticUtils.h"
+#include "vanadium/core/utils/SemanticUtils.h"
 
 #include <vanadium/ast/ASTTypes.h>
 #include <vanadium/ast/utils/ASTUtils.h>

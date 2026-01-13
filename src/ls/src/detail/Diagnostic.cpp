@@ -1,5 +1,7 @@
 #include "detail/Diagnostic.h"
 
+#include <vanadium/core/Program.h>
+
 #include <format>
 #include <vector>
 
@@ -8,7 +10,6 @@
 #include "LanguageServerConv.h"
 #include "LanguageServerSession.h"
 #include "Linter.h"
-#include "Program.h"
 #include "detail/CodeAction.h"
 #include "magic_enum/magic_enum.hpp"
 

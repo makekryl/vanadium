@@ -1,3 +1,5 @@
+#include <vanadium/core/Program.h>
+
 #include <magic_enum/magic_enum.hpp>
 #include <utility>
 
@@ -6,7 +8,6 @@
 #include "LanguageServerLogger.h"
 #include "LanguageServerMethods.h"
 #include "LanguageServerSession.h"
-#include "Program.h"
 
 namespace vanadium::ls {
 

@@ -8,6 +8,9 @@ add_library(vanadium_core STATIC
 )
 
 target_include_directories(vanadium_core PUBLIC
+  interface
+)
+target_include_directories(vanadium_core PRIVATE
   include
 )
 

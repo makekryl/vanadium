@@ -1,6 +1,8 @@
 #include "detail/References.h"
 
 #include <vanadium/ast/ASTNodes.h>
+#include <vanadium/core/Program.h>
+#include <vanadium/core/Semantic.h>
 
 #include "LSProtocol.h"
 #include "LSProtocolEx.h"
@@ -8,8 +10,6 @@
 #include "LanguageServerConv.h"
 #include "LanguageServerMethods.h"
 #include "LanguageServerSession.h"
-#include "Program.h"
-#include "Semantic.h"
 
 // TODO:
 //  1) support fields

@@ -1,3 +1,5 @@
+#include <vanadium/core/Program.h>
+
 #include <filesystem>
 
 #include "Filesystem.h"
@@ -7,7 +9,6 @@
 #include "LanguageServerLogger.h"
 #include "LanguageServerMethods.h"
 #include "LanguageServerTestFlags.h"
-#include "Program.h"
 #include "Solution.h"
 #include "impl/SystemFS.h"
 

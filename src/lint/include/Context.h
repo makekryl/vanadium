@@ -1,11 +1,11 @@
 #pragma once
 
 #include <vanadium/ast/ASTTypes.h>
+#include <vanadium/core/Program.h>
 
 #include <set>
 #include <string>
 
-#include "Program.h"
 #include "Rule.h"
 
 namespace vanadium::lint {

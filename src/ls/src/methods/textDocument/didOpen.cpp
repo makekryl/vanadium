@@ -1,3 +1,5 @@
+#include <vanadium/core/Program.h>
+
 #include <utility>
 
 #include "LSProtocol.h"
@@ -5,7 +7,6 @@
 #include "LanguageServerLogger.h"
 #include "LanguageServerMethods.h"
 #include "LanguageServerSession.h"
-#include "Program.h"
 #include "detail/Diagnostic.h"
 
 namespace vanadium::ls {

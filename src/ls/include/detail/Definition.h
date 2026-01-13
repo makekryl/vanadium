@@ -1,11 +1,11 @@
 #pragma once
 
 #include <vanadium/ast/ASTNodes.h>
+#include <vanadium/core/Program.h>
+#include <vanadium/core/Semantic.h>
+#include <vanadium/core/TypeChecker.h>
 
 #include "LSProtocol.h"
-#include "Program.h"
-#include "Semantic.h"
-#include "TypeChecker.h"
 
 namespace vanadium::ls {
 namespace detail {

@@ -1,4 +1,4 @@
-#include "Program.h"
+#include "vanadium/core/Program.h"
 
 #include <oneapi/tbb/parallel_for_each.h>
 #include <oneapi/tbb/spin_mutex.h>
@@ -22,9 +22,9 @@
 #include <type_traits>
 #include <unordered_map>
 
-#include "ImportVisitor.h"
-#include "Semantic.h"
-#include "TypeChecker.h"
+#include "vanadium/core/Semantic.h"
+#include "vanadium/core/TypeChecker.h"
+#include "vanadium/core/utils/ImportVisitor.h"
 
 namespace vanadium::core {
 

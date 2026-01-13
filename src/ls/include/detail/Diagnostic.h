@@ -1,10 +1,11 @@
 #pragma once
 
+#include <vanadium/core/Program.h>
+
 #include <vector>
 
 #include "LSProtocol.h"
 #include "LanguageServerSession.h"
-#include "Program.h"
 
 namespace vanadium::ls {
 namespace detail {

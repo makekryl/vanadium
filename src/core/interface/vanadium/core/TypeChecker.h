@@ -4,7 +4,7 @@
 #include <vanadium/ast/ASTTypes.h>
 #include <vanadium/lib/EnumFlags.h>
 
-#include "Semantic.h"
+#include "vanadium/core/Semantic.h"
 
 namespace vanadium::core {
 

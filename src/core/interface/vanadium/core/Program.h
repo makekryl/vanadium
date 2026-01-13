@@ -16,8 +16,8 @@
 #include <unordered_set>
 #include <vector>
 
-#include "Semantic.h"
-#include "TypeChecker.h"
+#include "vanadium/core/Semantic.h"
+#include "vanadium/core/TypeChecker.h"
 
 namespace vanadium::core {
 

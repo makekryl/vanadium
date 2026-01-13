@@ -3,13 +3,13 @@
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/ASTTypes.h>
 #include <vanadium/ast/utils/ASTUtils.h>
+#include <vanadium/core/Semantic.h>
 
 #include "LSProtocol.h"
 #include "LanguageServerContext.h"
 #include "LanguageServerConv.h"
 #include "LanguageServerMethods.h"
 #include "LanguageServerSession.h"
-#include "Semantic.h"
 
 namespace vanadium::ls {
 

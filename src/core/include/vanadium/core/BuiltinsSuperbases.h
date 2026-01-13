@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Semantic.h"
+#include "vanadium/core/Semantic.h"
 
 namespace vanadium::core {
 

@@ -1,4 +1,5 @@
 #include <vanadium/ast/ASTNodes.h>
+#include <vanadium/core/Semantic.h>
 
 #include <cstdio>
 #include <format>
@@ -7,7 +8,6 @@
 #include "BuiltinRules.h"
 #include "Context.h"
 #include "Rule.h"
-#include "Semantic.h"
 
 namespace vanadium::lint {
 namespace rules {

@@ -1,5 +1,8 @@
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/ASTTypes.h>
+#include <vanadium/core/Program.h>
+#include <vanadium/core/Semantic.h>
+#include <vanadium/core/TypeChecker.h>
 
 #include <memory>
 #include <optional>
@@ -13,9 +16,6 @@
 #include "LanguageServerConv.h"
 #include "LanguageServerMethods.h"
 #include "LanguageServerSession.h"
-#include "Program.h"
-#include "Semantic.h"
-#include "TypeChecker.h"
 
 namespace vanadium::ls {
 

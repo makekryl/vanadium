@@ -1,4 +1,5 @@
 #include <vanadium/ast/ASTNodes.h>
+#include <vanadium/core/Program.h>
 
 #include <cstdio>
 #include <format>
@@ -8,7 +9,6 @@
 
 #include "BuiltinRules.h"
 #include "Context.h"
-#include "Program.h"
 #include "Rule.h"
 
 namespace vanadium::lint {

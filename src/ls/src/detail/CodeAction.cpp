@@ -4,13 +4,13 @@
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/ASTTypes.h>
 #include <vanadium/ast/utils/ASTUtils.h>
+#include <vanadium/core/Program.h>
+#include <vanadium/core/Semantic.h>
+#include <vanadium/core/TypeChecker.h>
 
 #include "LSProtocol.h"
 #include "LanguageServerConv.h"
 #include "LanguageServerLogger.h"
-#include "Program.h"
-#include "Semantic.h"
-#include "TypeChecker.h"
 #include "detail/Helpers.h"
 
 namespace vanadium::ls::detail {

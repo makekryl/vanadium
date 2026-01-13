@@ -2,12 +2,11 @@
 // IWYU pragma: always_keep
 
 #include <vanadium/ast/ASTTypes.h>
+#include <vanadium/core/Semantic.h>
 
 #include <iostream>
 #include <magic_enum/magic_enum.hpp>
 #include <vector>
-
-#include "Semantic.h"
 
 namespace vanadium {
 

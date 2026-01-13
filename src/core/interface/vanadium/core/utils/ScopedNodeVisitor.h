@@ -3,7 +3,7 @@
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/ASTTypes.h>
 
-#include "Semantic.h"
+#include "vanadium/core/Semantic.h"
 
 namespace vanadium::core {
 namespace semantic {

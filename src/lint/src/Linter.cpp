@@ -1,11 +1,12 @@
 #include "Linter.h"
 
+#include <vanadium/core/Program.h>
+
 #include <algorithm>
 #include <numeric>
 #include <ranges>
 
 #include "Context.h"
-#include "Program.h"
 
 namespace vanadium::lint {
 

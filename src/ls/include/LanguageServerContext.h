@@ -2,6 +2,7 @@
 
 #include <tbb/enumerable_thread_specific.h>
 #include <tbb/task_arena.h>
+#include <vanadium/core/Program.h>
 #include <vanadium/lib/Arena.h>
 #include <vanadium/lib/Metaprogramming.h>
 #include <vanadium/lib/lserver/Connection.h>
@@ -14,7 +15,6 @@
 #include "LanguageServerSession.h"
 #include "LanguageServerSolution.h"
 #include "Linter.h"
-#include "Program.h"
 #include "Solution.h"
 
 // TODO: support overlapping projects paths

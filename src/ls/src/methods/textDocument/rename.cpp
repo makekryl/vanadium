@@ -1,5 +1,7 @@
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/ASTTypes.h>
+#include <vanadium/core/Program.h>
+#include <vanadium/core/Semantic.h>
 
 #include "LSProtocol.h"
 #include "LSProtocolEx.h"
@@ -7,8 +9,6 @@
 #include "LanguageServerConv.h"
 #include "LanguageServerMethods.h"
 #include "LanguageServerSession.h"
-#include "Program.h"
-#include "Semantic.h"
 #include "detail/Definition.h"
 
 namespace vanadium::ls {

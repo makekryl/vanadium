@@ -1,3 +1,5 @@
+#include <vanadium/core/Program.h>
+
 #include <string_view>
 #include <variant>
 
@@ -6,7 +8,6 @@
 #include "LanguageServerConv.h"
 #include "LanguageServerMethods.h"
 #include "LanguageServerSession.h"
-#include "Program.h"
 #include "detail/Diagnostic.h"
 
 namespace vanadium::ls {

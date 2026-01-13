@@ -1,4 +1,4 @@
-#include "Builtins.h"
+#include "vanadium/core/Builtins.h"
 
 #include <vanadium/ast/AST.h>
 #include <vanadium/ast/ASTNodes.h>
@@ -8,10 +8,10 @@
 
 #include <print>
 
-#include "BuiltinsSuperbases.h"
-#include "Program.h"
-#include "Semantic.h"
-#include "TypeChecker.h"
+#include "vanadium/core/BuiltinsSuperbases.h"
+#include "vanadium/core/Program.h"
+#include "vanadium/core/Semantic.h"
+#include "vanadium/core/TypeChecker.h"
 
 namespace vanadium::core {
 namespace builtins {

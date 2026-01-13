@@ -2,7 +2,7 @@
 
 #include <vanadium/lib/Metaprogramming.h>
 
-#include "Program.h"
+#include "vanadium/core/Program.h"
 
 namespace vanadium::core::semantic {
 

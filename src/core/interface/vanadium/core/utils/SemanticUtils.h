@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Program.h"
-#include "Semantic.h"
+#include "vanadium/core/Program.h"
+#include "vanadium/core/Semantic.h"
 
 namespace vanadium::core::semantic {
 namespace utils {

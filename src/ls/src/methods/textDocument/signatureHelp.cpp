@@ -1,6 +1,10 @@
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/ASTTypes.h>
 #include <vanadium/ast/utils/ASTUtils.h>
+#include <vanadium/core/Program.h>
+#include <vanadium/core/Semantic.h>
+#include <vanadium/core/TypeChecker.h>
+#include <vanadium/core/utils/SemanticUtils.h>
 
 #include <algorithm>
 #include <ranges>
@@ -14,10 +18,6 @@
 #include "LanguageServerConv.h"
 #include "LanguageServerMethods.h"
 #include "LanguageServerSession.h"
-#include "Program.h"
-#include "Semantic.h"
-#include "TypeChecker.h"
-#include "utils/SemanticUtils.h"
 
 namespace vanadium::ls {
 namespace {

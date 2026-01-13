@@ -1,5 +1,6 @@
 #pragma once
 
+#include <vanadium/core/Program.h>
 #include <vanadium/lib/Error.h>
 #include <vanadium/lib/FunctionRef.h>
 
@@ -7,7 +8,6 @@
 #include <ranges>
 
 #include "Filesystem.h"
-#include "Program.h"
 #include "Project.h"
 
 namespace vanadium {

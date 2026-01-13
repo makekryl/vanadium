@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <vanadium/ast/ASTTypes.h>
+#include <vanadium/core/Program.h>
 #include <vanadium/testing/gtest_helpers.h>
 #include <vanadium/testing/utils.h>
 
@@ -10,7 +11,6 @@
 #include <magic_enum/magic_enum.hpp>
 
 #include "CoreTests.h"
-#include "Program.h"
 #include "RunnerOpts.h"
 
 namespace vanadium::e2e::core {

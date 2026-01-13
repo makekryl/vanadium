@@ -4,6 +4,10 @@
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/ASTTypes.h>
 #include <vanadium/ast/utils/ASTUtils.h>
+#include <vanadium/core/Program.h>
+#include <vanadium/core/Semantic.h>
+#include <vanadium/core/TypeChecker.h>
+#include <vanadium/core/utils/SemanticUtils.h>
 #include <vanadium/lib/Arena.h>
 #include <vanadium/lib/Metaprogramming.h>
 
@@ -15,14 +19,10 @@
 #include "LSProtocol.h"
 #include "LanguageServerConv.h"
 #include "LanguageServerLogger.h"
-#include "Program.h"
-#include "Semantic.h"
 #include "Solution.h"
-#include "TypeChecker.h"
 #include "detail/Definition.h"
 #include "detail/Helpers.h"
 #include "magic_enum/magic_enum.hpp"
-#include "utils/SemanticUtils.h"
 
 namespace vanadium::ls::detail {
 

@@ -1,5 +1,6 @@
 #include <fmt/color.h>
 #include <oneapi/tbb/task_arena.h>
+#include <vanadium/core/Program.h>
 
 #include <argparse/argparse.hpp>
 #include <chrono>
@@ -14,7 +15,6 @@
 #include "Context.h"
 #include "Filesystem.h"
 #include "Linter.h"
-#include "Program.h"
 #include "Solution.h"
 #include "fmt/core.h"
 #include "impl/SystemFS.h"

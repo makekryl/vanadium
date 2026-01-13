@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vanadium/ast/ASTNodes.h>
+#include <vanadium/core/Program.h>
 #include <vanadium/lib/FunctionRef.h>
 
 #include <memory>
@@ -9,7 +10,6 @@
 #include <vector>
 
 #include "Context.h"
-#include "Program.h"
 #include "Rule.h"
 
 namespace vanadium::lint {

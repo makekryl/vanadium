@@ -1,8 +1,9 @@
+#include <vanadium/core/Program.h>
+
 #include "LSProtocol.h"
 #include "LanguageServerContext.h"
 #include "LanguageServerMethods.h"
 #include "LanguageServerSession.h"
-#include "Program.h"
 
 namespace vanadium::ls {
 template <>
