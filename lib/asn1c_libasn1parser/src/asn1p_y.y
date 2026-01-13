@@ -1602,11 +1602,13 @@ PrimitiveFieldReference:
 	TOK_typefieldreference {
 		$$.lex_type = RLT_AmpUppercase;
 		$$.name = $1;
+    $$._name_range = @1;
 	}
 	/* "&id" */
 	| TOK_valuefieldreference {
 		$$.lex_type = RLT_Amplowercase;
 		$$.name = $1;
+    $$._name_range = @1;
 	}
 	;
 
