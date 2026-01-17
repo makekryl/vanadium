@@ -29,12 +29,17 @@ constexpr auto kBuiltinTypeMapping = lib::MakeStaticMap<asn1p_expr_type_e, std::
     {ASN_BASIC_OCTET_STRING, "octetstring"},
     {ASN_BASIC_CHARACTER_STRING, "charstring"},
 });
+
+inline void ExtendByIncorporatedNode(ttcn_ast::Node* n, ttcn_ast::Node* x) {
+  n->parent = std::exchange(x->parent, n);
+  n->nrange.begin = x->nrange.begin;
 }
+}  // namespace
 
 class AstTransformer {
  public:
-  AstTransformer(const asn1p_t* ast, std::string_view src, lib::Arena& arena)
-      : ast_(ast), original_src_(src), arena_(arena) {
+  AstTransformer(const asn1p_t* ast, std::string_view src, lib::Arena& arena, Asn1pModuleProvider module_provider)
+      : ast_(ast), original_src_(src), arena_(arena), get_module_(std::move(module_provider)) {
     adjusted_src_.reserve(original_src_.length() + 256);
     adjusted_src_.append(original_src_);
   }
@@ -80,37 +85,67 @@ class AstTransformer {
     switch (expr->meta_type) {
       case AMT_VALUE:
         return TransformValueDeclaration(expr);
+      case AMT_OBJECTCLASS:
+        return nullptr;
       default:
-        return TransformExpr<true>(expr);
+        break;
     }
+
+    switch (expr->expr_type) {
+      case ASN_CONSTR_SEQUENCE:
+        return TransformStruct(ttcn_ast::TokenKind::RECORD, expr);
+      case ASN_CONSTR_SET:
+        return TransformStruct(ttcn_ast::TokenKind::SET, expr);
+      case ASN_CONSTR_CHOICE:
+        return TransformStruct(ttcn_ast::TokenKind::UNION, expr);
+
+      case ASN_CONSTR_SEQUENCE_OF:
+        return TransformSubTypeDecl(ttcn_ast::TokenKind::RECORD, expr);
+      case ASN_CONSTR_SET_OF:
+        return TransformSubTypeDecl(ttcn_ast::TokenKind::SET, expr);
+
+      case ASN_BASIC_ENUMERATED:
+        return TransformEnumeration(expr);
+
+      default: {
+        break;
+      }
+    }
+
+    return TransformExpr(expr);
   }
 
-  template <bool Outermost = false>
   ttcn_ast::Node* TransformExpr(const asn1p_expr_t* expr) {
-    std::println(stderr, "'{}': {} / {}", expr->Identifier, magic_enum::enum_name(expr->meta_type),
-                 magic_enum::enum_name(expr->expr_type));
+    std::println(stderr, "'{}': {} / {}", expr->Identifier ? expr->Identifier : "((EMPTY))",
+                 magic_enum::enum_name(expr->meta_type), magic_enum::enum_name(expr->expr_type));
     switch (expr->expr_type) {
-#define TRANSFORM_STRUCT_CASE(ASN1C_EXPR_TYPE, TTCN_STRUCT_KIND)                \
-  case ASN1C_EXPR_TYPE:                                                         \
-    if constexpr (Outermost) {                                                  \
-      return TransformStruct(ttcn_ast::TokenKind::TTCN_STRUCT_KIND, expr);      \
-    } else {                                                                    \
-      return TransformInnerStruct(ttcn_ast::TokenKind::TTCN_STRUCT_KIND, expr); \
-    }
-      TRANSFORM_STRUCT_CASE(ASN_CONSTR_SEQUENCE, RECORD)
-      TRANSFORM_STRUCT_CASE(ASN_CONSTR_SET, SET)
-      TRANSFORM_STRUCT_CASE(ASN_CONSTR_CHOICE, UNION)
-#undef TRANSFORM_STRUCT_CASE
+      case ASN_CONSTR_SEQUENCE:
+        return TransformInnerStruct(ttcn_ast::TokenKind::RECORD, expr);
+      case ASN_CONSTR_SET:
+        return TransformInnerStruct(ttcn_ast::TokenKind::SET, expr);
+      case ASN_CONSTR_CHOICE:
+        return TransformInnerStruct(ttcn_ast::TokenKind::UNION, expr);
+
+      case ASN_CONSTR_SEQUENCE_OF:
+        return TransformListSpec(ttcn_ast::TokenKind::RECORD, expr);
+      case ASN_CONSTR_SET_OF:
+        return TransformListSpec(ttcn_ast::TokenKind::SET, expr);
+
+      case ASN_BASIC_ENUMERATED:
+        return TransformInnerEnumeration(expr);
 
       case A1TC_REFERENCE:
-        return NewNode<ttcn_ast::nodes::RefSpec>([&](ttcn_ast::nodes::RefSpec& m) {
-          m.x = TransformTypeExpr(expr->reference);
-        });
+        return TransformTypeReference(expr->reference);
 
-      default:
-        return NewNode<ttcn_ast::nodes::RefSpec>([&](ttcn_ast::nodes::RefSpec& m) {
-          m.x = TransformBuiltinTypeExpr(expr);
-        });
+      default: {
+        if (auto* builtin_typename_node = TransformBuiltinTypeExpr(expr); builtin_typename_node) {
+          return NewNode<ttcn_ast::nodes::RefSpec>([&](ttcn_ast::nodes::RefSpec& m) {
+            m.x = builtin_typename_node;
+            builtin_typename_node->parent = &m;
+          });
+        }
+        return nullptr;
+      }
     }
   }
 
@@ -121,15 +156,30 @@ class AstTransformer {
   }
 
   ttcn_ast::nodes::Expr* TransformTypeExpr(const asn1p_ref_t* ref) {
+    ttcn_ast::nodes::Expr* x = NewNode<ttcn_ast::nodes::Ident>([&](ttcn_ast::nodes::Ident& ident) {
+      ident.nrange = ConsumeRange(ref->components[0]._name_range);
+    });
+
     if (ref->comp_count == 1) {
-      return NewNode<ttcn_ast::nodes::Ident>([&](ttcn_ast::nodes::Ident& ident) {
-        ident.nrange = ConsumeRange(ref->components[0]._name_range);
-      });
+      return x;
     }
 
-    auto* se = NewNode<ttcn_ast::nodes::SelectorExpr>([&](ttcn_ast::nodes::SelectorExpr& m) {
+    for (int i = 1; i < ref->comp_count; ++i) {
+      auto* se = NewNode<ttcn_ast::nodes::SelectorExpr>([&, x](ttcn_ast::nodes::SelectorExpr& m) {
+        m.x = x;
+        m.sel = NewNode<ttcn_ast::nodes::Ident>([&](ttcn_ast::nodes::Ident& ident) {
+          std::println(stderr, " ************** '{}': {}.{} // {}", ref->components[i].name,
+                       ref->components[i]._name_range.begin, ref->components[i]._name_range.end,
+                       magic_enum::enum_name(ref->components[i].lex_type));
+          ident.nrange = ConsumeRange(ref->components[i]._name_range);
+        });
+      });
+      ExtendByIncorporatedNode(se, se->x);
 
-    });
+      x = se;
+    }
+
+    return x;
   }
 
   ttcn_ast::nodes::Expr* TransformBuiltinTypeExpr(const asn1p_expr_t* expr) {
@@ -165,7 +215,7 @@ class AstTransformer {
 
       asn1p_expr_t* se;
       TQ_FOR(se, &(expr->members), next) {
-        if (auto* dn = TransformComponent(se); dn != nullptr) {
+        if (auto* dn = TransformComponent(se); dn) {
           m.fields.push_back(dn);
         }
       }
@@ -179,10 +229,51 @@ class AstTransformer {
 
       asn1p_expr_t* se;
       TQ_FOR(se, &(expr->members), next) {
-        if (auto* dn = TransformComponent(se); dn != nullptr) {
+        if (auto* dn = TransformComponent(se); dn) {
           m.fields.push_back(dn);
         }
       }
+    });
+  }
+
+  ttcn_ast::nodes::EnumTypeDecl* TransformEnumeration(const asn1p_expr_t* expr) {
+    return NewNode<ttcn_ast::nodes::EnumTypeDecl>([&](ttcn_ast::nodes::EnumTypeDecl& m) {
+      m.name.emplace().nrange = ConsumeRange(expr->_Identifier_Range);
+
+      asn1p_expr_t* member;
+      TQ_FOR(member, &(expr->members), next) {
+        m.values.push_back(NewNode<ttcn_ast::nodes::Ident>([&](ttcn_ast::nodes::Ident& iv) {
+          iv.nrange = ConsumeRange(member->_Identifier_Range);
+        }));
+      }
+    });
+  }
+
+  ttcn_ast::nodes::EnumSpec* TransformInnerEnumeration(const asn1p_expr_t* expr) {
+    return NewNode<ttcn_ast::nodes::EnumSpec>([&](ttcn_ast::nodes::EnumSpec& m) {
+      asn1p_expr_t* member;
+      TQ_FOR(member, &(expr->members), next) {
+        m.values.push_back(NewNode<ttcn_ast::nodes::Ident>([&](ttcn_ast::nodes::Ident& iv) {
+          iv.nrange = ConsumeRange(member->_Identifier_Range);
+        }));
+      }
+    });
+  }
+
+  ttcn_ast::nodes::ListSpec* TransformListSpec(ttcn_ast::TokenKind kind, const asn1p_expr_t* expr) {
+    return NewNode<ttcn_ast::nodes::ListSpec>([&](ttcn_ast::nodes::ListSpec& m) {
+      m.kind = Tok(kind);
+
+      m.elemtype = TransformExpr(TQ_FIRST(&(expr->members)))->As<ttcn_ast::nodes::TypeSpec>();
+    });
+  }
+
+  ttcn_ast::nodes::SubTypeDecl* TransformSubTypeDecl(ttcn_ast::TokenKind kind, const asn1p_expr_t* expr) {
+    return NewNode<ttcn_ast::nodes::SubTypeDecl>([&](ttcn_ast::nodes::SubTypeDecl& m) {
+      m.field = NewNode<ttcn_ast::nodes::Field>([&](ttcn_ast::nodes::Field& f) {
+        f.type = TransformListSpec(kind, expr);
+        f.name.emplace().nrange = ConsumeRange(expr->_Identifier_Range);
+      });
     });
   }
 
@@ -268,10 +359,12 @@ class AstTransformer {
   std::string adjusted_src_;
   std::string_view original_src_;
   lib::Arena& arena_;
+  Asn1pModuleProvider get_module_;
 };
 
-TransformedAsn1Ast TransformAsn1Ast(const asn1p_t* ast, std::string_view src, lib::Arena& arena) {
-  return AstTransformer(ast, src, arena).Transform();
+TransformedAsn1Ast TransformAsn1Ast(const asn1p_t* ast, std::string_view src, lib::Arena& arena,
+                                    Asn1pModuleProvider module_provider) {
+  return AstTransformer(ast, src, arena, std::move(module_provider)).Transform();
 }
 
 }  // namespace vanadium::asn1::ast

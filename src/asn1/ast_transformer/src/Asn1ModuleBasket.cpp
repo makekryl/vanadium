@@ -91,7 +91,9 @@ ttcn_ast::AST Asn1ModuleBasket::TransformImpl(OpaqueKey* key, lib::Arena& arena)
     };
   }
 
-  auto transformed_ast = TransformAsn1Ast(item.ast->Get(), item.src, arena);
+  auto transformed_ast = TransformAsn1Ast(item.ast->Get(), item.src, arena, [&](const char* required_module_name) {
+    return nullptr;
+  });
 
   errors.reserve(errors.size() + transformed_ast.errors.size());
   //
