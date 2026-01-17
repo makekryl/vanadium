@@ -16,7 +16,6 @@
 #include <print>
 #include <string_view>
 
-#include "asn1c/libasn1parser/asn1p_expr.h"
 #include "magic_enum/magic_enum.hpp"
 
 namespace vanadium::asn1::ast {
@@ -141,7 +140,7 @@ class AstTransformer {
         return TransformInnerEnumeration(expr);
 
       case A1TC_REFERENCE:
-        return TransformTypeReference(expr->reference);
+        return TransformTypeReference(expr);
 
       default: {
         if (auto* builtin_typename_node = TransformBuiltinTypeExpr(expr); builtin_typename_node) {
@@ -155,13 +154,15 @@ class AstTransformer {
     }
   }
 
-  ttcn_ast::nodes::RefSpec* TransformTypeReference(const asn1p_ref_t* ref) {
+  ttcn_ast::nodes::RefSpec* TransformTypeReference(const asn1p_expr_t* expr) {
     return NewNode<ttcn_ast::nodes::RefSpec>([&](ttcn_ast::nodes::RefSpec& m) {
-      m.x = TransformTypeExpr(ref);
+      m.x = TransformTypeExpr(expr);
     });
   }
 
-  ttcn_ast::nodes::Expr* TransformTypeExpr(const asn1p_ref_t* ref) {
+  ttcn_ast::nodes::Expr* TransformTypeExpr(const asn1p_expr_t* expr) {
+    const asn1p_ref_t* ref = expr->reference;
+
     if (ref->comp_count == 1) {
       return NewNode<ttcn_ast::nodes::Ident>([&](ttcn_ast::nodes::Ident& ident) {
         ident.nrange = ConsumeRange(ref->components[0]._name_range);
@@ -209,15 +210,42 @@ class AstTransformer {
     }
 
     switch (fieldexpr->expr_type) {
-      case A1TC_CLASSFIELD_TFS: {  // &Type
-        break;
-      }
-      case A1TC_CLASSFIELD_FTVFS: {  // &code
+      case A1TC_CLASSFIELD_FTVFS: {  // &code, fixed type
         const asn1p_expr_t* reftype = TQ_FIRST(&(fieldexpr->members));
         return TransformExpr(reftype)->As<ttcn_ast::nodes::Expr>();
       }
+      case A1TC_CLASSFIELD_TFS: {  // &Type, open type
+        // we need to inspect the expr itself to determine what is it constrained to
+
+        if (expr->constraints->el_count == 0) {
+          EmitError(ConsumeRange(selcomp._name_range), "component relation constraint expected");
+          return nullptr;
+        }
+
+        const asn1p_constraint_t* constr = expr->constraints->elements[0];
+        if (constr->type != ACT_CA_CRC) {
+          // todo: check elements[1],...
+          EmitError(ConsumeRange(selcomp._name_range), "component relation constraint expected");
+          return nullptr;
+        }
+
+        for (int i = 0; i < constr->el_count; i++) {
+          const auto* innerconstr = constr->elements[i];
+          std::println(stderr, " >> constraint({}): type={}, valuetype={} ::::: '{}'", i,
+                       magic_enum::enum_name(innerconstr->type), magic_enum::enum_name(innerconstr->value->type), [&] {
+                         std::string buf;
+                         for (int j = 0; j < innerconstr->value->value.reference->comp_count; j++) {
+                           buf += innerconstr->value->value.reference->components[j].name;
+                           buf += " .. ";
+                         }
+                         return buf;
+                       }());
+        }
+
+        break;
+      }
       default:
-        EmitError(ConsumeRange(selcomp._name_range), std::format("unsupported field expression type", selcomp.name));
+        EmitError(ConsumeRange(selcomp._name_range), "unsupported field expression type");
         return nullptr;
     }
 
@@ -236,7 +264,7 @@ class AstTransformer {
   ttcn_ast::nodes::ValueDecl* TransformValueDeclaration(const asn1p_expr_t* expr) {
     return NewNode<ttcn_ast::nodes::ValueDecl>([&](ttcn_ast::nodes::ValueDecl& m) {
       if (expr->expr_type == A1TC_REFERENCE) {
-        m.type = TransformTypeExpr(expr->reference);
+        m.type = TransformTypeExpr(expr);
       } else if (auto* builtin_type_expr = TransformBuiltinTypeExpr(expr); builtin_type_expr) {
         m.type = builtin_type_expr;
       }
@@ -424,7 +452,6 @@ class AstTransformer {
   }
   static const asn1p_expr_t* ResolveExprMember(const asn1p_expr_t* expr, const char* member_name) {
     asn1p_expr_t* child;
-
     TQ_FOR(child, &(expr->members), next) {
       if (child->Identifier && std::strcmp(child->Identifier, member_name) == 0) {
         return child;
