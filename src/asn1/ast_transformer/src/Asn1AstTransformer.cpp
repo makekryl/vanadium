@@ -1,5 +1,6 @@
 #include "vanadium/asn1/ast/Asn1AstTransformer.h"
 
+#include <asn1c/libasn1common/genhash.h>
 #include <asn1c/libasn1parser/asn1parser_cxx.h>
 #include <vanadium/ast/AST.h>
 #include <vanadium/ast/ASTNodes.h>
@@ -9,6 +10,8 @@
 #include <vanadium/lib/FunctionRef.h>
 #include <vanadium/lib/StaticMap.h>
 
+#include <cstring>
+#include <format>
 #include <optional>
 #include <print>
 #include <string_view>
@@ -34,6 +37,11 @@ inline void ExtendByIncorporatedNode(ttcn_ast::Node* n, ttcn_ast::Node* x) {
   n->parent = std::exchange(x->parent, n);
   n->nrange.begin = x->nrange.begin;
 }
+
+void DumpExpr(std::string_view prefix, const asn1p_expr_t* expr) {
+  std::println(stderr, "{}'{}': meta={} / etype={}", prefix, expr->Identifier ? expr->Identifier : "<EMPTY>",
+               magic_enum::enum_name(expr->meta_type), magic_enum::enum_name(expr->expr_type));
+}
 }  // namespace
 
 class AstTransformer {
@@ -49,7 +57,7 @@ class AstTransformer {
     return {
         .adjusted_src = *arena_.Alloc<std::string>(std::move(adjusted_src_)),
         .root = root,
-        .errors = {},
+        .errors = std::move(errors_),
     };
   }
 
@@ -80,8 +88,7 @@ class AstTransformer {
   }
 
   ttcn_ast::Node* TransformOutermostExpr(const asn1p_expr_t* expr) {
-    std::println(stderr, "[OUTER] '{}': {} / {}", expr->Identifier, magic_enum::enum_name(expr->meta_type),
-                 magic_enum::enum_name(expr->expr_type));
+    DumpExpr("[OUTER] ", expr);
     switch (expr->meta_type) {
       case AMT_VALUE:
         return TransformValueDeclaration(expr);
@@ -116,8 +123,7 @@ class AstTransformer {
   }
 
   ttcn_ast::Node* TransformExpr(const asn1p_expr_t* expr) {
-    std::println(stderr, "'{}': {} / {}", expr->Identifier ? expr->Identifier : "((EMPTY))",
-                 magic_enum::enum_name(expr->meta_type), magic_enum::enum_name(expr->expr_type));
+    DumpExpr("      * ", expr);
     switch (expr->expr_type) {
       case ASN_CONSTR_SEQUENCE:
         return TransformInnerStruct(ttcn_ast::TokenKind::RECORD, expr);
@@ -156,30 +162,66 @@ class AstTransformer {
   }
 
   ttcn_ast::nodes::Expr* TransformTypeExpr(const asn1p_ref_t* ref) {
-    ttcn_ast::nodes::Expr* x = NewNode<ttcn_ast::nodes::Ident>([&](ttcn_ast::nodes::Ident& ident) {
-      ident.nrange = ConsumeRange(ref->components[0]._name_range);
-    });
-
     if (ref->comp_count == 1) {
-      return x;
-    }
-
-    for (int i = 1; i < ref->comp_count; ++i) {
-      auto* se = NewNode<ttcn_ast::nodes::SelectorExpr>([&, x](ttcn_ast::nodes::SelectorExpr& m) {
-        m.x = x;
-        m.sel = NewNode<ttcn_ast::nodes::Ident>([&](ttcn_ast::nodes::Ident& ident) {
-          std::println(stderr, " ************** '{}': {}.{} // {}", ref->components[i].name,
-                       ref->components[i]._name_range.begin, ref->components[i]._name_range.end,
-                       magic_enum::enum_name(ref->components[i].lex_type));
-          ident.nrange = ConsumeRange(ref->components[i]._name_range);
-        });
+      return NewNode<ttcn_ast::nodes::Ident>([&](ttcn_ast::nodes::Ident& ident) {
+        ident.nrange = ConsumeRange(ref->components[0]._name_range);
       });
-      ExtendByIncorporatedNode(se, se->x);
-
-      x = se;
     }
 
-    return x;
+    if (ref->comp_count != 2) {
+      // TODO: check it
+      EmitError(ConsumeRange(ref->components[0]._name_range), "ref->comp_count != 2");
+      return nullptr;
+    }
+
+    const asn1p_ref_s::asn1p_ref_component_s& clscomp = ref->components[0];
+    const asn1p_ref_s::asn1p_ref_component_s& selcomp = ref->components[1];
+    switch (selcomp.lex_type) {
+      case RLT_AmpUppercase:
+      case RLT_Amplowercase:
+        break;
+      default:
+        EmitError(ConsumeRange(selcomp._name_range), "expression does not look like a CLASS field reference");
+        return nullptr;
+    }
+
+    const asn1p_expr_t* clsexpr = ResolveModuleMember(ref->module, clscomp.name);
+    if (!clsexpr) {
+      EmitError(ConsumeRange(clscomp._name_range), std::format("unresolved reference to '{}'", clscomp.name));
+      return nullptr;
+    }
+    if (clsexpr->expr_type != A1TC_CLASSDEF) {
+      EmitError(ConsumeRange(clscomp._name_range), std::format("'{}' is not a CLASS", clscomp.name));
+      return nullptr;
+    }
+
+    const asn1p_expr_t* fieldexpr = ResolveExprMember(clsexpr, selcomp.name);
+    if (!fieldexpr) {
+      EmitError(ConsumeRange(clscomp._name_range),
+                std::format("unresolved reference to field '{}' of CLASS '{}'", selcomp.name, clscomp.name));
+      return nullptr;
+    }
+    DumpExpr("[FIELD] ", fieldexpr);
+    if (fieldexpr->meta_type != AMT_OBJECTFIELD) [[unlikely]] {
+      // TODO: i guess this will never happen
+      EmitError(ConsumeRange(selcomp._name_range), std::format("'{}' is not a field", selcomp.name));
+      return nullptr;
+    }
+
+    switch (fieldexpr->expr_type) {
+      case A1TC_CLASSFIELD_TFS: {  // &Type
+        break;
+      }
+      case A1TC_CLASSFIELD_FTVFS: {  // &code
+        const asn1p_expr_t* reftype = TQ_FIRST(&(fieldexpr->members));
+        return TransformExpr(reftype)->As<ttcn_ast::nodes::Expr>();
+      }
+      default:
+        EmitError(ConsumeRange(selcomp._name_range), std::format("unsupported field expression type", selcomp.name));
+        return nullptr;
+    }
+
+    return nullptr;
   }
 
   ttcn_ast::nodes::Expr* TransformBuiltinTypeExpr(const asn1p_expr_t* expr) {
@@ -316,8 +358,11 @@ class AstTransformer {
     return p;
   }
 
-  static ttcn_ast::Token Tok(ttcn_ast::TokenKind kind) {
-    return {.kind = kind, .range = {}};
+  void EmitError(ttcn_ast::Range range, std::string&& message) {
+    errors_.emplace_back(TransformedAsn1Ast::Error{
+        .range = std::move(range),
+        .message = std::move(message),
+    });
   }
 
   ttcn_ast::Range ConsumeRange(const asn1p_src_range_t& range) {
@@ -358,8 +403,40 @@ class AstTransformer {
   const asn1p_t* ast_;
   std::string adjusted_src_;
   std::string_view original_src_;
+  std::vector<TransformedAsn1Ast::Error> errors_;
   lib::Arena& arena_;
   Asn1pModuleProvider get_module_;
+
+  //
+
+  static const asn1p_expr_t* ResolveModuleMember(const asn1p_module_t* mod, const char* member_name) {
+    const auto* expr = (asn1p_expr_t*)genhash_get(mod->members_hash, member_name);
+
+    std::println(stderr, " -> Resolve({})", member_name);
+    if (expr) {
+      std::println(stderr, " &&& '{}': {} / {}", expr->Identifier ? expr->Identifier : "((EMPTY))",
+                   magic_enum::enum_name(expr->meta_type), magic_enum::enum_name(expr->expr_type));
+    } else {
+      std::println(stderr, " &&& FAILED to resolve");
+    }
+
+    return expr;
+  }
+  static const asn1p_expr_t* ResolveExprMember(const asn1p_expr_t* expr, const char* member_name) {
+    asn1p_expr_t* child;
+
+    TQ_FOR(child, &(expr->members), next) {
+      if (child->Identifier && std::strcmp(child->Identifier, member_name) == 0) {
+        return child;
+      }
+    }
+
+    return nullptr;
+  }
+
+  static ttcn_ast::Token Tok(ttcn_ast::TokenKind kind) {
+    return {.kind = kind, .range = {}};
+  }
 };
 
 TransformedAsn1Ast TransformAsn1Ast(const asn1p_t* ast, std::string_view src, lib::Arena& arena,

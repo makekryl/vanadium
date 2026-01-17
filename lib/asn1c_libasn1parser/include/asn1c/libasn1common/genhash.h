@@ -28,6 +28,10 @@
 #ifndef __GENHASH_H__
 #define __GENHASH_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * General purpose hashing framework.
  * Refer to the corresponding .c source file for the detailed description.
@@ -225,5 +229,9 @@ int cmpf_void (const void *key1, const void *key2);
 
 unsigned int hashf_string (const void *key);
 int cmpf_string (const void *key1, const void *key2);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif	/* __GENHASH_H__ */
