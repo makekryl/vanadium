@@ -9,7 +9,7 @@ target_include_directories(vanadium_asn1_ast_transformer PUBLIC
 
 target_link_libraries(vanadium_asn1_ast_transformer PUBLIC
   vanadium_lib_arena
-  vanadium_asn1_asn1c_ast
+  vanadium_asn1_asn1c_astwrapper
   vanadium_ast
   magic_enum
 )
