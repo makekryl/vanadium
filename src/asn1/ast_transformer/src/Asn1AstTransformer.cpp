@@ -18,6 +18,8 @@
 
 #include "magic_enum/magic_enum.hpp"
 
+// For readability reasons, it is preferable NOT to use auto type detection for variables of asn1p types
+
 namespace vanadium::asn1::ast {
 
 namespace {

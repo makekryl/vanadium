@@ -3,6 +3,10 @@
 
 #include "vanadium/asn1/ast/Asn1cAstWrapper.h"
 
+// NOTE: tests below DO NOT and SHOULD NOT check the correctness of the parser:
+//       it is in scope of (currently non-existent) asn1c_libasn1parser tests
+
+using namespace vanadium;
 using namespace vanadium::asn1::ast;
 
 TEST(Asn1cAstWrapper, ParseSuccess) {
