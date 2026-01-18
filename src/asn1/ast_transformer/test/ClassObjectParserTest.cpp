@@ -1,20 +1,17 @@
+#include <asn1c/libasn1common/genhash.h>
+#include <asn1c/libasn1parser/asn1parser_cxx.h>
 #include <gtest/gtest.h>
 #include <vanadium/asn1/ast/Asn1cAstWrapper.h>
 #include <vanadium/lib/Arena.h>
 
-#include "vanadium/asn1/ast/Asn1AstTransformer.h"
+#include <string_view>
+
+#include "vanadium/asn1/ast/ClassObjectParser.h"
 
 using namespace vanadium;
 using namespace vanadium::asn1::ast;
 
-namespace {
-const asn1p_t* StubModuleProvider(const char*) {
-  return nullptr;
-}
-}  // namespace
-
-TEST(Asn1AstTransformerTest, ParametrizedConstructs) {
-  // Inspired by the [TITAN Programmers' Technical Reference Guide] par. 6.4
+TEST(ClassObjectParserTest, abcd) {
   constexpr std::string_view kAsnSource = R"(
     Test DEFINITIONS AUTOMATIC TAGS ::=
     BEGIN
@@ -49,18 +46,18 @@ TEST(Asn1AstTransformerTest, ParametrizedConstructs) {
     {
       {
         CATEGORY 1
-        CODE 1
+        CODE 2
         TYPE ErrorType1
       } |
       {
-        CATEGORY 2
-        CODE 234567895
+        CATEGORY 3
+        CODE 4
         TYPE ErrorType2
       } |
       errorClass3 |
       {
-        CATEGORY 4
-        CODE 2
+        CATEGORY 5
+        CODE 6
         TYPE ErrorType4
       }
     }
@@ -85,13 +82,27 @@ TEST(Asn1AstTransformerTest, ParametrizedConstructs) {
   const auto& ast = Parse(arena, kAsnSource);
   ASSERT_TRUE(ast);
 
-  TransformAsn1Ast(ast->Get(), kAsnSource, arena, [](const char*) -> const asn1p_s* {
-    return nullptr;
-  });
+  const auto* mod = TQ_FIRST(&(ast->Get()->modules));
+  ASSERT_TRUE(mod);
 
-  // todo:
-  //  0) there should not be any errors in TTCN ast
-  //  1) check absence of ERROR-CLASS and ErrorSet in TTCN AST
-  //  2) check presence of Error
-  //  3) check Error fields expansion
+  const auto* cls = (asn1p_expr_t*)genhash_get(mod->members_hash, "ERROR-CLASS");
+  ASSERT_TRUE(cls);
+  ASSERT_TRUE(cls->with_syntax);
+
+  const auto* set = (asn1p_expr_t*)genhash_get(mod->members_hash, "ErrorSet");
+  ASSERT_TRUE(set);
+  ASSERT_EQ(set->constraints->el_count, 4);
+
+  const auto* constr = set->constraints->elements[0];
+  ASSERT_TRUE(constr);
+
+  const auto& fields = ParseClassObject(
+      std::string_view{(char*)constr->value->value.string.buf, (size_t)constr->value->value.string.size},
+      cls->with_syntax);
+
+  EXPECT_EQ(fields, (ClassObjectList{
+                        {"&category", "1"},
+                        {"&code", "2"},
+                        {"&Type", "ErrorType1"},
+                    }));
 }

@@ -10,13 +10,17 @@
 #include <vanadium/lib/FunctionRef.h>
 #include <vanadium/lib/StaticMap.h>
 
+#include <algorithm>
+#include <cctype>
 #include <cstring>
 #include <format>
+#include <magic_enum/magic_enum.hpp>
 #include <optional>
 #include <print>
 #include <string_view>
+#include <vector>
 
-#include "magic_enum/magic_enum.hpp"
+#include "vanadium/asn1/ast/ClassObjectParser.h"
 
 // For readability reasons, it is preferable NOT to use auto type detection for variables of asn1p types
 
@@ -33,10 +37,41 @@ constexpr auto kBuiltinTypeMapping = lib::MakeStaticMap<asn1p_expr_type_e, std::
     {ASN_BASIC_OCTET_STRING, "octetstring"},
     {ASN_BASIC_CHARACTER_STRING, "charstring"},
 });
+}
 
-inline void ExtendByIncorporatedNode(ttcn_ast::Node* n, ttcn_ast::Node* x) {
-  n->parent = std::exchange(x->parent, n);
-  n->nrange.begin = x->nrange.begin;
+// asn1c helper stuff
+namespace {
+
+const asn1p_expr_t* ResolveModuleMember(const asn1p_module_t* mod, const char* member_name) {
+  const auto* expr = (asn1p_expr_t*)genhash_get(mod->members_hash, member_name);
+
+  std::println(stderr, " -> Resolve({})", member_name);
+  if (expr) {
+    std::println(stderr, " &&& '{}': {} / {}", expr->Identifier ? expr->Identifier : "((EMPTY))",
+                 magic_enum::enum_name(expr->meta_type), magic_enum::enum_name(expr->expr_type));
+  } else {
+    std::println(stderr, " &&& FAILED to resolve");
+  }
+
+  return expr;
+}
+const asn1p_expr_t* ResolveExprMember(const asn1p_expr_t* expr, const char* member_name) {
+  asn1p_expr_t* child;
+  TQ_FOR(child, &(expr->members), next) {
+    if (child->Identifier && std::strcmp(child->Identifier, member_name) == 0) {
+      return child;
+    }
+  }
+
+  return nullptr;
+}
+const asn1p_constraint_t* FindConstraint(const asn1p_expr_t* expr, asn1p_constraint_type_e type) {
+  for (int i = 0; i < expr->constraints->el_count; ++i) {
+    if (expr->constraints->elements[i]->type == type) {
+      return expr->constraints->elements[i];
+    }
+  }
+  return nullptr;
 }
 
 void DumpExpr(std::string_view prefix, const asn1p_expr_t* expr) {
@@ -180,8 +215,8 @@ class AstTransformer {
     const asn1p_ref_s::asn1p_ref_component_s& clscomp = ref->components[0];
     const asn1p_ref_s::asn1p_ref_component_s& selcomp = ref->components[1];
     switch (selcomp.lex_type) {
-      case RLT_AmpUppercase:
-      case RLT_Amplowercase:
+      case RLT_AmpUppercase:  // &Type
+      case RLT_Amplowercase:  // &code
         break;
       default:
         EmitError(ConsumeRange(selcomp._name_range), "expression does not look like a CLASS field reference");
@@ -219,32 +254,95 @@ class AstTransformer {
       case A1TC_CLASSFIELD_TFS: {  // &Type, open type
         // we need to inspect the expr itself to determine what is it constrained to
 
-        if (expr->constraints->el_count == 0) {
-          EmitError(ConsumeRange(selcomp._name_range), "component relation constraint expected");
+        // TODO: pass proper ranges to ConsumeRange calls below
+
+        const asn1p_constraint_t* comprel_constr = FindConstraint(expr, ACT_CA_CRC);  // ({ErrorSet}{@errorCategory})
+        if (!comprel_constr) {
+          EmitError(ConsumeRange(selcomp._name_range), "component relation constraint required");
+          return nullptr;
+        }
+        assert(comprel_constr->el_count >= 1);  // should always be true for ACT_CA_CRC
+
+        const asn1p_constraint_t* clsvals_constr = comprel_constr->elements[0];
+        if (!clsvals_constr->value || (clsvals_constr->value->type != asn1p_value_s::ATV_REFERENCED))
+            [[unlikely]] {  // should not happen though
+          EmitError(ConsumeRange(selcomp._name_range), "reference required");
+          return nullptr;
+        }
+        if (clsvals_constr->value->value.reference->comp_count != 1) {
+          // TODO: support cases where clsvals_constr->value->value.reference->comp_count > 1
+          EmitError(ConsumeRange(selcomp._name_range), "clsvals_constr->value->value.reference->comp_count != 1");
           return nullptr;
         }
 
-        const asn1p_constraint_t* constr = expr->constraints->elements[0];
-        if (constr->type != ACT_CA_CRC) {
-          // todo: check elements[1],...
-          EmitError(ConsumeRange(selcomp._name_range), "component relation constraint expected");
+        const char* clsvals_def_name = clsvals_constr->value->value.reference->components[0].name;
+        const asn1p_expr_t* clsvals_expr = ResolveModuleMember(ref->module, clsvals_def_name);
+        if (!clsvals_expr) {
+          EmitError(ConsumeRange(clscomp._name_range), std::format("unresolved reference to '{}'", clsvals_def_name));
           return nullptr;
         }
 
-        for (int i = 0; i < constr->el_count; i++) {
-          const auto* innerconstr = constr->elements[i];
-          std::println(stderr, " >> constraint({}): type={}, valuetype={} ::::: '{}'", i,
-                       magic_enum::enum_name(innerconstr->type), magic_enum::enum_name(innerconstr->value->type), [&] {
-                         std::string buf;
-                         for (int j = 0; j < innerconstr->value->value.reference->comp_count; j++) {
-                           buf += innerconstr->value->value.reference->components[j].name;
-                           buf += " .. ";
-                         }
-                         return buf;
-                       }());
+        if ((clsvals_expr->reference->comp_count != 1) ||
+            (std::strcmp(clsvals_expr->reference->components[0].name, clsexpr->Identifier) != 0)) {
+          EmitError(ConsumeRange(clscomp._name_range),
+                    std::format("referenced set is not of type '{}'", clsexpr->Identifier));
+          return nullptr;
         }
 
-        break;
+        if (clsvals_expr->constraints->type != ACT_CA_UNI) {
+          EmitError(ConsumeRange(clscomp._name_range),
+                    std::format("referenced set '{}' is not union-constrained: '{}'", clsvals_def_name,
+                                magic_enum::enum_name(clsvals_expr->constraints->type)));
+          return nullptr;
+        }
+
+        DumpExpr(" $CLSVALS$ :: ", clsvals_expr);
+
+        std::vector<std::string_view> possible_types;
+        possible_types.reserve(clsvals_expr->constraints->el_count);
+        for (int i = 0; i < clsvals_expr->constraints->el_count; i++) {
+          const auto* constr = clsvals_expr->constraints->elements[i];
+          if (!constr->value) [[unlikely]] {
+            // can this happen at all?
+            continue;
+          }
+          switch (constr->value->type) {
+            case asn1p_value_s::ATV_UNPARSED: {
+              const auto& fields = ParseClassObject(
+                  std::string_view{(char*)constr->value->value.string.buf, (size_t)constr->value->value.string.size},
+                  clsexpr->with_syntax);
+              auto it = std::ranges::find_if(fields, [&](const auto& row) {
+                return row.first == selcomp.name;
+              });
+              possible_types.emplace_back(it->second);
+              break;
+            }
+            default: {
+              // TODO
+              EmitError(ConsumeRange(clscomp._name_range), std::format("unexpected constraint value type: '{}'",
+                                                                       magic_enum::enum_name(constr->value->type)));
+              break;
+            }
+          }
+        }
+
+        return NewNode<ttcn_ast::nodes::StructSpec>([&](ttcn_ast::nodes::StructSpec& m) {
+                 m.kind = Tok(ttcn_ast::TokenKind::UNION);
+                 for (auto& ptype : possible_types) {
+                   m.fields.emplace_back(NewNode<ttcn_ast::nodes::Field>([&](ttcn_ast::nodes::Field& f) {
+                     // TODO: optimize
+                     f.name.emplace().nrange = AppendSource(std::string(ptype));
+                     f.type = NewNode<ttcn_ast::nodes::RefSpec>([&](ttcn_ast::nodes::RefSpec& rs) {
+                       rs.x = NewNode<ttcn_ast::nodes::Ident>([&](ttcn_ast::nodes::Ident& ident) {
+                         std::string ptypecpy(ptype);  // MEGA SHIT
+                         ptypecpy[0] = std::tolower(ptypecpy[0]);
+                         ident.nrange = AppendSource(std::string(ptypecpy));  // TODO: oh shi... (x2)
+                       });
+                     });
+                   }));
+                 }
+               })
+            ->As<ttcn_ast::nodes::Expr>();
       }
       default:
         EmitError(ConsumeRange(selcomp._name_range), "unsupported field expression type");
@@ -389,7 +487,7 @@ class AstTransformer {
   }
 
   void EmitError(ttcn_ast::Range range, std::string&& message) {
-    errors_.emplace_back(TransformedAsn1Ast::Error{
+    errors_.emplace_back(TransformedAsn1Ast::TransformationError{
         .range = std::move(range),
         .message = std::move(message),
     });
@@ -433,35 +531,11 @@ class AstTransformer {
   const asn1p_t* ast_;
   std::string adjusted_src_;
   std::string_view original_src_;
-  std::vector<TransformedAsn1Ast::Error> errors_;
+  std::vector<TransformedAsn1Ast::TransformationError> errors_;
   lib::Arena& arena_;
   Asn1pModuleProvider get_module_;
 
   //
-
-  static const asn1p_expr_t* ResolveModuleMember(const asn1p_module_t* mod, const char* member_name) {
-    const auto* expr = (asn1p_expr_t*)genhash_get(mod->members_hash, member_name);
-
-    std::println(stderr, " -> Resolve({})", member_name);
-    if (expr) {
-      std::println(stderr, " &&& '{}': {} / {}", expr->Identifier ? expr->Identifier : "((EMPTY))",
-                   magic_enum::enum_name(expr->meta_type), magic_enum::enum_name(expr->expr_type));
-    } else {
-      std::println(stderr, " &&& FAILED to resolve");
-    }
-
-    return expr;
-  }
-  static const asn1p_expr_t* ResolveExprMember(const asn1p_expr_t* expr, const char* member_name) {
-    asn1p_expr_t* child;
-    TQ_FOR(child, &(expr->members), next) {
-      if (child->Identifier && std::strcmp(child->Identifier, member_name) == 0) {
-        return child;
-      }
-    }
-
-    return nullptr;
-  }
 
   static ttcn_ast::Token Tok(ttcn_ast::TokenKind kind) {
     return {.kind = kind, .range = {}};

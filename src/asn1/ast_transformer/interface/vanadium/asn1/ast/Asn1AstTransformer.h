@@ -14,14 +14,14 @@ namespace vanadium::asn1::ast {
 namespace ttcn_ast = vanadium::ast;
 
 struct TransformedAsn1Ast {
-  struct Error {
+  struct TransformationError {
     ttcn_ast::Range range;
     std::string message;
   };
 
   std::string_view adjusted_src;
   ttcn_ast::RootNode* root;
-  std::vector<Error> errors;
+  std::vector<TransformationError> errors;
 };
 
 using Asn1pModuleProvider = lib::FunctionRef<const asn1p_t*(const char*)>;

@@ -9,6 +9,7 @@
 #include <cmath>
 #include <format>
 #include <iostream>
+#include <magic_enum/magic_enum.hpp>
 #include <ostream>
 #include <ranges>
 #include <string_view>
@@ -83,7 +84,11 @@ class TextASTDumper {
 template <>
 inline void vanadium::ast::Dumper<TextASTDumper>::Dump(std::string_view name, const vanadium::ast::Token& tok) {
   impl_.WriteName(name, tok.range);
-  impl_.WriteValue(tok.On(impl_.ast_.src));
+  if (tok.range.Length() > 0) {
+    impl_.WriteValue(tok.On(impl_.ast_.src));
+  } else {
+    impl_.WriteValue(std::format("::{}", magic_enum::enum_name(tok.kind)));
+  }
 }
 
 template <>
