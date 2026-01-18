@@ -5,7 +5,7 @@ module LanguageBuiltins {
 
 const charstring __SCOPE___;
 
-type enumerated __NULL_t {
+type enumerated ___asn1_NULL_t {
   NULL
 }
 
