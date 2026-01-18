@@ -29,6 +29,11 @@ function(add_gtest_executable target_name)
     GTest::gmock_main
   )
 
+  # include private headers too (include/ when interface/ exists)
+  target_include_directories(${TEST_TARGET_NAME} PRIVATE
+    $<TARGET_PROPERTY:${target_name},INCLUDE_DIRECTORIES>
+  )
+
   gtest_discover_tests(${TEST_TARGET_NAME}
     PROPERTIES LABELS "unit"
   )
