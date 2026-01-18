@@ -22,7 +22,7 @@ namespace vanadium::asn1::ast {
 
 namespace {
 constexpr auto kBuiltinTypeMapping = lib::MakeStaticMap<asn1p_expr_type_e, std::string_view>({
-    {ASN_BASIC_NULL, "NULL"},
+    {ASN_BASIC_NULL, "__NULL_t"},
     {ASN_BASIC_OBJECT_IDENTIFIER, "objid"},
     {ASN_BASIC_INTEGER, "integer"},
     {ASN_BASIC_REAL, "float"},
