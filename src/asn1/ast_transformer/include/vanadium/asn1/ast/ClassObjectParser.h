@@ -1,18 +1,26 @@
 #pragma once
 
+#include <vanadium/lib/FunctionRef.h>
+
 #include <string_view>
-#include <utility>
-#include <vector>
 
 using asn1p_wsyntx_t = struct asn1p_wsyntx_s;
 
 namespace vanadium::asn1::ast {
 
+struct ClassObjectRow {
+  std::string_view name;
+  std::string_view value;
+
+  bool operator<=>(const ClassObjectRow&) const noexcept = default;
+};
+
 // TODO: emit errors
+struct ClassObjectConsumer {
+  lib::Predicate<ClassObjectRow> accept_row;
+  // lib::Consumer<std::string> accept_error;
+};
 
-using ClassObjectRow = std::pair<std::string_view, std::string_view>;
-using ClassObjectList = std::vector<ClassObjectRow>;
-
-ClassObjectList ParseClassObject(std::string_view buf, const asn1p_wsyntx_t* syntax);
+void ParseClassObject(std::string_view buf, const asn1p_wsyntx_t* syntax, const ClassObjectConsumer&);
 
 }  // namespace vanadium::asn1::ast

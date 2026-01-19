@@ -308,13 +308,15 @@ class AstTransformer {
           }
           switch (constr->value->type) {
             case asn1p_value_s::ATV_UNPARSED: {
-              const auto& fields = ParseClassObject(
+              ParseClassObject(
                   std::string_view{(char*)constr->value->value.string.buf, (size_t)constr->value->value.string.size},
-                  clsexpr->with_syntax);
-              auto it = std::ranges::find_if(fields, [&](const auto& row) {
-                return row.first == selcomp.name;
-              });
-              possible_types.emplace_back(it->second);
+                  clsexpr->with_syntax, {.accept_row = [&](const ClassObjectRow& row) {
+                    const bool found = row.name == selcomp.name;
+                    if (found) {
+                      possible_types.emplace_back(row.value);
+                    }
+                    return !found;
+                  }});
               break;
             }
             default: {

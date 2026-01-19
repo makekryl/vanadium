@@ -1,5 +1,6 @@
 #include <asn1c/libasn1common/genhash.h>
 #include <asn1c/libasn1parser/asn1parser_cxx.h>
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <vanadium/asn1/ast/Asn1cAstWrapper.h>
 #include <vanadium/lib/Arena.h>
@@ -7,6 +8,8 @@
 #include <string_view>
 
 #include "vanadium/asn1/ast/ClassObjectParser.h"
+
+using namespace ::testing;
 
 using namespace vanadium;
 using namespace vanadium::asn1::ast;
@@ -96,13 +99,19 @@ TEST(ClassObjectParserTest, abcd) {
   const auto* constr = set->constraints->elements[0];
   ASSERT_TRUE(constr);
 
-  const auto& fields = ParseClassObject(
-      std::string_view{(char*)constr->value->value.string.buf, (size_t)constr->value->value.string.size},
-      cls->with_syntax);
+  MockFunction<bool(ClassObjectRow)> accept_row_mock;
+  ON_CALL(accept_row_mock, Call(_)).WillByDefault(Return(true));
+  {
+    InSequence s;
 
-  EXPECT_EQ(fields, (ClassObjectList{
-                        {"&category", "1"},
-                        {"&code", "2"},
-                        {"&Type", "ErrorType1"},
-                    }));
+    EXPECT_CALL(accept_row_mock, Call(Eq(ClassObjectRow{"&category", "1"})));
+    EXPECT_CALL(accept_row_mock, Call(Eq(ClassObjectRow{"&code", "2"})));
+    EXPECT_CALL(accept_row_mock, Call(Eq(ClassObjectRow{"&Type", "ErrorType1"})));
+  }
+
+  ParseClassObject(std::string_view{(char*)constr->value->value.string.buf, (size_t)constr->value->value.string.size},
+                   cls->with_syntax,
+                   ClassObjectConsumer{
+                       .accept_row = accept_row_mock.AsStdFunction(),
+                   });
 }

@@ -52,8 +52,8 @@ const asn1p_wsyntx_chunk_t *NextLiteralChunk(const asn1p_wsyntx_t *syntax, const
 }
 
 // Based on asn1c/libasn1fix/asn1fix_cws.c:_asn1f_parse_class_object_data
-bool ParseClassObject(ClassObjectList &result, const char *buf, const char *bend, const asn1p_wsyntx_t *syntax,
-                      const char **newpos, bool is_optional) {
+bool ParseClassObject(const ClassObjectConsumer &consumer, const char *buf, const char *bend,
+                      const asn1p_wsyntx_t *syntax, const char **newpos, bool is_optional) {
   const auto skip_spaces = [&] {
     while (buf < bend && std::isspace(*buf)) {
       ++buf;
@@ -105,7 +105,14 @@ bool ParseClassObject(ClassObjectList &result, const char *buf, const char *bend
         while ((value_end > buf) && std::isspace(value_end[-1])) {
           --value_end;
         }
-        result.emplace_back(chunk->content.token, std::string_view{buf, value_end});
+        const bool should_continue = consumer.accept_row({
+            .name = chunk->content.token,
+            .value = std::string_view{buf, value_end},
+        });
+        if (!should_continue) {
+          *newpos = bend;
+          break;
+        }
         buf = value_end;
         *newpos = buf;
         break;
@@ -114,7 +121,7 @@ bool ParseClassObject(ClassObjectList &result, const char *buf, const char *bend
       case asn1p_wsyntx_chunk_s::WC_OPTIONALGROUP: {
         const char *np = nullptr;  // todo: pass newpos itself
         skip_spaces();
-        const bool ret = ParseClassObject(result, buf, bend, chunk->content.syntax, &np, true);
+        const bool ret = ParseClassObject(consumer, buf, bend, chunk->content.syntax, &np, true);
         *newpos = np;
         if (!ret && np != buf) {
           return ret;
@@ -131,18 +138,12 @@ bool ParseClassObject(ClassObjectList &result, const char *buf, const char *bend
 
 }  // namespace
 
-ClassObjectList ParseClassObject(std::string_view buf, const asn1p_wsyntx_t *syntax) {
-  // TODO: utilize transformer's temporary arena, cache results per expr
-  ClassObjectList result;
-  // result.reserve(syntax->chunks); // no TQ macro for count?
-  {
-    const char *newpos{nullptr};  // ignored
-    ParseClassObject(result,
-                     buf.begin() + 1,  // +1 to skip {
-                     buf.end() - 1,    // -1 to drop {
-                     syntax, &newpos, false);
-  }
-  return result;
+void ParseClassObject(std::string_view buf, const asn1p_wsyntx_t *syntax, const ClassObjectConsumer &consumer) {
+  const char *newpos{nullptr};  // ignored
+  ParseClassObject(consumer,
+                   buf.begin() + 1,  // +1 to skip {
+                   buf.end() - 1,    // -1 to drop {
+                   syntax, &newpos, false);
 }
 
 }  // namespace vanadium::asn1::ast
