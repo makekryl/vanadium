@@ -349,6 +349,9 @@ namespace nodes {
 
 struct Expr : Node {
   Expr(NodeKind nkind) : Node(nkind) {}
+  static bool IsExpr(const Node* n) {
+    return NodeKind::expr_begin_ < n->nkind && n->nkind < NodeKind::expr_end_;
+  }
 };
 struct Stmt : Node {
   Stmt(NodeKind nkind) : Node(nkind) {}

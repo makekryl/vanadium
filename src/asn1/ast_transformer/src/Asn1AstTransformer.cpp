@@ -18,6 +18,8 @@
 #include <optional>
 #include <print>
 #include <string_view>
+#include <unordered_set>
+#include <utility>
 #include <vector>
 
 #include "vanadium/asn1/ast/ClassSetResolver.h"
@@ -133,8 +135,12 @@ class AstTransformer {
     switch (expr->meta_type) {
       case AMT_VALUE:
         return TransformValueDeclaration(expr);
+
       case AMT_OBJECTCLASS:
+      case AMT_VALUESET:
+        // those are not present in TTCN-3
         return nullptr;
+
       default:
         break;
     }
@@ -148,9 +154,9 @@ class AstTransformer {
         return TransformStruct(ttcn_ast::TokenKind::UNION, expr);
 
       case ASN_CONSTR_SEQUENCE_OF:
-        return TransformSubTypeDecl(ttcn_ast::TokenKind::RECORD, expr);
+        return TransformListSubTypeDecl(ttcn_ast::TokenKind::RECORD, expr);
       case ASN_CONSTR_SET_OF:
-        return TransformSubTypeDecl(ttcn_ast::TokenKind::SET, expr);
+        return TransformListSubTypeDecl(ttcn_ast::TokenKind::SET, expr);
 
       case ASN_BASIC_ENUMERATED:
         return TransformEnumeration(expr);
@@ -160,7 +166,20 @@ class AstTransformer {
       }
     }
 
-    return TransformExpr(expr);
+    auto* n = TransformExpr(expr);
+    if (n && n->nkind == ttcn_ast::NodeKind::RefSpec) {
+      auto* rs = NewNode<ttcn_ast::nodes::SubTypeDecl>([&](ttcn_ast::nodes::SubTypeDecl& m) {
+        m.field = NewNode<ttcn_ast::nodes::Field>([&](ttcn_ast::nodes::Field& f) {
+          f.type = n->As<ttcn_ast::nodes::RefSpec>();
+          f.name.emplace().nrange = ConsumeRange(expr->_Identifier_Range);
+        });
+      });
+      rs->parent = std::exchange(n->parent, rs);
+      rs->nrange = n->nrange;  // TODO(range): maybe better take from the expr, but it may break binsearch
+      return rs;
+    }
+
+    return n;
   }
 
   ttcn_ast::Node* TransformExpr(const asn1p_expr_t* expr) {
@@ -196,13 +215,23 @@ class AstTransformer {
     }
   }
 
-  ttcn_ast::nodes::RefSpec* TransformTypeReference(const asn1p_expr_t* expr) {
-    return NewNode<ttcn_ast::nodes::RefSpec>([&](ttcn_ast::nodes::RefSpec& m) {
-      m.x = TransformTypeExpr(expr);
+  ttcn_ast::nodes::TypeSpec* TransformTypeReference(const asn1p_expr_t* expr) {
+    auto* n = TransformTypeName(expr);
+    if (ttcn_ast::nodes::TypeSpec::IsTypeSpec(n)) {
+      return n->As<ttcn_ast::nodes::TypeSpec>();
+    }
+
+    auto* rs = NewNode<ttcn_ast::nodes::RefSpec>([&](ttcn_ast::nodes::RefSpec& m) {
+      m.x = n->As<ttcn_ast::nodes::Expr>();
     });
+    rs->parent = std::exchange(n->parent, rs);
+    rs->nrange = n->nrange;  // TODO(range): maybe better take from the expr, but it may break binsearch
+    return rs;
   }
 
-  ttcn_ast::nodes::Expr* TransformTypeExpr(const asn1p_expr_t* expr) {
+  // It will return either an Ident, which can be wrapped in RefSpec (if needed, e.g. in ValueDecl it will stay Ident),
+  // or a TypeSpec (class sets are translated into an UNION StructSpec)
+  ttcn_ast::Node* TransformTypeName(const asn1p_expr_t* expr) {
     const asn1p_ref_t* ref = expr->reference;
 
     if (ref->comp_count == 1) {
@@ -366,9 +395,15 @@ class AstTransformer {
   }
 
   ttcn_ast::nodes::ValueDecl* TransformValueDeclaration(const asn1p_expr_t* expr) {
+    if (expr->expr_type == A1TC_REFERENCE && IsAClassRef(expr->reference)) {
+      return nullptr;
+    }
+
     return NewNode<ttcn_ast::nodes::ValueDecl>([&](ttcn_ast::nodes::ValueDecl& m) {
       if (expr->expr_type == A1TC_REFERENCE) {
-        m.type = TransformTypeExpr(expr);
+        auto* type = TransformTypeName(expr);
+        assert(ttcn_ast::nodes::Expr::IsExpr(type));
+        m.type = type->As<ttcn_ast::nodes::Expr>();
       } else if (auto* builtin_type_expr = TransformBuiltinTypeExpr(expr); builtin_type_expr) {
         m.type = builtin_type_expr;
       }
@@ -442,7 +477,7 @@ class AstTransformer {
     });
   }
 
-  ttcn_ast::nodes::SubTypeDecl* TransformSubTypeDecl(ttcn_ast::TokenKind kind, const asn1p_expr_t* expr) {
+  ttcn_ast::nodes::SubTypeDecl* TransformListSubTypeDecl(ttcn_ast::TokenKind kind, const asn1p_expr_t* expr) {
     return NewNode<ttcn_ast::nodes::SubTypeDecl>([&](ttcn_ast::nodes::SubTypeDecl& m) {
       m.field = NewNode<ttcn_ast::nodes::Field>([&](ttcn_ast::nodes::Field& f) {
         f.type = TransformListSpec(kind, expr);
@@ -528,6 +563,22 @@ class AstTransformer {
     appended_ranges_.emplace(std::move(s), range);
 
     return range;
+  }
+
+  std::unordered_set<std::string_view> known_class_names_;
+  bool IsAClassRef(const asn1p_ref_t* ref) {
+    const char* name = ref->components[0].name;
+    if (known_class_names_.contains(name)) {
+      return true;
+    }
+
+    const auto* referenced_expr = ResolveModuleMember(ref->module, name);
+    if (referenced_expr->meta_type == AMT_OBJECTCLASS) {
+      known_class_names_.emplace(name);
+      return true;
+    }
+
+    return false;
   }
 
   ttcn_ast::Node* last_node_{nullptr};
