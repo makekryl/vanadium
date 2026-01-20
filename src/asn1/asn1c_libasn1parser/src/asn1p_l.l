@@ -609,7 +609,7 @@ _lex_atoi(const char *ptr, yyscan_t yyscanner) {
 			"Value \"%s\" at line %d is too large "
 			"for this compiler! Please contact the asn1c author.\n",
 			ptr, yyget_lineno(yyscanner));
-		errno = ERANGE;
+		// errno = ERANGE;
 	}
 	return value;
 }
@@ -624,7 +624,7 @@ _lex_atod(const char *ptr, yyscan_t yyscanner) {
 			"Value \"%s\" at line %d is outside of `double` range "
 			"in this compiler! Please contact the asn1c author.\n",
 			ptr, yyget_lineno(yyscanner));
-		errno = ERANGE;
+		// errno = ERANGE;
 	}
 	return value;
 }
