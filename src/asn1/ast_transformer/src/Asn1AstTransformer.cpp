@@ -39,18 +39,23 @@ constexpr auto kBuiltinTypeMapping = lib::MakeStaticMap<asn1p_expr_type_e, std::
 });
 }
 
+#define DEBUG(...)                     \
+  do {                                 \
+    std::println(stderr, __VA_ARGS__); \
+  } while (0);
+
 // asn1c helper stuff
 namespace {
 
 const asn1p_expr_t* ResolveModuleMember(const asn1p_module_t* mod, const char* member_name) {
   const auto* expr = (asn1p_expr_t*)genhash_get(mod->members_hash, member_name);
 
-  std::println(stderr, " -> Resolve({})", member_name);
+  DEBUG(" -> Resolve({})", member_name);
   if (expr) {
-    std::println(stderr, " &&& '{}': {} / {}", expr->Identifier ? expr->Identifier : "((EMPTY))",
-                 magic_enum::enum_name(expr->meta_type), magic_enum::enum_name(expr->expr_type));
+    DEBUG(" &&& '{}': {} / {}", expr->Identifier ? expr->Identifier : "((EMPTY))",
+          magic_enum::enum_name(expr->meta_type), magic_enum::enum_name(expr->expr_type));
   } else {
-    std::println(stderr, " &&& FAILED to resolve");
+    DEBUG(" &&& FAILED to resolve");
   }
 
   return expr;
@@ -75,8 +80,8 @@ const asn1p_constraint_t* FindConstraint(const asn1p_expr_t* expr, asn1p_constra
 }
 
 void DumpExpr(std::string_view prefix, const asn1p_expr_t* expr) {
-  std::println(stderr, "{}'{}': meta={} / etype={}", prefix, expr->Identifier ? expr->Identifier : "<EMPTY>",
-               magic_enum::enum_name(expr->meta_type), magic_enum::enum_name(expr->expr_type));
+  DEBUG("{}'{}': meta={} / etype={}", prefix, expr->Identifier ? expr->Identifier : "<EMPTY>",
+        magic_enum::enum_name(expr->meta_type), magic_enum::enum_name(expr->expr_type));
 }
 }  // namespace
 
@@ -298,50 +303,51 @@ class AstTransformer {
 
         DumpExpr(" $CLSVALS$ :: ", clsvals_expr);
 
-        std::vector<std::string_view> possible_types;
-        possible_types.reserve(clsvals_expr->constraints->el_count);
-        for (int i = 0; i < clsvals_expr->constraints->el_count; i++) {
-          const auto* constr = clsvals_expr->constraints->elements[i];
-          if (!constr->value) [[unlikely]] {
-            // can this happen at all?
-            continue;
-          }
-          switch (constr->value->type) {
-            case asn1p_value_s::ATV_UNPARSED: {
-              ParseClassObject(
-                  std::string_view{(char*)constr->value->value.string.buf, (size_t)constr->value->value.string.size},
-                  clsexpr->with_syntax, {.accept_row = [&](const ClassObjectRow& row) {
-                    const bool found = row.name == selcomp.name;
-                    if (found) {
-                      possible_types.emplace_back(row.value);
-                    }
-                    return !found;
-                  }});
-              break;
-            }
-            default: {
-              // TODO
-              EmitError(ConsumeRange(clscomp._name_range), std::format("unexpected constraint value type: '{}'",
-                                                                       magic_enum::enum_name(constr->value->type)));
-              break;
-            }
-          }
-        }
-
         return NewNode<ttcn_ast::nodes::StructSpec>([&](ttcn_ast::nodes::StructSpec& m) {
                  m.kind = Tok(ttcn_ast::TokenKind::UNION);
-                 for (auto& ptype : possible_types) {
-                   m.fields.emplace_back(NewNode<ttcn_ast::nodes::Field>([&](ttcn_ast::nodes::Field& f) {
-                     // TODO: optimize
-                     f.name.emplace().nrange = AppendSource(std::string(ptype));
-                     f.type = NewNode<ttcn_ast::nodes::RefSpec>([&](ttcn_ast::nodes::RefSpec& rs) {
-                       rs.x = NewNode<ttcn_ast::nodes::Ident>([&](ttcn_ast::nodes::Ident& ident) {
-                         std::string ptypecpy(ptype);  // MEGA SHIT
-                         ptypecpy[0] = std::tolower(ptypecpy[0]);
-                         ident.nrange = AppendSource(std::string(ptypecpy));  // TODO: oh shi... (x2)
-                       });
-                     });
-                   }));
+
+                 m.fields.reserve(clsvals_expr->constraints->el_count);
+
+                 for (int i = 0; i < clsvals_expr->constraints->el_count; i++) {
+                   const auto* constr = clsvals_expr->constraints->elements[i];
+                   if (!constr->value) [[unlikely]] {
+                     // can this happen at all?
+                     continue;
+                   }
+                   switch (constr->value->type) {
+                     case asn1p_value_s::ATV_UNPARSED: {
+                       ParseClassObject(
+                           std::string_view{(char*)constr->value->value.string.buf,
+                                            (size_t)constr->value->value.string.size},
+                           clsexpr->with_syntax, {.accept_row = [&](const ClassObjectRow& row) {
+                             if (row.name != selcomp.name) {
+                               return true;  // continue search
+                             }
+
+                             m.fields.emplace_back(NewNode<ttcn_ast::nodes::Field>([&](ttcn_ast::nodes::Field& f) {
+                               // TODO: optimize
+                               f.name.emplace().nrange = AppendSource(std::string(row.value));
+                               f.type = NewNode<ttcn_ast::nodes::RefSpec>([&](ttcn_ast::nodes::RefSpec& rs) {
+                                 rs.x = NewNode<ttcn_ast::nodes::Ident>([&](ttcn_ast::nodes::Ident& ident) {
+                                   std::string ptypecpy(row.value);  // MEGA SHIT
+                                   ptypecpy[0] = std::tolower(ptypecpy[0]);
+                                   ident.nrange = AppendSource(ptypecpy);  // TODO: oh shi... (x2)
+                                 });
+                               });
+                             }));
+
+                             return false;  // stop search
+                           }});
+                       break;
+                     }
+                     default: {
+                       // TODO
+                       EmitError(ConsumeRange(clscomp._name_range),
+                                 std::format("unexpected constraint value type: '{}'",
+                                             magic_enum::enum_name(constr->value->type)));
+                       break;
+                     }
+                   }
                  }
                })
             ->As<ttcn_ast::nodes::Expr>();
