@@ -217,6 +217,9 @@ class AstTransformer {
 
   ttcn_ast::nodes::TypeSpec* TransformTypeReference(const asn1p_expr_t* expr) {
     auto* n = TransformTypeName(expr);
+    if (!n) {
+      return nullptr;
+    }
     if (ttcn_ast::nodes::TypeSpec::IsTypeSpec(n)) {
       return n->As<ttcn_ast::nodes::TypeSpec>();
     }
@@ -573,7 +576,7 @@ class AstTransformer {
     }
 
     const auto* referenced_expr = ResolveModuleMember(ref->module, name);
-    if (referenced_expr->meta_type == AMT_OBJECTCLASS) {
+    if (referenced_expr && referenced_expr->meta_type == AMT_OBJECTCLASS) {
       known_class_names_.emplace(name);
       return true;
     }
