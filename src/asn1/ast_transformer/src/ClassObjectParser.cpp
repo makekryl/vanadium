@@ -5,7 +5,10 @@
 #include <cctype>
 #include <cstdio>
 #include <cstring>
+#include <format>
 #include <string_view>
+
+// TODO: for some reason, clangd ignores .clang-format config for this file
 
 namespace vanadium::asn1::ast {
 
@@ -60,8 +63,10 @@ bool ParseClassObject(const ClassObjectConsumer &consumer, const char *buf, cons
     }
   };
 
+  // TODO: provide error ranges
+
   struct asn1p_wsyntx_chunk_s *chunk;
-  TQ_FOR(chunk, (&syntax->chunks), next) {
+  TQ_FOR(chunk, &(syntax->chunks), next) {
     switch (chunk->type) {
       case asn1p_wsyntx_chunk_s::WC_WHITESPACE:
         // Ignore whitespace
@@ -72,8 +77,7 @@ bool ParseClassObject(const ClassObjectConsumer &consumer, const char *buf, cons
         const int token_len = std::strlen(chunk->content.token);
         if ((bend - buf < token_len) || (std::memcmp(buf, chunk->content.token, token_len) != 0)) {
           if (!is_optional) {
-            // FATAL("While parsing object class value %s at line %d: Expected: \"%s\", found: \"%s\"",
-            //       arg->expr->Identifier, arg->expr->_lineno, chunk->content.token, buf);
+            consumer.emit_error({}, std::format("expected '{}', got '{}'", chunk->content.token, buf));
           }
           *newpos = buf;
           return false;
@@ -95,7 +99,7 @@ bool ParseClassObject(const ClassObjectConsumer &consumer, const char *buf, cons
           value_end = std::strstr(buf, next_literal->content.token);
           if (!value_end) {
             if (!is_optional) {
-              // FATAL("Next literal \"%s\" not found !", next_literal->content.token);
+              consumer.emit_error({}, std::format("literal '{}' not found", chunk->content.token));
             }
 
             *newpos = buf_old;

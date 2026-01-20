@@ -20,7 +20,7 @@
 #include <string_view>
 #include <vector>
 
-#include "vanadium/asn1/ast/ClassObjectParser.h"
+#include "vanadium/asn1/ast/ClassSetResolver.h"
 
 // For readability reasons, it is preferable NOT to use auto type detection for variables of asn1p types
 
@@ -294,63 +294,59 @@ class AstTransformer {
           return nullptr;
         }
 
-        if (clsvals_expr->constraints->type != ACT_CA_UNI) {
-          EmitError(ConsumeRange(clscomp._name_range),
-                    std::format("referenced set '{}' is not union-constrained: '{}'", clsvals_def_name,
-                                magic_enum::enum_name(clsvals_expr->constraints->type)));
-          return nullptr;
-        }
-
-        DumpExpr(" $CLSVALS$ :: ", clsvals_expr);
-
         return NewNode<ttcn_ast::nodes::StructSpec>([&](ttcn_ast::nodes::StructSpec& m) {
                  m.kind = Tok(ttcn_ast::TokenKind::UNION);
-
                  m.fields.reserve(clsvals_expr->constraints->el_count);
 
-                 for (int i = 0; i < clsvals_expr->constraints->el_count; i++) {
-                   const auto* constr = clsvals_expr->constraints->elements[i];
-                   if (!constr->value) [[unlikely]] {
-                     // can this happen at all?
-                     continue;
+                 const auto accept_row = [&](const ClassObjectRow& row) {
+                   if (row.name != selcomp.name) {
+                     return true;  // continue search
                    }
-                   switch (constr->value->type) {
-                     case asn1p_value_s::ATV_UNPARSED: {
-                       ParseClassObject(
-                           std::string_view{(char*)constr->value->value.string.buf,
-                                            (size_t)constr->value->value.string.size},
-                           clsexpr->with_syntax, {.accept_row = [&](const ClassObjectRow& row) {
-                             if (row.name != selcomp.name) {
-                               return true;  // continue search
-                             }
 
-                             m.fields.emplace_back(NewNode<ttcn_ast::nodes::Field>([&](ttcn_ast::nodes::Field& f) {
-                               // TODO: optimize
-                               f.name.emplace().nrange = AppendSource(std::string(row.value));
-                               f.type = NewNode<ttcn_ast::nodes::RefSpec>([&](ttcn_ast::nodes::RefSpec& rs) {
-                                 rs.x = NewNode<ttcn_ast::nodes::Ident>([&](ttcn_ast::nodes::Ident& ident) {
-                                   std::string ptypecpy(row.value);  // MEGA SHIT
-                                   ptypecpy[0] = std::tolower(ptypecpy[0]);
-                                   ident.nrange = AppendSource(ptypecpy);  // TODO: oh shi... (x2)
+                   // todo: e.g. 'OCTET STRING' is translated to { name = 'oCTET STRING', type = 'OCTET STRING' },
+                   //       while it is expected to be { name = 'oCTET_STRING', type = 'octetstring' }
+                   // todo: parse the value like asn1c does and validate it
+
+                   m.fields.emplace_back(NewNode<ttcn_ast::nodes::Field>([&](ttcn_ast::nodes::Field& f) {
+                     // TODO: optimize
+                     f.name.emplace().nrange = AppendSource(std::string(row.value));
+                     f.type = NewNode<ttcn_ast::nodes::RefSpec>([&](ttcn_ast::nodes::RefSpec& rs) {
+                       rs.x = NewNode<ttcn_ast::nodes::Ident>([&](ttcn_ast::nodes::Ident& ident) {
+                         std::string ptypecpy(row.value);  // MEGA SHIT
+                         ptypecpy[0] = std::tolower(ptypecpy[0]);
+                         ident.nrange = AppendSource(ptypecpy);  // TODO: oh shi... (x2)
+                       });
+                     });
+                   }));
+
+                   return false;
+                 };
+
+                 // this cannot be written more cleanly due to FunctionRef lifetime requirements
+                 ResolveClassSet(clsvals_expr, clsexpr,
+                                 {
+                                     .resolve =
+                                         [&](const asn1p_module_t* mod, const char* name) {
+                                           return ResolveModuleMember(mod, name);
+                                         },
+                                     .accept_class =
+                                         [&](const auto& accept_accept_class_object_consumer) {
+                                           accept_accept_class_object_consumer({
+                                               .accept_row = accept_row,
+                                               .emit_error =
+                                                   [&](const auto& asn1c_range, std::string message) {
+                                                     EmitError(ConsumeRange(asn1c_range), std::move(message));
+                                                   },
+                                           });
+                                           return true;
+                                         },
+                                     .emit_error =
+                                         [&](const auto& asn1c_range, std::string message) {
+                                           EmitError(ConsumeRange(asn1c_range), std::move(message));
+                                         },
                                  });
-                               });
-                             }));
-
-                             return false;  // stop search
-                           }});
-                       break;
-                     }
-                     default: {
-                       // TODO
-                       EmitError(ConsumeRange(clscomp._name_range),
-                                 std::format("unexpected constraint value type: '{}'",
-                                             magic_enum::enum_name(constr->value->type)));
-                       break;
-                     }
-                   }
-                 }
                })
-            ->As<ttcn_ast::nodes::Expr>();
+            ->As<ttcn_ast::nodes::Expr>();  // TODO: remove
       }
       default:
         EmitError(ConsumeRange(selcomp._name_range), "unsupported field expression type");

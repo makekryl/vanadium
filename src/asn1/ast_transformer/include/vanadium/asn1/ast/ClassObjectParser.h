@@ -5,6 +5,7 @@
 #include <string_view>
 
 using asn1p_wsyntx_t = struct asn1p_wsyntx_s;
+using asn1p_src_range_t = struct asn1p_src_range_s;
 
 namespace vanadium::asn1::ast {
 
@@ -18,7 +19,7 @@ struct ClassObjectRow {
 // TODO: emit errors
 struct ClassObjectConsumer {
   lib::Predicate<ClassObjectRow> accept_row;
-  // lib::Consumer<std::string> accept_error;
+  lib::Consumer<const asn1p_src_range_t&, std::string> emit_error;
 };
 
 void ParseClassObject(std::string_view buf, const asn1p_wsyntx_t* syntax, const ClassObjectConsumer&);
