@@ -1,4 +1,5 @@
 #include <vanadium/asn1/ast/Asn1ModuleBasket.h>
+#include <vanadium/asn1/xast/Asn1Transparser.h>
 #include <vanadium/ast/AST.h>
 #include <vanadium/ast/Parser.h>
 #include <vanadium/bin/Bootstrap.h>
@@ -41,6 +42,9 @@ int main(int argc, char* argv[]) {
   std::vector<std::string> asn_include_filepaths;
   ap.add_argument("-A").append().store_into(asn_include_filepaths).help("additional ASN.1 files");
   //
+  bool use_asn1_xast{false};
+  ap.add_argument("--asn1-xast").flag().store_into(use_asn1_xast).help("use legacy ASN.1 transparser");
+  //
   std::string filepath;
   ap.add_argument("path").store_into(filepath).help("file path");
 
@@ -65,19 +69,23 @@ int main(int argc, char* argv[]) {
   //
   const auto ts_begin = std::chrono::steady_clock::now();
   if (is_asn) {
-    asn1::ast::Asn1ModuleBasket basket;
-    for (auto& extra_filepath : asn_include_filepaths) {
-      auto extra_src = ReadFile(extra_filepath);
-      if (!extra_src) {
-        std::println(stderr, "Failed to open '{}'", extra_filepath);
-        return 1;
-      }
+    if (use_asn1_xast) {
+      ast = asn1::xast::Transparse(arena, *src);
+    } else {
+      asn1::ast::Asn1ModuleBasket basket;
+      for (auto& extra_filepath : asn_include_filepaths) {
+        auto extra_src = ReadFile(extra_filepath);
+        if (!extra_src) {
+          std::println(stderr, "Failed to open '{}'", extra_filepath);
+          return 1;
+        }
 
-      // move std::string handle to arena so it does not dispose
-      basket.Update(&extra_filepath, *arena.Alloc<std::string>(std::move(*extra_src)));
+        // move std::string handle to arena so it does not dispose
+        basket.Update(&extra_filepath, *arena.Alloc<std::string>(std::move(*extra_src)));
+      }
+      basket.Update(&src, *src);
+      ast = basket.Transform(&src, arena);
     }
-    basket.Update(&src, *src);
-    ast = basket.Transform(&src, arena);
   } else {
     ast = ast::Parse(arena, *src);
   }
