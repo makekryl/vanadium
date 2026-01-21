@@ -1,4 +1,4 @@
-#include "Asn1Transparser.h"
+#include "vanadium/asn1/xast/Asn1Transparser.h"
 
 #include <vanadium/ast/AST.h>
 #include <vanadium/ast/ASTNodes.h>
@@ -14,20 +14,19 @@
 #include <format>
 #include <iomanip>
 #include <iostream>
+#include <magic_enum/magic_enum.hpp>
 #include <memory>
 #include <optional>
-#include <print>
 #include <stacktrace>
 #include <string_view>
 #include <utility>
 
-#include "Asn1AST.h"
-#include "Asn1Scanner.h"
-#include "magic_enum/magic_enum.hpp"
+#include "vanadium/asn1/xast/Asn1AST.h"
+#include "vanadium/asn1/xast/Asn1Scanner.h"
 
 // TODO: hardening (missing kEOF checks, etc.)
 
-namespace vanadium::asn1::ast {
+namespace vanadium::asn1::xast {
 namespace parser {
 
 namespace {
@@ -779,4 +778,4 @@ T* Transparser::NewNode(Initializer f) {
 }
 
 }  // namespace parser
-}  // namespace vanadium::asn1::ast
+}  // namespace vanadium::asn1::xast

@@ -7,7 +7,7 @@
 
 #include "Asn1AST.h"
 
-namespace vanadium::asn1::ast {
+namespace vanadium::asn1::xast {
 namespace parser {
 
 class Scanner {
@@ -44,4 +44,4 @@ class Scanner {
 };
 
 }  // namespace parser
-}  // namespace vanadium::asn1::ast
+}  // namespace vanadium::asn1::xast

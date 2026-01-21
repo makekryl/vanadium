@@ -1,13 +1,13 @@
-#include "Asn1Scanner.h"
+#include "vanadium/asn1/xast/Asn1Scanner.h"
 
 #include <vanadium/lib/StaticMap.h>
 
 #include <cctype>
 #include <string_view>
 
-#include "Asn1AST.h"
+#include "vanadium/asn1/xast/Asn1AST.h"
 
-namespace vanadium::asn1::ast {
+namespace vanadium::asn1::xast {
 namespace parser {
 
 constexpr auto kKeywordLookup = lib::MakeStaticMap<std::string_view, TokenKind>({
@@ -348,4 +348,4 @@ std::vector<ttcn_ast::pos_t>&& Scanner::ExtractLineMapping() noexcept {
 }
 
 }  // namespace parser
-}  // namespace vanadium::asn1::ast
+}  // namespace vanadium::asn1::xast

@@ -5,7 +5,7 @@
 #include <cstdint>
 
 namespace vanadium::asn1 {
-namespace ast {
+namespace xast {
 
 namespace ttcn_ast = vanadium::ast;
 
@@ -100,5 +100,5 @@ struct Token {
   }
 };
 
-}  // namespace ast
+}  // namespace xast
 }  // namespace vanadium::asn1

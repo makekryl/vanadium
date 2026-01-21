@@ -11,7 +11,7 @@
 #include "Asn1AST.h"
 #include "Asn1Scanner.h"
 
-namespace vanadium::asn1::ast {
+namespace vanadium::asn1::xast {
 namespace parser {
 
 class Transparser {
@@ -98,4 +98,4 @@ inline ttcn_ast::AST Transparse(lib::Arena& arena, std::string_view src) {
   };
 }
 
-}  // namespace vanadium::asn1::ast
+}  // namespace vanadium::asn1::xast
