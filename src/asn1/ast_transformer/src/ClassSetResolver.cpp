@@ -13,25 +13,6 @@ namespace vanadium::asn1::ast {
 
 namespace {
 
-// well actually it does not need an entire consumer, it needs only resolve & emit_error
-const asn1p_expr_t* ResolveRef(const asn1p_ref_t* ref, const ClassSetElementConsumer& consumer) {
-  assert(ref->comp_count > 0);
-  if (ref->comp_count != 1) {
-    consumer.emit_error(ref->components[0]._name_range, "(ClassSetResolver) ref->comp_count != 1");
-    return nullptr;
-  }
-
-  const char* referenced_expr_name = ref->components[0].name;
-  const asn1p_expr_t* referenced_expr = consumer.resolve(ref->module, referenced_expr_name);
-  if (!referenced_expr) {
-    consumer.emit_error(ref->components[0]._name_range,
-                        std::format("unresolved reference to '{}'", referenced_expr_name));
-    return nullptr;
-  }
-
-  return referenced_expr;
-}
-
 // to make the code below a little bit more readable
 constexpr bool kShouldContinue = true;
 constexpr bool kShouldNOTContinue = false;
@@ -51,7 +32,7 @@ bool ResolveClassValue(const asn1p_value_t* value, const asn1p_expr_t* cls_expr,
     }
 
     case asn1p_value_s::ATV_REFERENCED: {
-      const asn1p_expr_t* referenced_expr = ResolveRef(value->value.reference, consumer);
+      const asn1p_expr_t* referenced_expr = consumer.resolve(value->value.reference);
       if (!referenced_expr) {
         return kShouldContinue;
       }
@@ -104,7 +85,7 @@ bool ResolveClassSetImpl(const asn1p_expr_t* s_expr, const asn1p_expr_t* cls_exp
       }
       case ACT_EL_TYPE: {  // reference to another set
         assert(constr->containedSubtype);
-        const asn1p_expr_t* referenced_expr = ResolveRef(constr->containedSubtype->value.v_type->reference, consumer);
+        const asn1p_expr_t* referenced_expr = consumer.resolve(constr->containedSubtype->value.v_type->reference);
         if (!referenced_expr) {
           return kShouldContinue;
         }

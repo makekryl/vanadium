@@ -8,6 +8,7 @@
 #include <vanadium/ast/Scanner.h>
 #include <vanadium/lib/Arena.h>
 #include <vanadium/lib/FunctionRef.h>
+#include <vanadium/lib/ScopedValue.h>
 #include <vanadium/lib/StaticMap.h>
 
 #include <algorithm>
@@ -39,7 +40,17 @@ constexpr auto kBuiltinTypeMapping = lib::MakeStaticMap<asn1p_expr_type_e, std::
     {ASN_BASIC_OCTET_STRING, "octetstring"},
     {ASN_BASIC_CHARACTER_STRING, "charstring"},
 });
+
+void NormalizeToken(ttcn_ast::Range& range, std::string& s) {
+  std::replace(s.begin() + range.begin, s.begin() + range.end, '-', '_');
+
+  auto token = range.String(s);
+  if (ttcn_ast::parser::IsKeyword(token)) {
+    s[range.end] = '_';
+    ++range.end;
+  }
 }
+}  // namespace
 
 #define DEBUG(...)                     \
   do {                                 \
@@ -82,8 +93,8 @@ const asn1p_constraint_t* FindConstraint(const asn1p_expr_t* expr, asn1p_constra
 }
 
 void DumpExpr(std::string_view prefix, const asn1p_expr_t* expr) {
-  DEBUG("{}'{}': meta={} / etype={}", prefix, expr->Identifier ? expr->Identifier : "<EMPTY>",
-        magic_enum::enum_name(expr->meta_type), magic_enum::enum_name(expr->expr_type));
+  DEBUG("{}'{}': meta={} / etype={}, rspecs?={}", prefix, expr->Identifier ? expr->Identifier : "<EMPTY>",
+        magic_enum::enum_name(expr->meta_type), magic_enum::enum_name(expr->expr_type), !!expr->rhs_pspecs);
 }
 }  // namespace
 
@@ -132,6 +143,12 @@ class AstTransformer {
 
   ttcn_ast::Node* TransformOutermostExpr(const asn1p_expr_t* expr) {
     DumpExpr("[OUTER] ", expr);
+
+    if (expr->lhs_params) {
+      // [top-level def] if the type is parametrizable, do not emit it
+      return nullptr;
+    }
+
     switch (expr->meta_type) {
       case AMT_VALUE:
         return TransformValueDeclaration(expr);
@@ -203,6 +220,9 @@ class AstTransformer {
       case A1TC_REFERENCE:
         return TransformTypeReference(expr);
 
+      case A1TC_EXTENSIBLE:
+        return nullptr;
+
       default: {
         if (auto* builtin_typename_node = TransformBuiltinTypeExpr(expr); builtin_typename_node) {
           return NewNode<ttcn_ast::nodes::RefSpec>([&](ttcn_ast::nodes::RefSpec& m) {
@@ -234,10 +254,26 @@ class AstTransformer {
 
   // It will return either an Ident, which can be wrapped in RefSpec (if needed, e.g. in ValueDecl it will stay Ident),
   // or a TypeSpec (class sets are translated into an UNION StructSpec)
+  // So, this is VERY smart ass (or not) method that implements maybe the 75% of the "semantic" part of the transformer
   ttcn_ast::Node* TransformTypeName(const asn1p_expr_t* expr) {
+    DumpExpr(" ## TransformTypeName ", expr);
+    for (int i = 0; i < expr->reference->comp_count; i++) {
+      DEBUG("     - comp[{}].name = '{}'", i, expr->reference->components[i].name);
+    }
+
     const asn1p_ref_t* ref = expr->reference;
 
-    if (ref->comp_count == 1) {
+    if (ref->comp_count == 1) {  // errorInfo     ErrorInfoType
+      if (expr->rhs_pspecs) {
+        // parametrized type instantiation requested, we need to inline it
+        const asn1p_expr_t* memexpr = ResolveReference(ref);
+        if (!memexpr) {
+          return nullptr;
+        }
+        return Parametrize(memexpr, expr, [&] {
+          return TransformExpr(memexpr);
+        });
+      }
       return NewNode<ttcn_ast::nodes::Ident>([&](ttcn_ast::nodes::Ident& ident) {
         ident.nrange = ConsumeRange(ref->components[0]._name_range);
       });
@@ -249,6 +285,7 @@ class AstTransformer {
       return nullptr;
     }
 
+    // errorInfo     ERROR-CLASS.&Type
     const asn1p_ref_s::asn1p_ref_component_s& clscomp = ref->components[0];
     const asn1p_ref_s::asn1p_ref_component_s& selcomp = ref->components[1];
     switch (selcomp.lex_type) {
@@ -312,17 +349,16 @@ class AstTransformer {
           return nullptr;
         }
 
-        const char* clsvals_def_name = clsvals_constr->value->value.reference->components[0].name;
-        const asn1p_expr_t* clsvals_expr = ResolveModuleMember(ref->module, clsvals_def_name);
+        const asn1p_expr_t* clsvals_expr = ResolveReference(clsvals_constr->value->value.reference);
         if (!clsvals_expr) {
-          EmitError(ConsumeRange(clscomp._name_range), std::format("unresolved reference to '{}'", clsvals_def_name));
           return nullptr;
         }
 
         if ((clsvals_expr->reference->comp_count != 1) ||
             (std::strcmp(clsvals_expr->reference->components[0].name, clsexpr->Identifier) != 0)) {
           EmitError(ConsumeRange(clscomp._name_range),
-                    std::format("referenced set is not of type '{}'", clsexpr->Identifier));
+                    std::format("referenced set is not of type '{}', but of type '{}'", clsexpr->Identifier,
+                                clsvals_expr->reference->components[0].name));
           return nullptr;
         }
 
@@ -358,8 +394,8 @@ class AstTransformer {
                  ResolveClassSet(clsvals_expr, clsexpr,
                                  {
                                      .resolve =
-                                         [&](const asn1p_module_t* mod, const char* name) {
-                                           return ResolveModuleMember(mod, name);
+                                         [&](const asn1p_ref_t* ref) {
+                                           return ResolveReference(ref);
                                          },
                                      .accept_class =
                                          [&](const auto& accept_accept_class_object_consumer) {
@@ -381,7 +417,8 @@ class AstTransformer {
             ->As<ttcn_ast::nodes::Expr>();  // TODO: remove
       }
       default:
-        EmitError(ConsumeRange(selcomp._name_range), "unsupported field expression type");
+        EmitError(ConsumeRange(selcomp._name_range),
+                  std::format("unexpected field expression type: {}", magic_enum::enum_name(fieldexpr->expr_type)));
         return nullptr;
     }
 
@@ -537,15 +574,7 @@ class AstTransformer {
 
   ttcn_ast::Range ConsumeRange(const asn1p_src_range_t& range) {
     ttcn_ast::Range ttcn_range{.begin = range.begin, .end = range.end};
-
-    auto token = ttcn_range.String(adjusted_src_);
-    std::replace(adjusted_src_.begin() + ttcn_range.begin, adjusted_src_.begin() + ttcn_range.end, '-', '_');
-
-    if (ttcn_ast::parser::IsKeyword(token)) {
-      adjusted_src_[ttcn_range.end] = '_';
-      ++ttcn_range.end;
-    }
-
+    NormalizeToken(ttcn_range, adjusted_src_);
     return ttcn_range;
   }
 
@@ -562,6 +591,7 @@ class AstTransformer {
     range.end = range.begin + static_cast<ttcn_ast::pos_t>(s.length());
 
     adjusted_src_.append(s);
+    NormalizeToken(range, adjusted_src_);
 
     appended_ranges_.emplace(std::move(s), range);
 
@@ -582,6 +612,151 @@ class AstTransformer {
     }
 
     return false;
+  }
+
+  struct ParametrizationContext {
+    const ParametrizationContext* parent;
+    const asn1p_expr_t *target, *provider;
+  };
+  const ParametrizationContext* active_parametrization_ctx_{nullptr};
+  // This method is used by the semantic analyser part of the translator
+  // (resolving is not needed for AST transformation, but we need it to
+  //   instantiate parametrized types, resolve class constraints, etc.)
+  // It also takes care of the "unresolved reference" error emission
+  //
+  // TODO: maybe we would like to split up the transformer
+  // into the dump, pure transformer and the smart analyser parts
+  const asn1p_expr_t* ResolveReference(const asn1p_ref_t* ref) {
+    if (ref->comp_count != 1) {
+      // TODO: support complex cases
+      return nullptr;
+    }
+
+    if (const auto* expr = TryResolveReferenceViaParameters(ref, active_parametrization_ctx_); expr) {
+      if (expr->expr_type == A1TC_REFERENCE) {
+        return ResolveReferenceViaModule(expr->reference);
+      }
+      return expr;
+    }
+    if (const auto* expr = ResolveReferenceViaModule(ref); expr) {
+      return expr;
+    }
+
+    EmitError(ConsumeRange(ref->components[0]._name_range),
+              std::format("unresolved reference to '{}'", ref->components[0].name));
+    return nullptr;
+  }
+  const asn1p_expr_t* ResolveReferenceViaModule(const asn1p_ref_t* ref) {
+    // TODO: support complex cases
+    const char* name = ref->components[0].name;
+    return ResolveModuleMember(ref->module, name);
+  }
+  const asn1p_expr_t* TryResolveReferenceViaParameters(const asn1p_ref_t* ref, const ParametrizationContext* ctx) {
+    if (!ctx) {
+      return nullptr;
+    }
+
+    // TODO: support complex cases
+    const char* name = ref->components[0].name;
+
+    for (int i = 0; i < ctx->target->lhs_params->params_count; i++) {
+      const asn1p_paramlist_s::asn1p_param_s& slot = ctx->target->lhs_params->params[i];
+      if (std::strcmp(slot.argument, name) != 0) {
+        continue;
+      }
+
+      // we have the guarantee of Parametrize(...) that provided & required parameters count match
+      const asn1p_expr_t* arg = TQ_FIRST(&(ctx->provider->rhs_pspecs->members));
+      for (int j = 0; j < i; j++) {
+        arg = TQ_NEXT(arg, next);
+      }
+      const auto* ret = [&] -> const asn1p_expr_t* {
+        switch (arg->expr_type) {
+          case A1TC_VALUESET: {
+            if (arg->constraints->type == ACT_EL_TYPE) {
+              return arg->constraints->containedSubtype->value.v_type;
+            }
+            return nullptr;
+          }
+          default:
+            return arg;
+        }
+      }();
+      if (ret) {
+        if (ret->expr_type == A1TC_REFERENCE) {
+          // resolve a chain of parameters, e.g.
+          //    A { Type } ::= SEQUENCE { t Type }
+          //    B { Type } ::= A { Type }
+          //    C ::= B { INTEGER }
+          // inside A, Type is INTEGER through B
+          if (const auto* terminal = TryResolveReferenceViaParameters(ret->reference, ctx->parent); terminal) {
+            ret = terminal;
+          }
+        }
+      }
+      return ret;
+    }
+    return TryResolveReferenceViaParameters(ref, ctx->parent);
+  }
+  ttcn_ast::Node* Parametrize(const asn1p_expr_t* target, const asn1p_expr_t* provider,
+                              std::invocable /*<ttcn_ast::Node*()>*/ auto f) {
+    const auto check_type_match = [&](const asn1p_paramlist_s::asn1p_param_s& slot, const asn1p_expr_t* arg) {
+      assert(arg->reference);
+      const asn1p_expr_t* referenced_expr = ResolveReference(arg->reference);
+      if (!referenced_expr) {
+        return;
+      }
+      DumpExpr("  referenced_expr  /// ", referenced_expr);
+
+      if (referenced_expr->expr_type != A1TC_REFERENCE) {
+        // interesting... TODO: check later if it is possible
+        return;
+      }
+      assert(referenced_expr->reference);
+
+      if (asn1p_ref_compare(slot.governor, referenced_expr->reference) != 0) {
+        // todo: maybe deep compare (not just lexicographically), also print ALL components everywhere
+        EmitError(ConsumeRange(arg->reference->components[0]._name_range),
+                  std::format("expected parameter of type '{}', got '{}'", slot.governor->components[0].name,
+                              referenced_expr->reference->components[0].name));
+      }
+    };
+
+    const asn1p_expr_t* arg = TQ_FIRST(&(provider->rhs_pspecs->members));
+
+    int i;
+    for (i = 0; (i < target->lhs_params->params_count) && arg; i++, arg = TQ_NEXT(arg, next)) {
+      const asn1p_paramlist_s::asn1p_param_s& slot = target->lhs_params->params[i];
+
+      DEBUG(" slot.governor='{}', slot.argument='{}'", slot.governor->components[0].name, slot.argument);
+      DumpExpr("   ARG TO SLOT ^ : ", arg);
+
+      switch (arg->expr_type) {
+        case A1TC_VALUESET: {
+          if (arg->constraints->type == ACT_EL_TYPE) {
+            check_type_match(slot, arg->constraints->containedSubtype->value.v_type);
+          }
+          break;
+        }
+
+        default:
+          // idk what to do
+          break;
+      }
+    }
+    if (i != target->lhs_params->params_count) {
+      // TODO(range): provide range
+      EmitError({}, std::format("expected {} parameters, got {}", target->lhs_params->params_count, i));
+      return nullptr;
+    }
+
+    const ParametrizationContext ctx{
+        .parent = active_parametrization_ctx_,
+        .target = target,
+        .provider = provider,
+    };
+    lib::ScopedValue guard(active_parametrization_ctx_, &ctx);
+    return f();
   }
 
   ttcn_ast::Node* last_node_{nullptr};

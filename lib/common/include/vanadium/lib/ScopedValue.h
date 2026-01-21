@@ -6,7 +6,7 @@ namespace vanadium::lib {
 template <typename T>
 class ScopedValue {
  public:
-  ScopedValue(T& place, T&& new_value) : place_(place), previous_value_(std::exchange(place, std::move(new_value))) {}
+  ScopedValue(T& place, T new_value) : place_(place), previous_value_(std::exchange(place, std::move(new_value))) {}
 
   ~ScopedValue() {
     place_ = std::move(previous_value_);
