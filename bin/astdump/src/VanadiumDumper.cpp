@@ -12,7 +12,6 @@
 #include <print>
 #include <sstream>
 
-#include "Asn1Transparser.h"
 #include "vanadium/bin/astdump/AsciiColors.h"
 #include "vanadium/bin/astdump/TextDumper.h"
 
