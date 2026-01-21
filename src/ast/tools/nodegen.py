@@ -213,7 +213,7 @@ def generate_nodes_descriptors(nodes: AstNodesDict) -> str:
         if field.indirect:
           stored_type = f"{stored_type}*"
         if field.repeated:
-          stored_type = f"std::vector<{stored_type}>"  # TODO: span on arena
+          stored_type = f"std::vector<{stored_type}>"  # TODO(maybe): span on arena
         if not field.indirect and field.optional:
           stored_type = f"std::optional<{stored_type}>"
 
@@ -252,13 +252,22 @@ def generate_macro_inspector(nodes: AstNodesDict) -> str:
 def generate_dumper_code(nodes: AstNodesDict) -> str:
   buf = SourceCodeBuilder()
 
+  # workaround. TODO(maybe): read dumper pos from the schema
+  def _getfields(node: AstNode):
+    if node.name != "StructTypeDecl":
+      return node.fields
+    # for the rationale see the comment in nodes.yml
+    shallow_cloned = node.fields[:]
+    shallow_cloned[1], shallow_cloned[2] = shallow_cloned[2], shallow_cloned[1]
+    return shallow_cloned
+
   for node in nodes.values():
     buf.write(f"case NodeKind::{node.name}: {{")
     with buf.indented():
       buf.write(f"const auto* nn = n->As<nodes::{node.name}>();")
       buf.write(f'DumpGroup("{node.name}", [&] {{')
       with buf.indented():
-        for field in node.fields:
+        for field in _getfields(node):
           buf.write(f'Dump("{field.name}", nn->{field.name});')
       buf.write("});")
       buf.write("break;")

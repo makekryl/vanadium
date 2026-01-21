@@ -36,7 +36,7 @@ bool IsAsnFile(std::string_view path) {
 namespace {
 int main(int argc, char* argv[]) {
   argparse::ArgumentParser ap("astdump");
-  ap.add_description("Vanadium TTCN-3 syntax tree printer");
+  ap.add_description("Vanadium TTCN-3 syntax tree dumper");
   //
   std::vector<std::string> asn_include_filepaths;
   ap.add_argument("-A").append().store_into(asn_include_filepaths).help("additional ASN.1 files");
