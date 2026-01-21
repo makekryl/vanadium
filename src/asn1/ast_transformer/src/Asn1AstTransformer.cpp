@@ -723,6 +723,19 @@ class AstTransformer {
   }
   ttcn_ast::Node* Parametrize(const asn1p_expr_t* target, const asn1p_expr_t* provider,
                               std::invocable /*<ttcn_ast::Node*()>*/ auto f) {
+    const auto compare_refs = [](const asn1p_ref_t* a, const asn1p_ref_t* b) {
+      if (a->comp_count != b->comp_count) {
+        return -1;
+      }
+      for (std::size_t i = 0; i < a->comp_count; i++) {
+        if (a->components[i].lex_type != b->components[i].lex_type ||
+            std::strcmp(a->components[i].name, b->components[i].name) != 0) {
+          return -1;
+        }
+      }
+      return 0;
+    };
+
     const auto check_type_match = [&](const asn1p_paramlist_s::asn1p_param_s& slot, const asn1p_expr_t* arg) {
       assert(arg->reference);
       const asn1p_expr_t* referenced_expr = ResolveReference(arg->reference);
@@ -737,7 +750,7 @@ class AstTransformer {
       }
       assert(referenced_expr->reference);
 
-      if (asn1p_ref_compare(slot.governor, referenced_expr->reference) != 0) {
+      if (compare_refs(slot.governor, referenced_expr->reference) != 0) {
         // todo: maybe deep compare (not just lexicographically), also print ALL components everywhere
         EmitError(ConsumeRange(arg->reference->components[0]._name_range),
                   std::format("expected parameter of type '{}', got '{}'", slot.governor->components[0].name,
