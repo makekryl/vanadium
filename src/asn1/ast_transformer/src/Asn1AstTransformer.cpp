@@ -728,7 +728,8 @@ class AstTransformer {
     for (i = 0; (i < target->lhs_params->params_count) && arg; i++, arg = TQ_NEXT(arg, next)) {
       const asn1p_paramlist_s::asn1p_param_s& slot = target->lhs_params->params[i];
 
-      DEBUG(" slot.governor='{}', slot.argument='{}'", slot.governor->components[0].name, slot.argument);
+      DEBUG(" slot.governor='{}', slot.argument='{}'",
+            slot.governor ? slot.governor->components[0].name : "NO GOVERNOR", slot.argument);
       DumpExpr("   ARG TO SLOT ^ : ", arg);
 
       switch (arg->expr_type) {
