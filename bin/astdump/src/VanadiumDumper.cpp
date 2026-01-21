@@ -64,6 +64,8 @@ int main(int argc, char* argv[]) {
   TextASTDumper::Create(ast, std::cout).Apply([](auto& d) {
     d.Dump();
   });
+
+  return 0;
 }
 }  // namespace
 
