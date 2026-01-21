@@ -41,8 +41,8 @@ bool ResolveClassValue(const asn1p_value_t* value, const asn1p_expr_t* cls_expr,
     }
 
     default: {
-      // TODO
-      consumer.emit_error(cls_expr->_Identifier_Range,
+      // TODO(ranges)
+      consumer.emit_error({},
                           std::format("unexpected constraint value type: '{}'", magic_enum::enum_name(value->type)));
       break;
     }
@@ -72,7 +72,7 @@ bool ResolveClassSetImpl(const asn1p_expr_t* s_expr, const asn1p_expr_t* cls_exp
     }
   }
 
-  for (int i = 0; i < constraints->el_count; i++) {
+  for (unsigned int i = 0; i < constraints->el_count; i++) {
     const asn1p_constraint_t* constr = constraints->elements[i];
     switch (constr->type) {
       case ACT_EL_VALUE: {  // inline class value or reference to it
@@ -98,7 +98,7 @@ bool ResolveClassSetImpl(const asn1p_expr_t* s_expr, const asn1p_expr_t* cls_exp
         break;
       }
       default: {
-        consumer.emit_error(s_expr->_Identifier_Range,
+        consumer.emit_error(constr->_src_range,
                             std::format("unexpected constraint type: '{}'", magic_enum::enum_name(constr->type)));
         break;
       }

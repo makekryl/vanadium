@@ -11,7 +11,7 @@ asn1p_constraint_set_source(asn1p_constraint_t *ct,
                             struct asn1p_module_s *module, int lineno) {
     if(ct) {
         ct->module = module;
-        ct->_lineno = lineno;
+        // ct->_lineno = lineno; // TODO(asn1p_src_range_t)
         asn1p_value_set_source(ct->containedSubtype,module,lineno);
         asn1p_value_set_source(ct->value,module,lineno);
         asn1p_value_set_source(ct->range_start,module,lineno);
@@ -31,12 +31,12 @@ int asn1p_constraint_compare(const asn1p_constraint_t *a,
 }
 
 asn1p_constraint_t *
-asn1p_constraint_new(int _lineno, asn1p_module_t *mod) {
+asn1p_constraint_new(asn1p_src_range_t _src_range, asn1p_module_t *mod) {
 	asn1p_constraint_t *ct;
 
 	ct = asn1p_mem_calloc(1, sizeof(*ct));
 	if(ct) {
-		ct->_lineno = _lineno;
+		ct->_src_range = _src_range;
 		ct->module = mod;
 	}
 
@@ -82,7 +82,7 @@ asn1p_constraint_clone_with_resolver(asn1p_constraint_t *src,
 			}						\
 		} } while(0)
 
-	clone = asn1p_constraint_new(src->_lineno, src->module);
+	clone = asn1p_constraint_new(src->_src_range, src->module);
 	if(clone) {
 		unsigned int i;
 
@@ -107,7 +107,7 @@ asn1p_constraint_clone_with_resolver(asn1p_constraint_t *src,
 			}
 		}
 		assert(clone->el_count == src->el_count);
-		clone->_lineno = src->_lineno;
+		clone->_src_range = src->_src_range;
 	}
 
 	return clone;

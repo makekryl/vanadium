@@ -67,7 +67,7 @@ typedef struct asn1p_constraint_s {
 	unsigned int el_size;	/* Size of the allocated (elements) */
 
 	struct asn1p_module_s *module;	/* Defined in module */
-	int _lineno;	/* Position in a source file */
+  asn1p_src_range_t _src_range;
 } asn1p_constraint_t;
 
 /* Human-readable constraint type description */
@@ -84,7 +84,7 @@ void asn1p_constraint_set_source(asn1p_constraint_t *,
 /*
  * Constructors and a recursive destructor.
  */
-asn1p_constraint_t *asn1p_constraint_new(int _lineno, asn1p_module_t *mod);
+asn1p_constraint_t *asn1p_constraint_new(asn1p_src_range_t _src_range, asn1p_module_t *mod);
 void asn1p_constraint_free(asn1p_constraint_t *);
 
 /*
