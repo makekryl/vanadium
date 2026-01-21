@@ -49,7 +49,7 @@ struct ClassObjectParserTest : public ::testing::Test {
     const auto& ast = Parse(arena_, src);
     ASSERT_TRUE(ast);
 
-    const auto* mod = TQ_FIRST(&(ast->Get()->modules));
+    const auto* mod = TQ_FIRST(&(ast->Raw()->modules));
     ASSERT_TRUE(mod);
 
     const auto* cls = (asn1p_expr_t*)genhash_get(mod->members_hash, class_name);

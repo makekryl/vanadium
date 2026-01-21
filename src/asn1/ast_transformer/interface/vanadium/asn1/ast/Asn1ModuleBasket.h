@@ -24,6 +24,8 @@ struct Asn1ModuleBasketItem {
   std::optional<Asn1cAstWrapper> ast;
   std::vector<Asn1cSyntaxError> errors;
 
+  std::optional<std::string_view> module_name;
+
   bool dirty;
 };
 
@@ -62,7 +64,9 @@ class Asn1ModuleBasket {
   void UpdateImpl(OpaqueKey* key, std::string_view src);
   ttcn_ast::AST TransformImpl(OpaqueKey* key, lib::Arena& arena);
 
-  Asn1ModuleBasketItem* FindModule(std::string_view name);
+  void RegisterModule(Asn1ModuleBasketItem&);
+  Asn1ModuleBasketItem* FindModuleProvider(std::string_view name);
+
   ttcn_ast::AST TransformAST(Asn1ModuleBasketItem& item, lib::Arena& arena);
 
   std::unordered_map<OpaqueKey*, Asn1ModuleBasketItem> items_;

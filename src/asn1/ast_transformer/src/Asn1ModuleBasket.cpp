@@ -1,5 +1,6 @@
 #include "vanadium/asn1/ast/Asn1ModuleBasket.h"
 
+#include <asn1c/libasn1parser/asn1parser_cxx.h>
 #include <vanadium/asn1/ast/Asn1cAstWrapper.h>
 #include <vanadium/ast/ASTTypes.h>
 #include <vanadium/lib/Arena.h>
@@ -36,6 +37,9 @@ void Asn1ModuleBasket::UpdateImpl(OpaqueKey* key, std::string_view src) {
 
   if (!inserted) {
     item.arena.Reset();
+    if (item.module_name) {
+      modules_.erase(*item.module_name);
+    }
   }
 
   item.src = src;
@@ -43,6 +47,7 @@ void Asn1ModuleBasket::UpdateImpl(OpaqueKey* key, std::string_view src) {
   if (auto result = Parse(item.arena, src)) {
     item.ast = std::move(*result);
     item.errors.clear();
+    RegisterModule(item);
   } else {
     item.ast = std::nullopt;
     item.errors = std::move(result.error());
@@ -50,12 +55,29 @@ void Asn1ModuleBasket::UpdateImpl(OpaqueKey* key, std::string_view src) {
   item.dirty = true;
 }
 
-Asn1ModuleBasketItem* Asn1ModuleBasket::FindModule(std::string_view name) {
+void Asn1ModuleBasket::RegisterModule(Asn1ModuleBasketItem& item) {
+  if (const asn1p_module_t* mod = TQ_FIRST(&(item.ast->Raw()->modules)); mod) {
+    item.module_name = mod->ModuleName;
+
+    auto it = modules_.find(*item.module_name);
+    if (it == modules_.end()) {
+      modules_.emplace(*item.module_name, &item);
+      return;
+    }
+
+    item.errors.emplace_back(Asn1cSyntaxError{
+        .range = {},
+        .message = std::format("module '{}' is already defined in another file", *item.module_name),
+    });
+  }
+}
+
+Asn1ModuleBasketItem* Asn1ModuleBasket::FindModuleProvider(std::string_view name) {
   if (auto it = modules_.find(name); it != modules_.end()) {
     return it->second;
   }
   for (auto* ref : references_) {
-    if (auto* module = ref->FindModule(name)) {
+    if (auto* module = ref->FindModuleProvider(name)) {
       return module;
     }
   }
@@ -91,9 +113,14 @@ ttcn_ast::AST Asn1ModuleBasket::TransformImpl(OpaqueKey* key, lib::Arena& arena)
     };
   }
 
-  auto transformed_ast = TransformAsn1Ast(item.ast->Get(), item.src, arena, [&](const char* required_module_name) {
-    return nullptr;
-  });
+  auto transformed_ast = TransformAsn1Ast(item.ast->Raw(), item.src, arena,
+                                          [&](const char* required_module_name) -> const asn1p_module_t* {
+                                            const auto* provider = FindModuleProvider(required_module_name);
+                                            if (!provider) {
+                                              return nullptr;
+                                            }
+                                            return TQ_FIRST(&(provider->ast->Raw()->modules));
+                                          });
 
   errors.reserve(errors.size() + transformed_ast.errors.size());
   //

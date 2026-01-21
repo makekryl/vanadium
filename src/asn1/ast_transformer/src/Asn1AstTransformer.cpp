@@ -648,8 +648,31 @@ class AstTransformer {
   }
   const asn1p_expr_t* ResolveReferenceViaModule(const asn1p_ref_t* ref) {
     // TODO: support complex cases
-    const char* name = ref->components[0].name;
-    return ResolveModuleMember(ref->module, name);
+    return ResolveReferenceViaModule(ref->module, ref->components[0].name);
+  }
+  const asn1p_expr_t* ResolveReferenceViaModule(const asn1p_module_t* own_module, const char* name) {
+    if (const auto* expr = ResolveModuleMember(own_module, name); expr) {
+      return expr;
+    }
+
+    // TODO: check ambigious references, check modules' OID too
+    const asn1p_xports_t* xp;
+    TQ_FOR(xp, &(own_module->imports), xp_next) {
+      const asn1p_expr_t* tc;
+      TQ_FOR(tc, &(xp->xp_members), next) {
+        if (std::strcmp(name, tc->Identifier) != 0) {
+          continue;
+        }
+
+        const asn1p_module_t* provider_module = get_module_(xp->fromModuleName);
+        if (!provider_module) {
+          return nullptr;
+        }
+        return ResolveReferenceViaModule(provider_module, name);
+      }
+    }
+
+    return nullptr;
   }
   const asn1p_expr_t* TryResolveReferenceViaParameters(const asn1p_ref_t* ref, const ParametrizationContext* ctx) {
     if (!ctx) {

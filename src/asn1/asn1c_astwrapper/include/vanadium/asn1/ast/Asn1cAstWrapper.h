@@ -40,7 +40,7 @@ class Asn1cAstWrapper {
   const asn1p_t& operator*() const {
     return *ast_;
   }
-  [[nodiscard]] const asn1p_t* Get() const {
+  [[nodiscard]] const asn1p_t* Raw() const {
     return ast_;
   }
 

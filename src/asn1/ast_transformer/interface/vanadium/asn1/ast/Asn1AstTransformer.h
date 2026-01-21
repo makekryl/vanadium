@@ -7,6 +7,7 @@
 #include <vector>
 
 using asn1p_t = struct asn1p_s;
+using asn1p_module_t = struct asn1p_module_s;
 
 namespace vanadium::asn1::ast {
 
@@ -24,7 +25,7 @@ struct TransformedAsn1Ast {
   std::vector<TransformationError> errors;
 };
 
-using Asn1pModuleProvider = lib::FunctionRef<const asn1p_t*(const char*)>;
+using Asn1pModuleProvider = lib::FunctionRef<const asn1p_module_t*(const char*)>;
 
 TransformedAsn1Ast TransformAsn1Ast(const asn1p_t* ast, std::string_view src, lib::Arena& arena, Asn1pModuleProvider);
 
