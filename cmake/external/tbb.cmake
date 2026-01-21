@@ -22,7 +22,7 @@ endif()
 FetchContent_MakeAvailable(tbb)
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  # TODO: prevent leaking of -W to dependencies
+  # TODO: prevent leaking of -Wno-error to dependencies
   target_compile_options(tbb PRIVATE
     -Wno-error=stringop-overflow
   )
