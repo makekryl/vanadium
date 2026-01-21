@@ -15,7 +15,7 @@
 #include <ranges>
 #include <string_view>
 
-#include "vanadium/bin/astdump/asciicolorss.h"
+#include "vanadium/bin/astdump/AsciiColors.h"
 
 class TextASTDumper {
  private:
@@ -48,7 +48,7 @@ class TextASTDumper {
     }
 
     WriteIndent();
-    out_ << asciicolors::kBrightGray << name << asciicolors::kReset;
+    out_ << asciicolors::kBrightGray << name << ": " << asciicolors::kReset;
   }
 
   void WriteValue(std::string_view value) {

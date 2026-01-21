@@ -1,4 +1,5 @@
 #include <fmt/color.h>
+#include <fmt/core.h>
 #include <oneapi/tbb/task_arena.h>
 #include <vanadium/bin/Bootstrap.h>
 #include <vanadium/core/Program.h>
@@ -16,7 +17,6 @@
 #include "Filesystem.h"
 #include "Linter.h"
 #include "Solution.h"
-#include "fmt/core.h"
 #include "impl/SystemFS.h"
 
 namespace {

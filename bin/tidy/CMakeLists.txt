@@ -10,6 +10,6 @@ target_link_libraries(vanadium_tidy PRIVATE
   vanadium_bin_boostrap
   vanadium_lint
   vanadium_tooling
-  fmt::fmt
   argparse::argparse
+  fmt::fmt
 )

@@ -12,8 +12,8 @@
 #include <sstream>
 
 #include "Asn1Transparser.h"
+#include "vanadium/bin/astdump/AsciiColors.h"
 #include "vanadium/bin/astdump/TextDumper.h"
-#include "vanadium/bin/astdump/asciicolorss.h"
 
 using namespace vanadium;
 
