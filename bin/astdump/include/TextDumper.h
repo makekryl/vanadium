@@ -87,7 +87,7 @@ inline void vanadium::ast::Dumper<TextASTDumper>::Dump(std::string_view name, co
   if (tok.range.Length() > 0) {
     impl_.WriteValue(tok.On(impl_.ast_.src));
   } else {
-    impl_.WriteValue(std::format("::{}", magic_enum::enum_name(tok.kind)));
+    impl_.WriteValue(std::format("::{} ({})", magic_enum::enum_name(TokenKind(tok.kind)), int(tok.kind)));
   }
 }
 

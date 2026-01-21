@@ -7,6 +7,7 @@ target_include_directories(vanadium_astdump PRIVATE
 )
 
 target_link_libraries(vanadium_astdump PRIVATE
+  vanadium_bin_boostrap
   vanadium_ast
   vanadium_asn1_ast_transformer
   vanadium_asn1_xast

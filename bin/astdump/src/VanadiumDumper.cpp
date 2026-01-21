@@ -1,4 +1,5 @@
 #include <vanadium/ast/Parser.h>
+#include <vanadium/bin/Bootstrap.h>
 
 #include <format>
 #include <fstream>
@@ -31,6 +32,7 @@ vanadium::ast::AST ParseUsingAsn1c(vanadium::lib::Arena& arena, std::string_view
 }
 }  // namespace
 
+namespace {
 int main(int argc, char* argv[]) {
   if (argc != 2) {
     std::cerr << std::format("{} [filename]", argv[0]) << std::endl;
@@ -63,3 +65,6 @@ int main(int argc, char* argv[]) {
     d.Dump();
   });
 }
+}  // namespace
+
+DEFINE_VANADIUM_ENTRYPOINT(main);

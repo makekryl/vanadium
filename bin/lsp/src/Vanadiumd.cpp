@@ -1,3 +1,4 @@
+#include <vanadium/bin/Bootstrap.h>
 #include <vanadium/lib/lserver/Transport.h>
 #include <vanadium/version.h>
 
@@ -10,7 +11,6 @@
 #include <string_view>
 #include <thread>
 
-#include "Bootstrap.h"
 #include "LanguageServer.h"
 #include "LanguageServerTestFlags.h"
 

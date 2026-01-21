@@ -22,7 +22,7 @@ class EntryPoint {
 };
 }  // namespace vanadium::bin
 
-#define DEFINE_VANADIUM_ENTRYPOINT(fn)  \
-  namespace {                           \
-  vanadium::bin::EntryPoint vnep__(fn); \
+#define DEFINE_VANADIUM_ENTRYPOINT(fn)                     \
+  namespace {                                              \
+  vanadium::bin::EntryPoint vanadium_tool_entrypoint_(fn); \
   }
