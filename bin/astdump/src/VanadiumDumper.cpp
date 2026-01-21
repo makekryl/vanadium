@@ -5,6 +5,7 @@
 #include <vanadium/lib/Arena.h>
 
 #include <argparse/argparse.hpp>
+#include <chrono>
 #include <format>
 #include <fstream>
 #include <iostream>
@@ -63,6 +64,7 @@ int main(int argc, char* argv[]) {
   lib::Arena arena;
   std::optional<ast::AST> ast;  // lateinit
   //
+  const auto ts_begin = std::chrono::steady_clock::now();
   if (is_asn) {
     asn1::ast::Asn1ModuleBasket basket;
     for (auto& extra_filepath : asn_include_filepaths) {
@@ -80,6 +82,7 @@ int main(int argc, char* argv[]) {
   } else {
     ast = ast::Parse(arena, *src);
   }
+  const auto ts_end = std::chrono::steady_clock::now();
 
   std::ios_base::sync_with_stdio(false);
   std::cin.tie(nullptr);
@@ -98,6 +101,10 @@ int main(int argc, char* argv[]) {
   TextASTDumper::Create(*ast, std::cout).Apply([](auto& d) {
     d.Dump();
   });
+
+  std::println(std::cout, "\n{}{}  * Parsing took {} ms ({} KB) {}", asciicolors::kDim, asciicolors::kBold,
+               std::chrono::duration_cast<std::chrono::milliseconds>(ts_end - ts_begin).count(),
+               arena.SpaceUsed() / 1024, asciicolors::kReset);
 
   return 0;
 }
