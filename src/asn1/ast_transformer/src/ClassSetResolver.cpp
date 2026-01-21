@@ -6,7 +6,6 @@
 #include <magic_enum/magic_enum.hpp>
 #include <string_view>
 
-#include "asn1c/libasn1parser/asn1p_constr.h"
 #include "vanadium/asn1/ast/ClassObjectParser.h"
 
 namespace vanadium::asn1::ast {
@@ -51,68 +50,55 @@ bool ResolveClassValue(const asn1p_value_t* value, const asn1p_expr_t* cls_expr,
   return kShouldContinue;
 }
 
-bool ResolveClassSetImpl(const asn1p_expr_t* s_expr, const asn1p_expr_t* cls_expr,
-                         const ClassSetElementConsumer& consumer) {
+bool ResolveClassSetConstraint(const asn1p_constraint_t* constr, const asn1p_expr_t* cls_expr,
+                               const ClassSetElementConsumer& consumer) {
   // TODO: pass proper ranges to emit_error calls below
 
-  const asn1p_constraint_t* constraints = s_expr->constraints;
+  switch (constr->type) {
+    case ACT_CA_CSV:
+    case ACT_CA_UNI: {
+      for (unsigned int i = 0; i < constr->el_count; i++) {
+        if (ResolveClassSetConstraint(constr->elements[i], cls_expr, consumer) == kShouldNOTContinue) {
+          return kShouldNOTContinue;
+        }
+      }
+      return kShouldContinue;
+    }
 
-  if (constraints->type != ACT_CA_UNI) {
-    // well, there's a possible valid case:
-    // { A | B | C
-    //  , ... }
-    if ((constraints->el_count == 2) && (constraints->elements[0]->type == ACT_CA_UNI) &&
-        (constraints->elements[1]->type == ACT_EL_EXT)) {
-      constraints = constraints->elements[0];
-    } else {
-      consumer.emit_error(s_expr->_Identifier_Range,
-                          std::format("referenced set '{}' is not union-constrained: '{}'", s_expr->Identifier,
-                                      magic_enum::enum_name(constraints->type)));
+    case ACT_EL_EXT: {
+      // Paging-eDRXInformation-ExtIEs S1AP-PROTOCOL-EXTENSION ::= {
+      //    ...
+      // }
+      return kShouldContinue;
+    }
+
+    case ACT_EL_VALUE: {  // inline class value or reference to it
+      assert(constr->value);
+      return ResolveClassValue(constr->value, cls_expr, consumer);
+    }
+
+    case ACT_EL_TYPE: {  // reference to another set
+      assert(constr->containedSubtype);
+      const asn1p_expr_t* referenced_expr = consumer.resolve(constr->containedSubtype->value.v_type->reference);
+      if (!referenced_expr) {
+        return kShouldContinue;
+      }
+      return ResolveClassSetConstraint(referenced_expr->constraints, cls_expr, consumer);
+    }
+
+    default: {
+      consumer.emit_error(constr->_src_range,
+                          std::format("unexpected constraint type: '{}'", magic_enum::enum_name(constr->type)));
       return kShouldContinue;
     }
   }
-
-  for (unsigned int i = 0; i < constraints->el_count; i++) {
-    const asn1p_constraint_t* constr = constraints->elements[i];
-    switch (constr->type) {
-      case ACT_EL_VALUE: {  // inline class value or reference to it
-        assert(constr->value);
-        const bool should_continue = ResolveClassValue(constr->value, cls_expr, consumer);
-        if (!should_continue) {
-          return kShouldNOTContinue;
-        }
-        break;
-      }
-      case ACT_EL_TYPE: {  // reference to another set
-        assert(constr->containedSubtype);
-        const asn1p_expr_t* referenced_expr = consumer.resolve(constr->containedSubtype->value.v_type->reference);
-        if (!referenced_expr) {
-          return kShouldContinue;
-        }
-
-        const bool should_continue = ResolveClassSetImpl(referenced_expr, cls_expr, consumer);
-        if (!should_continue) {
-          return kShouldNOTContinue;
-        }
-
-        break;
-      }
-      default: {
-        consumer.emit_error(constr->_src_range,
-                            std::format("unexpected constraint type: '{}'", magic_enum::enum_name(constr->type)));
-        break;
-      }
-    }
-  }
-
-  return kShouldContinue;
 }
 
 }  // namespace
 
 void ResolveClassSet(const asn1p_expr_t* s_expr, const asn1p_expr_t* cls_expr,
                      const ClassSetElementConsumer& consumer) {
-  ResolveClassSetImpl(s_expr, cls_expr, consumer);
+  ResolveClassSetConstraint(s_expr->constraints, cls_expr, consumer);
 }
 
 }  // namespace vanadium::asn1::ast
