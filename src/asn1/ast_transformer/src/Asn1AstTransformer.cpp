@@ -56,6 +56,7 @@ void NormalizeToken(ttcn_ast::Range& range, std::string& s) {
   do {                                 \
     std::println(stderr, __VA_ARGS__); \
   } while (0);
+#define DEBUG(...) ;
 
 // asn1c helper stuff
 namespace {
@@ -254,7 +255,7 @@ class AstTransformer {
 
   // It will return either an Ident, which can be wrapped in RefSpec (if needed, e.g. in ValueDecl it will stay Ident),
   // or a TypeSpec (class sets are translated into an UNION StructSpec)
-  // So, this is VERY smart ass (or not) method that implements maybe the 75% of the "semantic" part of the transformer
+  // So, this is a VERY VERY smart ass method that implements maybe the 75% of the "semantic" part of the transformer
   ttcn_ast::Node* TransformTypeName(const asn1p_expr_t* expr) {
     DumpExpr(" ## TransformTypeName ", expr);
     for (int i = 0; i < expr->reference->comp_count; i++) {
@@ -363,58 +364,57 @@ class AstTransformer {
         }
 
         return NewNode<ttcn_ast::nodes::StructSpec>([&](ttcn_ast::nodes::StructSpec& m) {
-                 m.kind = Tok(ttcn_ast::TokenKind::UNION);
-                 m.fields.reserve(clsvals_expr->constraints->el_count);
+          m.kind = Tok(ttcn_ast::TokenKind::UNION);
+          m.fields.reserve(clsvals_expr->constraints->el_count);
 
-                 const auto accept_row = [&](const ClassObjectRow& row) {
-                   if (row.name != selcomp.name) {
-                     return true;  // continue search
-                   }
+          const auto accept_row = [&](const ClassObjectRow& row) {
+            if (row.name != selcomp.name) {
+              return true;  // continue search
+            }
 
-                   // todo: e.g. 'OCTET STRING' is translated to { name = 'oCTET STRING', type = 'OCTET STRING' },
-                   //       while it is expected to be { name = 'oCTET_STRING', type = 'octetstring' }
-                   // todo: parse the value like asn1c does and validate it
+            // todo: e.g. 'OCTET STRING' is translated to { name = 'oCTET STRING', type = 'OCTET STRING' },
+            //       while it is expected to be { name = 'oCTET_STRING', type = 'octetstring' }
+            // todo: parse the value like asn1c does and validate it
 
-                   m.fields.emplace_back(NewNode<ttcn_ast::nodes::Field>([&](ttcn_ast::nodes::Field& f) {
-                     // TODO: optimize
-                     f.name.emplace().nrange = AppendSource(std::string(row.value));
-                     f.type = NewNode<ttcn_ast::nodes::RefSpec>([&](ttcn_ast::nodes::RefSpec& rs) {
-                       rs.x = NewNode<ttcn_ast::nodes::Ident>([&](ttcn_ast::nodes::Ident& ident) {
-                         std::string ptypecpy(row.value);  // MEGA SHIT
-                         ptypecpy[0] = std::tolower(ptypecpy[0]);
-                         ident.nrange = AppendSource(ptypecpy);  // TODO: oh shi... (x2)
-                       });
-                     });
-                   }));
+            m.fields.emplace_back(NewNode<ttcn_ast::nodes::Field>([&](ttcn_ast::nodes::Field& f) {
+              // TODO: optimize
+              f.name.emplace().nrange = AppendSource(std::string(row.value));
+              f.type = NewNode<ttcn_ast::nodes::RefSpec>([&](ttcn_ast::nodes::RefSpec& rs) {
+                rs.x = NewNode<ttcn_ast::nodes::Ident>([&](ttcn_ast::nodes::Ident& ident) {
+                  std::string ptypecpy(row.value);  // MEGA SHIT
+                  ptypecpy[0] = std::tolower(ptypecpy[0]);
+                  ident.nrange = AppendSource(ptypecpy);  // TODO: oh shi... (x2)
+                });
+              });
+            }));
 
-                   return false;
-                 };
+            return false;
+          };
 
-                 // this cannot be written more cleanly due to FunctionRef lifetime requirements
-                 ResolveClassSet(clsvals_expr, clsexpr,
-                                 {
-                                     .resolve =
-                                         [&](const asn1p_ref_t* ref) {
-                                           return ResolveReference(ref);
-                                         },
-                                     .accept_class =
-                                         [&](const auto& accept_accept_class_object_consumer) {
-                                           accept_accept_class_object_consumer({
-                                               .accept_row = accept_row,
-                                               .emit_error =
-                                                   [&](const auto& asn1c_range, std::string message) {
-                                                     EmitError(ConsumeRange(asn1c_range), std::move(message));
-                                                   },
-                                           });
-                                           return true;
-                                         },
-                                     .emit_error =
-                                         [&](const auto& asn1c_range, std::string message) {
-                                           EmitError(ConsumeRange(asn1c_range), std::move(message));
-                                         },
-                                 });
-               })
-            ->As<ttcn_ast::nodes::Expr>();  // TODO: remove
+          // this cannot be written more cleanly due to FunctionRef lifetime requirements
+          ResolveClassSet(clsvals_expr, clsexpr,
+                          {
+                              .resolve =
+                                  [&](const asn1p_ref_t* ref) {
+                                    return ResolveReference(ref);
+                                  },
+                              .accept_class =
+                                  [&](const auto& accept_accept_class_object_consumer) {
+                                    accept_accept_class_object_consumer({
+                                        .accept_row = accept_row,
+                                        .emit_error =
+                                            [&](const auto& asn1c_range, std::string message) {
+                                              EmitError(ConsumeRange(asn1c_range), std::move(message));
+                                            },
+                                    });
+                                    return true;
+                                  },
+                              .emit_error =
+                                  [&](const auto& asn1c_range, std::string message) {
+                                    EmitError(ConsumeRange(asn1c_range), std::move(message));
+                                  },
+                          });
+        });
       }
       default:
         EmitError(ConsumeRange(selcomp._name_range),
