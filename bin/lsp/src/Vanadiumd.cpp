@@ -62,15 +62,9 @@ int main(int argc, char* argv[]) {
   ap.add_argument("--capture-output").flag();
   ap.add_argument("--full-analysis").flag();
 
-  /////////////////////////////////////////////
-  try {
-    ap.parse_args(argc, argv);
-  } catch (const std::exception& err) {
-    std::cerr << err.what() << std::endl;
-    std::cerr << ap;
-    return 1;
-  }
-  /////////////////////////////////////////////
+  //
+  PARSE_CLI_ARGS_OR_EXIT(ap, argc, argv, 1);
+  //
 
   std::println(stderr, "vanadiumd version {}", vanadium::bin::kVersion);
 

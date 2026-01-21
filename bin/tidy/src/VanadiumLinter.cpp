@@ -1,5 +1,6 @@
 #include <fmt/color.h>
 #include <oneapi/tbb/task_arena.h>
+#include <vanadium/bin/Bootstrap.h>
 #include <vanadium/core/Program.h>
 
 #include <argparse/argparse.hpp>
@@ -10,7 +11,6 @@
 #include <string>
 #include <thread>
 
-#include "Bootstrap.h"
 #include "BuiltinRules.h"
 #include "Context.h"
 #include "Filesystem.h"
@@ -41,15 +41,9 @@ int main(int argc, char* argv[]) {
   //
   ap.add_argument("path").store_into(solution_path).help("solution directory path");
 
-  /////////////////////////////////////////////
-  try {
-    ap.parse_args(argc, argv);
-  } catch (const std::exception& err) {
-    std::cerr << err.what() << std::endl;
-    std::cerr << ap;
-    return 1;
-  }
-  /////////////////////////////////////////////
+  //
+  PARSE_CLI_ARGS_OR_EXIT(ap, argc, argv, 1);
+  //
 
   tbb::task_arena task_arena(jobs);
 

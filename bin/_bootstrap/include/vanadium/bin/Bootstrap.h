@@ -26,3 +26,12 @@ class EntryPoint {
   namespace {                                              \
   vanadium::bin::EntryPoint vanadium_tool_entrypoint_(fn); \
   }
+
+#define PARSE_CLI_ARGS_OR_EXIT(ap, argc, argv, exit_code) \
+  try {                                                   \
+    (ap).parse_args(argc, argv);                          \
+  } catch (const std::exception& err) {                   \
+    std::cerr << err.what() << std::endl;                 \
+    std::cerr << (ap);                                    \
+    return 1;                                             \
+  }
