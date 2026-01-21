@@ -4,6 +4,7 @@
 #include <vanadium/ast/ASTDumper.h>
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/ASTTypes.h>
+#include <vanadium/ast/defs/magic_enum_defs.h>
 
 #include <cassert>
 #include <cmath>

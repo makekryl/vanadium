@@ -192,6 +192,8 @@ enum class TokenKind : std::uint8_t {
   WHILE,
   WITH,
   keyword_end,
+
+  kTokenKindEnd
 };
 // NOLINTEND(readability-identifier-naming)
 

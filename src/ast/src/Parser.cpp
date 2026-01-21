@@ -11,6 +11,7 @@
 #include "vanadium/ast/AST.h"
 #include "vanadium/ast/ASTNodes.h"
 #include "vanadium/ast/Scanner.h"
+#include "vanadium/ast/defs/magic_enum_defs.h"
 
 namespace vanadium::ast {
 namespace parser {
