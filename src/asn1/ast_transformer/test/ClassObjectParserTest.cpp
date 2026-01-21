@@ -23,8 +23,8 @@ struct ClassObjectParserTest : public ::testing::Test {
  protected:
   lib::Arena arena_;
 
-  MockFunction<bool(ClassObjectRow)> f_accept_row_mock_;
-  MockFunction<void(const asn1p_src_range_t&, std::string)> f_emit_error_mock_;
+  StrictMock<MockFunction<bool(ClassObjectRow)>> f_accept_row_mock_;
+  StrictMock<MockFunction<void(const asn1p_src_range_t&, std::string)>> f_emit_error_mock_;
 
  private:
   // due to FunctionRef functions lifetime requirements (stack-use-after-return otherwise)
