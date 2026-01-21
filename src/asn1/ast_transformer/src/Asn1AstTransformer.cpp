@@ -85,7 +85,7 @@ const asn1p_expr_t* ResolveExprMember(const asn1p_expr_t* expr, const char* memb
   return nullptr;
 }
 const asn1p_constraint_t* FindConstraint(const asn1p_expr_t* expr, asn1p_constraint_type_e type) {
-  for (int i = 0; i < expr->constraints->el_count; ++i) {
+  for (unsigned int i = 0; i < expr->constraints->el_count; ++i) {
     if (expr->constraints->elements[i]->type == type) {
       return expr->constraints->elements[i];
     }
@@ -258,7 +258,7 @@ class AstTransformer {
   // So, this is a VERY VERY smart ass method that implements maybe the 75% of the "semantic" part of the transformer
   ttcn_ast::Node* TransformTypeName(const asn1p_expr_t* expr) {
     DumpExpr(" ## TransformTypeName ", expr);
-    for (int i = 0; i < expr->reference->comp_count; i++) {
+    for (std::size_t i = 0; i < expr->reference->comp_count; i++) {
       DEBUG("     - comp[{}].name = '{}'", i, expr->reference->components[i].name);
     }
 
@@ -491,6 +491,9 @@ class AstTransformer {
 
       asn1p_expr_t* member;
       TQ_FOR(member, &(expr->members), next) {
+        if (member->expr_type != A1TC_UNIVERVAL) {
+          continue;
+        }
         m.values.push_back(NewNode<ttcn_ast::nodes::Ident>([&](ttcn_ast::nodes::Ident& iv) {
           iv.nrange = ConsumeRange(member);
         }));
@@ -502,6 +505,9 @@ class AstTransformer {
     return NewNode<ttcn_ast::nodes::EnumSpec>([&](ttcn_ast::nodes::EnumSpec& m) {
       asn1p_expr_t* member;
       TQ_FOR(member, &(expr->members), next) {
+        if (member->expr_type != A1TC_UNIVERVAL) {
+          continue;
+        }
         m.values.push_back(NewNode<ttcn_ast::nodes::Ident>([&](ttcn_ast::nodes::Ident& iv) {
           iv.nrange = ConsumeRange(member);
         }));
@@ -601,7 +607,7 @@ class AstTransformer {
       return it->second;
     }
 
-    ttcn_ast::Range range{.begin = static_cast<ttcn_ast::pos_t>(adjusted_src_.length())};
+    ttcn_ast::Range range{.begin = static_cast<ttcn_ast::pos_t>(adjusted_src_.length()), .end = {}};
     range.end = range.begin + static_cast<ttcn_ast::pos_t>(s.length());
 
     adjusted_src_.append(s);
