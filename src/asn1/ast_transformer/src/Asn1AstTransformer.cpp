@@ -189,7 +189,7 @@ class AstTransformer {
       auto* rs = NewNode<ttcn_ast::nodes::SubTypeDecl>([&](ttcn_ast::nodes::SubTypeDecl& m) {
         m.field = NewNode<ttcn_ast::nodes::Field>([&](ttcn_ast::nodes::Field& f) {
           f.type = n->As<ttcn_ast::nodes::RefSpec>();
-          f.name.emplace().nrange = ConsumeRange(expr->_Identifier_Range);
+          f.name.emplace().nrange = ConsumeRange(expr);
         });
       });
       rs->parent = std::exchange(n->parent, rs);
@@ -276,13 +276,13 @@ class AstTransformer {
         });
       }
       return NewNode<ttcn_ast::nodes::Ident>([&](ttcn_ast::nodes::Ident& ident) {
-        ident.nrange = ConsumeRange(ref->components[0]._name_range);
+        ident.nrange = ConsumeRange(ref->components[0], ref->module);
       });
     }
 
     if (ref->comp_count != 2) {
       // TODO: check it
-      EmitError(ConsumeRange(ref->components[0]._name_range), "ref->comp_count != 2");
+      EmitError(ConsumeRange(ref->components[0], ref->module), "ref->comp_count != 2");
       return nullptr;
     }
 
@@ -294,30 +294,30 @@ class AstTransformer {
       case RLT_Amplowercase:  // &code
         break;
       default:
-        EmitError(ConsumeRange(selcomp._name_range), "expression does not look like a CLASS field reference");
+        EmitError(ConsumeRange(selcomp, ref->module), "expression does not look like a CLASS field reference");
         return nullptr;
     }
 
     const asn1p_expr_t* clsexpr = ResolveModuleMember(ref->module, clscomp.name);
     if (!clsexpr) {
-      EmitError(ConsumeRange(clscomp._name_range), std::format("unresolved reference to '{}'", clscomp.name));
+      EmitError(ConsumeRange(clscomp, ref->module), std::format("unresolved reference to '{}'", clscomp.name));
       return nullptr;
     }
     if (clsexpr->expr_type != A1TC_CLASSDEF) {
-      EmitError(ConsumeRange(clscomp._name_range), std::format("'{}' is not a CLASS", clscomp.name));
+      EmitError(ConsumeRange(clscomp, ref->module), std::format("'{}' is not a CLASS", clscomp.name));
       return nullptr;
     }
 
     const asn1p_expr_t* fieldexpr = ResolveExprMember(clsexpr, selcomp.name);
     if (!fieldexpr) {
-      EmitError(ConsumeRange(clscomp._name_range),
+      EmitError(ConsumeRange(clscomp, ref->module),
                 std::format("unresolved reference to field '{}' of CLASS '{}'", selcomp.name, clscomp.name));
       return nullptr;
     }
     DumpExpr("[FIELD] ", fieldexpr);
     if (fieldexpr->meta_type != AMT_OBJECTFIELD) [[unlikely]] {
       // TODO: i guess this will never happen
-      EmitError(ConsumeRange(selcomp._name_range), std::format("'{}' is not a field", selcomp.name));
+      EmitError(ConsumeRange(selcomp, ref->module), std::format("'{}' is not a field", selcomp.name));
       return nullptr;
     }
 
@@ -333,7 +333,7 @@ class AstTransformer {
 
         const asn1p_constraint_t* comprel_constr = FindConstraint(expr, ACT_CA_CRC);  // ({ErrorSet}{@errorCategory})
         if (!comprel_constr) {
-          EmitError(ConsumeRange(selcomp._name_range), "component relation constraint required");
+          EmitError(ConsumeRange(selcomp, ref->module), "component relation constraint required");
           return nullptr;
         }
         assert(comprel_constr->el_count >= 1);  // should always be true for ACT_CA_CRC
@@ -341,12 +341,12 @@ class AstTransformer {
         const asn1p_constraint_t* clsvals_constr = comprel_constr->elements[0];
         if (!clsvals_constr->value || (clsvals_constr->value->type != asn1p_value_s::ATV_REFERENCED))
             [[unlikely]] {  // should not happen though
-          EmitError(ConsumeRange(selcomp._name_range), "reference required");
+          EmitError(ConsumeRange(selcomp, ref->module), "reference required");
           return nullptr;
         }
         if (clsvals_constr->value->value.reference->comp_count != 1) {
           // TODO: support cases where clsvals_constr->value->value.reference->comp_count > 1
-          EmitError(ConsumeRange(selcomp._name_range), "clsvals_constr->value->value.reference->comp_count != 1");
+          EmitError(ConsumeRange(selcomp, ref->module), "clsvals_constr->value->value.reference->comp_count != 1");
           return nullptr;
         }
 
@@ -357,7 +357,7 @@ class AstTransformer {
 
         if ((clsvals_expr->reference->comp_count != 1) ||
             (std::strcmp(clsvals_expr->reference->components[0].name, clsexpr->Identifier) != 0)) {
-          EmitError(ConsumeRange(clscomp._name_range),
+          EmitError(ConsumeRange(clscomp, ref->module),
                     std::format("referenced set is not of type '{}', but of type '{}'", clsexpr->Identifier,
                                 clsvals_expr->reference->components[0].name));
           return nullptr;
@@ -450,7 +450,7 @@ class AstTransformer {
       m.kind = arena_.Alloc<ttcn_ast::Token>(Tok(ttcn_ast::TokenKind::CONST));
 
       m.decls.push_back(NewNode<ttcn_ast::nodes::Declarator>([&](ttcn_ast::nodes::Declarator& d) {
-        d.name.emplace().nrange = ConsumeRange(expr->_Identifier_Range);
+        d.name.emplace().nrange = ConsumeRange(expr);
       }));
     });
   }
@@ -460,7 +460,7 @@ class AstTransformer {
     return NewNode<ttcn_ast::nodes::StructTypeDecl>([&](ttcn_ast::nodes::StructTypeDecl& m) {
       m.kind = Tok(kind);
 
-      m.name.emplace().nrange = ConsumeRange(expr->_Identifier_Range);
+      m.name.emplace().nrange = ConsumeRange(expr);
 
       asn1p_expr_t* se;
       TQ_FOR(se, &(expr->members), next) {
@@ -487,12 +487,12 @@ class AstTransformer {
 
   ttcn_ast::nodes::EnumTypeDecl* TransformEnumeration(const asn1p_expr_t* expr) {
     return NewNode<ttcn_ast::nodes::EnumTypeDecl>([&](ttcn_ast::nodes::EnumTypeDecl& m) {
-      m.name.emplace().nrange = ConsumeRange(expr->_Identifier_Range);
+      m.name.emplace().nrange = ConsumeRange(expr);
 
       asn1p_expr_t* member;
       TQ_FOR(member, &(expr->members), next) {
         m.values.push_back(NewNode<ttcn_ast::nodes::Ident>([&](ttcn_ast::nodes::Ident& iv) {
-          iv.nrange = ConsumeRange(member->_Identifier_Range);
+          iv.nrange = ConsumeRange(member);
         }));
       }
     });
@@ -503,7 +503,7 @@ class AstTransformer {
       asn1p_expr_t* member;
       TQ_FOR(member, &(expr->members), next) {
         m.values.push_back(NewNode<ttcn_ast::nodes::Ident>([&](ttcn_ast::nodes::Ident& iv) {
-          iv.nrange = ConsumeRange(member->_Identifier_Range);
+          iv.nrange = ConsumeRange(member);
         }));
       }
     });
@@ -521,7 +521,7 @@ class AstTransformer {
     return NewNode<ttcn_ast::nodes::SubTypeDecl>([&](ttcn_ast::nodes::SubTypeDecl& m) {
       m.field = NewNode<ttcn_ast::nodes::Field>([&](ttcn_ast::nodes::Field& f) {
         f.type = TransformListSpec(kind, expr);
-        f.name.emplace().nrange = ConsumeRange(expr->_Identifier_Range);
+        f.name.emplace().nrange = ConsumeRange(expr);
       });
     });
   }
@@ -533,7 +533,7 @@ class AstTransformer {
     }
 
     return NewNode<ttcn_ast::nodes::Field>([&](ttcn_ast::nodes::Field& m) {
-      m.name.emplace().nrange = ConsumeRange(se->_Identifier_Range);
+      m.name.emplace().nrange = ConsumeRange(se);
 
       if ((se->marker.flags & asn1p_expr_s::asn1p_expr_marker_s::EM_DEFAULT) ==
           asn1p_expr_s::asn1p_expr_marker_s::EM_DEFAULT) {
@@ -572,10 +572,24 @@ class AstTransformer {
     });
   }
 
+  // for ranges that are guaranteed to be from the module being transformed
   ttcn_ast::Range ConsumeRange(const asn1p_src_range_t& range) {
     ttcn_ast::Range ttcn_range{.begin = range.begin, .end = range.end};
     NormalizeToken(ttcn_range, adjusted_src_);
     return ttcn_range;
+  }
+  // for all other ranges
+  ttcn_ast::Range ConsumeRange(const char* name, const asn1p_src_range_t& range, const asn1p_module_t* mod) {
+    if (mod != TQ_FIRST(&(ast_->modules))) {
+      return AppendSource(name);
+    }
+    return ConsumeRange(range);
+  }
+  ttcn_ast::Range ConsumeRange(const asn1p_expr_t* expr) {
+    return ConsumeRange(expr->Identifier, expr->_Identifier_Range, expr->module);
+  }
+  ttcn_ast::Range ConsumeRange(const asn1p_ref_s::asn1p_ref_component_s& comp, const asn1p_module_t* mod) {
+    return ConsumeRange(comp.name, comp._name_range, mod);
   }
 
   std::unordered_map<std::string, ttcn_ast::Range> appended_ranges_;
