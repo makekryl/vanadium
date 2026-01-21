@@ -77,7 +77,7 @@ bool ParseClassObject(const ClassObjectConsumer &consumer, const char *buf, cons
         const int token_len = std::strlen(chunk->content.token);
         if ((bend - buf < token_len) || (std::memcmp(buf, chunk->content.token, token_len) != 0)) {
           if (!is_optional) {
-            consumer.emit_error({}, std::format("expected '{}', got '{}'", chunk->content.token, buf));
+            consumer.emit_error({}, std::format("expected pattern like '{}', got '{}'", chunk->content.token, buf));
           }
           *newpos = buf;
           return false;
@@ -115,7 +115,7 @@ bool ParseClassObject(const ClassObjectConsumer &consumer, const char *buf, cons
         });
         if (!should_continue) {
           *newpos = bend;
-          break;
+          return false;
         }
         buf = value_end;
         *newpos = buf;
