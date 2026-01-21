@@ -1,20 +1,25 @@
+#include <vanadium/asn1/ast/Asn1ModuleBasket.h>
+#include <vanadium/ast/AST.h>
 #include <vanadium/ast/Parser.h>
 #include <vanadium/bin/Bootstrap.h>
+#include <vanadium/lib/Arena.h>
 
+#include <argparse/argparse.hpp>
 #include <format>
 #include <fstream>
 #include <iostream>
+#include <print>
 #include <sstream>
 
 #include "Asn1Transparser.h"
-#include "TextDumper.h"
-#include "vanadium/asn1/ast/Asn1ModuleBasket.h"
-#include "vanadium/ast/AST.h"
-#include "vanadium/lib/Arena.h"
+#include "vanadium/bin/astdump/TextDumper.h"
+#include "vanadium/bin/astdump/asciicolorss.h"
+
+using namespace vanadium;
 
 namespace {
-std::optional<std::string> ReadFile(const char* path) {
-  // TODO: err
+std::optional<std::string> ReadFile(const std::string& path) {
+  // TODO: check & raise errors
   if (auto f = std::ifstream(path)) {
     std::stringstream buf;
     buf << f.rdbuf();
@@ -23,45 +28,74 @@ std::optional<std::string> ReadFile(const char* path) {
   return std::nullopt;
 }
 
-vanadium::ast::AST ParseUsingAsn1c(vanadium::lib::Arena& arena, std::string_view src) {
-  vanadium::ast::AST ast;
-
-  vanadium::asn1::ast::Asn1ModuleBasket basket;
-  basket.Update<void>(nullptr, src);
-  return basket.Transform<void>(nullptr, arena);
+bool IsAsnFile(std::string_view path) {
+  return path.ends_with(".asn");
 }
 }  // namespace
 
 namespace {
 int main(int argc, char* argv[]) {
-  if (argc != 2) {
-    std::cerr << std::format("{} [filename]", argv[0]) << std::endl;
+  argparse::ArgumentParser ap("astdump");
+  ap.add_description("Vanadium TTCN-3 syntax tree printer");
+  //
+  std::vector<std::string> asn_include_filepaths;
+  ap.add_argument("-A").append().store_into(asn_include_filepaths).help("additional ASN.1 files");
+  //
+  std::string filepath;
+  ap.add_argument("path").store_into(filepath).help("file path");
+
+  //
+  PARSE_CLI_ARGS_OR_EXIT(ap, argc, argv, 1);
+  //
+
+  const bool is_asn = IsAsnFile(filepath);
+  if (!is_asn && !asn_include_filepaths.empty()) {
+    std::println("Arguments of kind '-A' are not expected for a TTCN-3 file");
     return 1;
   }
 
-  const std::string_view filename{argv[1]};
-
-  const auto src = ReadFile(filename.data());
+  auto src = ReadFile(filepath);
   if (!src) {
-    std::cerr << std::format("Failed to open '{}'", filename) << std::endl;
+    std::println(stderr, "Failed to open '{}'", filepath);
     return 1;
   }
 
-  const auto parse_fn =
-      filename.ends_with(".asn") ? /*vanadium::asn1::ast::Transparse*/ ParseUsingAsn1c : vanadium::ast::Parse;
+  lib::Arena arena;
+  std::optional<ast::AST> ast;  // lateinit
+  //
+  if (is_asn) {
+    asn1::ast::Asn1ModuleBasket basket;
+    for (auto& extra_filepath : asn_include_filepaths) {
+      auto extra_src = ReadFile(extra_filepath);
+      if (!extra_src) {
+        std::println(stderr, "Failed to open '{}'", extra_filepath);
+        return 1;
+      }
 
-  vanadium::lib::Arena arena;
-  auto ast = parse_fn(arena, *src);
+      // move std::string handle to arena so it does not dispose
+      basket.Update(&extra_filepath, *arena.Alloc<std::string>(std::move(*extra_src)));
+    }
+    basket.Update(&src, *src);
+    ast = basket.Transform(&src, arena);
+  } else {
+    ast = ast::Parse(arena, *src);
+  }
 
-  // TODO: display errors
-  if (!ast.errors.empty()) {
-    std::cout << std::format(" (!) {} errors\n", ast.errors.size());
-    for (const auto& err : ast.errors) {
-      std::cout << std::format("{}:{} - {}", err.range.begin, err.range.end, err.description) << std::endl;
+  std::ios_base::sync_with_stdio(false);
+  std::cin.tie(nullptr);
+
+  if (!ast->errors.empty()) {
+    std::println(stderr, "{}{}{}{}", asciicolors::kRed, asciicolors::kBold,
+                 std::format(" (!) {} syntax{} errors", ast->errors.size(), is_asn ? " and/or semantic" : ""),
+                 asciicolors::kReset);
+    for (const auto& err : ast->errors) {
+      std::println(stderr, "{}{}{}{}{}{} - {}{}", asciicolors::kDim, asciicolors::kRed, asciicolors::kBold,
+                   std::format("{}:{}", err.range.begin, err.range.end), asciicolors::kReset, asciicolors::kRed,
+                   err.description, asciicolors::kReset);
     }
   }
 
-  TextASTDumper::Create(ast, std::cout).Apply([](auto& d) {
+  TextASTDumper::Create(*ast, std::cout).Apply([](auto& d) {
     d.Dump();
   });
 

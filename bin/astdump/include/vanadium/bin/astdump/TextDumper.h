@@ -15,16 +15,18 @@
 #include <ranges>
 #include <string_view>
 
+#include "vanadium/bin/astdump/asciicolorss.h"
+
 class TextASTDumper {
  private:
   TextASTDumper(vanadium::ast::AST& ast, std::ostream& out) : ast_(ast), out_(out) {}
 
   void WriteIndent() {
-    out_ << "\e[38;5;255m";
+    out_ << asciicolors::kWhite;
     for (std::size_t i = 0; i < indent_; i++) {
       out_ << "·  ";
     }
-    out_ << "\e[0m";
+    out_ << asciicolors::kReset;
   }
 
   void WriteName(std::string_view name, std::optional<vanadium::ast::Range> range = std::nullopt) {
@@ -46,14 +48,15 @@ class TextASTDumper {
     }
 
     WriteIndent();
-    out_ << "\e[1;90m" << name << ":\e[0m ";
+    out_ << asciicolors::kBrightGray << name << asciicolors::kReset;
   }
 
   void WriteValue(std::string_view value) {
     if (value.length() > 8192) {
-      value = "(bad value)";
+      out_ << asciicolors::kRed << value << asciicolors::kReset;
+      return;
     }
-    out_ << "\e[0;96m" << value << "\e[0m";
+    out_ << asciicolors::kBrightCyan << value << asciicolors::kReset;
   }
 
   template <typename F>
@@ -88,7 +91,7 @@ inline void vanadium::ast::Dumper<TextASTDumper>::Dump(std::string_view name, co
   if (tok.range.Length() > 0) {
     impl_.WriteValue(tok.On(impl_.ast_.src));
   } else {
-    impl_.WriteValue(std::format("::{} ({})", magic_enum::enum_name(TokenKind(tok.kind)), int(tok.kind)));
+    impl_.WriteValue(std::format("::{}", magic_enum::enum_name(TokenKind(tok.kind)), int(tok.kind)));
   }
 }
 
