@@ -1,5 +1,6 @@
 #include "vanadium/ast/Parser.h"
 
+#include <vanadium/lib/ScopedValue.h>
 #include <vanadium/lib/StaticSet.h>
 
 #include <cctype>
@@ -2660,23 +2661,19 @@ template <IsNode T, typename Initializer>
   requires std::is_invocable_v<Initializer, T&>
 T* Parser::NewNode(Initializer f) {
   auto* p = arena_->Alloc<T>();
+  p->parent = last_node_;
   p->nrange.begin = Peek(1).range.begin;
-  //
-  auto* top = last_node_;
-  p->parent = top;
-  last_node_ = p;
-  //
-  if constexpr (std::is_same_v<typename std::invoke_result_t<Initializer, T&>, bool>) {
-    if (!f(*p)) {
-      return nullptr;
+  {
+    lib::ScopedValue<Node*> guard(last_node_, p);
+    if constexpr (std::is_same_v<typename std::invoke_result_t<Initializer, T&>, bool>) {
+      if (!f(*p)) {
+        return nullptr;
+      }
+    } else {
+      f(*p);
     }
-  } else {
-    f(*p);
   }
-  //
   p->nrange.end = last_consumed_pos_;
-  //
-  last_node_ = top;
   return p;
 }
 
