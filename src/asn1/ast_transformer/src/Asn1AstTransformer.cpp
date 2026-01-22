@@ -50,6 +50,11 @@ void NormalizeToken(ttcn_ast::Range& range, std::string& s) {
     ++range.end;
   }
 }
+
+inline void EmbedNodeXIntoNodeY(ttcn_ast::Node* x, ttcn_ast::Node* y) {
+  y->parent = std::exchange(x->parent, y);
+  y->nrange = x->nrange;
+}
 }  // namespace
 
 #define DEBUG(...)                     \
@@ -192,8 +197,8 @@ class AstTransformer {
           f.name.emplace().nrange = ConsumeRange(expr);
         });
       });
-      rs->parent = std::exchange(n->parent, rs);
-      rs->nrange = n->nrange;  // TODO(range): maybe better take from the expr, but it may break binsearch
+      // TODO(range): maybe better take range from the expr, but it may break binsearch
+      EmbedNodeXIntoNodeY(n, rs);
       return rs;
     }
 
@@ -248,8 +253,8 @@ class AstTransformer {
     auto* rs = NewNode<ttcn_ast::nodes::RefSpec>([&](ttcn_ast::nodes::RefSpec& m) {
       m.x = n->As<ttcn_ast::nodes::Expr>();
     });
-    rs->parent = std::exchange(n->parent, rs);
-    rs->nrange = n->nrange;  // TODO(range): maybe better take from the expr, but it may break binsearch
+    // TODO(range): maybe better take range from the expr, but it may break binsearch
+    EmbedNodeXIntoNodeY(n, rs);
     return rs;
   }
 
@@ -378,12 +383,12 @@ class AstTransformer {
 
             m.fields.emplace_back(NewNode<ttcn_ast::nodes::Field>([&](ttcn_ast::nodes::Field& f) {
               // TODO: optimize
-              f.name.emplace().nrange = AppendSource(std::string(row.value));
+              std::string ptypecpy(row.value);  // MEGA SHIT
+              ptypecpy[0] = std::tolower(ptypecpy[0]);
+              f.name.emplace().nrange = AppendSource(ptypecpy);
               f.type = NewNode<ttcn_ast::nodes::RefSpec>([&](ttcn_ast::nodes::RefSpec& rs) {
                 rs.x = NewNode<ttcn_ast::nodes::Ident>([&](ttcn_ast::nodes::Ident& ident) {
-                  std::string ptypecpy(row.value);  // MEGA SHIT
-                  ptypecpy[0] = std::tolower(ptypecpy[0]);
-                  ident.nrange = AppendSource(ptypecpy);  // TODO: oh shi... (x2)
+                  ident.nrange = AppendSource(std::string(row.value));  // TODO: oh shi... (x2)
                 });
               });
             }));
@@ -534,11 +539,12 @@ class AstTransformer {
 
   ttcn_ast::nodes::Field* TransformComponent(const asn1p_expr_t* se) {
     auto* c = TransformExpr(se);
+    ///////////////////////////
     if (!c) {
       return nullptr;
     }
 
-    return NewNode<ttcn_ast::nodes::Field>([&](ttcn_ast::nodes::Field& m) {
+    auto* f = NewNode<ttcn_ast::nodes::Field>([&](ttcn_ast::nodes::Field& m) {
       m.name.emplace().nrange = ConsumeRange(se);
 
       if ((se->marker.flags & asn1p_expr_s::asn1p_expr_marker_s::EM_DEFAULT) ==
@@ -552,6 +558,8 @@ class AstTransformer {
 
       m.type = c->As<ttcn_ast::nodes::TypeSpec>();
     });
+    EmbedNodeXIntoNodeY(c, f);
+    return f;
   }
 
   //
