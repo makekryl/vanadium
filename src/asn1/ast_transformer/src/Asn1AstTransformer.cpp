@@ -135,6 +135,18 @@ class AstTransformer {
       m.nrange = {.begin = 0, .end = static_cast<ttcn_ast::pos_t>(original_src_.length())};
       m.name.emplace().nrange = ConsumeRange(mod->_ModuleName_Range);
 
+      asn1p_xports_t* xp;
+      TQ_FOR(xp, &(mod->imports), xp_next) {
+        m.defs.push_back(NewNode<ttcn_ast::nodes::Definition>([&](ttcn_ast::nodes::Definition& def) {
+          def.def = NewNode<ttcn_ast::nodes::ImportDecl>([&](ttcn_ast::nodes::ImportDecl& impd) {
+            impd.module.emplace().nrange = AppendSource(xp->fromModuleName);
+            impd.list.emplace_back(NewNode<ttcn_ast::nodes::DefKindExpr>([&](ttcn_ast::nodes::DefKindExpr& dk) {
+              dk.kind = {};
+            }));
+          });
+        }));
+      }
+
       asn1p_expr_t* tc;
       TQ_FOR(tc, &(mod->members), next) {
         if (auto* dn = TransformOutermostExpr(tc); dn != nullptr) {
