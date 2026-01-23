@@ -41,12 +41,17 @@ constexpr auto kBuiltinTypeMapping = lib::MakeStaticMap<asn1p_expr_type_e, std::
     {ASN_BASIC_CHARACTER_STRING, "charstring"},
 });
 
+template <bool UseAppend = false>  // well that's dirty
 void NormalizeToken(ttcn_ast::Range& range, std::string& s) {
   std::replace(s.begin() + range.begin, s.begin() + range.end, '-', '_');
 
   auto token = range.String(s);
   if (ttcn_ast::parser::IsKeyword(token)) {
-    s[range.end] = '_';
+    if constexpr (UseAppend) {
+      s.append("_");
+    } else {
+      s[range.end] = '_';
+    }
     ++range.end;
   }
 }
@@ -645,7 +650,7 @@ class AstTransformer {
     range.end = range.begin + static_cast<ttcn_ast::pos_t>(s.length());
 
     adjusted_src_.append(s);
-    NormalizeToken(range, adjusted_src_);
+    NormalizeToken<true>(range, adjusted_src_);
 
     appended_ranges_.emplace(std::move(s), range);
 
