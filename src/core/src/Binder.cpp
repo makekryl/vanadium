@@ -747,23 +747,22 @@ bool Binder::Inspect(const ast::Node* n) {
       const auto* m = n->As<ast::nodes::SubTypeDecl>();
 
       const auto* field = m->field;
-      externals_.With(externals_.Primary(), [&] {
-        Visit(field->type);
-      });
       Visit(field->arraydef);
       MaybeVisit(field->pars);
       MaybeVisit(field->value_constraint);
 
       if (field->name) {
-        if (field->type->nkind == ast::NodeKind::ListSpec) {
-          AddSymbol(BindListSpec(Lit(*field->name), SymbolFlags::kNone, field->type->As<ast::nodes::ListSpec>()));
-        } else {
-          AddSymbol(semantic::Symbol{
-              Lit(*field->name),
-              m,
-              SymbolFlags::kSubTypeType,
-          });
-        }
+        externals_.With(externals_.Primary(), [&] {
+          if (field->type->nkind == ast::NodeKind::ListSpec) {
+            AddSymbol(BindListSpec(Lit(*field->name), SymbolFlags::kNone, field->type->As<ast::nodes::ListSpec>()));
+          } else {
+            AddSymbol(semantic::Symbol{
+                Lit(*field->name),
+                m,
+                SymbolFlags::kSubTypeType,
+            });
+          }
+        });
       }
 
       return false;

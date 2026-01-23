@@ -890,27 +890,34 @@ const semantic::Symbol* ResolveTypeSpecSymbol(const SourceFile* file, const ast:
     case ast::NodeKind::StructSpec:
     case ast::NodeKind::EnumSpec: {
       const auto* parent = spec->parent;
-      if (parent->nkind == ast::NodeKind::ListSpec) {
-        const auto* ls_sym = ResolveTypeSpecSymbol(file, parent->As<ast::nodes::ListSpec>());
-        if (!ls_sym) {
-          return nullptr;
+      switch (parent->nkind) {
+        case ast::NodeKind::ListSpec: {
+          const auto* ls_sym = ResolveTypeSpecSymbol(file, parent->As<ast::nodes::ListSpec>());
+          if (!ls_sym) {
+            return nullptr;
+          }
+          return ResolveListElementType(ls_sym);
         }
-        return ResolveListElementType(ls_sym);
-      }
+        case ast::NodeKind::Field: {
+          const auto* owner = parent->As<ast::nodes::Field>();
+          if (!owner->name) {
+            return nullptr;
+          }
 
-      if (parent->nkind != ast::NodeKind::Field) [[unlikely]] {
-        return nullptr;
+          if (owner->parent->nkind == ast::NodeKind::SubTypeDecl) {
+            return file->module->scope->ResolveDirect(file->Text(*owner->name));
+          }
+
+          const auto* containing_sym = ResolveTypeSpecSymbol(file, owner->parent->As<ast::nodes::TypeSpec>());
+          if (!containing_sym || !(containing_sym->Flags() & core::semantic::SymbolFlags::kStructural)) {
+            return nullptr;
+          }
+          return containing_sym->Members()->LookupShadow(file->Text(*owner->name));
+        }
+        default:
+          break;
       }
-      const auto* owner = parent->As<ast::nodes::Field>();
-      if (!owner->name) {
-        return nullptr;
-      }
-      const core::semantic::Symbol* containing_sym =
-          ResolveTypeSpecSymbol(file, owner->parent->As<ast::nodes::TypeSpec>());
-      if (!containing_sym || !(containing_sym->Flags() & core::semantic::SymbolFlags::kStructural)) {
-        return nullptr;
-      }
-      return containing_sym->Members()->LookupShadow(file->Text(*owner->name));
+      return nullptr;
     }
     default:
       return nullptr;
