@@ -51,9 +51,11 @@ void NormalizeToken(ttcn_ast::Range& range, std::string& s) {
   }
 }
 
-inline void EmbedNodeXIntoNodeY(ttcn_ast::Node* x, ttcn_ast::Node* y) {
+template <ttcn_ast::IsNode T>
+inline T* EmbedNodeXIntoNodeY(T* x, ttcn_ast::Node* y) {
   y->parent = std::exchange(x->parent, y);
   y->nrange = x->nrange;
+  return x;
 }
 }  // namespace
 
@@ -141,7 +143,7 @@ class AstTransformer {
           def.def = NewNode<ttcn_ast::nodes::ImportDecl>([&](ttcn_ast::nodes::ImportDecl& impd) {
             impd.module.emplace().nrange = AppendSource(xp->fromModuleName);
             impd.list.emplace_back(NewNode<ttcn_ast::nodes::DefKindExpr>([&](ttcn_ast::nodes::DefKindExpr& dk) {
-              dk.kind = {};
+              dk.kind = Tok(ttcn_ast::TokenKind::ALL);
             }));
           });
         }));
@@ -202,19 +204,39 @@ class AstTransformer {
     }
 
     auto* n = TransformExpr(expr);
-    if (n && n->nkind == ttcn_ast::NodeKind::RefSpec) {
-      auto* rs = NewNode<ttcn_ast::nodes::SubTypeDecl>([&](ttcn_ast::nodes::SubTypeDecl& m) {
-        m.field = NewNode<ttcn_ast::nodes::Field>([&](ttcn_ast::nodes::Field& f) {
-          f.type = n->As<ttcn_ast::nodes::RefSpec>();
-          f.name.emplace().nrange = ConsumeRange(expr);
-        });
-      });
-      // TODO(range): maybe better take range from the expr, but it may break binsearch
-      EmbedNodeXIntoNodeY(n, rs);
-      return rs;
+    if (!n) {
+      return nullptr;
     }
 
-    return n;
+    switch (n->nkind) {
+      case ttcn_ast::NodeKind::RefSpec: {
+        return NewNode<ttcn_ast::nodes::SubTypeDecl>([&](ttcn_ast::nodes::SubTypeDecl& m) {
+          m.field = NewNode<ttcn_ast::nodes::Field>([&](ttcn_ast::nodes::Field& f) {
+            // TODO(range): maybe better take range from the expr, but it may break binsearch
+            f.type = EmbedNodeXIntoNodeY(n, &m)->As<ttcn_ast::nodes::RefSpec>();
+            f.name.emplace().nrange = ConsumeRange(expr);
+          });
+        });
+      }
+
+      case ttcn_ast::NodeKind::StructSpec: {
+        auto* sspec = n->As<ttcn_ast::nodes::StructSpec>();
+        return NewNode<ttcn_ast::nodes::StructTypeDecl>([&](ttcn_ast::nodes::StructTypeDecl& m) {
+          m.nrange = sspec->nrange;
+
+          m.kind = sspec->kind;
+          m.name.emplace().nrange = ConsumeRange(expr);
+
+          m.fields = std::move(sspec->fields);
+          for (auto* f : m.fields) {
+            f->parent = &m;
+          }
+        });
+      }
+
+      default:
+        return n;
+    }
   }
 
   ttcn_ast::Node* TransformExpr(const asn1p_expr_t* expr) {
@@ -244,8 +266,7 @@ class AstTransformer {
       default: {
         if (auto* builtin_typename_node = TransformBuiltinTypeExpr(expr); builtin_typename_node) {
           return NewNode<ttcn_ast::nodes::RefSpec>([&](ttcn_ast::nodes::RefSpec& m) {
-            m.x = builtin_typename_node;
-            builtin_typename_node->parent = &m;
+            m.x = EmbedNodeXIntoNodeY(builtin_typename_node, &m);
           });
         }
         return nullptr;
@@ -262,12 +283,10 @@ class AstTransformer {
       return n->As<ttcn_ast::nodes::TypeSpec>();
     }
 
-    auto* rs = NewNode<ttcn_ast::nodes::RefSpec>([&](ttcn_ast::nodes::RefSpec& m) {
-      m.x = n->As<ttcn_ast::nodes::Expr>();
+    return NewNode<ttcn_ast::nodes::RefSpec>([&](ttcn_ast::nodes::RefSpec& m) {
+      // TODO(range): maybe better take range from the expr, but it may break binsearch
+      m.x = EmbedNodeXIntoNodeY(n, &m)->As<ttcn_ast::nodes::Expr>();
     });
-    // TODO(range): maybe better take range from the expr, but it may break binsearch
-    EmbedNodeXIntoNodeY(n, rs);
-    return rs;
   }
 
   // It will return either an Ident, which can be wrapped in RefSpec (if needed, e.g. in ValueDecl it will stay Ident),
@@ -556,7 +575,7 @@ class AstTransformer {
       return nullptr;
     }
 
-    auto* f = NewNode<ttcn_ast::nodes::Field>([&](ttcn_ast::nodes::Field& m) {
+    return NewNode<ttcn_ast::nodes::Field>([&](ttcn_ast::nodes::Field& m) {
       m.name.emplace().nrange = ConsumeRange(se);
 
       if ((se->marker.flags & asn1p_expr_s::asn1p_expr_marker_s::EM_DEFAULT) ==
@@ -568,10 +587,8 @@ class AstTransformer {
         m.optional = true;
       }
 
-      m.type = c->As<ttcn_ast::nodes::TypeSpec>();
+      m.type = EmbedNodeXIntoNodeY(c, &m)->As<ttcn_ast::nodes::TypeSpec>();
     });
-    EmbedNodeXIntoNodeY(c, f);
-    return f;
   }
 
   //
@@ -580,14 +597,11 @@ class AstTransformer {
   T* NewNode(std::invocable<T&> auto f) {
     auto* p = arena_.Alloc<T>();
     p->nrange = {.begin = 0, .end = 0};
-    //
-    auto* top = last_node_;
-    p->parent = top;
-    last_node_ = p;
-    //
-    f(*p);
-    //
-    last_node_ = top;
+    p->parent = last_node_;
+    {
+      lib::ScopedValue<ttcn_ast::Node*> guard(last_node_, p);
+      f(*p);
+    }
     return p;
   }
 
