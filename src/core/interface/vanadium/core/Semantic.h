@@ -161,6 +161,10 @@ class SymbolTable {
     return Lookup(ShadowMemberKey(name));
   }
 
+  void Reserve(std::size_t n) {
+    names_.reserve(n);
+  }
+
  private:
   std::unordered_map<std::string_view, Symbol> names_;
 };

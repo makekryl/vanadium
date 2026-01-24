@@ -1043,6 +1043,7 @@ std::optional<Symbol> Binder::BindTypeSpec(std::string_view name, SymbolFlags::V
 
 SymbolTable& Binder::BindFields(const std::vector<ast::nodes::Field*>& fields) {
   auto& members = NewSymbolTable();
+  members.Reserve(fields.size());
   for (const auto* field : fields) {
     if (!field->name) {
       continue;
@@ -1072,6 +1073,7 @@ SymbolTable& Binder::BindFields(const std::vector<ast::nodes::Field*>& fields) {
 
 SymbolTable& Binder::BindEnumMembers(const std::vector<ast::nodes::Expr*>& values) {
   auto& members = NewSymbolTable();
+  members.Reserve(values.size());
   for (const auto* item : values) {
     const ast::nodes::Ident* valname = ast::utils::GetEnumValueNamePart(item);
     if (valname != nullptr) [[likely]] {
