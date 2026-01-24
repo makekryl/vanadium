@@ -72,7 +72,6 @@ extern const semantic::Symbol kVoidType;
 extern const semantic::Symbol kInferType;
 extern const semantic::Symbol kVarargsType;
 extern const semantic::Symbol kAltstepType;
-extern const semantic::Symbol kUncheckedType;
 }  // namespace symbols
 
 InstantiatedType ResolveExprSymbol(const SourceFile*, const semantic::Scope*, const ast::nodes::Expr*);

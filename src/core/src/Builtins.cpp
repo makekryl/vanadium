@@ -49,7 +49,6 @@ const semantic::Symbol* ResolveBuiltinType(std::string_view name) {
       {"__infer_arg_t", &checker::symbols::kInferType},
       {"__vargs_t", &checker::symbols::kVarargsType},
       {"__altstep_t", &checker::symbols::kAltstepType},
-      {"__unchecked_t", &checker::symbols::kUncheckedType},
   });
   if (const auto sym_opt = kBuiltinsTable.get(name); sym_opt) {
     return *sym_opt;

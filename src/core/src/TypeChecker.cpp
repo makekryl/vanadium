@@ -35,9 +35,6 @@ const semantic::Symbol kVarargsType{
 const semantic::Symbol kAltstepType{
     "<altstep>", nullptr,
     semantic::SymbolFlags::Value(semantic::SymbolFlags::kBuiltinType | semantic::SymbolFlags::kAnonymous)};
-const semantic::Symbol kUncheckedType{
-    "<unchecked>", nullptr,
-    semantic::SymbolFlags::Value(semantic::SymbolFlags::kBuiltinType | semantic::SymbolFlags::kAnonymous)};
 
 const semantic::Symbol kTemplateWildcardType{
     "<*>", nullptr,
@@ -201,9 +198,6 @@ class SelectorExprResolver {
       // TODO: if we get anytype, resolve to any visible type
       return nullptr;
     }
-    if (x_sym == &symbols::kUncheckedType) {
-      return &symbols::kUncheckedType;
-    }
 
     if (x_sym->Flags() & semantic::SymbolFlags::kTemplate) {
       mode_static_ = false;
@@ -355,10 +349,6 @@ class IndexExprResolver {
       if (x_sym == &symbols::kTypeError) {
         options_.check_index(ie->index);
         return nullptr;
-      }
-      if (x_sym == &symbols::kUncheckedType) [[unlikely]] {
-        options_.check_index(ie->index);
-        return &symbols::kUncheckedType;
       }
 
       const bool is_inferrence_expr = "-" == sf_->Text(ie->index);
@@ -1245,9 +1235,6 @@ void BasicTypeChecker::MatchTypes(const ast::Range& range, InstantiatedType actu
   }
 
   if (expected.sym == actual.sym) {
-    return;
-  }
-  if ((expected.sym == &symbols::kUncheckedType) || (actual.sym == &symbols::kUncheckedType)) {
     return;
   }
 
