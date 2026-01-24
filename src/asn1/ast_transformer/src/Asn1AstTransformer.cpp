@@ -230,11 +230,12 @@ class AstTransformer {
     }
 
     switch (n->nkind) {
-      case ttcn_ast::NodeKind::RefSpec: {
+      case ttcn_ast::NodeKind::RefSpec:
+      case ttcn_ast::NodeKind::ListSpec: {
         return NewNode<ttcn_ast::nodes::SubTypeDecl>([&](ttcn_ast::nodes::SubTypeDecl& m) {
           m.field = NewNode<ttcn_ast::nodes::Field>([&](ttcn_ast::nodes::Field& f) {
             // TODO(range): maybe better take range from the expr, but it may break binsearch
-            f.type = EmbedNodeXIntoNodeY(n, &m)->As<ttcn_ast::nodes::RefSpec>();
+            f.type = EmbedNodeXIntoNodeY(n, &m)->As<ttcn_ast::nodes::TypeSpec>();
             f.name.emplace().nrange = ConsumeRange(expr);
           });
         });
