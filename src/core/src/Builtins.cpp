@@ -136,6 +136,26 @@ const semantic::Scope* const kBuiltinsScope = [] {
         });
         return false;
       }
+      case ast::NodeKind::EnumTypeDecl: {
+        const auto* m = n->As<ast::nodes::EnumTypeDecl>();
+        scope->symbols.Add(semantic::Symbol{
+            sf.Text(*m->name),
+            m,
+            semantic::SymbolFlags::kEnumType,
+            [&] {
+              auto* members = sf.arena.Alloc<semantic::SymbolTable>();
+              for (const auto* v : m->values) {
+                members->Add(semantic::Symbol{
+                    sf.Text(v),
+                    v,
+                    semantic::SymbolFlags::kEnumMember,
+                });
+              }
+              return members;
+            }(),
+        });
+        return false;
+      }
       case ast::NodeKind::ClassTypeDecl: {
         auto* prev_scope{scope};
         scope = sf.arena.Alloc<semantic::Scope>(n, prev_scope);
