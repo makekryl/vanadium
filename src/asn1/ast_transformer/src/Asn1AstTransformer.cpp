@@ -17,7 +17,6 @@
 #include <format>
 #include <magic_enum/magic_enum.hpp>
 #include <optional>
-#include <print>
 #include <string_view>
 #include <unordered_set>
 #include <utility>
@@ -26,6 +25,16 @@
 #include "vanadium/asn1/ast/ClassSetResolver.h"
 
 // For readability reasons, it is preferable NOT to use auto type detection for variables of asn1p types
+
+#if 0
+#include <print>
+#define DEBUG(msg, ...)                                                        \
+  do {                                                                         \
+    std::println(stderr, "AsnTransformer:{} | " msg, __LINE__, ##__VA_ARGS__); \
+  } while (0);
+#else
+#define DEBUG(...) ((void)0)
+#endif
 
 namespace vanadium::asn1::ast {
 
@@ -64,12 +73,6 @@ inline T* EmbedNodeXIntoNodeY(T* x, ttcn_ast::Node* y) {
 }
 }  // namespace
 
-#define DEBUG(...)                     \
-  do {                                 \
-    std::println(stderr, __VA_ARGS__); \
-  } while (0);
-#define DEBUG(...) ;
-
 // asn1c helper stuff
 namespace {
 
@@ -77,7 +80,7 @@ const asn1p_expr_t* ResolveModuleMember(const asn1p_module_t* mod, const char* m
   const auto* expr = (asn1p_expr_t*)genhash_get(mod->members_hash, member_name);
 
   DEBUG(" -> Resolve({})", member_name);
-  if (expr) {
+  if (expr) {  // NOLINT(bugprone-branch-clone)
     DEBUG(" &&& '{}': {} / {}", expr->Identifier ? expr->Identifier : "((EMPTY))",
           magic_enum::enum_name(expr->meta_type), magic_enum::enum_name(expr->expr_type));
   } else {
@@ -105,7 +108,9 @@ const asn1p_constraint_t* FindConstraint(const asn1p_expr_t* expr, asn1p_constra
   return nullptr;
 }
 
-void DumpExpr(std::string_view prefix, const asn1p_expr_t* expr) {
+void DebugDumpExpr(std::string_view prefix, const asn1p_expr_t* expr) {
+  (void)prefix;
+  (void)expr;
   DEBUG("{}'{}': meta={} / etype={}, rspecs?={}", prefix, expr->Identifier ? expr->Identifier : "<EMPTY>",
         magic_enum::enum_name(expr->meta_type), magic_enum::enum_name(expr->expr_type), !!expr->rhs_pspecs);
 }
@@ -183,7 +188,7 @@ class AstTransformer {
   }
 
   ttcn_ast::Node* TransformOutermostExpr(const asn1p_expr_t* expr) {
-    DumpExpr("[OUTER] ", expr);
+    DebugDumpExpr("[OUTER] ", expr);
 
     if (expr->lhs_params) {
       // [top-level def] if the type is parametrizable, do not emit it
@@ -262,7 +267,7 @@ class AstTransformer {
   }
 
   ttcn_ast::Node* TransformExpr(const asn1p_expr_t* expr) {
-    DumpExpr("      * ", expr);
+    DebugDumpExpr("      * ", expr);
     switch (expr->expr_type) {
       case ASN_CONSTR_SEQUENCE:
         return TransformInnerStruct(ttcn_ast::TokenKind::RECORD, expr);
@@ -315,7 +320,7 @@ class AstTransformer {
   // or a TypeSpec (class sets are translated into an UNION StructSpec)
   // So, this is a VERY VERY smart ass method that implements maybe the 75% of the "semantic" part of the transformer
   ttcn_ast::Node* TransformTypeName(const asn1p_expr_t* expr) {
-    DumpExpr(" ## TransformTypeName ", expr);
+    DebugDumpExpr(" ## TransformTypeName ", expr);
     for (std::size_t i = 0; i < expr->reference->comp_count; i++) {
       DEBUG("     - comp[{}].name = '{}'", i, expr->reference->components[i].name);
     }
@@ -372,7 +377,7 @@ class AstTransformer {
                 std::format("unresolved reference to field '{}' of CLASS '{}'", selcomp.name, clscomp.name));
       return nullptr;
     }
-    DumpExpr("[FIELD] ", fieldexpr);
+    DebugDumpExpr("[FIELD] ", fieldexpr);
     if (fieldexpr->meta_type != AMT_OBJECTFIELD) [[unlikely]] {
       // TODO: i guess this will never happen
       EmitError(ConsumeRange(selcomp, ref->module), std::format("'{}' is not a field", selcomp.name));
@@ -828,7 +833,7 @@ class AstTransformer {
       if (!referenced_expr) {
         return;
       }
-      DumpExpr("  referenced_expr  /// ", referenced_expr);
+      DebugDumpExpr("  referenced_expr  /// ", referenced_expr);
 
       if (referenced_expr->expr_type != A1TC_REFERENCE) {
         // interesting... TODO: check later if it is possible
@@ -852,7 +857,7 @@ class AstTransformer {
 
       DEBUG(" slot.governor='{}', slot.argument='{}'",
             slot.governor ? slot.governor->components[0].name : "NO GOVERNOR", slot.argument);
-      DumpExpr("   ARG TO SLOT ^ : ", arg);
+      DebugDumpExpr("   ARG TO SLOT ^ : ", arg);
 
       switch (arg->expr_type) {
         case A1TC_VALUESET: {
