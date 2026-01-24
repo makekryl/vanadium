@@ -81,11 +81,6 @@ void asn1p_lexer_hack_push_encoding_control(yyscan_t);
 #define ASN_FILENAME "TODO(asn1p_parse_debug_filename)"
 
 /*
- * Process directives as <ASN1C:RepresentAsPointer>
- */
-extern int asn1p_as_pointer;
-
-/*
  * This temporary variable is used to solve the shortcomings of 1-lookahead
  * parser.
  */
@@ -356,7 +351,6 @@ asn1p_y_strdup(const asn1p_yctx_t *ctx, const char *s) {
 %type	<a_expr>		DefinedUntaggedType
 %type	<a_expr>		ConcreteTypeDeclaration "concrete TypeDeclaration"
 %type	<a_expr>		TypeDeclaration
-%type	<a_expr>		MaybeIndirectTypeDeclaration
 %type	<a_ref>			ComplexTypeReference
 %type	<a_ref>			ComplexTypeReferenceAmpList
 %type	<a_refcomp>		ComplexTypeReferenceElement
@@ -461,7 +455,6 @@ asn1p_y_strdup(const asn1p_yctx_t *ctx, const char *s) {
 %type	<a_int>			optUNIQUE
 %type	<a_pres>		optPresenceConstraint PresenceConstraint
 %type	<tv_str>		ComponentIdList
-%type	<a_int>			NSTD_IndirectMarker
 
 %%
 
@@ -1392,7 +1385,7 @@ UntaggedType:
 	;
 
 MaybeIndirectTaggedType:
-    optTag MaybeIndirectTypeDeclaration optManyConstraints {
+    optTag TypeDeclaration optManyConstraints {
 		$$ = $2;
 		$$->tag = $1;
 		/*
@@ -1413,33 +1406,7 @@ MaybeIndirectTaggedType:
 			}
 		}
 	}
-    ;
-
-NSTD_IndirectMarker:
-	{
-		$$ = asn1p_as_pointer ? EM_INDIRECT : 0;
-		asn1p_as_pointer = 0;
-	}
-	;
-
-MaybeIndirectTypeDeclaration:
-    NSTD_IndirectMarker TypeDeclaration {
-        $$ = $2;
-		$$->marker.flags |= $1;
-
-		if(($$->marker.flags & EM_INDIRECT)
-		&& ($$->marker.flags & EM_OPTIONAL) != EM_OPTIONAL) {
-			fprintf(stderr,
-				"INFO: Directive <ASN1C:RepresentAsPointer> "
-				"applied to %s at %s:%d\n",
-				ASN_EXPR_TYPE2STR($$->expr_type)
-					?  ASN_EXPR_TYPE2STR($$->expr_type)
-					: "member",
-				ASN_FILENAME, $$->_lineno
-			);
-		}
-    }
-    ;
+  ;
 
 TypeDeclaration:
     ConcreteTypeDeclaration
@@ -1465,7 +1432,7 @@ ConcreteTypeDeclaration:
 		$$->expr_type = ASN_CONSTR_SET;
 		$$->meta_type = AMT_TYPE;
 	}
-	| TOK_SEQUENCE optSizeOrConstraint TOK_OF optIdentifier optTag MaybeIndirectTypeDeclaration {
+	| TOK_SEQUENCE optSizeOrConstraint TOK_OF optIdentifier optTag TypeDeclaration {
 		$$ = NEW_EXPR();
 		checkmem($$);
 		$$->constraints = $2;
@@ -1475,7 +1442,7 @@ ConcreteTypeDeclaration:
 		$6->tag = $5;
 		asn1p_expr_add($$, $6);
 	}
-	| TOK_SET optSizeOrConstraint TOK_OF optIdentifier optTag MaybeIndirectTypeDeclaration {
+	| TOK_SET optSizeOrConstraint TOK_OF optIdentifier optTag TypeDeclaration {
 		$$ = NEW_EXPR();
 		checkmem($$);
 		$$->constraints = $2;

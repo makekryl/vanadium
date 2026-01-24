@@ -45,12 +45,10 @@ void asn1p_lexer_hack_push_encoding_control(yyscan_t);	/* Used in .y */
 //		exit(1);				\
 //	} while(0)
 
-int asn1p_lexer_pedantic_1990 = 0;
-int asn1p_lexer_types_year = 0;
-int asn1p_lexer_constructs_year = 0;
-int asn1p_lexer_extended_values = 0;
-
-int asn1p_as_pointer;
+static const int asn1p_lexer_pedantic_1990 = 0;
+static const int asn1p_lexer_types_year = 0;
+static const int asn1p_lexer_constructs_year = 0;
+static const int asn1p_lexer_extended_values = 0;
 
 static asn1c_integer_t _lex_atoi(const char *ptr, yyscan_t);
 static double          _lex_atod(const char *ptr, yyscan_t);
@@ -119,8 +117,6 @@ WSP	[\t\r\v\f\n ]
 <idash_comment>{
 	-{3,}	yy_pop_state(yyscanner); /* Acceptable end of comment */
 }
-
---<[ \t]*ASN1C.RepresentAsPointer[ \t]*>--	asn1p_as_pointer = 1;
 
 <extended_values>{
     "#BIT STRING"    {
