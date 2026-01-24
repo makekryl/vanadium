@@ -142,13 +142,29 @@ class AstTransformer {
       m.nrange = {.begin = 0, .end = static_cast<ttcn_ast::pos_t>(original_src_.length())};
       m.name.emplace().nrange = ConsumeRange(mod->_ModuleName_Range);
 
+      auto* const tok_public = arena_.Alloc<ttcn_ast::Token>(Tok(ttcn_ast::TokenKind::PUBLIC));
+
       asn1p_xports_t* xp;
       TQ_FOR(xp, &(mod->imports), xp_next) {
+        const auto& name_range = AppendSource(xp->fromModuleName);
         m.defs.push_back(NewNode<ttcn_ast::nodes::Definition>([&](ttcn_ast::nodes::Definition& def) {
+          def.visibility = tok_public;
           def.def = NewNode<ttcn_ast::nodes::ImportDecl>([&](ttcn_ast::nodes::ImportDecl& impd) {
-            impd.module.emplace().nrange = AppendSource(xp->fromModuleName);
+            impd.module.emplace().nrange = name_range;
             impd.list.emplace_back(NewNode<ttcn_ast::nodes::DefKindExpr>([&](ttcn_ast::nodes::DefKindExpr& dk) {
               dk.kind = Tok(ttcn_ast::TokenKind::ALL);
+            }));
+          });
+        }));
+        m.defs.push_back(NewNode<ttcn_ast::nodes::Definition>([&](ttcn_ast::nodes::Definition& def) {
+          def.visibility = tok_public;
+          def.def = NewNode<ttcn_ast::nodes::ImportDecl>([&](ttcn_ast::nodes::ImportDecl& impd) {
+            impd.module.emplace().nrange = name_range;
+            impd.list.emplace_back(NewNode<ttcn_ast::nodes::DefKindExpr>([&](ttcn_ast::nodes::DefKindExpr& dk) {
+              dk.kind = Tok(ttcn_ast::TokenKind::IMPORT);
+              dk.list.emplace_back(NewNode<ttcn_ast::nodes::Ident>([&](ttcn_ast::nodes::Ident& ident) {
+                ident.nrange = name_range;
+              }));
             }));
           });
         }));
