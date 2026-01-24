@@ -21,6 +21,16 @@ typedef void *yyscan_t;
 typedef struct {
   uint32_t current_offset;
   asn1p_errs_t *errors;
+
+  struct {
+    /*
+    * This temporary variable is used to solve the shortcomings of 1-lookahead
+    * parser.
+    */
+    struct AssignedIdentifier *saved_aid;
+
+    asn1p_module_t *currentModule;
+  } ystate;
 } asn1p_parser_ctx_t;
 }
 
@@ -55,17 +65,10 @@ void asn1p_lexer_hack_push_opaque_state(yyscan_t);
 void asn1p_lexer_hack_enable_with_syntax(yyscan_t);
 void asn1p_lexer_hack_push_encoding_control(yyscan_t);
 
-/*
- * This temporary variable is used to solve the shortcomings of 1-lookahead
- * parser.
- */
-static struct AssignedIdentifier *saved_aid;
-
 static asn1p_value_t *_convert_bitstring2binary(char *str, int base);
 static void _fixup_anonymous_identifier(const asn1p_parser_ctx_t *ctx, asn1p_expr_t *expr, yyscan_t);
 
-static asn1p_module_t *currentModule;
-#define	NEW_EXPR()	(asn1p_expr_new(asn1p_get_lineno(yyscanner), currentModule))
+#define	NEW_EXPR()	(asn1p_expr_new(asn1p_get_lineno(yyscanner), (ctx->ystate.currentModule)))
 
 #define	checkmem(ptr)	do {						\
 		if(!(ptr))						\
@@ -75,7 +78,7 @@ static asn1p_module_t *currentModule;
 #define	CONSTRAINT_INSERT(root, constr_type, arg1, arg2) do {		\
 		if(arg1->type != constr_type) {				\
 			int __ret;					\
-			root = asn1p_constraint_new((yyloc), currentModule);	\
+			root = asn1p_constraint_new((yyloc), (ctx->ystate.currentModule));	\
 			checkmem(root);					\
 			root->type = constr_type;			\
 			__ret = asn1p_constraint_insert(root,		\
@@ -453,14 +456,14 @@ ModuleList:
  */
 
 ModuleDefinition:
-	TypeRefName { currentModule = asn1p_module_new(); }
+	TypeRefName { ctx->ystate.currentModule = asn1p_module_new(); }
 	optObjectIdentifier TOK_DEFINITIONS
 		optModuleDefinitionFlags
 		TOK_PPEQ TOK_BEGIN
 		optModuleBody
 		TOK_END {
 
-		$$ = currentModule;
+		$$ = ctx->ystate.currentModule;
 
 		if($8) {
 			asn1p_module_t tmp = *($$);
@@ -689,10 +692,10 @@ optImports:
 
 ImportsDefinition:
 	TOK_IMPORTS optImportsBundleSet ';' {
-		if(!saved_aid && 0)
+		if(!ctx->ystate.saved_aid && 0)
 			return yyerror(&yyloc, ctx, param, yyscanner, "Unterminated IMPORTS FROM, "
 					"expected semicolon ';'");
-		saved_aid = 0;
+		ctx->ystate.saved_aid = 0;
 		$$ = $2;
 	}
 	/*
@@ -731,7 +734,7 @@ ImportsBundle:
 		$$->fromModuleName = $3;
 		$$->identifier = $4;
 		/* This stupid thing is used for look-back hack. */
-		saved_aid = $$->identifier.oid ? 0 : &($$->identifier);
+		ctx->ystate.saved_aid = $$->identifier.oid ? 0 : &($$->identifier);
 		checkmem($$);
 	}
 	;
@@ -946,7 +949,7 @@ ParameterArgumentName:
 	}
 	| TypeRefName ':' Identifier {
 		int ret;
-		$$.governor = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
+		$$.governor = asn1p_ref_new(asn1p_get_lineno(yyscanner), ctx->ystate.currentModule);
 		ret = asn1p_ref_add_component($$.governor, $1, @1, 0);
 		checkmem(ret == 0);
 		$$.argument = $3;
@@ -954,7 +957,7 @@ ParameterArgumentName:
 	}
 	| TypeRefName ':' TypeRefName {
 		int ret;
-		$$.governor = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
+		$$.governor = asn1p_ref_new(asn1p_get_lineno(yyscanner), ctx->ystate.currentModule);
 		ret = asn1p_ref_add_component($$.governor, $1, @1, 0);
 		checkmem(ret == 0);
 		$$.argument = $3;
@@ -962,7 +965,7 @@ ParameterArgumentName:
 	}
 	| BasicTypeId ':' Identifier {
 		int ret;
-		$$.governor = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
+		$$.governor = asn1p_ref_new(asn1p_get_lineno(yyscanner), ctx->ystate.currentModule);
 		ret = asn1p_ref_add_component($$.governor,
 			ASN_EXPR_TYPE2STR($1), @1, 1);
 		checkmem(ret == 0);
@@ -970,7 +973,7 @@ ParameterArgumentName:
 	}
 	| BasicTypeId ':' TypeRefName {
 		int ret;
-		$$.governor = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
+		$$.governor = asn1p_ref_new(asn1p_get_lineno(yyscanner), ctx->ystate.currentModule);
 		ret = asn1p_ref_add_component($$.governor,
 			ASN_EXPR_TYPE2STR($1), @1, 1);
 		checkmem(ret == 0);
@@ -1424,7 +1427,7 @@ ConcreteTypeDeclaration:
 		int ret;
 		$$ = NEW_EXPR();
 		checkmem($$);
-		$$->reference = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
+		$$->reference = asn1p_ref_new(asn1p_get_lineno(yyscanner), ctx->ystate.currentModule);
 		ret = asn1p_ref_add_component($$->reference,
 			$4, @4, RLT_lowercase);
 		checkmem(ret == 0);
@@ -1449,7 +1452,7 @@ ConcreteTypeDeclaration:
 ComplexTypeReference:
 	TOK_typereference {
 		int ret;
-		$$ = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
+		$$ = asn1p_ref_new(asn1p_get_lineno(yyscanner), ctx->ystate.currentModule);
 		checkmem($$);
 		ret = asn1p_ref_add_component($$, $1, @1, RLT_UNKNOWN);
 		checkmem(ret == 0);
@@ -1457,7 +1460,7 @@ ComplexTypeReference:
 	}
 	| TOK_capitalreference {
 		int ret;
-		$$ = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
+		$$ = asn1p_ref_new(asn1p_get_lineno(yyscanner), ctx->ystate.currentModule);
 		checkmem($$);
 		ret = asn1p_ref_add_component($$, $1, @1, RLT_CAPITALS);
 		asn1p_mem_free($1);
@@ -1465,7 +1468,7 @@ ComplexTypeReference:
 	}
 	| TOK_typereference '.' TypeRefName {
 		int ret;
-		$$ = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
+		$$ = asn1p_ref_new(asn1p_get_lineno(yyscanner), ctx->ystate.currentModule);
 		checkmem($$);
 		ret = asn1p_ref_add_component($$, $1, @1, RLT_UNKNOWN);
 		checkmem(ret == 0);
@@ -1476,7 +1479,7 @@ ComplexTypeReference:
 	}
 	| TOK_capitalreference '.' TypeRefName {
 		int ret;
-		$$ = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
+		$$ = asn1p_ref_new(asn1p_get_lineno(yyscanner), ctx->ystate.currentModule);
 		checkmem($$);
 		ret = asn1p_ref_add_component($$, $1, @1, RLT_UNKNOWN);
 		checkmem(ret == 0);
@@ -1509,7 +1512,7 @@ ComplexTypeReference:
 ComplexTypeReferenceAmpList:
 	ComplexTypeReferenceElement {
 		int ret;
-		$$ = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
+		$$ = asn1p_ref_new(asn1p_get_lineno(yyscanner), ctx->ystate.currentModule);
 		checkmem($$);
 		ret = asn1p_ref_add_component($$, $1.name, $1._name_range, $1.lex_type);
 		asn1p_mem_free($1.name);
@@ -1545,7 +1548,7 @@ PrimitiveFieldReference:
 FieldName:
 	/* "&Type1" */
 	TOK_typefieldreference {
-		$$ = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
+		$$ = asn1p_ref_new(asn1p_get_lineno(yyscanner), ctx->ystate.currentModule);
 		asn1p_ref_add_component($$, $1, @1, RLT_AmpUppercase);
 		asn1p_mem_free($1);
 	}
@@ -1563,13 +1566,13 @@ FieldName:
 
 DefinedObjectClass:
 	TOK_capitalreference {
-		$$ = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
+		$$ = asn1p_ref_new(asn1p_get_lineno(yyscanner), ctx->ystate.currentModule);
 		asn1p_ref_add_component($$, $1, @1, RLT_CAPITALS);
 		asn1p_mem_free($1);
 	}
 /*
 	| TypeRefName '.' TOK_capitalreference {
-		$$ = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
+		$$ = asn1p_ref_new(asn1p_get_lineno(yyscanner), ctx->ystate.currentModule);
 		asn1p_ref_add_component($$, $1, @1, RLT_AmpUppercase);
 		asn1p_ref_add_component($$, $3, @3, RLT_CAPITALS);
 		asn1p_mem_free($1);
@@ -1631,7 +1634,7 @@ DefinedValue:
 	| TypeRefName '.' Identifier {
 		asn1p_ref_t *ref;
 		int ret;
-		ref = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
+		ref = asn1p_ref_new(asn1p_get_lineno(yyscanner), ctx->ystate.currentModule);
 		checkmem(ref);
 		ret = asn1p_ref_add_component(ref, $1, @1, RLT_UNKNOWN);
 		checkmem(ret == 0);
@@ -1825,19 +1828,19 @@ SubtypeConstraint: ElementSetSpecs;
 
 ElementSetSpecs:
 	TOK_ThreeDots  {
-		$$ = asn1p_constraint_new(@$, currentModule);
+		$$ = asn1p_constraint_new(@$, ctx->ystate.currentModule);
 		$$->type = ACT_EL_EXT;
 	}
    | ElementSetSpec
    | ElementSetSpec ',' TOK_ThreeDots {
        asn1p_constraint_t *ct;
-       ct = asn1p_constraint_new(@$, currentModule);
+       ct = asn1p_constraint_new(@$, ctx->ystate.currentModule);
        ct->type = ACT_EL_EXT;
        CONSTRAINT_INSERT($$, ACT_CA_CSV, $1, ct);
    }
    | ElementSetSpec ',' TOK_ThreeDots ',' ElementSetSpec {
        asn1p_constraint_t *ct;
-       ct = asn1p_constraint_new(@$, currentModule);
+       ct = asn1p_constraint_new(@$, ctx->ystate.currentModule);
        ct->type = ACT_EL_EXT;
        CONSTRAINT_INSERT($$, ACT_CA_CSV, $1, ct);
        ct = $$;
@@ -1878,7 +1881,7 @@ Elements:
     SubtypeElements
     | '(' ElementSetSpec ')' {
         int ret;
-        $$ = asn1p_constraint_new(@$, currentModule);
+        $$ = asn1p_constraint_new(@$, ctx->ystate.currentModule);
         checkmem($$);
         $$->type = ACT_CA_SET;
         ret = asn1p_constraint_insert($$, $2);
@@ -1888,13 +1891,13 @@ Elements:
 
 SubtypeElements:
 	SingleValue {
-		$$ = asn1p_constraint_new(@$, currentModule);
+		$$ = asn1p_constraint_new(@$, ctx->ystate.currentModule);
 		checkmem($$);
 		$$->type = ACT_EL_VALUE;
 		$$->value = $1;
 	}
 	| ContainedSubtype {
-		$$ = asn1p_constraint_new(@$, currentModule);
+		$$ = asn1p_constraint_new(@$, ctx->ystate.currentModule);
 		checkmem($$);
 		$$->type = ACT_EL_TYPE;
 		$$->containedSubtype = $1;
@@ -1920,15 +1923,15 @@ SizeConstraint:
 
 PatternConstraint:
 	TOK_PATTERN TOK_cstring {
-		$$ = asn1p_constraint_new(@$, currentModule);
+		$$ = asn1p_constraint_new(@$, ctx->ystate.currentModule);
 		$$->type = ACT_CT_PATTERN;
 		$$->value = asn1p_value_frombuf($2.buf, $2.len, 0);
 	}
 	| TOK_PATTERN Identifier {
 		asn1p_ref_t *ref;
-		$$ = asn1p_constraint_new(@$, currentModule);
+		$$ = asn1p_constraint_new(@$, ctx->ystate.currentModule);
 		$$->type = ACT_CT_PATTERN;
-		ref = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
+		ref = asn1p_ref_new(asn1p_get_lineno(yyscanner), ctx->ystate.currentModule);
 		asn1p_ref_add_component(ref, $2, @2, RLT_lowercase);
 		$$->value = asn1p_value_fromref(ref, 0);
 		asn1p_mem_free($2);
@@ -1937,7 +1940,7 @@ PatternConstraint:
 
 ValueRange:
     LowerEndValue ConstraintRangeSpec UpperEndValue {
-		$$ = asn1p_constraint_new(@$, currentModule);
+		$$ = asn1p_constraint_new(@$, ctx->ystate.currentModule);
 		checkmem($$);
 		$$->type = $2;
 		$$->range_start = $1;
@@ -2007,9 +2010,9 @@ FullSpecification: '{' TypeConstraints '}' { $$ = $2; };
 PartialSpecification:
     '{' TOK_ThreeDots ',' TypeConstraints '}' {
         assert($4->type == ACT_CA_CSV);
-        $$ = asn1p_constraint_new(@$, currentModule);
+        $$ = asn1p_constraint_new(@$, ctx->ystate.currentModule);
         $$->type = ACT_CA_CSV;
-        asn1p_constraint_t *ct = asn1p_constraint_new(@$, currentModule);
+        asn1p_constraint_t *ct = asn1p_constraint_new(@$, ctx->ystate.currentModule);
         checkmem($$);
         ct->type = ACT_EL_EXT;
         asn1p_constraint_insert($$, ct);
@@ -2021,7 +2024,7 @@ PartialSpecification:
     };
 TypeConstraints:
     NamedConstraint {
-        $$ = asn1p_constraint_new(@$, currentModule);
+        $$ = asn1p_constraint_new(@$, ctx->ystate.currentModule);
         $$->type = ACT_CA_CSV;
         asn1p_constraint_insert($$, $1);
     }
@@ -2032,7 +2035,7 @@ TypeConstraints:
 	;
 NamedConstraint:
 	IdentifierAsValue optConstraint optPresenceConstraint {
-        $$ = asn1p_constraint_new(@$, currentModule);
+        $$ = asn1p_constraint_new(@$, ctx->ystate.currentModule);
         checkmem($$);
         $$->type = ACT_EL_VALUE;
         $$->value = $1;
@@ -2072,7 +2075,7 @@ GeneralConstraint:
 UserDefinedConstraint:
 	TOK_CONSTRAINED TOK_BY '{'
 		{ asn1p_lexer_hack_push_opaque_state(yyscanner); } Opaque /* '}' */ {
-		$$ = asn1p_constraint_new(@$, currentModule);
+		$$ = asn1p_constraint_new(@$, ctx->ystate.currentModule);
 		checkmem($$);
 		$$->type = ACT_CT_CTDBY;
 		$$->value = asn1p_value_frombuf($5.buf, $5.len, 0);
@@ -2083,7 +2086,7 @@ UserDefinedConstraint:
 
 ContentsConstraint:
 	TOK_CONTAINING Type {
-		$$ = asn1p_constraint_new(@$, currentModule);
+		$$ = asn1p_constraint_new(@$, ctx->ystate.currentModule);
 		$$->type = ACT_CT_CTNG;
 		$$->value = asn1p_value_fromtype($2);
 		asn1p_expr_free($2);
@@ -2110,12 +2113,12 @@ TableConstraint:
  */
 SimpleTableConstraint:
 	'{' TypeRefName '}' {
-		asn1p_ref_t *ref = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
+		asn1p_ref_t *ref = asn1p_ref_new(asn1p_get_lineno(yyscanner), ctx->ystate.currentModule);
 		asn1p_constraint_t *ct;
 		int ret;
 		ret = asn1p_ref_add_component(ref, $2, @2, 0);
 		checkmem(ret == 0);
-		ct = asn1p_constraint_new(@$, currentModule);
+		ct = asn1p_constraint_new(@$, ctx->ystate.currentModule);
 		checkmem($$);
 		ct->type = ACT_EL_VALUE;
 		ct->value = asn1p_value_fromref(ref, 0);
@@ -2132,14 +2135,14 @@ ComponentRelationConstraint:
 
 AtNotationList:
 	AtNotationElement {
-		$$ = asn1p_constraint_new(@$, currentModule);
+		$$ = asn1p_constraint_new(@$, ctx->ystate.currentModule);
 		checkmem($$);
 		$$->type = ACT_EL_VALUE;
 		$$->value = asn1p_value_fromref($1, 0);
 	}
 	| AtNotationList ',' AtNotationElement {
 		asn1p_constraint_t *ct;
-		ct = asn1p_constraint_new(@$, currentModule);
+		ct = asn1p_constraint_new(@$, ctx->ystate.currentModule);
 		checkmem(ct);
 		ct->type = ACT_EL_VALUE;
 		ct->value = asn1p_value_fromref($3, 0);
@@ -2156,7 +2159,7 @@ AtNotationElement:
 		int ret;
 		*p = '@';
 		strcpy(p + 1, $2);
-		$$ = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
+		$$ = asn1p_ref_new(asn1p_get_lineno(yyscanner), ctx->ystate.currentModule);
 		ret = asn1p_ref_add_component($$, p, @2, 0);
 		checkmem(ret == 0);
 		asn1p_mem_free(p);
@@ -2168,7 +2171,7 @@ AtNotationElement:
 		p[0] = '@';
 		p[1] = '.';
 		strcpy(p + 2, $3);
-		$$ = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
+		$$ = asn1p_ref_new(asn1p_get_lineno(yyscanner), ctx->ystate.currentModule);
 		ret = asn1p_ref_add_component($$, p, @3, 0);
 		checkmem(ret == 0);
 		asn1p_mem_free(p);
@@ -2468,7 +2471,7 @@ Identifier:
 
 IdentifierAsReference:
     Identifier {
-		$$ = asn1p_ref_new(asn1p_get_lineno(yyscanner), currentModule);
+		$$ = asn1p_ref_new(asn1p_get_lineno(yyscanner), ctx->ystate.currentModule);
 		asn1p_ref_add_component($$, $1, @1, RLT_lowercase);
 		asn1p_mem_free($1);
     };
