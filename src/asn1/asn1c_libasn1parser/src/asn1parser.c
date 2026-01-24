@@ -19,15 +19,14 @@ static int _asn1p_fix_modules(asn1p_t *a, const char *fname);
  */
 asn1p_t *
 asn1p_parse_buffer(const char *buffer, int size, asn1p_errs_t *errs) {
-  asn1p_yctx_t yctx = { .errors = errs };
-  asn1p_lctx_t lctx = {0};
+  asn1p_parser_ctx_t parser_ctx = { .current_offset = 0, .errors = errs };
   asn1p_t *a = NULL;
   //
   yyscan_t scanner;
   YY_BUFFER_STATE ybuf;
 	int ret;
 
-  if (asn1p_lex_init_extra(&lctx, &scanner) != 0) {
+  if (asn1p_lex_init_extra(&parser_ctx, &scanner) != 0) {
     assert(0 && "asn1p_lex_init_extra");
   	return NULL;
   }
@@ -40,7 +39,7 @@ asn1p_parse_buffer(const char *buffer, int size, asn1p_errs_t *errs) {
 	}
 
   asn1p_set_lineno(1, scanner);
-  ret = asn1p_parse(&yctx, &a, scanner);
+  ret = asn1p_parse(&parser_ctx, &a, scanner);
 
   asn1p__delete_buffer(ybuf, scanner);
   asn1p_lex_destroy(scanner);

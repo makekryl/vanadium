@@ -7,15 +7,7 @@
 %option bison-locations
 %option	never-interactive
 %option	noinput
-%option extra-type="asn1p_lctx_t *"
-
-%top {
-#include <stdint.h>
-
-typedef struct {
-  uint32_t current_offset;
-} asn1p_lctx_t;
-}
+%option extra-type="asn1p_parser_ctx_t *"
 
 %{
 
@@ -37,14 +29,6 @@ void asn1p_lexer_hack_push_opaque_state(yyscan_t);		/* Used in .y */
 void asn1p_lexer_hack_enable_with_syntax(yyscan_t);		/* Used in .y */
 void asn1p_lexer_hack_push_encoding_control(yyscan_t);	/* Used in .y */
 
-//#define	YY_FATAL_ERROR(msg)	do {			\
-//		fprintf(stderr,				\
-//			"lexer error at line %d, "	\
-//			"text \"%s\"\n",		\
-//			yylineno, yytext);		\
-//		exit(1);				\
-//	} while(0)
-
 static const int asn1p_lexer_pedantic_1990 = 0;
 static const int asn1p_lexer_types_year = 0;
 static const int asn1p_lexer_constructs_year = 0;
@@ -52,6 +36,8 @@ static const int asn1p_lexer_extended_values = 0;
 
 static asn1c_integer_t _lex_atoi(const char *ptr, yyscan_t);
 static double          _lex_atod(const char *ptr, yyscan_t);
+
+static void asn1p_lexer_error(yyscan_t, const char *msg);
 
 /*
  * Check that the type is defined in the year of the standard choosen.
@@ -172,11 +158,7 @@ WSP	[\t\r\v\f\n ]
 		}
 
 	"::="	{
-			fprintf(stderr,
-				"ASN.1 Parser synchronization failure: "
-				"\"%s\" at line %d must not appear "
-				"inside value definition\n",
-				yytext, yylineno);
+			asn1p_lexer_error(yyscanner, "synchronization failure: this must not appear inside value definition");
 			return -1;
 		}
 
@@ -206,9 +188,14 @@ WSP	[\t\r\v\f\n ]
 
 			if(asn1p_lexer_pedantic_1990
 			&& strchr(yytext, '\n')) {
-				fprintf(stderr, "%s: "
-				"Newlines are prohibited by ASN.1:1990\n",
-				yylval_param->tv_opaque.buf);
+        const char *errmsg_description = ": Newlines are prohibited by ASN.1:1990";
+        int total_errmsg_size = yylval_param->tv_opaque.len + strlen(errmsg_description);
+        char *errmsg_buf = asn1p_mem_alloc(total_errmsg_size + 1);
+        memcpy(errmsg_buf, yylval_param->tv_opaque.buf, yylval_param->tv_opaque.len);
+        memcpy(errmsg_buf + yylval_param->tv_opaque.len, errmsg_description, strlen(errmsg_description));
+        errmsg_buf[total_errmsg_size] = 0;
+				asn1p_lexer_error(yyscanner, errmsg_buf);
+        asn1p_mem_free(errmsg_buf);
 				return -1;
 			}
 
@@ -278,8 +265,7 @@ ANY			{
 				/* Appeared in 1990, removed in 1997 */
 				if(TYPE_LIFETIME(1990, 1997))
 					return TOK_ANY;
-				fprintf(stderr, "Keyword \"%s\" at line %d "
-					"is obsolete\n", yytext, yylineno);
+				asn1p_lexer_error(yyscanner, "keyword is obsolete");
 				REJECT;
 			}
 APPLICATION		return TOK_APPLICATION;
@@ -310,8 +296,7 @@ DEFINED			{
 				/* Appeared in 1990, removed in 1997 */
 				if(TYPE_LIFETIME(1990, 1997))
 					return TOK_DEFINED;
-				fprintf(stderr, "Keyword \"%s\" at line %d "
-					"is obsolete\n", yytext, yylineno);
+				asn1p_lexer_error(yyscanner, "keyword is obsolete");
 				/* Deprecated since */
 				REJECT;
 			}
@@ -485,15 +470,11 @@ WITH			return TOK_WITH;
 		for(; *p; p++) if(*p >= '0' && *p <= '9')
 			{ v2 = _lex_atoi(p, yyscanner); break; }
 		if(v1 < 0 || v1 > 7) {
-			fprintf(stderr, "%s at line %d: X.680:2003, #37.14 "
-				"mandates 0..7 range for Tuple's TableColumn\n",
-				yytext, yylineno);
+			asn1p_lexer_error(yyscanner, "X.680:2003, #37.14 mandates 0..7 range for Tuple's TableColumn");
 			return -1;
 		}
 		if(v2 < 0 || v2 > 15) {
-			fprintf(stderr, "%s at line %d: X.680:2003, #37.14 "
-				"mandates 0..15 range for Tuple's TableRow\n",
-				yytext, yylineno);
+			asn1p_lexer_error(yyscanner, "X.680:2003, #37.14 mandates 0..15 range for Tuple's TableRow");
 			return -1;
 		}
 		yylval_param->a_int = (v1 << 4) + v2;
@@ -516,27 +497,19 @@ WITH			return TOK_WITH;
 		for(; *p; p++) if(*p >= '0' && *p <= '9')
 			{ v4 = _lex_atoi(p, yyscanner); break; }
 		if(v1 < 0 || v1 > 127) {
-			fprintf(stderr, "%s at line %d: X.680:2003, #37.12 "
-				"mandates 0..127 range for Quadruple's Group\n",
-				yytext, yylineno);
+			asn1p_lexer_error(yyscanner, "X.680:2003, #37.12 mandates 0..127 range for Quadruple's Group");
 			return -1;
 		}
 		if(v2 < 0 || v2 > 255) {
-			fprintf(stderr, "%s at line %d: X.680:2003, #37.12 "
-				"mandates 0..255 range for Quadruple's Plane\n",
-				yytext, yylineno);
+			asn1p_lexer_error(yyscanner, "X.680:2003, #37.12 mandates 0..255 range for Quadruple's Plane");
 			return -1;
 		}
 		if(v3 < 0 || v3 > 255) {
-			fprintf(stderr, "%s at line %d: X.680:2003, #37.12 "
-				"mandates 0..255 range for Quadruple's Row\n",
-				yytext, yylineno);
+			asn1p_lexer_error(yyscanner, "X.680:2003, #37.12 mandates 0..255 range for Quadruple's Row");
 			return -1;
 		}
 		if(v4 < 0 || v4 > 255) {
-			fprintf(stderr, "%s at line %d: X.680:2003, #37.12 "
-				"mandates 0..255 range for Quadruple's Cell\n",
-				yytext, yylineno);
+			asn1p_lexer_error(yyscanner, "X.680:2003, #37.12 mandates 0..255 range for Quadruple's Cell");
 			return -1;
 		}
 		yylval_param->a_int = (v1 << 24) | (v2 << 16) | (v3 << 8) | v4;
@@ -551,19 +524,13 @@ WITH			return TOK_WITH;
 
 [^A-Za-z0-9:=,{}<.@()[]'\"|&^*;!-] {
 		if(TYPE_LIFETIME(1994, 0))
-			fprintf(stderr, "ERROR: ");
-		fprintf(stderr,
-		"Symbol '%c' at line %d is prohibited "
-		"by ASN.1:1994 and ASN.1:1997\n",
-			yytext[0], yylineno);
+      asn1p_lexer_error(yyscanner, "symbol is prohibited by ASN.1:1994 and ASN.1:1997");
 		if(TYPE_LIFETIME(1994, 0))
 			return -1;
 	}
 
 <*>.	{
-		fprintf(stderr,
-			"Unexpected token at line %d: \"%s\"\n",
-			yylineno, yytext);
+		asn1p_lexer_error(yyscanner, "unexpected token");
 		while(YYSTATE != INITIAL)
 			yy_pop_state(yyscanner);
 		if(0) {
@@ -601,11 +568,7 @@ static asn1c_integer_t
 _lex_atoi(const char *ptr, yyscan_t yyscanner) {
 	asn1c_integer_t value;
 	if(asn1p_atoi(ptr, &value)) {
-		fprintf(stderr,
-			"Value \"%s\" at line %d is too large "
-			"for this compiler! Please contact the asn1c author.\n",
-			ptr, yyget_lineno(yyscanner));
-		// errno = ERANGE;
+    asn1p_lexer_error(yyscanner, "value is too large for this compiler");
 	}
 	return value;
 }
@@ -616,12 +579,20 @@ _lex_atod(const char *ptr, yyscan_t yyscanner) {
 	errno = 0;
 	value = strtod(ptr, 0);
 	if(errno) {
-		fprintf(stderr,
-			"Value \"%s\" at line %d is outside of `double` range "
-			"in this compiler! Please contact the asn1c author.\n",
-			ptr, yyget_lineno(yyscanner));
-		// errno = ERANGE;
+    asn1p_lexer_error(yyscanner, "value is outside of `double` range in this compiler");
 	}
 	return value;
 }
 
+// implemented in asn1p_y.y
+int asn1p_push_error(asn1p_parser_ctx_t *ctx, const YYLTYPE *loc, const char *msg);
+
+static void
+asn1p_lexer_error(yyscan_t yyscanner, const char* msg) {
+  asn1p_parser_ctx_t *ctx = yyget_extra(yyscanner);
+  YYLTYPE loc = {
+    .begin = ctx->current_offset,
+    .end = ctx->current_offset + yyget_leng(yyscanner)
+  };
+  asn1p_push_error(ctx, &loc, msg);
+}

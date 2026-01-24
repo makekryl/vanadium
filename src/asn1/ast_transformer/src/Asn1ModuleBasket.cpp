@@ -50,12 +50,12 @@ void Asn1ModuleBasket::UpdateImpl(OpaqueKey* key, std::string_view src) {
   item.src = src;
   item.lines = ttcn_ast::LineMapping(CollectLineStarts(src));
   if (auto result = Parse(item.arena, src)) {
-    item.ast = std::move(*result);
+    item.ast = std::move(result);
     item.errors.clear();
     RegisterModule(item);
   } else {
     item.ast = std::nullopt;
-    item.errors = std::move(result.error());
+    item.errors = std::move(result.ErrorsMut());
   }
 }
 

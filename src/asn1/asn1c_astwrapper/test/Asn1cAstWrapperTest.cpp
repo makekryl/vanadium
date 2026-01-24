@@ -31,9 +31,6 @@ TEST(Asn1cAstWrapper, ParseSuccess) {
   )");
 
   EXPECT_TRUE(res);
-
-  auto ast = std::move(*res);
-  (void)ast;
 }
 
 TEST(Asn1cAstWrapper, ParseFailure) {
@@ -49,5 +46,5 @@ TEST(Asn1cAstWrapper, ParseFailure) {
   )");
 
   ASSERT_FALSE(res);
-  EXPECT_EQ(res.error().size(), 1);
+  EXPECT_EQ(res.Errors().size(), 1);
 }

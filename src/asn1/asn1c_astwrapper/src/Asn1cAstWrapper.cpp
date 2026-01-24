@@ -26,14 +26,18 @@ void WithArenaAsn1cAllocator(lib::Arena& arena, std::invocable auto f) {
 }
 }  // namespace
 
-Asn1cAstWrapper::Asn1cAstWrapper(asn1p_t* ast, lib::Arena& arena) : ast_(ast), arena_(&arena) {}
+Asn1cAstWrapper::Asn1cAstWrapper(asn1p_t* ast, std::vector<Asn1cSyntaxError> errors, lib::Arena& arena)
+    : ast_(ast), errors_(std::move(errors)), arena_(&arena) {}
 
 Asn1cAstWrapper::Asn1cAstWrapper(Asn1cAstWrapper&& other) noexcept
-    : ast_(std::exchange(other.ast_, nullptr)), arena_(std::exchange(other.arena_, nullptr)) {}
+    : ast_(std::exchange(other.ast_, nullptr)),
+      errors_(std::move(other.errors_)),
+      arena_(std::exchange(other.arena_, nullptr)) {}
 
 Asn1cAstWrapper& Asn1cAstWrapper::operator=(Asn1cAstWrapper&& other) noexcept {
   Asn1cAstWrapper tmp(std::move(other));
   std::swap(ast_, other.ast_);
+  std::swap(errors_, other.errors_);
   std::swap(arena_, other.arena_);
   return *this;
 }
@@ -47,7 +51,7 @@ Asn1cAstWrapper::~Asn1cAstWrapper() {
   });
 }
 
-std::expected<Asn1cAstWrapper, std::vector<Asn1cSyntaxError>> Parse(lib::Arena& arena, std::string_view src) {
+Asn1cAstWrapper Parse(lib::Arena& arena, std::string_view src) {
   static std::mutex m;
   std::lock_guard l(m);
 
@@ -59,31 +63,20 @@ std::expected<Asn1cAstWrapper, std::vector<Asn1cSyntaxError>> Parse(lib::Arena& 
     ast = asn1p_parse_buffer(src.data(), src.size(), &errs);
   });
 
-  if (!ast || errs.size > 0) {
-    if (ast) {
-      WithArenaAsn1cAllocator(arena, [&] {
-        asn1p_delete(ast);
-      });
-      ast = nullptr;
-    }
-
-    std::vector<Asn1cSyntaxError> v(errs.size);
-    for (int i = 0; i < errs.size; i++) {
-      v[i].range = {
-          .begin = errs.data[i].range.begin,
-          .end = errs.data[i].range.end,
-      };
-      v[i].message = std::string(errs.data[i].msg);
-    }
-
-    WithArenaAsn1cAllocator(arena, [&] {
-      asn1p_errs_free(&errs);
-    });
-
-    return std::unexpected{v};
+  std::vector<Asn1cSyntaxError> errors(errs.size);
+  for (int i = 0; i < errs.size; i++) {
+    errors[i].range = {
+        .begin = errs.data[i].range.begin,
+        .end = errs.data[i].range.end,
+    };
+    errors[i].message = std::string(errs.data[i].msg);
   }
 
-  return Asn1cAstWrapper{ast, arena};
+  WithArenaAsn1cAllocator(arena, [&] {
+    asn1p_errs_free(&errs);
+  });
+
+  return Asn1cAstWrapper{ast, std::move(errors), arena};
 }
 
 }  // namespace vanadium::asn1::ast

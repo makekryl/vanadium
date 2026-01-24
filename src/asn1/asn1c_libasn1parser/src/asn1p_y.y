@@ -4,7 +4,7 @@
 %locations
 %define api.location.type {asn1p_src_range_t}
 
-%parse-param { asn1p_yctx_t *ctx }
+%parse-param { asn1p_parser_ctx_t *ctx }
 %parse-param { void **param }
 %parse-param { yyscan_t yyscanner }
 //
@@ -19,8 +19,9 @@ typedef void *yyscan_t;
 
 %code requires {
 typedef struct {
+  uint32_t current_offset;
   asn1p_errs_t *errors;
-} asn1p_yctx_t;
+} asn1p_parser_ctx_t;
 }
 
 %{
@@ -38,9 +39,6 @@ typedef struct {
 #include "asn1p_y.h"
 #include "asn1p_l.h"
 
-#define YYDEBUG 1
-#define YYFPRINTF   prefixed_fprintf
-
 #define YYLLOC_DEFAULT(Current, Rhs, N) \
     do { \
         if (N > 0) { \
@@ -51,34 +49,11 @@ typedef struct {
         } \
     } while (0)
 
-/*
- * Prefix parser debug with "PARSER: " for easier human eye scanning.
- */
-static int
-__attribute__((format(printf, 2, 3)))
-prefixed_fprintf(FILE *f, const char *fmt, ...) {
-    static int line_ended = 1;
-    va_list ap;
-    va_start(ap, fmt);
-    if(line_ended) {
-        fprintf(f, "PARSER: ");
-        line_ended = 0;
-    }
-    size_t len = strlen(fmt);
-    if(len && fmt[len-1] == '\n') {
-        line_ended = 1;
-    }
-    int ret = vfprintf(f, fmt, ap);
-    va_end(ap);
-    return ret;
-}
-
-static int yyerror(YYLTYPE *, asn1p_yctx_t *ctx, void **param, yyscan_t scanner, const char *msg);
+static int yyerror(YYLTYPE *, asn1p_parser_ctx_t *ctx, void **param, yyscan_t scanner, const char *msg);
 
 void asn1p_lexer_hack_push_opaque_state(yyscan_t);
 void asn1p_lexer_hack_enable_with_syntax(yyscan_t);
 void asn1p_lexer_hack_push_encoding_control(yyscan_t);
-#define ASN_FILENAME "TODO(asn1p_parse_debug_filename)"
 
 /*
  * This temporary variable is used to solve the shortcomings of 1-lookahead
@@ -87,7 +62,7 @@ void asn1p_lexer_hack_push_encoding_control(yyscan_t);
 static struct AssignedIdentifier *saved_aid;
 
 static asn1p_value_t *_convert_bitstring2binary(char *str, int base);
-static void _fixup_anonymous_identifier(const asn1p_yctx_t *ctx, asn1p_expr_t *expr, yyscan_t);
+static void _fixup_anonymous_identifier(const asn1p_parser_ctx_t *ctx, asn1p_expr_t *expr, yyscan_t);
 
 static asn1p_module_t *currentModule;
 #define	NEW_EXPR()	(asn1p_expr_new(asn1p_get_lineno(yyscanner), currentModule))
@@ -127,19 +102,6 @@ static asn1p_module_t *currentModule;
         }                                                                      \
         assert(TQ_FIRST(&((from)->where)) == 0);                               \
     } while(0)
-
-
-char*
-asn1p_y_strdup(const asn1p_yctx_t *ctx, const char *s) {
-  size_t len = strlen(s) + 1;
-  void *newbuf = asn1p_mem_alloc(len);
-
-  if (!newbuf) {
-    return NULL;
-  }
-
-  return (char *) memcpy(newbuf, s, len);
-}
 
 %}
 
@@ -612,7 +574,7 @@ ModuleDefinitionFlag:
 			fprintf(stderr,
 				"WARNING: %s INSTRUCTIONS at %s:%d: "
 				"Unrecognized encoding reference\n",
-				$1, ASN_FILENAME, asn1p_get_lineno(yyscanner));
+				$1, "ASN_FILENAME", asn1p_get_lineno(yyscanner));
 		 	$$ = MSF_unk_INSTRUCTIONS;
 		}
 		asn1p_mem_free($1);
@@ -700,7 +662,7 @@ Assignment:
 		fprintf(stderr,
 			"WARNING: ENCODING-CONTROL %s "
 			"specification at %s:%d ignored\n",
-			$2, ASN_FILENAME, asn1p_get_lineno(yyscanner));
+			$2, "ASN_FILENAME", asn1p_get_lineno(yyscanner));
 		asn1p_mem_free($2);
 		$$ = 0;
 	}
@@ -2619,7 +2581,7 @@ _convert_bitstring2binary(char *str, int base) {
  * the specification's compliance to modern ASN.1 standards.
  */
 static void
-_fixup_anonymous_identifier(const asn1p_yctx_t *ctx, asn1p_expr_t *expr, yyscan_t yyscanner) {
+_fixup_anonymous_identifier(const asn1p_parser_ctx_t *ctx, asn1p_expr_t *expr, yyscan_t yyscanner) {
 	char *p;
 	assert(expr->Identifier == 0);
 
@@ -2655,8 +2617,8 @@ _fixup_anonymous_identifier(const asn1p_yctx_t *ctx, asn1p_expr_t *expr, yyscan_
 		expr->Identifier);
 }
 
-static int
-yyerror(YYLTYPE *loc, asn1p_yctx_t *ctx, void **param, yyscan_t yyscanner, const char *msg) {
+extern int
+asn1p_push_error(asn1p_parser_ctx_t *ctx, const YYLTYPE *loc, const char *msg) {
   asn1p_err_t *newdata = asn1p_mem_realloc(ctx->errors->data,
     ctx->errors->size * sizeof(ctx->errors->data[0]),
     (ctx->errors->size + 1) * sizeof(ctx->errors->data[0]));
@@ -2671,6 +2633,11 @@ yyerror(YYLTYPE *loc, asn1p_yctx_t *ctx, void **param, yyscan_t yyscanner, const
   err->msg = asn1p_mem_strdup(msg);
 
   return -1;
+}
+
+static int
+yyerror(YYLTYPE *loc, asn1p_parser_ctx_t *ctx, void **param, yyscan_t yyscanner, const char *msg) {
+  return asn1p_push_error(ctx, loc, msg);
 }
 
 int

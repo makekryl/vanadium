@@ -3,7 +3,6 @@
 #include <vanadium/lib/Arena.h>
 
 #include <cstdint>
-#include <expected>
 #include <string_view>
 #include <vector>
 
@@ -25,7 +24,7 @@ struct Asn1cSyntaxError {
 
 class Asn1cAstWrapper {
  public:
-  Asn1cAstWrapper(asn1p_t* ast, lib::Arena& arena);
+  Asn1cAstWrapper(asn1p_t* ast, std::vector<Asn1cSyntaxError> errors, lib::Arena& arena);
   ~Asn1cAstWrapper();
 
   Asn1cAstWrapper(const Asn1cAstWrapper&) = delete;
@@ -33,6 +32,10 @@ class Asn1cAstWrapper {
 
   Asn1cAstWrapper& operator=(const Asn1cAstWrapper&) = delete;
   Asn1cAstWrapper& operator=(Asn1cAstWrapper&&) noexcept;
+
+  operator bool() const noexcept {
+    return ast_ != nullptr;
+  }
 
   const asn1p_t* operator->() const {
     return ast_;
@@ -44,11 +47,19 @@ class Asn1cAstWrapper {
     return ast_;
   }
 
+  [[nodiscard]] const std::vector<Asn1cSyntaxError>& Errors() const {
+    return errors_;
+  }
+  [[nodiscard]] std::vector<Asn1cSyntaxError>& ErrorsMut() {
+    return errors_;
+  }
+
  private:
   asn1p_t* ast_;
+  std::vector<Asn1cSyntaxError> errors_;
   lib::Arena* arena_;
 };
 
-std::expected<Asn1cAstWrapper, std::vector<Asn1cSyntaxError>> Parse(lib::Arena&, std::string_view);
+Asn1cAstWrapper Parse(lib::Arena&, std::string_view);
 
 }  // namespace vanadium::asn1::ast

@@ -85,7 +85,7 @@ TEST(Asn1AstTransformerTest, ParametrizedConstructs) {
   const auto& ast = Parse(arena, kAsnSource);
   ASSERT_TRUE(ast);
 
-  TransformAsn1Ast(ast->Raw(), kAsnSource, arena, [](const char*) -> const asn1p_module_t* {
+  TransformAsn1Ast(ast.Raw(), kAsnSource, arena, [](const char*) -> const asn1p_module_t* {
     return nullptr;
   });
 
