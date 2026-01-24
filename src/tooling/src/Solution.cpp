@@ -1,12 +1,18 @@
 #include "Solution.h"
 
 #include <vanadium/core/Program.h>
+#include <vanadium/lib/Error.h>
 
 #include <expected>
 #include <print>
 
 #include "Filesystem.h"
 #include "Project.h"
+#include "ProjectSorter.h"
+
+namespace vanadium::core {
+extern thread_local bool do_reanalyse_program_deps;
+}
 
 namespace vanadium::tooling {
 
@@ -139,11 +145,20 @@ std::expected<Solution, Error> Solution::Load(const fs::Path& path, lib::Consume
     subproj.program.SealReferences();
   }
 
+  // todo: do not add & seal references if failed
+  const auto sorted_projs = SortProjects(solution.projects_);
+  if (!sorted_projs) {
+    return std::unexpected{Error{"Project references have cyclic dependencies"}};
+  }
+
   precommit(solution);
 
-  for (auto& proj : solution.projects_ | std::views::values) {
-    proj.program.Commit([](auto&) {});
+  core::do_reanalyse_program_deps = false;
+  for (const auto* proj : *sorted_projs) {
+    fprintf(stderr, " -> COMMIT(%s)\n", proj->Name().c_str());
+    const_cast<SolutionProject*>(proj)->program.Commit([](auto&) {});
   }
+  core::do_reanalyse_program_deps = true;
 
   return solution;
 }

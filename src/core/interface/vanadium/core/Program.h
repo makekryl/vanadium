@@ -220,7 +220,7 @@ class Program {
 
   std::unordered_set<Program*> explicit_references_;
   std::unordered_set<Program*> references_;
-  std::unordered_set<Program*> dependents_;
+  std::unordered_set<Program*> direct_dependents_;
 };
 
 }  // namespace vanadium::core

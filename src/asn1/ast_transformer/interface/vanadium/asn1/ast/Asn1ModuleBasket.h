@@ -25,8 +25,6 @@ struct Asn1ModuleBasketItem {
   std::vector<Asn1cSyntaxError> errors;
 
   std::optional<std::string_view> module_name;
-
-  bool dirty;
 };
 
 class Asn1ModuleBasket {
@@ -38,7 +36,7 @@ class Asn1ModuleBasket {
 
   template <typename TKey>
   ttcn_ast::AST Transform(TKey* key, lib::Arena& arena) {
-    return TransformImpl(key, arena);
+    return TransformImpl(reinterpret_cast<OpaqueKey*>(key), arena);
   }
 
   template <typename TKey>
@@ -48,15 +46,7 @@ class Asn1ModuleBasket {
            });
   }
 
-  template <typename TKey>
-  auto DirtyKeys() const {
-    return items_ | std::views::filter([&](auto& p) {
-             return p.second.dirty;
-           }) |
-           std::views::keys | std::views::transform([&](OpaqueKey* k) {
-             return reinterpret_cast<TKey*>(k);
-           });
-  }
+  void AddReference(Asn1ModuleBasket*);
 
  private:
   using OpaqueKey = void;

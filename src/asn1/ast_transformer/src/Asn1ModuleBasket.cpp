@@ -7,7 +7,6 @@
 #include <vanadium/lib/FunctionRef.h>
 
 #include <mutex>
-#include <print>
 #include <string_view>
 #include <unordered_map>
 #include <vector>
@@ -27,6 +26,10 @@ std::vector<pos_t> CollectLineStarts(std::string_view src) {
   return line_starts;
 }
 }  // namespace
+
+void Asn1ModuleBasket::AddReference(Asn1ModuleBasket* ref) {
+  references_.emplace_back(ref);
+}
 
 void Asn1ModuleBasket::UpdateImpl(OpaqueKey* key, std::string_view src) {
   static std::mutex mu;  // todo: check global variables in l/y
@@ -52,7 +55,6 @@ void Asn1ModuleBasket::UpdateImpl(OpaqueKey* key, std::string_view src) {
     item.ast = std::nullopt;
     item.errors = std::move(result.error());
   }
-  item.dirty = true;
 }
 
 void Asn1ModuleBasket::RegisterModule(Asn1ModuleBasketItem& item) {
@@ -96,8 +98,6 @@ ttcn_ast::AST Asn1ModuleBasket::TransformImpl(OpaqueKey* key, lib::Arena& arena)
         .description = err.message,
     });
   }
-
-  std::println(stderr, "TransformImpl(errs.size={}, ?ast={})", errors.size(), !!item.ast);
 
   if (!item.ast) {
     return {

@@ -170,15 +170,14 @@ void Program::DetachFile(SourceFile& sf) {
 
 void Program::AddReference(Program* program) {
   explicit_references_.emplace(program);
-  program->dependents_.emplace(this);
+  program->direct_dependents_.emplace(this);
 }
 
 void Program::SealReferences() {
   const auto bind_ref = [&, pthis = this](this auto&& self, Program* referenced_program) -> void {
     pthis->references_.emplace(referenced_program);
-    referenced_program->dependents_.emplace(pthis);
 
-    // pthis->asnModules_.AddReference(&referenced_program->asnModules_);
+    pthis->asn_modules_.AddReference(&referenced_program->asn_modules_);
 
     for (auto* tref : referenced_program->explicit_references_) {
       self(tref);
@@ -414,8 +413,22 @@ void Program::Crossbind(SourceFile& sf, ExternallyResolvedGroup& ext_group) {
   }
 }
 
+// TODO: quick hack
+extern thread_local bool do_reanalyse_program_deps;
+thread_local bool do_reanalyse_program_deps = true;
+
 void Program::Analyze() {
   tbb::parallel_for_each(asn_modules_.Keys<SourceFile>(), [&](SourceFile* sf) {
+    if (sf->analysis_state != AnalysisState::kDirty) {
+      // Hereby, incrementalized ASN.1 modules analysis resides here, in Program
+      // Possible problems:
+      //  1) if it is a multi-project solution, and Program::Analyze was called in a non-optimal order,
+      //     i.e. project's B, which depends on A, crossbind will occur before project A's ASN modules transformation,
+      //     B's crossbind will have invalid state as it did not know about those ASN modules existence
+      // 2) Dirtyness propagation is powered by the crossbind's dependency detector
+      return;
+    }
+
     // todo: this is a copypaste from Program::UpdateFile
     DetachFile(*sf);
     sf->module = std::nullopt;
@@ -425,8 +438,6 @@ void Program::Analyze() {
     sf->ast = asn_modules_.Transform(sf, sf->arena);
     sf->ast.root->file = sf;
     AttachFile(*sf);
-
-    // todo: clean dirty flag
   });
 
   tbb::parallel_for_each(files_ | std::views::values, [&](SourceFile& sf) {
@@ -461,8 +472,10 @@ void Program::Analyze() {
     }
   });
 
-  for (auto* program : dependents_) {
-    program->Analyze();
+  if (do_reanalyse_program_deps) [[likely]] {
+    for (auto* program : direct_dependents_) {
+      program->Analyze();
+    }
   }
 }
 
