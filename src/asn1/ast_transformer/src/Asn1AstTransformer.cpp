@@ -145,7 +145,7 @@ class AstTransformer {
   ttcn_ast::nodes::Module* TransformModule(const asn1p_module_t* mod) {
     return NewNode<ttcn_ast::nodes::Module>([&](ttcn_ast::nodes::Module& m) {
       m.nrange = {.begin = 0, .end = static_cast<ttcn_ast::pos_t>(original_src_.length())};
-      m.name.emplace().nrange = ConsumeRange(mod->_ModuleName_Range);
+      EmplaceIdent(m.name, ConsumeRange(mod->_ModuleName_Range));
 
       auto* const tok_public = arena_.Alloc<ttcn_ast::Token>(Tok(ttcn_ast::TokenKind::PUBLIC));
 
@@ -155,7 +155,7 @@ class AstTransformer {
         m.defs.push_back(NewNode<ttcn_ast::nodes::Definition>([&](ttcn_ast::nodes::Definition& def) {
           def.visibility = tok_public;
           def.def = NewNode<ttcn_ast::nodes::ImportDecl>([&](ttcn_ast::nodes::ImportDecl& impd) {
-            impd.module.emplace().nrange = name_range;
+            EmplaceIdent(impd.module, name_range);
             impd.list.emplace_back(NewNode<ttcn_ast::nodes::DefKindExpr>([&](ttcn_ast::nodes::DefKindExpr& dk) {
               dk.kind = Tok(ttcn_ast::TokenKind::ALL);
             }));
@@ -164,7 +164,7 @@ class AstTransformer {
         m.defs.push_back(NewNode<ttcn_ast::nodes::Definition>([&](ttcn_ast::nodes::Definition& def) {
           def.visibility = tok_public;
           def.def = NewNode<ttcn_ast::nodes::ImportDecl>([&](ttcn_ast::nodes::ImportDecl& impd) {
-            impd.module.emplace().nrange = name_range;
+            EmplaceIdent(impd.module, name_range);
             impd.list.emplace_back(NewNode<ttcn_ast::nodes::DefKindExpr>([&](ttcn_ast::nodes::DefKindExpr& dk) {
               dk.kind = Tok(ttcn_ast::TokenKind::IMPORT);
               dk.list.emplace_back(NewNode<ttcn_ast::nodes::Ident>([&](ttcn_ast::nodes::Ident& ident) {
@@ -241,7 +241,7 @@ class AstTransformer {
           m.field = NewNode<ttcn_ast::nodes::Field>([&](ttcn_ast::nodes::Field& f) {
             // TODO(range): maybe better take range from the expr, but it may break binsearch
             f.type = EmbedNodeXIntoNodeY(n, &m)->As<ttcn_ast::nodes::TypeSpec>();
-            f.name.emplace().nrange = ConsumeRange(expr);
+            EmplaceIdent(f.name, ConsumeRange(expr));
           });
         });
       }
@@ -252,7 +252,7 @@ class AstTransformer {
           m.nrange = sspec->nrange;
 
           m.kind = sspec->kind;
-          m.name.emplace().nrange = ConsumeRange(expr);
+          EmplaceIdent(m.name, ConsumeRange(expr));
 
           m.fields = std::move(sspec->fields);
           for (auto* f : m.fields) {
@@ -445,7 +445,7 @@ class AstTransformer {
               // TODO: optimize
               std::string ptypecpy(s);  // MEGA SHIT
               ptypecpy[0] = std::tolower(ptypecpy[0]);
-              f.name.emplace().nrange = AppendSource(ptypecpy);
+              EmplaceIdent(f.name, AppendSource(ptypecpy));
               f.type = NewNode<ttcn_ast::nodes::RefSpec>([&](ttcn_ast::nodes::RefSpec& rs) {
                 rs.x = NewNode<ttcn_ast::nodes::Ident>([&](ttcn_ast::nodes::Ident& ident) {
                   ident.nrange = AppendSource(s);  // TODO: oh shi... (x2)
@@ -456,7 +456,7 @@ class AstTransformer {
             if (!std::islower(s[0])) {
               m.fields.emplace_back(NewNode<ttcn_ast::nodes::Field>([&](ttcn_ast::nodes::Field& f) {
                 // TODO: optimize
-                f.name.emplace().nrange = AppendSource(s);
+                EmplaceIdent(f.name, AppendSource(s));
                 f.type = lc_field->type;  // cheap lol
               }));
             }
@@ -523,7 +523,7 @@ class AstTransformer {
       m.kind = arena_.Alloc<ttcn_ast::Token>(Tok(ttcn_ast::TokenKind::CONST));
 
       m.decls.push_back(NewNode<ttcn_ast::nodes::Declarator>([&](ttcn_ast::nodes::Declarator& d) {
-        d.name.emplace().nrange = ConsumeRange(expr);
+        EmplaceIdent(d.name, ConsumeRange(expr));
       }));
     });
   }
@@ -533,7 +533,7 @@ class AstTransformer {
     return NewNode<ttcn_ast::nodes::StructTypeDecl>([&](ttcn_ast::nodes::StructTypeDecl& m) {
       m.kind = Tok(kind);
 
-      m.name.emplace().nrange = ConsumeRange(expr);
+      EmplaceIdent(m.name, ConsumeRange(expr));
 
       asn1p_expr_t* se;
       TQ_FOR(se, &(expr->members), next) {
@@ -560,7 +560,7 @@ class AstTransformer {
 
   ttcn_ast::nodes::EnumTypeDecl* TransformEnumeration(const asn1p_expr_t* expr) {
     return NewNode<ttcn_ast::nodes::EnumTypeDecl>([&](ttcn_ast::nodes::EnumTypeDecl& m) {
-      m.name.emplace().nrange = ConsumeRange(expr);
+      EmplaceIdent(m.name, ConsumeRange(expr));
 
       asn1p_expr_t* member;
       TQ_FOR(member, &(expr->members), next) {
@@ -600,7 +600,7 @@ class AstTransformer {
     return NewNode<ttcn_ast::nodes::SubTypeDecl>([&](ttcn_ast::nodes::SubTypeDecl& m) {
       m.field = NewNode<ttcn_ast::nodes::Field>([&](ttcn_ast::nodes::Field& f) {
         f.type = TransformListSpec(kind, expr);
-        f.name.emplace().nrange = ConsumeRange(expr);
+        EmplaceIdent(f.name, ConsumeRange(expr));
       });
     });
   }
@@ -613,7 +613,7 @@ class AstTransformer {
     }
 
     return NewNode<ttcn_ast::nodes::Field>([&](ttcn_ast::nodes::Field& m) {
-      m.name.emplace().nrange = ConsumeRange(se);
+      EmplaceIdent(m.name, ConsumeRange(se));
 
       if ((se->marker.flags & asn1p_expr_s::asn1p_expr_marker_s::EM_DEFAULT) ==
           asn1p_expr_s::asn1p_expr_marker_s::EM_DEFAULT) {
@@ -640,6 +640,12 @@ class AstTransformer {
       f(*p);
     }
     return p;
+  }
+
+  void EmplaceIdent(std::optional<ttcn_ast::nodes::Ident>& opt, const ttcn_ast::Range& range) {
+    opt.emplace();
+    opt->parent = last_node_;
+    opt->nrange = range;
   }
 
   void EmitError(ttcn_ast::Range range, std::string&& message) {
