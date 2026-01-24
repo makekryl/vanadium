@@ -155,7 +155,6 @@ std::expected<Solution, Error> Solution::Load(const fs::Path& path, lib::Consume
 
   core::do_reanalyse_program_deps = false;
   for (const auto* proj : *sorted_projs) {
-    fprintf(stderr, " -> COMMIT(%s)\n", proj->Name().c_str());
     const_cast<SolutionProject*>(proj)->program.Commit([](auto&) {});
   }
   core::do_reanalyse_program_deps = true;
