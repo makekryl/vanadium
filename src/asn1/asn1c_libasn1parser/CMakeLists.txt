@@ -22,7 +22,7 @@ ADD_FLEX_BISON_DEPENDENCY(
 
 add_library(asn1c_libasn1parser STATIC
   src/common/asn1_ref.c
-  src/common/genhash.c
+  src/common/genhash.cpp
 
   src/asn1parser.c
   src/asn1p_alloc.c

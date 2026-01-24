@@ -85,7 +85,7 @@ asn1p_module_move_members(asn1p_module_t *to, asn1p_module_t *from) {
         }
         assert(TQ_FIRST(&from->members) == 0);
 
-        genhash_empty(from->members_hash, 0, 0);
+        genhash_empty(from->members_hash);
     }
 }
 

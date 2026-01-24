@@ -32,6 +32,8 @@
 extern "C" {
 #endif
 
+#include <stddef.h>
+
 /*
  * General purpose hashing framework.
  * Refer to the corresponding .c source file for the detailed description.
@@ -51,47 +53,9 @@ typedef struct genhash_s genhash_t;
  */
 genhash_t *genhash_new(
 	int (*keycmpf) (const void *key1, const void *key2),
-	unsigned int (*keyhashf) (const void *key),
+	size_t (*keyhashf) (const void *key),
 	void (*keydestroyf) (void *key),
 	void (*valuedestroyf) (void *value));
-
-/*
- * Re-initialize genhash structure with new callback functions.
- * (Rarely ever used).
- */
-int genhash_reinit(
-	genhash_t *hash,
-	int (*keycmpf) (const void *key1, const void *key2),
-	unsigned int (*keyhashf) (const void *key),
-	void (*keydestroyf) (void *key),
-	void (*valuedestroyf) (void *value));
-
-/*
- * Initialize the LRU-driven elements count limiting
- * and/or set a new Least Recently Used list size limit.
- * If a new entry is being added to the hash, the least recently used entry
- * (one at the bottom of the LRU list) will be automatically deleted.
- * The deletion may be skipped if the hash is very small
- * (currently, "small" means no longer than 4 entries).
- * This function is immune to NULL argument.
- * 
- * RETURN VALUES:
- * 	The previous LRU limit, or -1/EINVAL when h is NULL.
- * EXAMPLE:
- * 	genhash_set_lru_limit(h, 1500);	// Maximum 1500 entries in the hash
- */
-int genhash_set_lru_limit(genhash_t *h, int new_lru_limit);
-
-/*
- * Set the system-wide (!!!) limit on maximum number of buckets.
- * If the value is 0, the hash is allowed to store only 4 elements inline
- * (buckets allocation is suppressed).
- * If the value is 1, the hash turns out into a linked list.
- * The default limit is about 1M buckets.
- * RETURN VALUES:
- * 	The previous buckets number limit.
- */
-int genhash_set_buckets_limit(int new_max_number_of_buckets);
 
 /*
  * destroys a hash, freeing each key and/or value.
@@ -103,14 +67,8 @@ void genhash_destroy(genhash_t *h);
 
 /*
  * Delete all elements from the hash, retaining the hash structure itself.
- * Optionally, it may be told to invoke, or not invoke the corresponding
- * key/value destructors.
- * This function is immune to NULL argument.
- * 
- * EXAMPLE:
- * 	genhash_empty(h, 1, 1);	// Remove all entries, invoking destructors
  */
-void genhash_empty(genhash_t *h, int freekeys, int freevalues);
+void genhash_empty(genhash_t *h);
 
 /*
  * Add, returns 0 on success, -1 on failure (ENOMEM). Note, you CAN add
@@ -163,14 +121,7 @@ int genhash_count(genhash_t *h);
  * genhash_iter*() functions.
  */
 typedef struct genhash_iter_s {
-	genhash_t *hash_ptr;
-	union {
-		int item_number;
-		void *location;
-	} un;
-	int order_lru_first;
-	struct genhash_iter_s *iter_prev;
-	struct genhash_iter_s *iter_next;
+	char pimpl_mem[16];
 } genhash_iter_t;
 
 /*
@@ -206,7 +157,7 @@ int genhash_iter_init(genhash_iter_t *iter,
  *		print_keyval(key, val);		// Use key and value
  * 	genhash_iter_done(&iter);		// Done iterations.
  */
-int genhash_iter(genhash_iter_t *iter, void */***/key, void */***/val);
+int genhash_iter(genhash_iter_t *iter, void **key, void **val);
 
 /*
  * Dispose of the iterator.
@@ -221,13 +172,13 @@ void genhash_iter_done(genhash_iter_t *iter);
  * The following hashing and comparison functions are provided for
  * you, or you may supply your own.
  */
-unsigned int hashf_int (const void *key); /* Key is an int * */
+size_t hashf_int (const void *key); /* Key is an int * */
 int cmpf_int (const void *key1, const void *key2);
 
-unsigned int hashf_void (const void *key);
+size_t hashf_void (const void *key);
 int cmpf_void (const void *key1, const void *key2);
 
-unsigned int hashf_string (const void *key);
+size_t hashf_string (const void *key);
 int cmpf_string (const void *key1, const void *key2);
 
 #ifdef __cplusplus
