@@ -95,7 +95,7 @@ rpc::ExpectedResult<lsp::InitializeResult> methods::initialize::invoke(LsContext
               .semanticTokensProvider =
                   lsp::SemanticTokensOptions{
                       .legend =
-                          {
+                          lsp::SemanticTokensLegend{
                               .tokenTypes = lsp::kBuiltinSemanticTokenTypes,
                               .tokenModifiers = lsp::kBuiltinSemanticTokenModifiers,
                           },
