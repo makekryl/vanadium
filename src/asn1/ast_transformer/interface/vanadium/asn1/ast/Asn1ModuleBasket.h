@@ -6,6 +6,7 @@
 #include <vanadium/lib/Arena.h>
 #include <vanadium/lib/FunctionRef.h>
 
+#include <mutex>
 #include <ranges>
 #include <string_view>
 #include <unordered_map>
@@ -60,7 +61,11 @@ class Asn1ModuleBasket {
   ttcn_ast::AST TransformAST(Asn1ModuleBasketItem& item, lib::Arena& arena);
 
   std::unordered_map<OpaqueKey*, Asn1ModuleBasketItem> items_;
+  std::mutex items_mutex_;
+  //
   std::unordered_map<std::string_view, Asn1ModuleBasketItem*> modules_;
+  std::mutex modules_mutex_;
+
   std::vector<Asn1ModuleBasket*> references_;
 };
 

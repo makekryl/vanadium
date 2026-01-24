@@ -32,10 +32,12 @@ void Asn1ModuleBasket::AddReference(Asn1ModuleBasket* ref) {
 }
 
 void Asn1ModuleBasket::UpdateImpl(OpaqueKey* key, std::string_view src) {
-  static std::mutex mu;  // todo: check global variables in l/y
-  std::lock_guard l(mu);
-
-  auto [it, inserted] = items_.try_emplace(key);
+  decltype(items_)::iterator it;
+  bool inserted;
+  {
+    std::lock_guard lock(items_mutex_);
+    std::tie(it, inserted) = items_.try_emplace(key);
+  }
   auto& item = it->second;
 
   if (!inserted) {
@@ -61,10 +63,13 @@ void Asn1ModuleBasket::RegisterModule(Asn1ModuleBasketItem& item) {
   if (const asn1p_module_t* mod = TQ_FIRST(&(item.ast->Raw()->modules)); mod) {
     item.module_name = mod->ModuleName;
 
-    auto it = modules_.find(*item.module_name);
-    if (it == modules_.end()) {
-      modules_.emplace(*item.module_name, &item);
-      return;
+    {
+      std::lock_guard lock(modules_mutex_);
+      auto it = modules_.find(*item.module_name);
+      if (it == modules_.end()) {
+        modules_.emplace(*item.module_name, &item);
+        return;
+      }
     }
 
     item.errors.emplace_back(Asn1cSyntaxError{

@@ -5,6 +5,7 @@
 
 #include <concepts>
 #include <expected>
+#include <mutex>
 #include <utility>
 #include <vector>
 
@@ -47,6 +48,9 @@ Asn1cAstWrapper::~Asn1cAstWrapper() {
 }
 
 std::expected<Asn1cAstWrapper, std::vector<Asn1cSyntaxError>> Parse(lib::Arena& arena, std::string_view src) {
+  static std::mutex m;
+  std::lock_guard l(m);
+
   asn1p_t* ast;
   asn1p_errs_t errs;
 
