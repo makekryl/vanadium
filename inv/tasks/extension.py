@@ -14,10 +14,14 @@ from . import build
 @with_build_options_params
 def symlink_lsp(c: Context):
   dst = Path("extension/bin/vanadiumd")
+
   _, build_dir = build._get_cmake_params(c)
+  lsp_bin_path = build_dir / "bin/lsp/vanadiumd"
+
+  print(f"Creating symlink to '{lsp_bin_path}'")
 
   def _create_symlink():
-    return os.symlink((build_dir / "bin/lsp/vanadiumd").absolute(), dst)
+    return os.symlink(lsp_bin_path.absolute(), dst)
 
   try:
     _create_symlink()
