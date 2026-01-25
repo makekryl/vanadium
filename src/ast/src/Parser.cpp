@@ -1024,7 +1024,7 @@ nodes::TemplateDecl* Parser::ParseTemplateDecl() {
       Expect(TokenKind::RPAREN);
     } else {
       td.restriction = NewNode<nodes::RestrictionSpec>([&](auto& n) {
-        n.type = {TokenKind::kSentinel};
+        n.type = {.kind = TokenKind::kSentinel, .range = {}};
       });
     }
     if (tok_ == TokenKind::MODIF) {
@@ -1078,7 +1078,7 @@ nodes::RestrictionSpec* Parser::ParseRestrictionSpec() {
           rs.type = Consume();
           Expect(TokenKind::RPAREN);
         } else {
-          rs.type = {TokenKind::kSentinel};
+          n.type = {.kind = TokenKind::kSentinel, .range = {}};
         }
       });
     case TokenKind::OMIT:

@@ -139,7 +139,7 @@ template <class Result>
 struct Response {
   id_t id;
   std::optional<Result> result{};
-  std::optional<Error> error;
+  std::optional<Error> error{std::nullopt};
   std::string version{kJsonRpcVersion};
 
   // NOLINTBEGIN(readability-identifier-naming)

@@ -86,6 +86,7 @@ class Bitset {
   }
 
   void CheckBounds(std::size_t pos) const {
+    (void)pos;
     assert(pos < bits_ && "Bitset index is out of bounds");
   }
 
