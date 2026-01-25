@@ -6,9 +6,8 @@
 #include <vanadium/core/Program.h>
 #include <vanadium/lib/Error.h>
 #include <vanadium/lib/FunctionRef.h>
-
-#include "Filesystem.h"
-#include "Project.h"
+#include <vanadium/tooling/Filesystem.h>
+#include <vanadium/tooling/Project.h>
 
 namespace vanadium {
 namespace tooling {

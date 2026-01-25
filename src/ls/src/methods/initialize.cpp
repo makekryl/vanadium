@@ -3,16 +3,15 @@
 #include <LSProtocol.h>
 
 #include <vanadium/core/Program.h>
+#include <vanadium/tooling/Filesystem.h>
+#include <vanadium/tooling/Solution.h>
+#include <vanadium/tooling/impl/SystemFS.h>
 
 #include "vanadium/ls/LanguageServerClientMessaging.h"
 #include "vanadium/ls/LanguageServerContext.h"
 #include "vanadium/ls/LanguageServerLogger.h"
 #include "vanadium/ls/LanguageServerMethods.h"
 #include "vanadium/ls/LanguageServerTestFlags.h"
-
-#include "Filesystem.h"
-#include "Solution.h"
-#include "impl/SystemFS.h"
 
 namespace vanadium::ls {
 

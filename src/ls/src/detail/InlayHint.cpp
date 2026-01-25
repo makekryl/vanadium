@@ -19,13 +19,12 @@
 #include <vanadium/core/TypeChecker.h>
 #include <vanadium/core/utils/ScopedNodeVisitor.h>
 #include <vanadium/core/utils/SemanticUtils.h>
+#include <vanadium/tooling/Solution.h>
 
 #include "vanadium/ls/LanguageServerConv.h"
 #include "vanadium/ls/LanguageServerLogger.h"
 #include "vanadium/ls/LanguageServerSolution.h"
 #include "vanadium/ls/detail/Definition.h"
-
-#include "Solution.h"
 
 // TODO: maybe track file version
 struct InlayHintPayload {

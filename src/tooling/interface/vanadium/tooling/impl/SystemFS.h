@@ -7,7 +7,7 @@
 #include <vanadium/lib/Error.h>
 #include <vanadium/lib/FunctionRef.h>
 
-#include "Filesystem.h"
+#include "vanadium/tooling/Filesystem.h"
 
 namespace vanadium::tooling::fs {
 

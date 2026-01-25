@@ -1,11 +1,11 @@
-#include "Project.h"
+#include "vanadium/tooling/Project.h"
 
 #include <cassert>
 #include <expected>
 
 #include <rfl/toml.hpp>
 
-#include "Filesystem.h"
+#include "vanadium/tooling/Filesystem.h"
 
 namespace vanadium {
 namespace tooling {

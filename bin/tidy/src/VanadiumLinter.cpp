@@ -15,10 +15,9 @@
 #include <vanadium/lint/BuiltinRules.h>
 #include <vanadium/lint/Context.h>
 #include <vanadium/lint/Linter.h>
-
-#include "Filesystem.h"
-#include "Solution.h"
-#include "impl/SystemFS.h"
+#include <vanadium/tooling/Filesystem.h>
+#include <vanadium/tooling/Solution.h>
+#include <vanadium/tooling/impl/SystemFS.h>
 
 namespace {
 vanadium::lint::Linter CreateLinter() {

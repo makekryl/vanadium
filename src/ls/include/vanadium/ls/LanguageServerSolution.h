@@ -3,7 +3,7 @@
 #include <optional>
 #include <string_view>
 
-#include "Solution.h"
+#include <vanadium/tooling/Solution.h>
 
 namespace vanadium::ls {
 

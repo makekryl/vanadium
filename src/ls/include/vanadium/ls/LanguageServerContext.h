@@ -12,11 +12,11 @@
 #include <vanadium/lib/Arena.h>
 #include <vanadium/lib/Metaprogramming.h>
 #include <vanadium/lib/lserver/Connection.h>
+#include <vanadium/lint/Linter.h>
+#include <vanadium/tooling/Solution.h>
 
 #include "LanguageServerSession.h"
 #include "LanguageServerSolution.h"
-#include "Linter.h"
-#include "Solution.h"
 
 // TODO: support overlapping projects paths
 

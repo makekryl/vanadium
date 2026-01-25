@@ -19,13 +19,12 @@
 #include <vanadium/core/utils/SemanticUtils.h>
 #include <vanadium/lib/Arena.h>
 #include <vanadium/lib/Metaprogramming.h>
+#include <vanadium/tooling/Solution.h>
 
 #include "vanadium/ls/LanguageServerConv.h"
 #include "vanadium/ls/LanguageServerLogger.h"
 #include "vanadium/ls/detail/Definition.h"
 #include "vanadium/ls/detail/Helpers.h"
-
-#include "Solution.h"
 
 namespace vanadium::ls::detail {
 

@@ -9,8 +9,7 @@
 #include <rfl/toml/read.hpp>
 
 #include <vanadium/lib/Error.h>
-
-#include "Filesystem.h"
+#include <vanadium/tooling/Filesystem.h>
 
 namespace vanadium {
 namespace tooling {

@@ -1,11 +1,11 @@
-#include "ProjectSorter.h"
+#include "vanadium/tooling/ProjectSorter.h"
 
 #include <optional>
 #include <queue>
 #include <ranges>
 #include <vector>
 
-#include "Project.h"
+#include "vanadium/tooling/Project.h"
 
 namespace vanadium::tooling {
 

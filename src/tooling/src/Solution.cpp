@@ -1,4 +1,4 @@
-#include "Solution.h"
+#include "vanadium/tooling/Solution.h"
 
 #include <expected>
 #include <print>
@@ -6,9 +6,9 @@
 #include <vanadium/core/Program.h>
 #include <vanadium/lib/Error.h>
 
-#include "Filesystem.h"
-#include "Project.h"
-#include "ProjectSorter.h"
+#include "vanadium/tooling/Filesystem.h"
+#include "vanadium/tooling/Project.h"
+#include "vanadium/tooling/ProjectSorter.h"
 
 namespace vanadium::core {
 extern thread_local bool do_reanalyse_program_deps;

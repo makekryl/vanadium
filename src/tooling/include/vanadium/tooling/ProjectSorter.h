@@ -6,7 +6,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "Solution.h"
+#include "vanadium/tooling/Solution.h"
 
 namespace vanadium::tooling {
 
