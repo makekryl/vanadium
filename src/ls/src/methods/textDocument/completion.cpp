@@ -1,9 +1,10 @@
 #include "detail/Completion.h"
 
-#include "LSProtocol.h"
-#include "LSProtocolEx.h"
-#include "LanguageServerContext.h"
-#include "LanguageServerMethods.h"
+#include <LSProtocol.h>
+#include <LSProtocolEx.h>
+
+#include "vanadium/ls/LanguageServerContext.h"
+#include "vanadium/ls/LanguageServerMethods.h"
 
 namespace vanadium::ls {
 rpc::ExpectedResult<lsp::CompletionResult> methods::textDocument::completion::invoke(

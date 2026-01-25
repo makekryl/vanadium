@@ -1,10 +1,11 @@
+#include <LSProtocol.h>
+
 #include <glaze/json/generic.hpp>
 
-#include "LSProtocol.h"
-#include "LanguageServerContext.h"
-#include "LanguageServerMethods.h"
 #include "vanadium/lib/jsonrpc/Common.h"
 #include "vanadium/lib/lserver/Connection.h"
+#include "vanadium/ls/LanguageServerContext.h"
+#include "vanadium/ls/LanguageServerMethods.h"
 
 namespace {
 // (obviously) move this uh... "constant" somewhere else and modify it if we would need to deregister

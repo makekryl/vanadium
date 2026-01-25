@@ -1,10 +1,9 @@
 #pragma once
 
+#include <LSProtocol.h>
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/core/Program.h>
 #include <vanadium/lib/FunctionRef.h>
-
-#include "LSProtocol.h"
 
 namespace vanadium::ls::detail {
 

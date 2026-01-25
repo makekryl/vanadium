@@ -1,11 +1,12 @@
 #pragma once
 
+#include <LSProtocol.h>
+#include <LSProtocolEx.h>
+
 #include <cstddef>
 #include <glaze/util/string_literal.hpp>
 
 #include "LSMethod.h"
-#include "LSProtocol.h"
-#include "LSProtocolEx.h"
 #include "LanguageServerContext.h"
 
 namespace vanadium::ls {

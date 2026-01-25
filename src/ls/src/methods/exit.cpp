@@ -1,5 +1,5 @@
-#include "LanguageServerContext.h"
-#include "LanguageServerMethods.h"
+#include "vanadium/ls/LanguageServerContext.h"
+#include "vanadium/ls/LanguageServerMethods.h"
 
 namespace vanadium::ls {
 void methods::exit::invoke(LsContext&, const lib::jsonrpc::Empty&) {

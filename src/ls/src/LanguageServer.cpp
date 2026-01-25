@@ -1,4 +1,4 @@
-#include "LanguageServer.h"
+#include "vanadium/ls/LanguageServer.h"
 
 #include <vanadium/lib/Metaprogramming.h>
 #include <vanadium/lib/jsonrpc/Server.h>
@@ -9,9 +9,9 @@
 #include <glaze/json.hpp>
 
 #include "BuiltinRules.h"
-#include "LanguageServerContext.h"
-#include "LanguageServerLogger.h"
-#include "LanguageServerMethods.h"
+#include "vanadium/ls/LanguageServerContext.h"
+#include "vanadium/ls/LanguageServerLogger.h"
+#include "vanadium/ls/LanguageServerMethods.h"
 
 namespace vanadium::ls {
 

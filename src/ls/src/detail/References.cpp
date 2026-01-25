@@ -6,7 +6,7 @@
 
 #include <memory>
 
-#include "detail/Definition.h"
+#include "vanadium/ls/detail/Definition.h"
 
 namespace vanadium::ls::detail {
 

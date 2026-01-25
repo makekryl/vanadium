@@ -1,9 +1,8 @@
 #pragma once
 
+#include <LSProtocol.h>
 #include <vanadium/ast/AST.h>
 #include <vanadium/ast/ASTTypes.h>
-
-#include "LSProtocol.h"
 
 namespace vanadium::ls {
 namespace conv {

@@ -1,3 +1,5 @@
+#include <LSProtocol.h>
+#include <LSProtocolEx.h>
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/ASTTypes.h>
 #include <vanadium/core/Program.h>
@@ -10,12 +12,10 @@
 #include <stack>
 #include <vector>
 
-#include "LSProtocol.h"
-#include "LSProtocolEx.h"
-#include "LanguageServerContext.h"
-#include "LanguageServerConv.h"
-#include "LanguageServerMethods.h"
-#include "LanguageServerSession.h"
+#include "vanadium/ls/LanguageServerContext.h"
+#include "vanadium/ls/LanguageServerConv.h"
+#include "vanadium/ls/LanguageServerMethods.h"
+#include "vanadium/ls/LanguageServerSession.h"
 
 namespace vanadium::ls {
 

@@ -1,9 +1,9 @@
+#include <LSProtocol.h>
 #include <vanadium/core/Program.h>
 
-#include "LSProtocol.h"
-#include "LanguageServerContext.h"
-#include "LanguageServerMethods.h"
-#include "LanguageServerSession.h"
+#include "vanadium/ls/LanguageServerContext.h"
+#include "vanadium/ls/LanguageServerMethods.h"
+#include "vanadium/ls/LanguageServerSession.h"
 
 namespace vanadium::ls {
 void methods::textDocument::didClose::invoke(LsContext& ctx, const lsp::DidCloseTextDocumentParams& params) {

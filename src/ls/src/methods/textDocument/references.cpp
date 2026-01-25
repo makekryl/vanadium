@@ -1,15 +1,15 @@
 #include "detail/References.h"
 
+#include <LSProtocol.h>
+#include <LSProtocolEx.h>
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/core/Program.h>
 #include <vanadium/core/Semantic.h>
 
-#include "LSProtocol.h"
-#include "LSProtocolEx.h"
-#include "LanguageServerContext.h"
-#include "LanguageServerConv.h"
-#include "LanguageServerMethods.h"
-#include "LanguageServerSession.h"
+#include "vanadium/ls/LanguageServerContext.h"
+#include "vanadium/ls/LanguageServerConv.h"
+#include "vanadium/ls/LanguageServerMethods.h"
+#include "vanadium/ls/LanguageServerSession.h"
 
 // TODO:
 //  1) support fields

@@ -1,8 +1,9 @@
+#include "vanadium/ls/LanguageServerSolution.h"
+
 #include <filesystem>
 #include <optional>
 #include <string_view>
 
-#include "LanguageServerSolution.h"
 #include "Solution.h"
 
 namespace vanadium::ls {

@@ -1,6 +1,6 @@
-#include "LanguageServerClientMessaging.h"
+#include "vanadium/ls/LanguageServerClientMessaging.h"
 
-#include "LSProtocolEx.h"
+#include <LSProtocolEx.h>
 
 namespace vanadium::ls::clientMessaging {
 

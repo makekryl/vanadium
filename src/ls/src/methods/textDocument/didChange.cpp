@@ -1,14 +1,14 @@
+#include <LSProtocol.h>
 #include <vanadium/core/Program.h>
 
 #include <string_view>
 #include <variant>
 
-#include "LSProtocol.h"
-#include "LanguageServerContext.h"
-#include "LanguageServerConv.h"
-#include "LanguageServerMethods.h"
-#include "LanguageServerSession.h"
-#include "detail/Diagnostic.h"
+#include "vanadium/ls/LanguageServerContext.h"
+#include "vanadium/ls/LanguageServerConv.h"
+#include "vanadium/ls/LanguageServerMethods.h"
+#include "vanadium/ls/LanguageServerSession.h"
+#include "vanadium/ls/detail/Diagnostic.h"
 
 namespace vanadium::ls {
 void methods::textDocument::didChange::invoke(LsContext& ctx, const lsp::DidChangeTextDocumentParams& params) {

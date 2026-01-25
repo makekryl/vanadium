@@ -1,3 +1,4 @@
+#include <LSProtocol.h>
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/ASTTypes.h>
 #include <vanadium/ast/utils/ASTUtils.h>
@@ -8,12 +9,11 @@
 
 #include <optional>
 
-#include "LSProtocol.h"
-#include "LanguageServerContext.h"
-#include "LanguageServerConv.h"
-#include "LanguageServerMethods.h"
-#include "LanguageServerSession.h"
-#include "detail/Definition.h"
+#include "vanadium/ls/LanguageServerContext.h"
+#include "vanadium/ls/LanguageServerConv.h"
+#include "vanadium/ls/LanguageServerMethods.h"
+#include "vanadium/ls/LanguageServerSession.h"
+#include "vanadium/ls/detail/Definition.h"
 
 namespace vanadium::ls {
 

@@ -1,8 +1,9 @@
-#include "LSProtocol.h"
-#include "LanguageServerContext.h"
-#include "LanguageServerMethods.h"
-#include "LanguageServerSession.h"
-#include "detail/InlayHint.h"
+#include <LSProtocol.h>
+
+#include "vanadium/ls/LanguageServerContext.h"
+#include "vanadium/ls/LanguageServerMethods.h"
+#include "vanadium/ls/LanguageServerSession.h"
+#include "vanadium/ls/detail/InlayHint.h"
 
 namespace vanadium::ls {
 rpc::ExpectedResult<lsp::InlayHint> methods::inlayHint::resolve::invoke(LsContext& ctx, const lsp::InlayHint& hint) {

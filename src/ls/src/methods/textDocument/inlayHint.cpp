@@ -1,9 +1,10 @@
 #include "detail/InlayHint.h"
 
-#include "LSProtocol.h"
-#include "LSProtocolEx.h"
-#include "LanguageServerContext.h"
-#include "LanguageServerMethods.h"
+#include <LSProtocol.h>
+#include <LSProtocolEx.h>
+
+#include "vanadium/ls/LanguageServerContext.h"
+#include "vanadium/ls/LanguageServerMethods.h"
 
 namespace vanadium::ls {
 

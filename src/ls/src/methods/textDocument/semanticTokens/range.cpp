@@ -1,3 +1,5 @@
+#include <LSProtocol.h>
+#include <LSProtocolEx.h>
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/utils/ASTUtils.h>
 #include <vanadium/core/Program.h>
@@ -8,13 +10,11 @@
 #include <concepts>
 #include <utility>
 
-#include "LSProtocol.h"
-#include "LSProtocolEx.h"
-#include "LanguageServerContext.h"
-#include "LanguageServerConv.h"
-#include "LanguageServerLogger.h"
-#include "LanguageServerMethods.h"
-#include "detail/InlayHint.h"
+#include "vanadium/ls/LanguageServerContext.h"
+#include "vanadium/ls/LanguageServerConv.h"
+#include "vanadium/ls/LanguageServerLogger.h"
+#include "vanadium/ls/LanguageServerMethods.h"
+#include "vanadium/ls/detail/InlayHint.h"
 
 namespace lsp {
 inline SemanticTokenModifiers operator|(SemanticTokenModifiers lhs, SemanticTokenModifiers rhs) {

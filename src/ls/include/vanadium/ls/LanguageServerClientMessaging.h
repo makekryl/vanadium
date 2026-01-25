@@ -1,7 +1,8 @@
 #pragma once
 
-#include "LSProtocol.h"
-#include "LSProtocolEx.h"
+#include <LSProtocol.h>
+#include <LSProtocolEx.h>
+
 #include "LanguageServerContext.h"
 
 namespace vanadium::ls {

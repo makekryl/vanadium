@@ -1,5 +1,6 @@
 #include "detail/InlayHint.h"
 
+#include <LSProtocol.h>
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/ASTTypes.h>
 #include <vanadium/ast/utils/ASTUtils.h>
@@ -17,12 +18,11 @@
 #include <utility>
 #include <variant>
 
-#include "LSProtocol.h"
-#include "LanguageServerConv.h"
-#include "LanguageServerLogger.h"
-#include "LanguageServerSolution.h"
 #include "Solution.h"
-#include "detail/Definition.h"
+#include "vanadium/ls/LanguageServerConv.h"
+#include "vanadium/ls/LanguageServerLogger.h"
+#include "vanadium/ls/LanguageServerSolution.h"
+#include "vanadium/ls/detail/Definition.h"
 
 // TODO: maybe track file version
 struct InlayHintPayload {
