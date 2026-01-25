@@ -1,9 +1,7 @@
 {
   "name": "TTCN-3",
   "scopeName": "source.ttcn3",
-  "fileTypes": [
-    "ttcn"
-  ],
+  "fileTypes": ["ttcn"],
   "patterns": [
     {
       "include": "#comments"
