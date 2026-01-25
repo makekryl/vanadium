@@ -2,8 +2,8 @@
 
 #include <vanadium/ast/ASTNodes.h>
 
-#include "Context.h"
-#include "Rule.h"
+#include "vanadium/lint/Context.h"
+#include "vanadium/lint/Rule.h"
 
 namespace vanadium::lint {
 namespace rules {

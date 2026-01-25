@@ -7,9 +7,9 @@
 #include <string_view>
 #include <unordered_set>
 
-#include "BuiltinRules.h"
-#include "Context.h"
-#include "Rule.h"
+#include "vanadium/lint/BuiltinRules.h"
+#include "vanadium/lint/Context.h"
+#include "vanadium/lint/Rule.h"
 
 namespace vanadium::lint {
 namespace rules {

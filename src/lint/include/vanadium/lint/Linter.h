@@ -9,8 +9,8 @@
 #include <unordered_map>
 #include <vector>
 
-#include "Context.h"
-#include "Rule.h"
+#include "vanadium/lint/Context.h"
+#include "vanadium/lint/Rule.h"
 
 namespace vanadium::lint {
 

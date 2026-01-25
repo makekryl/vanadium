@@ -3,6 +3,9 @@
 #include <oneapi/tbb/task_arena.h>
 #include <vanadium/bin/Bootstrap.h>
 #include <vanadium/core/Program.h>
+#include <vanadium/lint/BuiltinRules.h>
+#include <vanadium/lint/Context.h>
+#include <vanadium/lint/Linter.h>
 
 #include <argparse/argparse.hpp>
 #include <chrono>
@@ -12,10 +15,7 @@
 #include <string>
 #include <thread>
 
-#include "BuiltinRules.h"
-#include "Context.h"
 #include "Filesystem.h"
-#include "Linter.h"
 #include "Solution.h"
 #include "impl/SystemFS.h"
 

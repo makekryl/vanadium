@@ -6,7 +6,7 @@
 #include <set>
 #include <string>
 
-#include "Rule.h"
+#include "vanadium/lint/Rule.h"
 
 namespace vanadium::lint {
 
