@@ -10,47 +10,32 @@
 
 namespace vanadium::ls {
 
-namespace rpc {
-
-using namespace lserver::rpc;
-
-template <glz::string_literal Name, typename Params, typename Result>
-struct Request : Method<Name, Params, Result> {
-  static ExpectedResult<Result> invoke(LsContext&, const Params&);
-};
-
-template <glz::string_literal Name, typename Params, typename Result = lib::jsonrpc::Empty>
-struct Notification : Method<Name, Params, Result> {
-  static void invoke(LsContext&, const Params&);
-};
-
-}  // namespace rpc
+namespace rpc = lserver::rpc;
 
 // subclass over using-alias to avoid too much noise from templates in stacktraces
-#define DECL_METHOD(NAME, HANDLE, TYPE, PARAMS, RESULT, RETVAL) \
-  struct NAME : rpc::TYPE<HANDLE, PARAMS, RESULT> {             \
-    static RETVAL invoke(LsContext&, const PARAMS&);            \
+#define DECL_METHOD(NAME, HANDLE, PARAMS, RESULT, RETVAL) \
+  struct NAME : rpc::Method<HANDLE, PARAMS, RESULT> {     \
+    static RETVAL invoke(LsContext&, const PARAMS&);      \
   };
 
-#define DECL_REQUEST_0(NAME, PARAMS, RESULT) \
-  DECL_METHOD(NAME, #NAME, Request, PARAMS, RESULT, rpc::ExpectedResult<RESULT>)
-#define DECL_REQUEST_1(W0, NAME, PARAMS, RESULT)                                         \
-  namespace W0 {                                                                         \
-  DECL_METHOD(NAME, #W0 "/" #NAME, Request, PARAMS, RESULT, rpc::ExpectedResult<RESULT>) \
+#define DECL_REQUEST_0(NAME, PARAMS, RESULT) DECL_METHOD(NAME, #NAME, PARAMS, RESULT, rpc::ExpectedResult<RESULT>)
+#define DECL_REQUEST_1(W0, NAME, PARAMS, RESULT)                                \
+  namespace W0 {                                                                \
+  DECL_METHOD(NAME, #W0 "/" #NAME, PARAMS, RESULT, rpc::ExpectedResult<RESULT>) \
   }
-#define DECL_REQUEST_2(W0, W1, NAME, PARAMS, RESULT)                                             \
-  namespace W0::W1 {                                                                             \
-  DECL_METHOD(NAME, #W0 "/" #W1 "/" #NAME, Request, PARAMS, RESULT, rpc::ExpectedResult<RESULT>) \
+#define DECL_REQUEST_2(W0, W1, NAME, PARAMS, RESULT)                                    \
+  namespace W0::W1 {                                                                    \
+  DECL_METHOD(NAME, #W0 "/" #W1 "/" #NAME, PARAMS, RESULT, rpc::ExpectedResult<RESULT>) \
   }
 
-#define DECL_NOTIFIC_0(NAME, PARAMS) DECL_METHOD(NAME, #NAME, Notification, PARAMS, lib::jsonrpc::Empty, void)
-#define DECL_NOTIFIC_1(W0, NAME, PARAMS)                                            \
-  namespace W0 {                                                                    \
-  DECL_METHOD(NAME, #W0 "/" #NAME, Notification, PARAMS, lib::jsonrpc::Empty, void) \
+#define DECL_NOTIFIC_0(NAME, PARAMS) DECL_METHOD(NAME, #NAME, PARAMS, lib::jsonrpc::Empty, void)
+#define DECL_NOTIFIC_1(W0, NAME, PARAMS)                              \
+  namespace W0 {                                                      \
+  DECL_METHOD(NAME, #W0 "/" #NAME, PARAMS, lib::jsonrpc::Empty, void) \
   }
-#define DECL_NOTIFIC_2(W0, W1, NAME, PARAMS)                                                \
-  namespace W0::W1 {                                                                        \
-  DECL_METHOD(NAME, #W0 "/" #W1 "/" #NAME, Notification, PARAMS, lib::jsonrpc::Empty, void) \
+#define DECL_NOTIFIC_2(W0, W1, NAME, PARAMS)                                  \
+  namespace W0::W1 {                                                          \
+  DECL_METHOD(NAME, #W0 "/" #W1 "/" #NAME, PARAMS, lib::jsonrpc::Empty, void) \
   }
 
 // NOLINTBEGIN(readability-identifier-naming)
@@ -63,8 +48,8 @@ DECL_REQUEST_0(shutdown, lib::jsonrpc::Empty, std::nullptr_t);
 DECL_NOTIFIC_0(exit, lib::jsonrpc::Empty);
 
 namespace dollar {
-DECL_METHOD(cancelRequest, "$/cancelRequest", Notification, lsp::CancelParams, lib::jsonrpc::Empty, void)
-DECL_METHOD(setTrace, "$/setTrace", Notification, lsp::SetTraceParams, lib::jsonrpc::Empty, void)
+DECL_METHOD(cancelRequest, "$/cancelRequest", lsp::CancelParams, lib::jsonrpc::Empty, void)
+DECL_METHOD(setTrace, "$/setTrace", lsp::SetTraceParams, lib::jsonrpc::Empty, void)
 }  // namespace dollar
 
 // textDocument
