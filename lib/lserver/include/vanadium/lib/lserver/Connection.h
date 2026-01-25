@@ -165,7 +165,7 @@ class Connection {
   struct WaitToken {
     rpc_id_t awaited_id;
     std::optional<PooledMessageToken> response{std::nullopt};
-    std::atomic<bool> satisfied;
+    std::atomic<bool> satisfied{false};
   };
 
   HandlerFn handler_;
