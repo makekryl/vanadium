@@ -63,6 +63,13 @@
         "VANADIUM_USE_UBSAN": "ON"
       }
     },
+    {
+      "name": "tsan",
+      "hidden": true,
+      "cacheVariables": {
+        "VANADIUM_USE_TSAN": "ON"
+      }
+    },
 
     {
       "name": "static",
@@ -97,6 +104,10 @@
     {
       "name": "clang-debug-sanitizers",
       "inherits": ["clang-debug", "asan"]
+    },
+    {
+      "name": "clang-debug-tsan",
+      "inherits": ["clang-debug", "tsan"]
     },
 
     {
