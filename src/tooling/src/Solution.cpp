@@ -6,6 +6,7 @@
 #include <vanadium/core/Program.h>
 #include <vanadium/lib/Error.h>
 
+#include "vanadium/tooling/CompilerExtensionManager.h"
 #include "vanadium/tooling/Filesystem.h"
 #include "vanadium/tooling/Project.h"
 #include "vanadium/tooling/ProjectSorter.h"
@@ -77,6 +78,24 @@ std::expected<Solution, Error> Solution::Load(const fs::Path& path, lib::Consume
   Solution solution(std::move(*root_load_result));
 
   const auto& root_desc = solution.root_project_.Manifest();
+
+  if (root_desc.compiler_extensions) {
+    // This is not good because compiler extensions are global state, and can't be changed per project
+    // On the other hand, it's unlikely that someone'd want to simultaneously load projects built by different compilers
+    std::vector<std::string_view> unknown_extensions;
+    SetCompilerExtensions(*root_desc.compiler_extensions, [&](const auto& bad_ext) {
+      unknown_extensions.emplace_back(std::move(bad_ext));
+    });
+    if (!unknown_extensions.empty()) {
+      std::string err_msg = "Unsupported extensions: ";
+      for (const auto& ext : unknown_extensions) {
+        err_msg += ext;
+        err_msg += ", ";
+      }
+      err_msg.resize(err_msg.size() - 2);
+      return std::unexpected{Error{std::move(err_msg)}};
+    }
+  }
 
   if (root_desc.external) {
     for (const auto& [ext_name, ext_desc] : *root_desc.external) {

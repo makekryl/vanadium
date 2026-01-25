@@ -41,7 +41,7 @@ namespace vanadium::asn1::ast {
 
 namespace compilerExtensions {
 bool eag_grouping = false;
-}  // namespace compilerExtensions
+}
 
 namespace {
 constexpr auto kBuiltinTypeMapping = lib::MakeStaticMap<asn1p_expr_type_e, std::string_view>({

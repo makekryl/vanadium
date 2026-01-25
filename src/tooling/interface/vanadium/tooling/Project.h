@@ -15,8 +15,7 @@ namespace vanadium {
 namespace tooling {
 
 // reflectcpp does not support reading into string_views
-// despite we're not asking for any lifetime guarantees,
-// and this is extremely disappointing
+// despite we're not asking for any lifetime guarantees
 
 struct ExternalProjectDescriptor {
   std::string path;
@@ -34,6 +33,8 @@ struct ProjectManifest {
   } project;
 
   std::optional<std::unordered_map<std::string, ExternalProjectDescriptor>> external;
+
+  std::optional<std::vector<std::string>> compiler_extensions;
 };
 
 class Project {

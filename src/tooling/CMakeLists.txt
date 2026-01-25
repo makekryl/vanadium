@@ -2,6 +2,7 @@ add_library(vanadium_tooling STATIC
   src/Project.cpp
   src/Solution.cpp
   src/ProjectSorter.cpp
+  src/CompilerExtensionManager.cpp
   src/impl/SystemFS.cpp
 )
 

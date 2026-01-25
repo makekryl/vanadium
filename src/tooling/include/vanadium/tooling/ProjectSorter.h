@@ -1,7 +1,5 @@
 #pragma once
 
-// TODO: split include/ into include/ and interface/, keep this header private
-
 #include <optional>
 #include <unordered_map>
 #include <vector>
