@@ -18,6 +18,7 @@ namespace vanadium::asn1::ast {
 namespace {
 std::vector<pos_t> CollectLineStarts(std::string_view src) {
   std::vector<pos_t> line_starts;
+  line_starts.push_back(0);
   for (std::size_t i = 0; i < src.size(); ++i) {
     if (src[i] == '\n') {
       line_starts.push_back(i + 1);
