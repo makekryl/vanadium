@@ -59,7 +59,7 @@ Asn1cAstWrapper Parse(lib::Arena& arena, std::string_view src) {
   });
 
   std::vector<Asn1cSyntaxError> errors(errs.size);
-  for (int i = 0; i < errs.size; i++) {
+  for (std::size_t i = 0; i < errs.size; i++) {
     errors[i].range = {
         .begin = errs.data[i].range.begin,
         .end = errs.data[i].range.end,
