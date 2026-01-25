@@ -16,7 +16,6 @@
 //  2) look for references in other files
 
 namespace vanadium::ls {
-template <>
 rpc::ExpectedResult<lsp::ReferencesResult> methods::textDocument::references::invoke(
     LsContext& ctx, const lsp::ReferenceParams& params) {
   auto res = ctx.WithFile<lsp::ReferencesResult>(

@@ -47,7 +47,6 @@ lsp::DefinitionResult ProvideDefinition(const lsp::DefinitionParams& params, con
 }
 }  // namespace
 
-template <>
 rpc::ExpectedResult<lsp::DefinitionResult> methods::textDocument::definition::invoke(
     LsContext& ctx, const lsp::DefinitionParams& params) {
   return ctx.WithFile<lsp::DefinitionResult>(params, ProvideDefinition).value_or(nullptr);

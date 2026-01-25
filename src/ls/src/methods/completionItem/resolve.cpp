@@ -4,7 +4,6 @@
 #include "detail/Completion.h"
 
 namespace vanadium::ls {
-template <>
 rpc::ExpectedResult<lsp::CompletionItem> methods::completionItem::resolve::invoke(LsContext& ctx,
                                                                                   const lsp::CompletionItem& item) {
   return ctx.LockData([&](LsSessionRef d) {

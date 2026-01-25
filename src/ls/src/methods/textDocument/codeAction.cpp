@@ -6,7 +6,6 @@
 #include "LanguageServerMethods.h"
 
 namespace vanadium::ls {
-template <>
 rpc::ExpectedResult<lsp::CodeActionResult> methods::textDocument::codeAction::invoke(
     LsContext& ctx, const lsp::CodeActionParams& params) {
   return ctx.WithFile<lsp::CodeActionResult>(params, detail::ProvideCodeActions).value_or(nullptr);

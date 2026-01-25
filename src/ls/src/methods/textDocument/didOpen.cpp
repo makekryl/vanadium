@@ -10,7 +10,6 @@
 #include "detail/Diagnostic.h"
 
 namespace vanadium::ls {
-template <>
 void methods::textDocument::didOpen::invoke(LsContext& ctx, const lsp::DidOpenTextDocumentParams& params) {
   ctx.LockData([&](LsSessionRef d) {
     const auto& resolution = ctx.ResolveFileUri(params.textDocument.uri);

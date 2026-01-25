@@ -26,23 +26,32 @@ struct Notification : Method<Name, Params, Result> {
 
 }  // namespace rpc
 
-#define DECL_METHOD_0(NAME, TYPE, PARAMS, RESULT) using NAME = rpc::TYPE<#NAME, PARAMS, RESULT>
-#define DECL_METHOD_1(W0, NAME, TYPE, PARAMS, RESULT)    \
-  namespace W0 {                                         \
-  using NAME = rpc::TYPE<#W0 "/" #NAME, PARAMS, RESULT>; \
+// subclass over using-alias to avoid too much noise from templates in stacktraces
+#define DECL_METHOD(NAME, HANDLE, TYPE, PARAMS, RESULT, RETVAL) \
+  struct NAME : rpc::TYPE<HANDLE, PARAMS, RESULT> {             \
+    static RETVAL invoke(LsContext&, const PARAMS&);            \
+  };
+
+#define DECL_REQUEST_0(NAME, PARAMS, RESULT) \
+  DECL_METHOD(NAME, #NAME, Request, PARAMS, RESULT, rpc::ExpectedResult<RESULT>)
+#define DECL_REQUEST_1(W0, NAME, PARAMS, RESULT)                                         \
+  namespace W0 {                                                                         \
+  DECL_METHOD(NAME, #W0 "/" #NAME, Request, PARAMS, RESULT, rpc::ExpectedResult<RESULT>) \
   }
-#define DECL_METHOD_2(W0, W1, NAME, TYPE, PARAMS, RESULT)        \
-  namespace W0::W1 {                                             \
-  using NAME = rpc::TYPE<#W0 "/" #W1 "/" #NAME, PARAMS, RESULT>; \
+#define DECL_REQUEST_2(W0, W1, NAME, PARAMS, RESULT)                                             \
+  namespace W0::W1 {                                                                             \
+  DECL_METHOD(NAME, #W0 "/" #W1 "/" #NAME, Request, PARAMS, RESULT, rpc::ExpectedResult<RESULT>) \
   }
 
-#define DECL_REQUEST_0(NAME, PARAMS, RESULT) DECL_METHOD_0(NAME, Request, PARAMS, RESULT)
-#define DECL_REQUEST_1(W0, NAME, PARAMS, RESULT) DECL_METHOD_1(W0, NAME, Request, PARAMS, RESULT)
-#define DECL_REQUEST_2(W0, W1, NAME, PARAMS, RESULT) DECL_METHOD_2(W0, W1, NAME, Request, PARAMS, RESULT)
-
-#define DECL_NOTIFIC_0(NAME, PARAMS) DECL_METHOD_0(NAME, Notification, PARAMS, lib::jsonrpc::Empty)
-#define DECL_NOTIFIC_1(W0, NAME, PARAMS) DECL_METHOD_1(W0, NAME, Notification, PARAMS, lib::jsonrpc::Empty)
-#define DECL_NOTIFIC_2(W0, W1, NAME, PARAMS) DECL_METHOD_2(W0, W1, NAME, Notification, PARAMS, lib::jsonrpc::Empty)
+#define DECL_NOTIFIC_0(NAME, PARAMS) DECL_METHOD(NAME, #NAME, Notification, PARAMS, lib::jsonrpc::Empty, void)
+#define DECL_NOTIFIC_1(W0, NAME, PARAMS)                                            \
+  namespace W0 {                                                                    \
+  DECL_METHOD(NAME, #W0 "/" #NAME, Notification, PARAMS, lib::jsonrpc::Empty, void) \
+  }
+#define DECL_NOTIFIC_2(W0, W1, NAME, PARAMS)                                                \
+  namespace W0::W1 {                                                                        \
+  DECL_METHOD(NAME, #W0 "/" #W1 "/" #NAME, Notification, PARAMS, lib::jsonrpc::Empty, void) \
+  }
 
 // NOLINTBEGIN(readability-identifier-naming)
 
@@ -54,8 +63,8 @@ DECL_REQUEST_0(shutdown, lib::jsonrpc::Empty, std::nullptr_t);
 DECL_NOTIFIC_0(exit, lib::jsonrpc::Empty);
 
 namespace dollar {
-using cancelRequest = rpc::Notification<"$/cancelRequest", lsp::CancelParams>;
-using setTrace = rpc::Notification<"$/setTrace", lsp::SetTraceParams>;
+DECL_METHOD(cancelRequest, "$/cancelRequest", Notification, lsp::CancelParams, lib::jsonrpc::Empty, void)
+DECL_METHOD(setTrace, "$/setTrace", Notification, lsp::SetTraceParams, lib::jsonrpc::Empty, void)
 }  // namespace dollar
 
 // textDocument
@@ -94,9 +103,7 @@ DECL_REQUEST_1(inlayHint, resolve, lsp::InlayHint, lsp::InlayHint);
 #undef DECL_REQUEST_2
 #undef DECL_REQUEST_1
 #undef DECL_REQUEST_0
-#undef DECL_METHOD_2
-#undef DECL_METHOD_1
-#undef DECL_METHOD_0
+#undef DECL_METHOD
 
 // NOLINTEND(readability-identifier-naming)
 

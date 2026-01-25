@@ -341,7 +341,6 @@ lsp::DocumentSybmolResult GatherResult(const lsp::DocumentSymbolParams&, const c
 }
 }  // namespace
 
-template <>
 rpc::ExpectedResult<lsp::DocumentSybmolResult> methods::textDocument::documentSymbol::invoke(
     LsContext& ctx, const lsp::DocumentSymbolParams& params) {
   return ctx.WithFile<lsp::DocumentSybmolResult>(params, GatherResult).value_or(nullptr);

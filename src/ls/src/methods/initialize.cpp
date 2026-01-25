@@ -18,7 +18,6 @@ namespace testflags {
 bool do_not_skip_full_analysis{false};
 }
 
-template <>
 rpc::ExpectedResult<lsp::InitializeResult> methods::initialize::invoke(LsContext& ctx,
                                                                        const lsp::InitializeParams& params) {
   VLS_INFO("Initializing... (jobs={}, concurrency={})", ctx.task_arena.max_concurrency(),

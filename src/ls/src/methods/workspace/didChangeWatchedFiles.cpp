@@ -61,7 +61,6 @@ namespace {
 }
 }  // namespace
 
-template <>
 void methods::workspace::didChangeWatchedFiles::invoke(LsContext& ctx, const lsp::DidChangeWatchedFilesParams& params) {
   ctx.LockData([&](LsSessionRef) {
     if (params.changes.size() == 1) {

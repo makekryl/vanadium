@@ -182,7 +182,6 @@ lsp::SemanticTokens CollectSemanticTokens(const lsp::SemanticTokensRangeParams& 
   return result;
 }
 
-template <>
 rpc::ExpectedResult<lsp::SemanticTokensRangeResult> methods::textDocument::semanticTokens::range::invoke(
     LsContext& ctx, const lsp::SemanticTokensRangeParams& params) {
   return ctx.WithFile<lsp::SemanticTokensRangeResult>(params, CollectSemanticTokens).value_or(nullptr);

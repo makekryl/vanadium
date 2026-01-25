@@ -377,7 +377,7 @@ lsp::HoverResult ProvideHover(const lsp::HoverParams& params, const core::Source
         return provider_file->ast.Text(*m->name);
       }());
       builder.WithWriter([&](auto w) {
-        std::format_to(w, "Type: `{}`", provider_file->ast.Text(m->type));
+        std::format_to(w, "Type: `{}` / `{}`", provider_file->ast.Text(m->type), sym->GetName());
       });
       builder.WriteSeparator();
       builder.WriteCodeBlock(provider_file->ast.Text(m));
@@ -484,7 +484,6 @@ lsp::HoverResult ProvideHover(const lsp::HoverParams& params, const core::Source
 }
 }  // namespace
 
-template <>
 rpc::ExpectedResult<lsp::HoverResult> methods::textDocument::hover::invoke(LsContext& ctx,
                                                                            const lsp::HoverParams& params) {
   return ctx.WithFile<lsp::HoverResult>(params, ProvideHover).value_or(nullptr);

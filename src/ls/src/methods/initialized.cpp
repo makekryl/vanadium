@@ -23,7 +23,6 @@ template <typename T>
 }  // namespace
 
 namespace vanadium::ls {
-template <>
 void methods::initialized::invoke(LsContext& ctx, const lib::jsonrpc::Empty&) {
   ctx.connection->Request<"client/registerCapability", lserver::NoAwaitResponse /*<std::nullptr_t>*/>(
       lsp::RegistrationParams{
