@@ -9,8 +9,21 @@ RUN if [ "${REINSTALL_CMAKE_VERSION_FROM_SOURCE}" != "none" ]; then \
 
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install --no-install-recommends \
-      gcc-14 g++-14 gdb \
-      clang-19 lldb \
-      valgrind \
-      ninja-build \
-    && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/*
+        gdb \
+        valgrind \
+        ninja-build \
+    && apt-get clean -y && rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
+    && apt-get -y install --no-install-recommends \
+        gcc-14 g++-14 \
+        clang-19 clang-format-19 \
+    && apt-get clean -y && rm -rf /var/lib/apt/lists/* \
+    \
+    && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100 \
+    && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 100 \
+    \
+    && update-alternatives --install /usr/bin/clang clang /usr/bin/clang-19 100 \
+    && update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-19 100 \
+    \
+    && update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-19 100
