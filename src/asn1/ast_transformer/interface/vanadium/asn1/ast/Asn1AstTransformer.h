@@ -29,4 +29,8 @@ using Asn1pModuleProvider = lib::FunctionRef<const asn1p_module_t*(const char*)>
 
 TransformedAsn1Ast TransformAsn1Ast(const asn1p_t* ast, std::string_view src, lib::Arena& arena, Asn1pModuleProvider);
 
+namespace compilerExtensions {
+extern bool eag_grouping;
+}
+
 }  // namespace vanadium::asn1::ast

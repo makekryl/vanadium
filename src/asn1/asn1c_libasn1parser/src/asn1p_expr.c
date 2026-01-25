@@ -303,10 +303,18 @@ asn1p_expr_add(asn1p_expr_t *to, asn1p_expr_t *what) {
 void
 asn1p_expr_add_many(asn1p_expr_t *to, asn1p_expr_t *from_what) {
 	asn1p_expr_t *expr;
+
+  expr = TQ_FIRST(&(from_what->members));
+  if (expr) {
+    expr->eag_level.is_first = 1;
+  }
+
 	TQ_FOR(expr, &(from_what->members), next) {
 		expr->parent_expr = to;
+    ++expr->eag_level.value;
 	}
-	TQ_CONCAT(&(to->members), &(from_what->members), next);
+
+  TQ_CONCAT(&(to->members), &(from_what->members), next);
 }
 
 /*

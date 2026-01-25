@@ -38,6 +38,10 @@
 
 namespace vanadium::asn1::ast {
 
+namespace compilerExtensions {
+bool eag_grouping = false;
+}  // namespace compilerExtensions
+
 namespace {
 constexpr auto kBuiltinTypeMapping = lib::MakeStaticMap<asn1p_expr_type_e, std::string_view>({
     {ASN_BASIC_NULL, "___asn1_NULL_t"},
@@ -528,19 +532,83 @@ class AstTransformer {
     });
   }
 
+  void TransformStructFields(const asn1p_expr_t* expr, std::vector<ttcn_ast::nodes::Field*>& fields) {
+    if (!compilerExtensions::eag_grouping) {
+      asn1p_expr_t* se;
+      TQ_FOR(se, &(expr->members), next) {
+        if (auto* dn = TransformComponent(se); dn) {
+          if (se->eag_level.value > 0) {
+            dn->optional = true;
+          }
+          fields.push_back(dn);
+        }
+      }
+      return;
+    }
+
+    /*
+     * SEQUENCE {
+     *   a INTEGER,
+     *   ...,
+     *   [[                   <- ver1
+     *       b INTEGER,
+     *       [[               <- ver1.ver1
+     *          c BOOLEAN
+     *       ]],
+     *       [[               <- ver1.ver2
+     *          d BOOLEAN
+     *       ]],
+     *       e INTEGER
+     *   ]],
+     *   [[                   <- ver2
+     *       f INTEGER
+     *   ]],
+     *   g INTEGER
+     * }
+     */
+
+    const asn1p_expr_t* se = TQ_FIRST(&(expr->members));
+    const auto transform_version = [&](this auto&& self, std::uint16_t current_level,
+                                       std::vector<ttcn_ast::nodes::Field*>& current_fields) -> void {
+      std::uint16_t current_ver = 0;
+      while (se) {
+        if (se->eag_level.value < current_level) {
+          break;
+        }
+
+        if (se->eag_level.value > current_level) {
+          ++current_ver;
+          current_fields.push_back(NewNode<ttcn_ast::nodes::Field>([&](ttcn_ast::nodes::Field& f) {
+            EmplaceIdent(f.name, AppendSource(std::format("ver{}", current_ver)));
+            f.optional = true;
+            f.type = NewNode<ttcn_ast::nodes::StructSpec>([&](ttcn_ast::nodes::StructSpec& m) {
+              m.kind = Tok(ttcn_ast::TokenKind::RECORD);
+              self(se->eag_level.value, m.fields);  // <--
+            });
+          }));
+          continue;
+        }
+
+        if (!current_fields.empty() && se->eag_level.is_first) {
+          break;
+        }
+        if (auto* dn = TransformComponent(se); dn) {
+          current_fields.push_back(dn);
+        }
+
+        se = TQ_NEXT(se, next);
+      }
+    };
+    transform_version(0, fields);
+  }
+
   ttcn_ast::nodes::StructTypeDecl* TransformStruct(ttcn_ast::TokenKind kind /* RECORD/SET/UNION */,
                                                    const asn1p_expr_t* expr) {
     return NewNode<ttcn_ast::nodes::StructTypeDecl>([&](ttcn_ast::nodes::StructTypeDecl& m) {
       m.kind = Tok(kind);
 
       EmplaceIdent(m.name, ConsumeRange(expr));
-
-      asn1p_expr_t* se;
-      TQ_FOR(se, &(expr->members), next) {
-        if (auto* dn = TransformComponent(se); dn) {
-          m.fields.push_back(dn);
-        }
-      }
+      TransformStructFields(expr, m.fields);
     });
   }
 
@@ -548,13 +616,7 @@ class AstTransformer {
                                                     const asn1p_expr_t* expr) {
     return NewNode<ttcn_ast::nodes::StructSpec>([&](ttcn_ast::nodes::StructSpec& m) {
       m.kind = Tok(kind);
-
-      asn1p_expr_t* se;
-      TQ_FOR(se, &(expr->members), next) {
-        if (auto* dn = TransformComponent(se); dn) {
-          m.fields.push_back(dn);
-        }
-      }
+      TransformStructFields(expr, m.fields);
     });
   }
 

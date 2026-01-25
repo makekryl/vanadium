@@ -223,6 +223,14 @@ typedef struct asn1p_expr_s {
 	 */
 	int auto_tags_OK;
 
+  /*
+   * Extension addition group nesting in relation to the root expression
+   */
+  struct {
+    uint8_t is_first;
+    uint16_t value;
+  } eag_level;
+
 	/*
 	 * Members of the constructed type.
 	 */
