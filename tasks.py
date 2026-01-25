@@ -2,6 +2,7 @@ from invoke import Collection, Context, Task, UnexpectedExit, task
 from invoke.runners import Local as LocalRunner
 from invoke.runners import Result as RunResult
 
+from inv.common.colors import colors
 from inv.tasks import build, check, extension, test
 
 
@@ -18,7 +19,7 @@ class AlertingLocalRunner(LocalRunner):
       if not kwargs.get("hide"):
         result: RunResult = err.result
         print(
-          "\033[1;31m ✕ Command '\033[22m{cmd}\033[1m' exited with code {code}\033[0m".format(
+          f"{colors.RED}{colors.BOLD} ✕ Command '{colors.NO_INTENSITY}{{cmd}}{colors.BOLD}' exited with code {{code}}{colors.END}".format(
             cmd=result.command,
             code=result.return_code,
           )
@@ -36,7 +37,7 @@ ns.add_collection(test)
 ns.configure(
   {
     "run": {
-      "echo_format": "\033[1;37m ⟶ {command}\033[0m",
+      "echo_format": f"{colors.LIGHT_GRAY}{colors.BOLD} ⟶ {{command}}{colors.END}",
       "echo": True,
       "pty": True,
     },
