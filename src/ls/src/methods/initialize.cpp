@@ -56,6 +56,8 @@ rpc::ExpectedResult<lsp::InitializeResult> methods::initialize::invoke(LsContext
                      .message = ctx.Temp<std::string>(std::format("Solution initialization failed:\n{}", err_message)),
                  });
       }
+    } else {
+      VLS_WARN("Manifest file does not exist");
     }
   }
 
