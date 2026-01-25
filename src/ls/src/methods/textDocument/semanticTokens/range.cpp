@@ -1,14 +1,15 @@
+#include <concepts>
+#include <utility>
+
 #include <LSProtocol.h>
 #include <LSProtocolEx.h>
+
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/utils/ASTUtils.h>
 #include <vanadium/core/Program.h>
 #include <vanadium/core/Semantic.h>
 #include <vanadium/core/TypeChecker.h>
 #include <vanadium/core/utils/ScopedNodeVisitor.h>
-
-#include <concepts>
-#include <utility>
 
 #include "vanadium/ls/LanguageServerContext.h"
 #include "vanadium/ls/LanguageServerConv.h"

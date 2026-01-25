@@ -1,8 +1,8 @@
 #pragma once
 
-#include <vanadium/lib/FunctionRef.h>
-
 #include <string>
+
+#include <vanadium/lib/FunctionRef.h>
 
 #include "vanadium/asn1/ast/ClassObjectParser.h"
 

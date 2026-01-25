@@ -1,9 +1,9 @@
 #pragma once
 
-#include <oneapi/tbb/concurrent_queue.h>
-
 #include <utility>
 #include <vector>
+
+#include <oneapi/tbb/concurrent_queue.h>
 
 namespace vanadium::lserver {
 

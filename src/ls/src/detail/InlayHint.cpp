@@ -1,6 +1,16 @@
 #include "detail/InlayHint.h"
 
+#include <algorithm>
+#include <stack>
+#include <string_view>
+#include <type_traits>
+#include <utility>
+#include <variant>
+
+#include <glaze/json.hpp>
+
 #include <LSProtocol.h>
+
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/ASTTypes.h>
 #include <vanadium/ast/utils/ASTUtils.h>
@@ -10,19 +20,12 @@
 #include <vanadium/core/utils/ScopedNodeVisitor.h>
 #include <vanadium/core/utils/SemanticUtils.h>
 
-#include <algorithm>
-#include <glaze/json.hpp>
-#include <stack>
-#include <string_view>
-#include <type_traits>
-#include <utility>
-#include <variant>
-
-#include "Solution.h"
 #include "vanadium/ls/LanguageServerConv.h"
 #include "vanadium/ls/LanguageServerLogger.h"
 #include "vanadium/ls/LanguageServerSolution.h"
 #include "vanadium/ls/detail/Definition.h"
+
+#include "Solution.h"
 
 // TODO: maybe track file version
 struct InlayHintPayload {

@@ -1,4 +1,5 @@
 #include <LSProtocol.h>
+
 #include <vanadium/core/Program.h>
 
 #include "vanadium/ls/LanguageServerContext.h"

@@ -1,17 +1,18 @@
-#include <vanadium/asn1/ast/Asn1ModuleBasket.h>
-#include <vanadium/asn1/xast/Asn1Transparser.h>
-#include <vanadium/ast/AST.h>
-#include <vanadium/ast/Parser.h>
-#include <vanadium/bin/Bootstrap.h>
-#include <vanadium/lib/Arena.h>
-
-#include <argparse/argparse.hpp>
 #include <chrono>
 #include <format>
 #include <fstream>
 #include <iostream>
 #include <print>
 #include <sstream>
+
+#include <argparse/argparse.hpp>
+
+#include <vanadium/asn1/ast/Asn1ModuleBasket.h>
+#include <vanadium/asn1/xast/Asn1Transparser.h>
+#include <vanadium/ast/AST.h>
+#include <vanadium/ast/Parser.h>
+#include <vanadium/bin/Bootstrap.h>
+#include <vanadium/lib/Arena.h>
 
 #include "vanadium/bin/astdump/AsciiColors.h"
 #include "vanadium/bin/astdump/TextDumper.h"

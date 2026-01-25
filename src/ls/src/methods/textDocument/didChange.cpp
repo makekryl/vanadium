@@ -1,8 +1,9 @@
-#include <LSProtocol.h>
-#include <vanadium/core/Program.h>
-
 #include <string_view>
 #include <variant>
+
+#include <LSProtocol.h>
+
+#include <vanadium/core/Program.h>
 
 #include "vanadium/ls/LanguageServerContext.h"
 #include "vanadium/ls/LanguageServerConv.h"

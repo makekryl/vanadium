@@ -4,3 +4,29 @@ ColumnLimit: 120
 
 AllowShortFunctionsOnASingleLine: Empty
 AllowShortLambdasOnASingleLine: Empty
+
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex:           '^<(gtest|gmock)/'
+    Priority:        1
+  #
+  - Regex:           '^<(c.*|[a-z_]+)>$'
+    Priority:        2
+  #
+  - Regex:           '^<(argparse|fmt|glaze|magic_enum|reflectcpp|oneapi)/'
+    Priority:        3
+  #
+  - Regex:           '^<asn1c/'
+    Priority:        3
+  #
+  - Regex:           '^<vanadium/'
+    Priority:        5
+  #
+  - Regex:           '^"vanadium/'
+    Priority:        6
+  #
+  - Regex:           '^<.*>$'
+    Priority:        4
+  #
+  - Regex:           '^".*"$'
+    Priority:        7

@@ -1,10 +1,10 @@
 #pragma once
 
+#include <vector>
+
 #include <vanadium/ast/AST.h>
 #include <vanadium/lib/Arena.h>
 #include <vanadium/lib/FunctionRef.h>
-
-#include <vector>
 
 using asn1p_t = struct asn1p_s;
 using asn1p_module_t = struct asn1p_module_s;

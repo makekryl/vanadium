@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <expected>
+
 #include <rfl/toml.hpp>
 
 #include "Filesystem.h"

@@ -1,16 +1,18 @@
-#include <LSProtocol.h>
-#include <vanadium/core/Program.h>
-
 #include <filesystem>
 
-#include "Filesystem.h"
-#include "Solution.h"
-#include "impl/SystemFS.h"
+#include <LSProtocol.h>
+
+#include <vanadium/core/Program.h>
+
 #include "vanadium/ls/LanguageServerClientMessaging.h"
 #include "vanadium/ls/LanguageServerContext.h"
 #include "vanadium/ls/LanguageServerLogger.h"
 #include "vanadium/ls/LanguageServerMethods.h"
 #include "vanadium/ls/LanguageServerTestFlags.h"
+
+#include "Filesystem.h"
+#include "Solution.h"
+#include "impl/SystemFS.h"
 
 namespace vanadium::ls {
 

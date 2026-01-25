@@ -1,11 +1,11 @@
-#include <vanadium/ast/ASTNodes.h>
-#include <vanadium/core/Program.h>
-
 #include <cstdio>
 #include <format>
 #include <ranges>
 #include <string_view>
 #include <unordered_set>
+
+#include <vanadium/ast/ASTNodes.h>
+#include <vanadium/core/Program.h>
 
 #include "vanadium/lint/BuiltinRules.h"
 #include "vanadium/lint/Context.h"

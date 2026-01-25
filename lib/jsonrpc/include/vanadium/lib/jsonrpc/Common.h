@@ -1,10 +1,11 @@
 #pragma once
 
 #include <cstdint>
-#include <glaze/json.hpp>
 #include <string>
 #include <string_view>
 #include <type_traits>
+
+#include <glaze/json.hpp>
 
 // Based on <glaze/ext/jsonrpc.hpp>
 

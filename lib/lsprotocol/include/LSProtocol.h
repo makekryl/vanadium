@@ -6,12 +6,13 @@
 #pragma once
 
 #include <cstdint>
-#include <glaze/json.hpp>
 #include <optional>
 #include <string_view>
 #include <tuple>
 #include <variant>
 #include <vector>
+
+#include <glaze/json.hpp>
 
 // NOLINTBEGIN(readability-identifier-naming)
 

@@ -1,10 +1,10 @@
+#include <format>
+#include <ranges>
+
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/ASTTypes.h>
 #include <vanadium/ast/utils/ASTUtils.h>
 #include <vanadium/core/Semantic.h>
-
-#include <format>
-#include <ranges>
 
 #include "vanadium/lint/BuiltinRules.h"
 #include "vanadium/lint/Context.h"

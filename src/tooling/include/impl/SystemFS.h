@@ -1,11 +1,11 @@
 #pragma once
 
-#include <vanadium/lib/Error.h>
-#include <vanadium/lib/FunctionRef.h>
-
 #include <optional>
 #include <string>
 #include <string_view>
+
+#include <vanadium/lib/Error.h>
+#include <vanadium/lib/FunctionRef.h>
 
 #include "Filesystem.h"
 

@@ -1,8 +1,10 @@
-#include <LSProtocol.h>
-#include <vanadium/core/Program.h>
+#include <utility>
 
 #include <magic_enum/magic_enum.hpp>
-#include <utility>
+
+#include <LSProtocol.h>
+
+#include <vanadium/core/Program.h>
 
 #include "vanadium/ls/LanguageServerContext.h"
 #include "vanadium/ls/LanguageServerLogger.h"

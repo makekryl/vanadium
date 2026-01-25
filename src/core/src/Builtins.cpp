@@ -1,12 +1,12 @@
 #include "vanadium/core/Builtins.h"
 
+#include <print>
+
 #include <vanadium/ast/AST.h>
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/Parser.h>
 #include <vanadium/lib/Arena.h>
 #include <vanadium/lib/StaticMap.h>
-
-#include <print>
 
 #include "vanadium/core/BuiltinsSuperbases.h"
 #include "vanadium/core/Program.h"

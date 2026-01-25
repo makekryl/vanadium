@@ -1,16 +1,16 @@
 #pragma once
 
-#include <vanadium/asn1/ast/Asn1cAstWrapper.h>
-#include <vanadium/ast/AST.h>
-#include <vanadium/ast/ASTTypes.h>
-#include <vanadium/lib/Arena.h>
-#include <vanadium/lib/FunctionRef.h>
-
 #include <mutex>
 #include <ranges>
 #include <string_view>
 #include <unordered_map>
 #include <vector>
+
+#include <vanadium/asn1/ast/Asn1cAstWrapper.h>
+#include <vanadium/ast/AST.h>
+#include <vanadium/ast/ASTTypes.h>
+#include <vanadium/lib/Arena.h>
+#include <vanadium/lib/FunctionRef.h>
 
 namespace vanadium::asn1::ast {
 

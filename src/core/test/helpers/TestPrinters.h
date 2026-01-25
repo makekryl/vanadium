@@ -1,12 +1,13 @@
 #pragma once
 // IWYU pragma: always_keep
 
+#include <iostream>
+#include <vector>
+
+#include <magic_enum/magic_enum.hpp>
+
 #include <vanadium/ast/ASTTypes.h>
 #include <vanadium/core/Semantic.h>
-
-#include <iostream>
-#include <magic_enum/magic_enum.hpp>
-#include <vector>
 
 namespace vanadium {
 

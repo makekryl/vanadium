@@ -1,15 +1,16 @@
 #include "vanadium/asn1/ast/Asn1ModuleBasket.h"
 
-#include <asn1c/libasn1parser/asn1parser_cxx.h>
-#include <vanadium/asn1/ast/Asn1cAstWrapper.h>
-#include <vanadium/ast/ASTTypes.h>
-#include <vanadium/lib/Arena.h>
-#include <vanadium/lib/FunctionRef.h>
-
 #include <mutex>
 #include <string_view>
 #include <unordered_map>
 #include <vector>
+
+#include <asn1c/libasn1parser/asn1parser_cxx.h>
+
+#include <vanadium/asn1/ast/Asn1cAstWrapper.h>
+#include <vanadium/ast/ASTTypes.h>
+#include <vanadium/lib/Arena.h>
+#include <vanadium/lib/FunctionRef.h>
 
 #include "vanadium/asn1/ast/Asn1AstTransformer.h"
 

@@ -1,14 +1,16 @@
 #include <gtest/gtest.h>
-#include <vanadium/ast/ASTTypes.h>
-#include <vanadium/core/Program.h>
-#include <vanadium/testing/gtest_helpers.h>
-#include <vanadium/testing/utils.h>
 
 #include <algorithm>
 #include <concepts>
 #include <filesystem>
 #include <fstream>
+
 #include <magic_enum/magic_enum.hpp>
+
+#include <vanadium/ast/ASTTypes.h>
+#include <vanadium/core/Program.h>
+#include <vanadium/testing/gtest_helpers.h>
+#include <vanadium/testing/utils.h>
 
 #include "CoreTests.h"
 #include "RunnerOpts.h"

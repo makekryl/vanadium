@@ -1,9 +1,9 @@
 #include "vanadium/asn1/xast/Asn1Scanner.h"
 
-#include <vanadium/lib/StaticMap.h>
-
 #include <cctype>
 #include <string_view>
+
+#include <vanadium/lib/StaticMap.h>
 
 #include "vanadium/asn1/xast/Asn1AST.h"
 

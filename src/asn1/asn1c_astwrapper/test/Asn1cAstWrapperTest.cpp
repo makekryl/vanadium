@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+
 #include <vanadium/lib/Arena.h>
 
 #include "vanadium/asn1/ast/Asn1cAstWrapper.h"

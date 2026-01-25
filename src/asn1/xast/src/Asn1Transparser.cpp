@@ -1,10 +1,5 @@
 #include "vanadium/asn1/xast/Asn1Transparser.h"
 
-#include <vanadium/ast/AST.h>
-#include <vanadium/ast/ASTNodes.h>
-#include <vanadium/ast/ASTTypes.h>
-#include <vanadium/ast/Scanner.h>
-
 #include <algorithm>
 #include <cctype>
 #include <charconv>
@@ -14,12 +9,18 @@
 #include <format>
 #include <iomanip>
 #include <iostream>
-#include <magic_enum/magic_enum.hpp>
 #include <memory>
 #include <optional>
 #include <stacktrace>
 #include <string_view>
 #include <utility>
+
+#include <magic_enum/magic_enum.hpp>
+
+#include <vanadium/ast/AST.h>
+#include <vanadium/ast/ASTNodes.h>
+#include <vanadium/ast/ASTTypes.h>
+#include <vanadium/ast/Scanner.h>
 
 #include "vanadium/asn1/xast/Asn1AST.h"
 #include "vanadium/asn1/xast/Asn1Scanner.h"

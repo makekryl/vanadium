@@ -1,10 +1,3 @@
-#include <vanadium/ast/AST.h>
-#include <vanadium/ast/ASTNodes.h>
-#include <vanadium/ast/ASTTypes.h>
-#include <vanadium/ast/utils/ASTUtils.h>
-#include <vanadium/lib/Bitset.h>
-#include <vanadium/lib/DelimitedStringView.h>
-
 #include <algorithm>
 #include <cassert>
 #include <memory>
@@ -14,6 +7,13 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+
+#include <vanadium/ast/AST.h>
+#include <vanadium/ast/ASTNodes.h>
+#include <vanadium/ast/ASTTypes.h>
+#include <vanadium/ast/utils/ASTUtils.h>
+#include <vanadium/lib/Bitset.h>
+#include <vanadium/lib/DelimitedStringView.h>
 
 #include "vanadium/core/Program.h"
 #include "vanadium/core/Semantic.h"

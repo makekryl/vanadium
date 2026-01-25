@@ -1,16 +1,17 @@
 #pragma once
 
+#include <condition_variable>
+#include <cstddef>
+#include <expected>
+#include <type_traits>
+
+#include <glaze/json.hpp>
 #include <oneapi/tbb/concurrent_unordered_map.h>
 #include <oneapi/tbb/spin_rw_mutex.h>
 #include <oneapi/tbb/task_arena.h>
 #include <oneapi/tbb/task_group.h>
-#include <vanadium/lib/jsonrpc/Common.h>
 
-#include <condition_variable>
-#include <cstddef>
-#include <expected>
-#include <glaze/json.hpp>
-#include <type_traits>
+#include <vanadium/lib/jsonrpc/Common.h>
 
 #include "vanadium/lib/lserver/Channel.h"
 #include "vanadium/lib/lserver/MessageToken.h"

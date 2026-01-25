@@ -1,19 +1,20 @@
 #pragma once
 
+#include <cassert>
+#include <cmath>
+#include <format>
+#include <iostream>
+#include <ostream>
+#include <ranges>
+#include <string_view>
+
+#include <magic_enum/magic_enum.hpp>
+
 #include <vanadium/ast/AST.h>
 #include <vanadium/ast/ASTDumper.h>
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/ASTTypes.h>
 #include <vanadium/ast/defs/magic_enum_defs.h>
-
-#include <cassert>
-#include <cmath>
-#include <format>
-#include <iostream>
-#include <magic_enum/magic_enum.hpp>
-#include <ostream>
-#include <ranges>
-#include <string_view>
 
 #include "vanadium/bin/astdump/AsciiColors.h"
 

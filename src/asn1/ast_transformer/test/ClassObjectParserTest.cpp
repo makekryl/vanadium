@@ -1,12 +1,14 @@
-#include <asn1c/libasn1common/genhash.h>
-#include <asn1c/libasn1parser/asn1parser_cxx.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <vanadium/asn1/ast/Asn1cAstWrapper.h>
-#include <vanadium/lib/Arena.h>
 
 #include <string_view>
 #include <vector>
+
+#include <asn1c/libasn1common/genhash.h>
+#include <asn1c/libasn1parser/asn1parser_cxx.h>
+
+#include <vanadium/asn1/ast/Asn1cAstWrapper.h>
+#include <vanadium/lib/Arena.h>
 
 #include "vanadium/asn1/ast/ClassObjectParser.h"
 

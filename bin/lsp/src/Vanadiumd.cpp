@@ -1,10 +1,3 @@
-#include <vanadium/bin/Bootstrap.h>
-#include <vanadium/lib/lserver/Transport.h>
-#include <vanadium/ls/LanguageServer.h>
-#include <vanadium/ls/LanguageServerTestFlags.h>
-#include <vanadium/version.h>
-
-#include <argparse/argparse.hpp>
 #include <chrono>
 #include <csignal>
 #include <fstream>
@@ -12,6 +5,14 @@
 #include <print>
 #include <string_view>
 #include <thread>
+
+#include <argparse/argparse.hpp>
+
+#include <vanadium/bin/Bootstrap.h>
+#include <vanadium/lib/lserver/Transport.h>
+#include <vanadium/ls/LanguageServer.h>
+#include <vanadium/ls/LanguageServerTestFlags.h>
+#include <vanadium/version.h>
 
 class OutputCapturingTransport : public vanadium::lserver::Transport {
  public:

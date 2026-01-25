@@ -1,10 +1,11 @@
 #pragma once
 
+#include <cstddef>
+
+#include <glaze/util/string_literal.hpp>
+
 #include <LSProtocol.h>
 #include <LSProtocolEx.h>
-
-#include <cstddef>
-#include <glaze/util/string_literal.hpp>
 
 #include "LSMethod.h"
 #include "LanguageServerContext.h"

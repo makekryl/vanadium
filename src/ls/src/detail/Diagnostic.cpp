@@ -1,13 +1,15 @@
 #include "detail/Diagnostic.h"
 
+#include <format>
+#include <vector>
+
+#include <magic_enum/magic_enum.hpp>
+
 #include <LSProtocol.h>
+
 #include <vanadium/core/Program.h>
 #include <vanadium/lint/Context.h>
 #include <vanadium/lint/Linter.h>
-
-#include <format>
-#include <magic_enum/magic_enum.hpp>
-#include <vector>
 
 #include "vanadium/ls/LanguageServerConv.h"
 #include "vanadium/ls/LanguageServerSession.h"

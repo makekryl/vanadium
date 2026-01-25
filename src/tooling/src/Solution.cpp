@@ -1,10 +1,10 @@
 #include "Solution.h"
 
-#include <vanadium/core/Program.h>
-#include <vanadium/lib/Error.h>
-
 #include <expected>
 #include <print>
+
+#include <vanadium/core/Program.h>
+#include <vanadium/lib/Error.h>
 
 #include "Filesystem.h"
 #include "Project.h"

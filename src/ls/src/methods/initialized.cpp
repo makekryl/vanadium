@@ -1,6 +1,6 @@
-#include <LSProtocol.h>
-
 #include <glaze/json/generic.hpp>
+
+#include <LSProtocol.h>
 
 #include "vanadium/lib/jsonrpc/Common.h"
 #include "vanadium/lib/lserver/Connection.h"

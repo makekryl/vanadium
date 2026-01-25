@@ -1,13 +1,13 @@
 #pragma once
 
-#include <vanadium/ast/ASTNodes.h>
-#include <vanadium/core/Program.h>
-#include <vanadium/lib/FunctionRef.h>
-
 #include <memory>
 #include <optional>
 #include <unordered_map>
 #include <vector>
+
+#include <vanadium/ast/ASTNodes.h>
+#include <vanadium/core/Program.h>
+#include <vanadium/lib/FunctionRef.h>
 
 #include "vanadium/lint/Context.h"
 #include "vanadium/lint/Rule.h"

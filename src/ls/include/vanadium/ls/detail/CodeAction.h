@@ -1,10 +1,11 @@
 #pragma once
 
+#include <string_view>
+
 #include <LSProtocol.h>
+
 #include <vanadium/core/Program.h>
 #include <vanadium/core/Semantic.h>
-
-#include <string_view>
 
 #include "vanadium/ls/LanguageServerSession.h"
 

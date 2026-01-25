@@ -1,10 +1,10 @@
 #pragma once
 
-#include <vanadium/ast/ASTTypes.h>
-#include <vanadium/core/Program.h>
-
 #include <set>
 #include <string>
+
+#include <vanadium/ast/ASTTypes.h>
+#include <vanadium/core/Program.h>
 
 #include "vanadium/lint/Rule.h"
 

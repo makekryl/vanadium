@@ -1,7 +1,19 @@
 #include "vanadium/asn1/ast/Asn1AstTransformer.h"
 
+#include <algorithm>
+#include <cctype>
+#include <cstring>
+#include <format>
+#include <optional>
+#include <string_view>
+#include <unordered_set>
+#include <utility>
+#include <vector>
+
 #include <asn1c/libasn1common/genhash.h>
 #include <asn1c/libasn1parser/asn1parser_cxx.h>
+#include <magic_enum/magic_enum.hpp>
+
 #include <vanadium/ast/AST.h>
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/ASTTypes.h>
@@ -10,17 +22,6 @@
 #include <vanadium/lib/FunctionRef.h>
 #include <vanadium/lib/ScopedValue.h>
 #include <vanadium/lib/StaticMap.h>
-
-#include <algorithm>
-#include <cctype>
-#include <cstring>
-#include <format>
-#include <magic_enum/magic_enum.hpp>
-#include <optional>
-#include <string_view>
-#include <unordered_set>
-#include <utility>
-#include <vector>
 
 #include "vanadium/asn1/ast/ClassSetResolver.h"
 

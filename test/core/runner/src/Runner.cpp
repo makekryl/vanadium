@@ -1,8 +1,9 @@
 #include <gtest/gtest.h>
-#include <vanadium/testing/gtest_helpers.h>
 
 #include <filesystem>
 #include <print>
+
+#include <vanadium/testing/gtest_helpers.h>
 
 #include "CoreTests.h"
 #include "RunnerOpts.h"

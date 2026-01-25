@@ -1,5 +1,12 @@
+#include <algorithm>
+#include <ranges>
+#include <string_view>
+#include <type_traits>
+#include <vector>
+
 #include <LSProtocol.h>
 #include <LSProtocolEx.h>
+
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/ASTTypes.h>
 #include <vanadium/ast/utils/ASTUtils.h>
@@ -7,12 +14,6 @@
 #include <vanadium/core/Semantic.h>
 #include <vanadium/core/TypeChecker.h>
 #include <vanadium/core/utils/SemanticUtils.h>
-
-#include <algorithm>
-#include <ranges>
-#include <string_view>
-#include <type_traits>
-#include <vector>
 
 #include "vanadium/ls/LanguageServerContext.h"
 #include "vanadium/ls/LanguageServerConv.h"

@@ -1,12 +1,12 @@
 #pragma once
 
-#include <vanadium/ast/ASTNodes.h>
-
 #include <cassert>
 #include <cstdint>
 #include <ranges>
 #include <unordered_map>
 #include <vector>
+
+#include <vanadium/ast/ASTNodes.h>
 
 #include "vanadium/core/Builtins.h"
 

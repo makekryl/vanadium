@@ -1,8 +1,8 @@
 #pragma once
 
-#include <vanadium/lib/FunctionRef.h>
-
 #include <string_view>
+
+#include <vanadium/lib/FunctionRef.h>
 
 using asn1p_wsyntx_t = struct asn1p_wsyntx_s;
 using asn1p_src_range_t = struct asn1p_src_range_s;

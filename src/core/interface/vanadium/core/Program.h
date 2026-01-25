@@ -1,6 +1,14 @@
 #pragma once
 
+#include <ranges>
+#include <string>
+#include <string_view>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
+
 #include <oneapi/tbb/spin_mutex.h>
+
 #include <vanadium/asn1/ast/Asn1ModuleBasket.h>
 #include <vanadium/ast/AST.h>
 #include <vanadium/ast/ASTNodes.h>
@@ -8,13 +16,6 @@
 #include <vanadium/lib/Bitset.h>
 #include <vanadium/lib/DelimitedStringView.h>
 #include <vanadium/lib/FunctionRef.h>
-
-#include <ranges>
-#include <string>
-#include <string_view>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
 
 #include "vanadium/core/Semantic.h"
 #include "vanadium/core/TypeChecker.h"

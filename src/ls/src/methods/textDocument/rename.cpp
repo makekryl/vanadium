@@ -1,5 +1,6 @@
 #include <LSProtocol.h>
 #include <LSProtocolEx.h>
+
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/ASTTypes.h>
 #include <vanadium/core/Program.h>

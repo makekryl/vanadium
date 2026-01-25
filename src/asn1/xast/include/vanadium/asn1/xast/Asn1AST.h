@@ -1,8 +1,8 @@
 #pragma once
 
-#include <vanadium/ast/ASTTypes.h>
-
 #include <cstdint>
+
+#include <vanadium/ast/ASTTypes.h>
 
 namespace vanadium::asn1 {
 namespace xast {

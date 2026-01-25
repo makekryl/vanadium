@@ -1,13 +1,13 @@
 #pragma once
 
-#include <vanadium/lib/Error.h>
-#include <vanadium/lib/FunctionRef.h>
-
 #include <expected>
 #include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
+
+#include <vanadium/lib/Error.h>
+#include <vanadium/lib/FunctionRef.h>
 
 namespace vanadium::tooling {
 namespace fs {

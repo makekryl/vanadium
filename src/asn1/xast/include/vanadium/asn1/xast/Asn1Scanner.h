@@ -1,9 +1,9 @@
 #pragma once
 
-#include <vanadium/ast/ASTTypes.h>
-
 #include <string_view>
 #include <vector>
+
+#include <vanadium/ast/ASTTypes.h>
 
 #include "Asn1AST.h"
 

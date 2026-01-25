@@ -1,16 +1,17 @@
-#include <LSProtocol.h>
-#include <LSProtocolEx.h>
-#include <vanadium/ast/ASTNodes.h>
-#include <vanadium/ast/ASTTypes.h>
-#include <vanadium/core/Program.h>
-#include <vanadium/core/Semantic.h>
-#include <vanadium/core/TypeChecker.h>
-
 #include <memory>
 #include <optional>
 #include <ranges>
 #include <stack>
 #include <vector>
+
+#include <LSProtocol.h>
+#include <LSProtocolEx.h>
+
+#include <vanadium/ast/ASTNodes.h>
+#include <vanadium/ast/ASTTypes.h>
+#include <vanadium/core/Program.h>
+#include <vanadium/core/Semantic.h>
+#include <vanadium/core/TypeChecker.h>
 
 #include "vanadium/ls/LanguageServerContext.h"
 #include "vanadium/ls/LanguageServerConv.h"

@@ -2,6 +2,7 @@
 
 #include <LSProtocol.h>
 #include <LSProtocolEx.h>
+
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/core/Program.h>
 #include <vanadium/core/Semantic.h>

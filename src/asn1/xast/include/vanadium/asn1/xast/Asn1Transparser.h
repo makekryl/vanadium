@@ -1,12 +1,12 @@
 #pragma once
 
+#include <string_view>
+#include <vector>
+
 #include <vanadium/ast/AST.h>
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/ASTTypes.h>
 #include <vanadium/lib/Arena.h>
-
-#include <string_view>
-#include <vector>
 
 #include "Asn1AST.h"
 #include "Asn1Scanner.h"

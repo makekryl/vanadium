@@ -1,9 +1,10 @@
 #pragma once
 
-#include <LSProtocol.h>
-#include <vanadium/core/Program.h>
-
 #include <vector>
+
+#include <LSProtocol.h>
+
+#include <vanadium/core/Program.h>
 
 #include "vanadium/ls/LanguageServerSession.h"
 

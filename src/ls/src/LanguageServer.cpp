@@ -1,17 +1,19 @@
 #include "vanadium/ls/LanguageServer.h"
 
+#include <chrono>
+#include <cstdlib>
+
+#include <glaze/json.hpp>
+
 #include <vanadium/lib/Metaprogramming.h>
 #include <vanadium/lib/jsonrpc/Server.h>
 #include <vanadium/lib/lserver/Connection.h>
 
-#include <chrono>
-#include <cstdlib>
-#include <glaze/json.hpp>
-
-#include "BuiltinRules.h"
 #include "vanadium/ls/LanguageServerContext.h"
 #include "vanadium/ls/LanguageServerLogger.h"
 #include "vanadium/ls/LanguageServerMethods.h"
+
+#include "BuiltinRules.h"
 
 namespace vanadium::ls {
 

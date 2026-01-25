@@ -1,19 +1,20 @@
-#include <fmt/color.h>
-#include <fmt/core.h>
-#include <oneapi/tbb/task_arena.h>
-#include <vanadium/bin/Bootstrap.h>
-#include <vanadium/core/Program.h>
-#include <vanadium/lint/BuiltinRules.h>
-#include <vanadium/lint/Context.h>
-#include <vanadium/lint/Linter.h>
-
-#include <argparse/argparse.hpp>
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
 #include <string>
 #include <thread>
+
+#include <argparse/argparse.hpp>
+#include <fmt/color.h>
+#include <fmt/core.h>
+#include <oneapi/tbb/task_arena.h>
+
+#include <vanadium/bin/Bootstrap.h>
+#include <vanadium/core/Program.h>
+#include <vanadium/lint/BuiltinRules.h>
+#include <vanadium/lint/Context.h>
+#include <vanadium/lint/Linter.h>
 
 #include "Filesystem.h"
 #include "Solution.h"

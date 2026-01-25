@@ -1,10 +1,10 @@
 #include "vanadium/asn1/ast/ClassSetResolver.h"
 
-#include <asn1c/libasn1parser/asn1parser_cxx.h>
-
 #include <format>
-#include <magic_enum/magic_enum.hpp>
 #include <string_view>
+
+#include <asn1c/libasn1parser/asn1parser_cxx.h>
+#include <magic_enum/magic_enum.hpp>
 
 #include "vanadium/asn1/ast/ClassObjectParser.h"
 

@@ -1,13 +1,14 @@
 #include <gtest/gtest.h>
-#include <vanadium/ast/utils/ASTUtils.h>
-#include <vanadium/core/Program.h>
-#include <vanadium/core/Semantic.h>
-#include <vanadium/testing/macro.h>
 
 #include <initializer_list>
 #include <ranges>
 #include <string>
 #include <string_view>
+
+#include <vanadium/ast/utils/ASTUtils.h>
+#include <vanadium/core/Program.h>
+#include <vanadium/core/Semantic.h>
+#include <vanadium/testing/macro.h>
 
 #include "helpers/TestPrinters.h"
 

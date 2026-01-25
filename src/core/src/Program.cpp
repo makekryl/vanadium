@@ -1,16 +1,5 @@
 #include "vanadium/core/Program.h"
 
-#include <oneapi/tbb/parallel_for_each.h>
-#include <oneapi/tbb/spin_mutex.h>
-#include <oneapi/tbb/task_group.h>
-#include <vanadium/asn1/ast/Asn1ModuleBasket.h>
-#include <vanadium/ast/AST.h>
-#include <vanadium/ast/ASTNodes.h>
-#include <vanadium/ast/Parser.h>
-#include <vanadium/ast/utils/ASTUtils.h>
-#include <vanadium/lib/Arena.h>
-#include <vanadium/lib/Bitset.h>
-
 #include <algorithm>
 #include <cassert>
 #include <concepts>
@@ -21,6 +10,18 @@
 #include <string_view>
 #include <type_traits>
 #include <unordered_map>
+
+#include <oneapi/tbb/parallel_for_each.h>
+#include <oneapi/tbb/spin_mutex.h>
+#include <oneapi/tbb/task_group.h>
+
+#include <vanadium/asn1/ast/Asn1ModuleBasket.h>
+#include <vanadium/ast/AST.h>
+#include <vanadium/ast/ASTNodes.h>
+#include <vanadium/ast/Parser.h>
+#include <vanadium/ast/utils/ASTUtils.h>
+#include <vanadium/lib/Arena.h>
+#include <vanadium/lib/Bitset.h>
 
 #include "vanadium/core/Semantic.h"
 #include "vanadium/core/TypeChecker.h"

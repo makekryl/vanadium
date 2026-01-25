@@ -1,16 +1,18 @@
+#include <format>
+#include <iterator>
+#include <ranges>
+
+#include <magic_enum/magic_enum.hpp>
+
 #include <LSProtocol.h>
 #include <LSProtocolEx.h>
+
 #include <vanadium/ast/AST.h>
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/ASTTypes.h>
 #include <vanadium/ast/utils/ASTUtils.h>
 #include <vanadium/core/Program.h>
 #include <vanadium/core/Semantic.h>
-
-#include <format>
-#include <iterator>
-#include <magic_enum/magic_enum.hpp>
-#include <ranges>
 
 #include "vanadium/ls/LanguageServerContext.h"
 #include "vanadium/ls/LanguageServerConv.h"

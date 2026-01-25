@@ -1,7 +1,5 @@
 #include "impl/SystemFS.h"
 
-#include <vanadium/lib/Error.h>
-
 #include <cerrno>
 #include <cstring>
 #include <expected>
@@ -12,6 +10,8 @@
 #include <optional>
 #include <string>
 #include <string_view>
+
+#include <vanadium/lib/Error.h>
 
 namespace {
 Error GetSystemError() {

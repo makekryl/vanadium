@@ -1,10 +1,10 @@
 #include "vanadium/lint/Linter.h"
 
-#include <vanadium/core/Program.h>
-
 #include <algorithm>
 #include <numeric>
 #include <ranges>
+
+#include <vanadium/core/Program.h>
 
 #include "vanadium/lint/Context.h"
 

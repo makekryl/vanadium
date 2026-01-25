@@ -1,9 +1,9 @@
-#include <vanadium/ast/ASTNodes.h>
-#include <vanadium/core/Semantic.h>
-
 #include <cstdio>
 #include <format>
 #include <ranges>
+
+#include <vanadium/ast/ASTNodes.h>
+#include <vanadium/core/Semantic.h>
 
 #include "vanadium/lint/BuiltinRules.h"
 #include "vanadium/lint/Context.h"

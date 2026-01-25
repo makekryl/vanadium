@@ -1,6 +1,6 @@
-#include <LSProtocol.h>
-
 #include <csignal>
+
+#include <LSProtocol.h>
 
 #include "vanadium/ls/LanguageServerContext.h"
 #include "vanadium/ls/LanguageServerMethods.h"

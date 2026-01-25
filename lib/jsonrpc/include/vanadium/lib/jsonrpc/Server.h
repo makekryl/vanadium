@@ -1,11 +1,12 @@
 #pragma once
 
-#include <glaze/json.hpp>
 #include <string_view>
 #include <type_traits>
 #include <unordered_map>
 #include <utility>
 #include <variant>
+
+#include <glaze/json.hpp>
 
 #include "vanadium/lib/jsonrpc/Common.h"
 

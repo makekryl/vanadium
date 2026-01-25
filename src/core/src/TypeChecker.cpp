@@ -1,15 +1,15 @@
 #include "vanadium/core/TypeChecker.h"
 
-#include <vanadium/ast/ASTNodes.h>
-#include <vanadium/ast/ASTTypes.h>
-#include <vanadium/ast/utils/ASTUtils.h>
-
 #include <algorithm>
 #include <cstdlib>
 #include <format>
 #include <string_view>
 #include <type_traits>
 #include <utility>
+
+#include <vanadium/ast/ASTNodes.h>
+#include <vanadium/ast/ASTTypes.h>
+#include <vanadium/ast/utils/ASTUtils.h>
 
 #include "vanadium/core/Builtins.h"
 #include "vanadium/core/BuiltinsSuperbases.h"

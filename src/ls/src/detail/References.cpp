@@ -1,10 +1,10 @@
 #include "detail/References.h"
 
+#include <memory>
+
 #include <vanadium/ast/AST.h>
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/utils/ASTUtils.h>
-
-#include <memory>
 
 #include "vanadium/ls/detail/Definition.h"
 

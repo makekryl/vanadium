@@ -1,12 +1,12 @@
 #include "vanadium/asn1/ast/ClassObjectParser.h"
 
-#include <asn1c/libasn1parser/asn1parser_cxx.h>
-
 #include <cctype>
 #include <cstdio>
 #include <cstring>
 #include <format>
 #include <string_view>
+
+#include <asn1c/libasn1parser/asn1parser_cxx.h>
 
 // TODO: for some reason, clangd ignores .clang-format config for this file
 

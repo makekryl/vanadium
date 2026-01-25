@@ -1,6 +1,7 @@
 #pragma once
 
 #include <LSProtocol.h>
+
 #include <vanadium/ast/AST.h>
 #include <vanadium/ast/ASTTypes.h>
 
