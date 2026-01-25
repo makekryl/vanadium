@@ -1,4 +1,4 @@
-#include "detail/CodeAction.h"
+#include "vanadium/ls/detail/CodeAction.h"
 
 #include <LSProtocol.h>
 #include <LSProtocolEx.h>

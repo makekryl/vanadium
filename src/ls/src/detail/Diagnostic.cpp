@@ -1,4 +1,4 @@
-#include "detail/Diagnostic.h"
+#include "vanadium/ls/detail/Diagnostic.h"
 
 #include <format>
 #include <vector>

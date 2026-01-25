@@ -1,4 +1,4 @@
-#include "detail/Helpers.h"
+#include "vanadium/ls/detail/Helpers.h"
 
 #include <vanadium/ast/AST.h>
 #include <vanadium/ast/ASTNodes.h>

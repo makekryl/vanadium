@@ -1,4 +1,4 @@
-#include "detail/InlayHint.h"
+#include "vanadium/ls/detail/InlayHint.h"
 
 #include <LSProtocol.h>
 #include <LSProtocolEx.h>

@@ -1,4 +1,4 @@
-#include "detail/Completion.h"
+#include "vanadium/ls/detail/Completion.h"
 
 #include <LSProtocol.h>
 #include <LSProtocolEx.h>

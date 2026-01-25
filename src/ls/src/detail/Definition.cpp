@@ -1,4 +1,4 @@
-#include "detail/Definition.h"
+#include "vanadium/ls/detail/Definition.h"
 
 #include <LSProtocol.h>
 

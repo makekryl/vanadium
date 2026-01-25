@@ -1,4 +1,4 @@
-#include "detail/References.h"
+#include "vanadium/ls/detail/References.h"
 
 #include <LSProtocol.h>
 #include <LSProtocolEx.h>
