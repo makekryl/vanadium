@@ -5,9 +5,9 @@ set(REFLECTCPP_SOURCE_PATCH_COMMAND git apply
 )
 
 FetchContent_Declare(
-  reflectcpp
+  reflectcpp     # 0.23.0
   GIT_REPOSITORY https://github.com/getml/reflect-cpp.git
-  GIT_TAG        a70b4ecc7a3742594ff01beb43322d2f7ddfea20
+  GIT_TAG        09e17b2b8578e95625fc1fc92ec863d2583e1723
   GIT_SHALLOW 1
   GIT_SUBMODULES ""  # skip vcpkg cloning
 
