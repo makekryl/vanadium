@@ -5,8 +5,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
-
-#include <rfl/toml/read.hpp>
+#include <vector>
 
 #include <vanadium/lib/Error.h>
 #include <vanadium/tooling/Filesystem.h>
@@ -61,13 +60,8 @@ class Project {
   }
 
   template <typename T>
-  [[nodiscard]] std::expected<T, Error> ReadSpec() const {
-    rfl::Result<T> result = rfl::toml::read<T>(manifest_contents_);
-    if (result.has_value()) {
-      return result.value();
-    }
-    return Error{result.error().what()};
-  }
+  [[nodiscard]] std::expected<T, Error> ReadSpec() const;
+  // ^ include ProjectSpecReader
 
   static std::expected<Project, Error> Load(const fs::Path& path);
   Project(fs::Path path, std::string&& contents, ProjectManifest&&);
