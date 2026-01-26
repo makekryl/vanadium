@@ -185,7 +185,7 @@ class SelectorExprResolver {
         if (const auto* superbase = builtins::GetSuperbase(x_sym); superbase) {
           x_sym = superbase;
         } else {
-          x_sym = ResolvePotentiallyAliasedType(x_sym);
+          x_sym = ResolveTerminalType(x_sym);
         }
       }
     }
@@ -455,7 +455,7 @@ const semantic::Symbol* ResolveAliasedType(const semantic::Symbol* sym) {
 }
 }  // namespace
 
-const semantic::Symbol* ResolvePotentiallyAliasedType(const semantic::Symbol* sym) {
+const semantic::Symbol* ResolveTerminalType(const semantic::Symbol* sym) {
   if (!(sym->Flags() & semantic::SymbolFlags::kSubtype)) [[likely]] {
     return sym;
   }
@@ -517,7 +517,7 @@ InstantiatedType ResolveAssignmentTarget(const SourceFile* file, const semantic:
       if (!cl_type) {
         return InstantiatedType::None();
       }
-      cl_type.sym = ResolvePotentiallyAliasedType(cl_type.sym);
+      cl_type.sym = ResolveTerminalType(cl_type.sym);
       if (!(cl_type->Flags() & semantic::SymbolFlags::kStructural)) {
         return InstantiatedType::None();
       }
@@ -1239,8 +1239,8 @@ void BasicTypeChecker::MatchTypes(const ast::Range& range, InstantiatedType actu
   }
 
   // TODO: read language spec and maybe make something more precise
-  const auto* real_expected_sym = ResolvePotentiallyAliasedType(expected.sym);
-  actual.sym = ResolvePotentiallyAliasedType(actual.sym);
+  const auto* real_expected_sym = ResolveTerminalType(expected.sym);
+  actual.sym = ResolveTerminalType(actual.sym);
   if (real_expected_sym == actual.sym || !real_expected_sym || !actual.sym) {
     return;
   }
@@ -1253,8 +1253,8 @@ void BasicTypeChecker::MatchTypes(const ast::Range& range, InstantiatedType actu
       return;
     }
     if (actual_element_sym && expected_element_sym) {
-      actual_element_sym = ResolvePotentiallyAliasedType(actual_element_sym);
-      expected_element_sym = ResolvePotentiallyAliasedType(expected_element_sym);
+      actual_element_sym = ResolveTerminalType(actual_element_sym);
+      expected_element_sym = ResolveTerminalType(expected_element_sym);
       if (actual_element_sym == expected_element_sym) {
         return;
       }
@@ -1521,7 +1521,7 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, InstantiatedTyp
         if (x_type) {
           // TODO: 1) maybe just abort early if !x_sym
           //       2) resolve alias only if really needed, it's done by MatchTypes otherwise
-          x_type.sym = ResolvePotentiallyAliasedType(x_type.sym);
+          x_type.sym = ResolveTerminalType(x_type.sym);
         }
       }
 
@@ -1643,7 +1643,7 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, InstantiatedTyp
       resulting_type = desired_type;
       //
 
-      desired_type.sym = ResolvePotentiallyAliasedType(desired_type.sym);
+      desired_type.sym = ResolveTerminalType(desired_type.sym);
       if (!desired_type) {  // todo: this was a quick fix.
         Introspect(m);
         break;

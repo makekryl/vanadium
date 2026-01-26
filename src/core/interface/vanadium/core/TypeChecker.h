@@ -82,7 +82,7 @@ InstantiatedType ResolveExprType(const SourceFile*, const semantic::Scope*, cons
 const semantic::Symbol* ResolveListElementType(const semantic::Symbol*);
 const semantic::Symbol* ResolveTypeSpecSymbol(const SourceFile*, const ast::nodes::TypeSpec*);
 
-const semantic::Symbol* ResolvePotentiallyAliasedType(const semantic::Symbol*);
+const semantic::Symbol* ResolveTerminalType(const semantic::Symbol*);
 
 namespace ext {
 InstantiatedType ResolveAssignmentTarget(const SourceFile*, const semantic::Scope*, const ast::nodes::AssignmentExpr*);
