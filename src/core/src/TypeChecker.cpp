@@ -354,6 +354,12 @@ class IndexExprResolver {
         return nullptr;
       }
 
+      x_sym = ResolveTerminalType(x_sym);
+      if (!x_sym) {
+        options_.check_index(ie->index);
+        return nullptr;
+      }
+
       const bool is_inferrence_expr = "-" == sf_->Text(ie->index);
       if (!head_type_.is_instance) {
         // RoTypeId[-]
