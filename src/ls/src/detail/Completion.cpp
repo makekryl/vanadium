@@ -174,11 +174,12 @@ lsp::CompletionList CollectCompletions(const lsp::CompletionParams& params, cons
 
   if (n->nkind == ast::NodeKind::SelectorExpr) {
     n = n->As<ast::nodes::SelectorExpr>()->x;
-    const auto sym = core::checker::ResolveExprType(&file, scope, n->As<ast::nodes::Expr>());
+    // todo: rename sym -> type
+    auto sym = core::checker::ResolveExprType(&file, scope, n->As<ast::nodes::Expr>());
     if (!sym) {
       return completion_list;  // todo: extract filler to separate func
     }
-    sym = core::checker::ResolveTerminalType(sym);
+    sym.sym = core::checker::ResolveTerminalType(sym.sym);
     if (!sym) {
       return completion_list;  // todo: extract filler to separate func
     }
