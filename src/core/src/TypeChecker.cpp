@@ -585,8 +585,9 @@ InstantiatedType DeduceCompositeLiteralType(const SourceFile* file, const semant
             return InstantiatedType::None();
           }
 
-          if (cl_sym->Flags() & semantic::SymbolFlags::kSubtype) {
-            cl_sym.sym = ResolveAliasedType(cl_sym.sym);
+          cl_sym.sym = ResolveTerminalType(cl_sym.sym);
+          if (!cl_sym) {
+            return InstantiatedType::None();
           }
 
           if (cl_sym->Flags() & semantic::SymbolFlags::kList) {
@@ -654,16 +655,16 @@ InstantiatedType DeduceCompositeLiteralType(const SourceFile* file, const semant
     case ast::NodeKind::FormalPar: {
       // TODO: remove duplication
       auto restype = ResolveDeclarationType(file, n->parent);
-      if (restype && (restype->Flags() & semantic::SymbolFlags::kSubtype)) {
-        restype.sym = ResolveAliasedType(restype.sym);
+      if (restype) {
+        restype.sym = ResolveTerminalType(restype.sym);
       }
       return restype;
     }
     case ast::NodeKind::TemplateDecl: {
       // TODO: remove duplication
       auto restype = ResolveCallableReturnType(file, n->parent->As<ast::nodes::TemplateDecl>());
-      if (restype && (restype->Flags() & semantic::SymbolFlags::kSubtype)) {
-        restype.sym = ResolveAliasedType(restype.sym);
+      if (restype) {
+        restype.sym = ResolveTerminalType(restype.sym);
       }
       return restype;
     }
@@ -672,8 +673,8 @@ InstantiatedType DeduceCompositeLiteralType(const SourceFile* file, const semant
       const auto* decl = ast::utils::GetPredecessor<ast::nodes::FuncDecl>(rs);
       // TODO: remove duplication
       auto restype = ResolveCallableReturnType(file, decl);
-      if (restype && (restype->Flags() & semantic::SymbolFlags::kSubtype)) {
-        restype.sym = ResolveAliasedType(restype.sym);
+      if (restype) {
+        restype.sym = ResolveTerminalType(restype.sym);
       }
       return restype;
     }

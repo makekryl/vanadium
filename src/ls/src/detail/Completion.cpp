@@ -178,6 +178,13 @@ lsp::CompletionList CollectCompletions(const lsp::CompletionParams& params, cons
     if (!sym) {
       return completion_list;  // todo: extract filler to separate func
     }
+    sym = core::checker::ResolveTerminalType(sym);
+    if (!sym) {
+      return completion_list;  // todo: extract filler to separate func
+    }
+    if (sym->Flags() & core::semantic::SymbolFlags::kSubtype) {
+      // sym = core::checker::
+    }
     if (sym->Flags() & core::semantic::SymbolFlags::kStructural) {
       for (const auto& [name, msym] : sym->Members()->Enumerate()) {
         // TODO: show type
