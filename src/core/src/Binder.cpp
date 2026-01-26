@@ -761,6 +761,7 @@ bool Binder::Inspect(const ast::Node* n) {
                 m,
                 SymbolFlags::kSubTypeType,
             });
+            Visit(field->type);
           }
         });
       }
