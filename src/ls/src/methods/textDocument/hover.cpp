@@ -379,7 +379,7 @@ lsp::HoverResult ProvideHover(const lsp::HoverParams& params, const core::Source
         return provider_file->ast.Text(*m->name);
       }());
       builder.WithWriter([&](auto w) {
-        std::format_to(w, "Type: `{}` / `{}`", provider_file->ast.Text(m->type), sym->GetName());
+        std::format_to(w, "Type: `{}`", provider_file->ast.Text(m->type));
       });
       builder.WriteSeparator();
       builder.WriteCodeBlock(provider_file->ast.Text(m));
