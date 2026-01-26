@@ -1,10 +1,11 @@
+#include "vanadium/lint/rules/NoUnnecessaryValueof.h"
+
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/utils/ASTUtils.h>
 #include <vanadium/core/Semantic.h>
 #include <vanadium/core/TypeChecker.h>
 #include <vanadium/core/utils/SemanticUtils.h>
 
-#include "vanadium/lint/BuiltinRules.h"
 #include "vanadium/lint/Context.h"
 #include "vanadium/lint/Rule.h"
 

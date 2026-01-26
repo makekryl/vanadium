@@ -1,3 +1,5 @@
+#include "vanadium/lint/rules/NoUnusedVars.h"
+
 #include <format>
 #include <ranges>
 
@@ -6,12 +8,13 @@
 #include <vanadium/ast/utils/ASTUtils.h>
 #include <vanadium/core/Semantic.h>
 
-#include "vanadium/lint/BuiltinRules.h"
 #include "vanadium/lint/Context.h"
 #include "vanadium/lint/Rule.h"
 
 namespace vanadium::lint {
 namespace rules {
+
+NoUnusedVars::NoUnusedVars() : Rule("no-unused-vars") {}
 
 namespace {
 ast::Range GetVariableNameRange(const ast::Node* decl) {
@@ -94,8 +97,6 @@ void CheckScope(const std::pair<NoUnusedVars*, Context&> rule_ctx, const core::s
   }
 }
 }  // namespace
-
-NoUnusedVars::NoUnusedVars() : Rule("no-unused-vars") {}
 
 void NoUnusedVars::Exit(Context& ctx) {
   for (const auto& sym : ctx.GetFile().module->scope->symbols.Enumerate() | std::ranges::views::values) {

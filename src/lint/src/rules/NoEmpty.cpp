@@ -1,6 +1,7 @@
+#include "vanadium/lint/rules/NoEmpty.h"
+
 #include <vanadium/ast/ASTNodes.h>
 
-#include "vanadium/lint/BuiltinRules.h"
 #include "vanadium/lint/Context.h"
 #include "vanadium/lint/Rule.h"
 

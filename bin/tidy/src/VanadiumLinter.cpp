@@ -12,9 +12,12 @@
 
 #include <vanadium/bin/Bootstrap.h>
 #include <vanadium/core/Program.h>
-#include <vanadium/lint/BuiltinRules.h>
 #include <vanadium/lint/Context.h>
 #include <vanadium/lint/Linter.h>
+#include <vanadium/lint/rules/NoEmpty.h>
+#include <vanadium/lint/rules/NoUnnecessaryValueof.h>
+#include <vanadium/lint/rules/NoUnusedImports.h>
+#include <vanadium/lint/rules/NoUnusedVars.h>
 #include <vanadium/tooling/Filesystem.h>
 #include <vanadium/tooling/Solution.h>
 #include <vanadium/tooling/impl/SystemFS.h>

@@ -1,3 +1,5 @@
+#include "vanadium/lint/rules/PreferConst.h"
+
 #include <cstdio>
 #include <format>
 #include <ranges>
@@ -5,12 +7,13 @@
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/core/Semantic.h>
 
-#include "vanadium/lint/BuiltinRules.h"
 #include "vanadium/lint/Context.h"
 #include "vanadium/lint/Rule.h"
 
 namespace vanadium::lint {
 namespace rules {
+
+PreferConst::PreferConst() : Rule("prefer-const") {}
 
 namespace {
 struct ScopeChecker {
@@ -102,8 +105,6 @@ struct ScopeChecker {
   }
 };
 }  // namespace
-
-PreferConst::PreferConst() : Rule("prefer-const") {}
 
 void PreferConst::Exit(Context& ctx) {
   ScopeChecker checker{.rule = this, .ctx = ctx};

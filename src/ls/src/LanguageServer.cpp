@@ -8,7 +8,10 @@
 #include <vanadium/lib/Metaprogramming.h>
 #include <vanadium/lib/jsonrpc/Server.h>
 #include <vanadium/lib/lserver/Connection.h>
-#include <vanadium/lint/BuiltinRules.h>
+#include <vanadium/lint/rules/NoEmpty.h>
+#include <vanadium/lint/rules/NoUnnecessaryValueof.h>
+#include <vanadium/lint/rules/NoUnusedImports.h>
+#include <vanadium/lint/rules/NoUnusedVars.h>
 
 #include "vanadium/ls/LanguageServerContext.h"
 #include "vanadium/ls/LanguageServerLogger.h"

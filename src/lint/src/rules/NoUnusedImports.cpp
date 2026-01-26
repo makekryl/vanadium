@@ -1,3 +1,5 @@
+#include "vanadium/lint/rules/NoUnusedImports.h"
+
 #include <cstdio>
 #include <format>
 #include <ranges>
@@ -7,12 +9,13 @@
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/core/Program.h>
 
-#include "vanadium/lint/BuiltinRules.h"
 #include "vanadium/lint/Context.h"
 #include "vanadium/lint/Rule.h"
 
 namespace vanadium::lint {
 namespace rules {
+
+NoUnusedImports::NoUnusedImports() : Rule("no-unused-imports") {}
 
 namespace {
 const core::ImportDescriptor& FindImport(const core::ModuleDescriptor& module, std::string_view import, bool transit) {
@@ -28,8 +31,6 @@ const core::ImportDescriptor& FindImport(const core::ModuleDescriptor& module, s
   throw "this should never happen";
 }
 }  // namespace
-
-NoUnusedImports::NoUnusedImports() : Rule("no-unused-imports") {}
 
 void NoUnusedImports::Exit(Context& ctx) {
   const auto report_import = [&](const ast::nodes::ImportDecl* decl, std::string&& message) {
