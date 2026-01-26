@@ -111,6 +111,7 @@ void Serve(lserver::Transport& transport, std::size_t concurrency, std::size_t j
   ctx->linter.RegisterRule<lint::rules::NoEmpty>();
   ctx->linter.RegisterRule<lint::rules::NoUnusedVars>();
   ctx->linter.RegisterRule<lint::rules::NoUnusedImports>();
+  ctx->linter.RegisterRule<lint::rules::NoUnnecessaryValueof>();
 
   connection.Listen();
 }

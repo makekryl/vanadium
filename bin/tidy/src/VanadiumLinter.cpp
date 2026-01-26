@@ -25,6 +25,7 @@ vanadium::lint::Linter CreateLinter() {
   linter.RegisterRule<vanadium::lint::rules::NoEmpty>();
   linter.RegisterRule<vanadium::lint::rules::NoUnusedVars>();
   linter.RegisterRule<vanadium::lint::rules::NoUnusedImports>();
+  linter.RegisterRule<vanadium::lint::rules::NoUnnecessaryValueof>();
   return linter;
 }
 

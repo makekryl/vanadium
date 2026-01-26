@@ -33,5 +33,12 @@ class PreferConst final : public Rule {
   void Exit(Context& ctx) final;
 };
 
+class NoUnnecessaryValueof final : public Rule {
+ public:
+  NoUnnecessaryValueof();
+  void Register(const MatcherRegistrar& match) const final;
+  void Check(Context& ctx, const ast::Node* node) final;
+};
+
 }  // namespace rules
 }  // namespace vanadium::lint
