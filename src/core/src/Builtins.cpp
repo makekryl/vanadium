@@ -63,13 +63,10 @@ constexpr std::string_view kBuiltinsSource{
 };
 
 const semantic::Scope* const kBuiltinsScope = [] {
-  static lib::Arena arena;
+  static SourceFile sf{.path = ""};
+  auto& arena = sf.arena;
+  sf.ast = ast::Parse(arena, kBuiltinsSource), sf.ast.root->file = &sf;
 
-  static SourceFile sf{
-      .path = "",
-      .ast = ast::Parse(arena, kBuiltinsSource),
-  };
-  sf.ast.root->file = &sf;
   if (!sf.ast.errors.empty()) [[unlikely]] {
     std::println(stderr, "Builtin definitions module has syntax errors:");
     for (const auto& err : sf.ast.errors) {
