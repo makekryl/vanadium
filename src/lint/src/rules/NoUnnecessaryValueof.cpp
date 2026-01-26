@@ -44,7 +44,7 @@ void NoUnnecessaryValueof::Check(Context& ctx, const ast::Node* node) {
   }
 
   if (argtype.restriction == core::checker::TemplateRestrictionKind::kNone) [[unlikely]] {
-    ctx.Report(this, m->fun->nrange, "valueof's argument is already value");
+    ctx.Report(this, m->fun->nrange, "valueof's argument is already a value");
   }
 }
 
