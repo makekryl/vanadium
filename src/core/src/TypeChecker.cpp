@@ -184,8 +184,6 @@ class SelectorExprResolver {
       if (x_sym) {
         if (const auto* superbase = builtins::GetSuperbase(x_sym); superbase) {
           x_sym = superbase;
-        } else {
-          x_sym = ResolveTerminalType(x_sym);
         }
       }
     }
@@ -207,6 +205,11 @@ class SelectorExprResolver {
       if (!x_sym) {
         return nullptr;
       }
+    }
+
+    x_sym = ResolveTerminalType(x_sym);
+    if (!x_sym) {
+      return nullptr;
     }
 
     if (!(x_sym->Flags() & (semantic::SymbolFlags::kStructural | semantic::SymbolFlags::kClass |
