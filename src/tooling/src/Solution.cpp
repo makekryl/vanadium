@@ -58,7 +58,7 @@ void InitSubproject(const Solution& solution, SolutionProject& subproject) {
     scan_dir(project_dir);
     if (const auto& search_paths = subproject.project.Manifest().project.search_paths; search_paths) {
       for (const auto& search_path : *search_paths) {
-        const auto additional_dir = project_dir.Resolve(search_path);
+        const auto additional_dir = project_dir.Resolve(search_path).Normalize();
         if (additional_dir.Exists()) {
           subproject.project.AddSearchPath(additional_dir);
           scan_dir(additional_dir);

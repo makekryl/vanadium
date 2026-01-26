@@ -32,6 +32,10 @@ std::string SystemFS::Join(std::string_view base_path, std::string_view path) co
   return std::filesystem::path(path).lexically_relative(base_path).string();
 }
 
+[[nodiscard]] std::string SystemFS::Normalize(std::string_view path) const {
+  return std::filesystem::path(path).lexically_normal().string();
+}
+
 bool SystemFS::Exists(const std::string &path) const {
   return std::filesystem::exists(path);
 }
