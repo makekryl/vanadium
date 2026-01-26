@@ -1078,7 +1078,7 @@ nodes::RestrictionSpec* Parser::ParseRestrictionSpec() {
           rs.type = Consume();
           Expect(TokenKind::RPAREN);
         } else {
-          n.type = {.kind = TokenKind::kSentinel, .range = {}};
+          rs.type = {.kind = TokenKind::kSentinel, .range = {}};
         }
       });
     case TokenKind::OMIT:
