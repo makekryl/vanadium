@@ -4,7 +4,7 @@
   "description": "TTCN-3 Language Support",
   "icon": "icon.png",
   "author": "makekryl",
-  "publisher": "Mikhail Krylov",
+  "publisher": "makekryl",
   "version": "0.2.0",
   "private": true,
   "repository": "https://github.com/makekryl/vanadiumd",
