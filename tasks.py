@@ -8,7 +8,7 @@ from inv.tasks import build, check, extension, test
 
 @task
 def regenerate_lsprotocol(c: Context):
-  c.run("python3 ./lib/lsprotocol/run_generator.py")
+  c.run("bash ./lib/lsprotocol/run_generator.sh")
 
 
 class AlertingLocalRunner(LocalRunner):
