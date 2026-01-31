@@ -6,7 +6,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include <vanadium/ast/ASTNodes.h>
+#include <vanadium/ast/ASTTypes.h>
 
 #include "vanadium/core/Builtins.h"
 
