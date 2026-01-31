@@ -228,13 +228,16 @@ struct UnsuccessfulIndirectTestParam {
   std::string_view moduleC;
 };
 DEFINE_NAMED_TEST_PARAM_PRINTER(UnsuccessfulIndirectTestParam, testcase);
-using UnsuccessfulIndirectTestParamModuleB = std::string_view;
-using UnsuccessfulIndirectTestParamModuleCImports = std::string_view;
-struct UnsuccessfulIndirect
-    : public CrossbindTest,
-      public ::testing::WithParamInterface<
-          std::tuple<UnsuccessfulIndirectTestParam,
-                     std::tuple<UnsuccessfulIndirectTestParamModuleB, UnsuccessfulIndirectTestParamModuleCImports>>> {};
+struct UnsuccessfulIndirectAuxTestParam {
+  std::string_view name;
+  //
+  std::string_view moduleB;
+  std::string_view moduleCImports;
+};
+DEFINE_NAMED_TEST_PARAM_PRINTER(UnsuccessfulIndirectAuxTestParam, name);
+struct UnsuccessfulIndirect : public CrossbindTest,
+                              public ::testing::WithParamInterface<
+                                  std::tuple<UnsuccessfulIndirectTestParam, UnsuccessfulIndirectAuxTestParam>> {};
 
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(CrossbindTest, UnsuccessfulIndirect, testing::Combine(
@@ -272,74 +275,79 @@ INSTANTIATE_TEST_SUITE_P(CrossbindTest, UnsuccessfulIndirect, testing::Combine(
     }
   ),
   testing::Values(
-    std::tuple{
-      R"(
-        import from ModuleA all;  // non-public
+    UnsuccessfulIndirectAuxTestParam{
+      .name = "private-direct-import-in-B",
+      .moduleB = R"(
+        import from ModuleA all;
       )",
-      R"(
+      .moduleCImports = R"(
         import from ModuleB { import all };
       )"
     },
-    std::tuple{
-      R"(
-        import from ModuleA { import all };  // non-public
+    UnsuccessfulIndirectAuxTestParam{
+      .name = "private-recursive-import-in-B",
+      .moduleB = R"(
+        import from ModuleA { import all };
       )",
-      R"(
+      .moduleCImports = R"(
         import from ModuleB { import all };
       )"
     },
-    std::tuple{
-      R"(
-        public import from ModuleA { import all };  // indirect
+    UnsuccessfulIndirectAuxTestParam{
+      .name = "public-recursive-import-in-B",
+      .moduleB = R"(
+        public import from ModuleA { import all };
       )",
-      R"(
-        import from ModuleB { import all };
+      .moduleCImports = R"(
+        import from ModuleB { import all }; // indirect
       )"
     },
-    std::tuple{
-      R"(
+    UnsuccessfulIndirectAuxTestParam{
+      .name = "direct-import-in-C",
+      .moduleB = R"(
         public import from ModuleA all;
       )",
-      R"(
+      .moduleCImports = R"(
         import from ModuleB all;  // direct
       )"
     },
-    std::tuple{
-      R"(
+    UnsuccessfulIndirectAuxTestParam{
+      .name = "empty-B",
+      .moduleB = R"(
       )",
-      R"(
+      .moduleCImports = R"(
        import from ModuleB all;  // direct
       )"
     },
-    std::tuple{
-      R"(
+    UnsuccessfulIndirectAuxTestParam{
+      .name = "empty-C",
+      .moduleB = R"(
         public import from ModuleA all;
       )",
-      R"(
+      .moduleCImports = R"(
       )"
     },
-    std::tuple{
-      R"(
+    UnsuccessfulIndirectAuxTestParam{
+      .name = "empty",
+      .moduleB = R"(
       )",
-      R"(
+      .moduleCImports = R"(
       )"
     }
   )
-), [](const testing::TestParamInfo<UnsuccessfulIndirect::ParamType>& info) {
-  return std::format("{}__{}", info.index, std::get<0>(info.param).testcase);
-});
+));
 // clang-format on
 
 TEST_P(UnsuccessfulIndirect, Parametrized) {
-  const auto& [param, bound_imports] = GetParam();
-  const auto& [moduleB, moduleCImports] = bound_imports;
-  const auto moduleC = std::format("{}\n{}", moduleCImports, param.moduleC);  // NOLINT(readability-identifier-naming)
+  const auto& [param, aux_param] = GetParam();
+  const auto moduleC =
+      std::format("{}\n{}", aux_param.moduleCImports, param.moduleC);  // NOLINT(readability-identifier-naming)
 
   core::Program program;
 
   ASSERT_TRUE(prepareWorkingSet(program, {
                                              {kModuleA, param.moduleA},
-                                             {kModuleB, moduleB},
+                                             {kModuleB, aux_param.moduleB},
                                              {kModuleC, moduleC},
                                          }));
 
@@ -364,11 +372,12 @@ struct FarIndirectTestParam {
   std::string_view moduleD;
 };
 DEFINE_NAMED_TEST_PARAM_PRINTER(FarIndirectTestParam, testcase);
-using FarIndirectTestParamModuleB = std::string_view;
-using FarIndirectTestParamModuleC = std::string_view;
+using FarIndirectTestParamModuleB = NamedStringParam;
+using FarIndirectTestParamModuleC = NamedStringParam;
 struct FarIndirect : public CrossbindTest,
-                     public ::testing::WithParamInterface<
-                         std::tuple<FarIndirectTestParam, FarIndirectTestParamModuleB, FarIndirectTestParamModuleC>> {};
+                     public ::testing::WithParamInterface<std::tuple<FarIndirectTestParam,         //
+                                                                     FarIndirectTestParamModuleB,  //
+                                                                     FarIndirectTestParamModuleC>> {};
 
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(CrossbindTest, FarIndirect, testing::Combine(
@@ -411,33 +420,50 @@ INSTANTIATE_TEST_SUITE_P(CrossbindTest, FarIndirect, testing::Combine(
     }
   ),
   testing::Values(
-    R"(
-      public import from ModuleA all;
-    )",
-    R"(
-      public import from ModuleA { import all };
-      public import from ModuleA all;
-    )",
-    R"(
-      public import from ModuleA all;
-      public import from ModuleA { import all };
-    )"
+    NamedStringParam{
+      .name = "D",
+      .value = R"(
+        public import from ModuleA all;
+      )",
+    },
+    NamedStringParam{
+      .name = "TD",
+      .value = R"(
+        public import from ModuleA { import all };
+        public import from ModuleA all;
+      )",
+    },
+    NamedStringParam{
+      .name = "DT",
+      .value = R"(
+        public import from ModuleA all;
+        public import from ModuleA { import all };
+      )",
+    }
   ),
-  testing::Values(R"(
-      public import from ModuleB { import all };
-    )",
-    R"(
-      public import from ModuleB { import all };
-      public import from ModuleB all;
-    )",
-    R"(
-      public import from ModuleB all;
-      public import from ModuleB { import all };
-    )"
+  testing::Values(
+    NamedStringParam{
+      .name = "T",
+      .value = R"(
+        public import from ModuleB { import all };
+      )",
+    },
+    NamedStringParam{
+      .name = "TD",
+      .value = R"(
+        public import from ModuleB { import all };
+        public import from ModuleB all;
+      )",
+    },
+    NamedStringParam{
+      .name = "DT",
+      .value = R"(
+        public import from ModuleB all;
+        public import from ModuleB { import all };
+      )",
+    }
   )
-), [](const testing::TestParamInfo<FarIndirect::ParamType>& info) {
-  return std::format("{}__{}", info.index, std::get<0>(info.param).testcase);
-});
+));
 // clang-format on
 
 TEST_P(FarIndirect, Parametrized) {
