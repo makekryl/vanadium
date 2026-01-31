@@ -10,6 +10,7 @@ def with_test_params(tfunc: TaskCallable) -> TaskCallable:
     c: Context,
     jobs: int | None = None,
     filter: str | None = None,
+    exclude: str | None = None,
     only_build: bool = False,
     ctest_args: str | None = None,
   ) -> None:
@@ -19,6 +20,7 @@ def with_test_params(tfunc: TaskCallable) -> TaskCallable:
 
     cfg.jobs = jobs
     cfg.filter = filter
+    cfg.exclude = exclude
     cfg.only_build = only_build
     cfg.ctest_args = ctest_args
 
@@ -31,6 +33,10 @@ def with_test_params(tfunc: TaskCallable) -> TaskCallable:
       ),
       InjectableParam(
         "filter",
+        None,
+      ),
+      InjectableParam(
+        "exclude",
         None,
       ),
       InjectableParam(

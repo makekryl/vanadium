@@ -20,6 +20,8 @@ def test(c: Context, label: str):
   args = []
   if c.config.vanadium.test.filter:
     args.append(f"-R '{c.config.vanadium.test.filter}'")
+  if c.config.vanadium.test.exclude:
+    args.append(f"-E '{c.config.vanadium.test.exclude}'")
   if c.config.vanadium.test.jobs:
     args.append(f"-j {c.config.vanadium.test.jobs}")
   if c.config.vanadium.test.ctest_args:
