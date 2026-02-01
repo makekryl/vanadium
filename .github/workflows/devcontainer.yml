@@ -1,0 +1,34 @@
+name: devcontainer
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+    paths:
+      - .devcontainer/**
+
+permissions:
+    contents: read
+    packages: write
+    attestations: write
+    id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Devcontainer image
+        uses: devcontainers/ci@v0.3
+        with:
+          imageName: ghcr.io/${{ github.repository_owner }}/vanadium-devcontainer
+          cacheFrom: ghcr.io/${{ github.repository_owner }}/vanadium-devcontainer
+          push: always
