@@ -12,9 +12,12 @@ from . import build
 @with_build_params
 @with_test_params
 def test(c: Context, label: str):
-  build_dir = build.build(c, target=f"build_{label}_tests")
+  if not c.config.vanadium.test.skip_build:
+    build_dir = build.build(c, target=f"build_{label}_tests")
+  else:
+    build_dir = build.get_build_dir(c)
 
-  if c.config.vanadium.test.only_build:
+  if c.config.vanadium.test.no_run:
     return
 
   args = []

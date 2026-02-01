@@ -4,4 +4,7 @@ FetchContent_Declare(
   GIT_TAG        e69e5f977d458f2650bb346dadf2ad30c5320281
   GIT_SHALLOW 1
 )
+
+set(FMT_INSTALL OFF CACHE BOOL "" FORCE)
+
 FetchContent_MakeAvailable(fmt)

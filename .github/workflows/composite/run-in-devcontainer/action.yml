@@ -1,0 +1,18 @@
+name: Run in Devcontainer
+
+inputs:
+  run:
+    required: true
+    type: string
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Run in Devcontainer
+      uses: devcontainers/ci@v0.3
+      with:
+        cacheFrom: ghcr.io/${{ github.repository }}-devcontainer
+        push: never
+        runCmd: |
+          set -euxo pipefail
+          ${{ inputs.run }}

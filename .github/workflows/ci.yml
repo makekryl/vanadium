@@ -1,0 +1,101 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+  merge_group:
+    branches:
+      - master
+
+concurrency:
+  group: ${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+# Ensure scripts are run with pipefail. See:
+# https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#exit-codes-and-error-action-preference
+# (note: does not have effect on the commands run inside devcontainer)
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Pull Devcontainer
+        uses: ./.github/workflows/composite/run-in-devcontainer
+        with: { run: uv sync --no-group build }
+
+      - name: Check code formatting
+        uses: ./.github/workflows/composite/run-in-devcontainer
+        with:
+          run: |
+            uv run inv check.format \
+              --jobs $(nproc)
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        toolchain: [clang]  # TODO: fix gcc build
+        kind: [unit, e2e]
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Pull Devcontainer
+        uses: ./.github/workflows/composite/run-in-devcontainer
+        with: { run: uv sync }
+
+      - name: Build tests
+        uses: ./.github/workflows/composite/run-in-devcontainer
+        with:
+          run: |
+            uv run inv test.${{ matrix.kind }} --sanitizers \
+              --toolchain ${{ matrix.toolchain }} \
+              --jobs $(nproc) --no-run
+
+      - name: Run tests
+        uses: ./.github/workflows/composite/run-in-devcontainer
+        with:
+          run: |
+            uv run inv test.${{ matrix.kind }} --sanitizers \
+              --toolchain ${{ matrix.toolchain }} \
+              --jobs $(nproc) --skip-build
+
+  release:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Pull Devcontainer
+        uses: ./.github/workflows/composite/run-in-devcontainer
+        with: { run: uv sync }
+
+      - name: Build Vanadium tools
+        uses: ./.github/workflows/composite/run-in-devcontainer
+        with:
+          run: |
+            uv run inv build --target vanadium_tools --release
+
+      - name: Install Vanadium tools
+        uses: ./.github/workflows/composite/run-in-devcontainer
+        with:
+          run: |
+            mkdir out/install
+            uv run inv build.install --dir out/install --release
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: release
+          path: out/install/

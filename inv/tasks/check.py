@@ -67,7 +67,7 @@ _FORMATTERS: list[Formatter] = [
     alias="js",
     run=create_parallel_formatter(
       lambda filepath, dryrun: [
-        "npx",
+        *("npx", "-y"),
         "prettier",
         "--check",
         *(() if dryrun else ("--write",)),
@@ -83,7 +83,7 @@ _IGNORE_FILEPATHS_PREFIXES: dict[str, Iterable[str]] = {
 }
 
 
-def _run_formatter(formatter: Formatter, dryrun: bool, workers: int) -> int:
+def _run_formatter(formatter: Formatter, dryrun: bool, jobs: int) -> int:
   files = git.list_files(formatter.file_extensions)
 
   total_files_count = len(files)
@@ -98,21 +98,22 @@ def _run_formatter(formatter: Formatter, dryrun: bool, workers: int) -> int:
   print(
     print_prefix,
     f"running {colors.CYAN}{formatter.name}{colors.END} "
-    f"over {len(files)} out of {total_files_count} files in {workers} threads",
+    f"over {len(files)} out of {total_files_count} files in {jobs} threads",
   )
 
   ts_start = time.time()
-  baddies = formatter.run(files, dryrun, workers)
+  baddies = formatter.run(files, dryrun, jobs)
   elapsed = time.time() - ts_start
 
   if not baddies:
-    print("", print_prefix, "all files are formatted", get_elapsed_time_msg(elapsed))
+    print("└", print_prefix, "all files are formatted", get_elapsed_time_msg(elapsed))
     return 0
 
   print(
-    "",
+    "└",
     print_prefix,
-    f"{len(baddies)} files are not formatted: {', '.join(f"'{colors.PURPLE}{b}{colors.END}'" for b in baddies)}",
+    f"{len(baddies)} files are not formatted",
+    ", ".join(f"'{colors.PURPLE}{b}{colors.END}'" for b in baddies),
     get_elapsed_time_msg(elapsed),
   )
 
@@ -120,7 +121,7 @@ def _run_formatter(formatter: Formatter, dryrun: bool, workers: int) -> int:
 
 
 @task
-def format(c: Context, fix: bool = False, workers: int = 4):
+def format(c: Context, fix: bool = False, jobs: int = 4):
   baddies = 0
 
   ts_start = time.time()
@@ -128,7 +129,7 @@ def format(c: Context, fix: bool = False, workers: int = 4):
     baddies += _run_formatter(
       formatter=formatter,
       dryrun=not fix,
-      workers=workers,
+      jobs=jobs,
     )
   elapsed = time.time() - ts_start
 

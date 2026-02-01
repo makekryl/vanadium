@@ -11,7 +11,8 @@ def with_test_params(tfunc: TaskCallable) -> TaskCallable:
     jobs: int | None = None,
     filter: str | None = None,
     exclude: str | None = None,
-    only_build: bool = False,
+    skip_build: bool = False,
+    no_run: bool = False,
     ctest_args: str | None = None,
   ) -> None:
     if "test" not in c.config.vanadium:
@@ -21,7 +22,8 @@ def with_test_params(tfunc: TaskCallable) -> TaskCallable:
     cfg.jobs = jobs
     cfg.filter = filter
     cfg.exclude = exclude
-    cfg.only_build = only_build
+    cfg.skip_build = skip_build
+    cfg.no_run = no_run
     cfg.ctest_args = ctest_args
 
   return inject_task_params(
@@ -40,7 +42,11 @@ def with_test_params(tfunc: TaskCallable) -> TaskCallable:
         None,
       ),
       InjectableParam(
-        "only_build",
+        "skip_build",
+        False,
+      ),
+      InjectableParam(
+        "no_run",
         False,
       ),
       InjectableParam(

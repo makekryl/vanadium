@@ -5,13 +5,13 @@ on:
     branches:
       - master
     paths:
-      - .devcontainer/**
+      - '.devcontainer/**'
 
 permissions:
-    contents: read
-    packages: write
-    attestations: write
-    id-token: write
+  contents: read
+  packages: write
+  attestations: write
+  id-token: write
 
 jobs:
   build:
@@ -29,6 +29,6 @@ jobs:
       - name: Build and push Devcontainer image
         uses: devcontainers/ci@v0.3
         with:
-          imageName: ghcr.io/${{ github.repository_owner }}/vanadium-devcontainer
-          cacheFrom: ghcr.io/${{ github.repository_owner }}/vanadium-devcontainer
+          imageName: ghcr.io/${{ github.repository }}-devcontainer
+          cacheFrom: ghcr.io/${{ github.repository }}-devcontainer
           push: always

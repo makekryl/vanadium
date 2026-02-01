@@ -1,10 +1,13 @@
+import sys
+from pathlib import Path
+
 from invoke import Context, task
 
 from inv.config import (
   CMAKE_PRESETS,
   TOOLCHAINS,
-  get_build_dir,
   get_preset,
+  get_preset_build_dir,
 )
 from inv.params.build import with_build_params
 
@@ -23,8 +26,13 @@ def _get_cmake_params(c: Context):
     ),
     toolchain=c.config.vanadium.build.toolchain,
   )
-  build_dir = get_build_dir(preset)
+  build_dir = get_preset_build_dir(preset)
   return preset, build_dir
+
+
+def get_build_dir(c: Context):
+  _, build_dir = _get_cmake_params(c)
+  return build_dir
 
 
 @task
@@ -36,7 +44,7 @@ def configure(
   c.run(
     f"cmake -DCMAKE_GENERATOR=Ninja --preset '{preset}' -B '{build_dir}'",
     env={
-      "CMAKE_COLOR_DIAGNOSTICS": "ON",
+      "CMAKE_COLOR_DIAGNOSTICS": "ON" if sys.stdout.isatty() else "OFF",
     },
   )
 
@@ -47,7 +55,7 @@ def build(
   c: Context,
   target: str | None = None,
 ):
-  _, build_dir = _get_cmake_params(c)
+  build_dir = get_build_dir(c)
 
   if c.config.vanadium.build.reconfigure or not build_dir.exists():
     configure(c)
@@ -59,6 +67,26 @@ def build(
     args.append(f"-j {c.config.vanadium.build.jobs}")
 
   c.run(f"cmake --build '{build_dir}' {' '.join(args)}")
+
+  return build_dir
+
+
+@task
+@with_build_params
+def install(
+  c: Context,
+  dir: str | None = None,
+):
+  build_dir = get_build_dir(c)
+
+  args = [
+    "--component runtime",
+  ]
+  if dir:
+    assert Path(dir).exists(), f"directory '{dir}' does not exist"
+    args.append(f"--prefix '{dir}'")
+
+  c.run(f"cmake --install '{build_dir}' {' '.join(args)}")
 
   return build_dir
 
