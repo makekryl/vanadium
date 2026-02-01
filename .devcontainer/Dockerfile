@@ -12,12 +12,14 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
         gdb \
         valgrind \
         ninja-build \
+        flex bison \
     && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install --no-install-recommends \
         gcc-14 g++-14 \
         clang-19 clang-format-19 \
+    && apt-get -y purge gcc-13 g++-13 && apt-get -y autoremove --purge \
     && apt-get clean -y && rm -rf /var/lib/apt/lists/* \
     \
     && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100 \
