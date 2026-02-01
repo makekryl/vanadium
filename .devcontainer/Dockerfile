@@ -18,7 +18,8 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install --no-install-recommends \
         gcc-14 g++-14 \
-        clang-19 clang-format-19 \
+        clang-19 libclang-rt-19-dev \
+        clang-format-19 \
     && apt-get -y purge gcc-13 g++-13 && apt-get -y autoremove --purge \
     && apt-get clean -y && rm -rf /var/lib/apt/lists/* \
     \
