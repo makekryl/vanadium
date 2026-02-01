@@ -37,6 +37,7 @@ _FORMATTERS: list[Formatter] = [
     alias="py",
     run=create_parallel_formatter(
       lambda filepath, dryrun: [
+        "uvx",
         "ruff",
         "format",
         *(("--check",) if dryrun else ()),
@@ -50,6 +51,7 @@ _FORMATTERS: list[Formatter] = [
     alias="py",
     run=create_parallel_formatter(
       lambda filepath, dryrun: [
+        "uvx",
         "ruff",
         "check",
         "--select",

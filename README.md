@@ -92,12 +92,14 @@ Vanadium is a non-commercial project licensed under the BSD 3-Clause License, an
 Vanadium written in modern C++23, with CMake used as the build system. Python is used as auxilary language for development purposes, [pyinvoke](https://github.com/pyinvoke/invoke) is used for project tasks orchestration and [uv](https://github.com/astral-sh/uv) for Python package and environment management.
 
 Following is required to build the project:
+
 - `cmake`
 - `clang >= 19` or `gcc >= 14`
-- `python >= 3.12` for AST stuff generation
+- `python >= 3.11` for AST stuff generation
 - `flex` and `bison` to generate ASN.1 parser
 
 Optionally, you may need:
+
 - `ninja` as a faster CMake build backend
 - `gdb` and `valgrind` for development
 - `clang-format >= 19`
@@ -134,6 +136,7 @@ $ ./out/build/clang-debug-sanitizers/bin/tidy/vanadium_tidy
 ```
 
 About the `inv build` flags:
+
 - `--reconfigure` runs CMake reconfiguration before build, it may be skipped if you don't need it
 - `--sanitizers` appends `-sanitizers` suffix to the active CMake preset, selecting the corresponding one (see `CMakePresets.json`)
 - `--toolchain <clang|gcc>` - selects the active toolchain
@@ -168,11 +171,13 @@ CMake's CTest is used as the test runner and [gtest](https://google.github.io/go
 There's two kind of tests - unit tests and end-to-end (e2e) tests. Unit tests are placed within corresponding targets' directories and end-to-end tests are placed in `test/`.
 
 - To run unit tests:
+
 ```sh
 $ inv test.unit
 ```
 
 - To run end-to-end tests:
+
 ```sh
 $ inv test.e2e
 ```
