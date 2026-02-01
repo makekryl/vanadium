@@ -4,9 +4,12 @@ FetchContent_Declare(
   GIT_TAG        6910c9d9165801d8827d628cb72eb7ea9dd538c5
   GIT_SHALLOW 1
 )
+
+set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
 if(MSVC)
   set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 endif()
+
 FetchContent_MakeAvailable(googletest)
 
 include(GoogleTest)

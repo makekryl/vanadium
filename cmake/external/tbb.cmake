@@ -12,17 +12,19 @@ FetchContent_Declare(
   PATCH_COMMAND ${TBB_SOURCE_PATCH_COMMAND}
 )
 
-set(TBB_TEST OFF)
-set(TBB_DISABLE_HWLOC_AUTOMATIC_SEARCH ON)
+set(TBBMALLOC_BUILD OFF CACHE BOOL "" FORCE)
+set(TBB_TEST OFF CACHE BOOL "" FORCE)
+set(TBB_DISABLE_HWLOC_AUTOMATIC_SEARCH ON CACHE BOOL "" FORCE)
+set(TBB_ENABLE_IPO OFF CACHE BOOL "" FORCE)  # IPO should not make a noticeable difference
 #
 if(VANADIUM_STATIC_BUILD)
   set(BUILD_SHARED_LIBS OFF)
+  set(TBB_INSTALL OFF CACHE BOOL "" FORCE)
 endif()
 
 FetchContent_MakeAvailable(tbb)
 
-if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  # TODO: prevent leaking of -Wno-error to dependencies
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   target_compile_options(tbb PRIVATE
     -Wno-error=stringop-overflow
   )

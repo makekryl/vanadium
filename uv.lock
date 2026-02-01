@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.11"
 
 [[package]]
@@ -65,7 +65,7 @@ dependencies = [
 ]
 
 [package.dev-dependencies]
-dev = [
+build = [
     { name = "pyyaml" },
 ]
 
@@ -76,4 +76,4 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
-dev = [{ name = "pyyaml", specifier = ">=6.0.2,<7.0.0" }]
+build = [{ name = "pyyaml", specifier = ">=6.0.2,<7.0.0" }]

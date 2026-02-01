@@ -1,3 +1,5 @@
+import sys
+
 from invoke import Collection, Context, Task, UnexpectedExit, task
 from invoke.runners import Local as LocalRunner
 from invoke.runners import Result as RunResult
@@ -39,7 +41,7 @@ ns.configure(
     "run": {
       "echo_format": f"{colors.LIGHT_GRAY}{colors.BOLD} ⟶ {{command}}{colors.END}",
       "echo": True,
-      "pty": True,
+      "pty": sys.stdout.isatty(),
     },
     "runners": {
       "local": AlertingLocalRunner,
