@@ -19,7 +19,7 @@ target_link_libraries(vanadium_tooling PRIVATE
 )
 target_link_libraries(vanadium_tooling PUBLIC
   vanadium_core
-  reflectcpp
+  glaze::glaze
 )
 
 add_gtest_executable(vanadium_tooling)

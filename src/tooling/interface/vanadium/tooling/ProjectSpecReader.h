@@ -1,6 +1,7 @@
 #pragma once
 
-#include <rfl/toml/read.hpp>
+#include <glaze/core/reflect.hpp>
+#include <glaze/toml.hpp>
 
 #include "vanadium/tooling/Project.h"
 
@@ -9,10 +10,11 @@
 namespace vanadium::tooling {
 template <typename T>
 [[nodiscard]] std::expected<T, Error> Project::ReadSpec() const {
-  rfl::Result<T> result = rfl::toml::read<T>(manifest_contents_);
-  if (result.has_value()) {
-    return result.value();
+  T obj;
+  if (auto ec = glz::read<glz::opts{.format = glz::TOML, .error_on_unknown_keys = false}>(obj, manifest_contents_);
+      ec) {
+    return std::unexpected{Error{glz::format_error(ec, manifest_contents_)}};
   }
-  return std::unexpected{Error{result.error().what()}};
+  return obj;
 }
 }  // namespace vanadium::tooling

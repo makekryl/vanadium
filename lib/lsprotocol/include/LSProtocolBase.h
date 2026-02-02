@@ -10,6 +10,8 @@
 #include <variant>        // IWYU pragma: export
 #include <vector>         // IWYU pragma: export
 
+#include <glaze/json/generic_fwd.hpp>  // IWYU pragma: export
+
 struct GlazeGenericStub {
   std::variant<std::nullptr_t, double, std::string, bool, std::vector<GlazeGenericStub>,
                std::map<std::string, GlazeGenericStub, std::less<> > >
@@ -20,12 +22,7 @@ struct GlazeGenericStub {
   // ^ glz::generic destructor is no longer virtual in the latest revision, remove this after updating glaze
 };
 
-#ifdef LSPROTOCOL_CODEC
 using LSPAny = glz::generic;
-static_assert(sizeof(GlazeGenericStub) == sizeof(glz::generic));
-#else
-using LSPAny = GlazeGenericStub;
-#endif
 
 using LSPArray = std::vector<LSPAny>;
 using LSPObject = LSPAny;

@@ -3,17 +3,18 @@
 #include <cassert>
 #include <expected>
 
-#include <rfl/toml.hpp>
+#include <glaze/core/reflect.hpp>
+#include <glaze/toml.hpp>
 
 #include "vanadium/tooling/Filesystem.h"
 
 namespace vanadium {
 namespace tooling {
 
-std::expected<Project, Error> Project::Load(const fs::Path &path) {
+std::expected<Project, Error> Project::Load(const fs::Path& path) {
   std::string contents;
   {
-    const auto &manifest_path = path.Resolve(kManifestFilename);
+    const auto& manifest_path = path.Resolve(kManifestFilename);
     if (!manifest_path.Exists() || manifest_path.IsDirectory()) {
       return std::unexpected<Error>{"Manifest file does not exist"};
     }
@@ -27,15 +28,15 @@ std::expected<Project, Error> Project::Load(const fs::Path &path) {
     }
   }
 
-  rfl::Result<ProjectManifest> parse_result = rfl::toml::read<ProjectManifest>(contents);
-  if (!parse_result.has_value()) {
-    return std::unexpected{Error{"Failed to parse manifest", Error{parse_result.error().what()}}};
+  ProjectManifest manifest;
+  if (auto ec = glz::read<glz::opts{.format = glz::TOML, .error_on_unknown_keys = false}>(manifest, contents); ec) {
+    return std::unexpected{Error{"Failed to parse manifest", Error{glz::format_error(ec, contents)}}};
   }
 
-  return Project{path, std::move(contents), std::move(*parse_result)};
+  return Project{path, std::move(contents), std::move(manifest)};
 }
 
-Project::Project(fs::Path path, std::string &&contents, ProjectManifest &&descriptor)
+Project::Project(fs::Path path, std::string&& contents, ProjectManifest&& descriptor)
     : path_(std::move(path)), manifest_contents_(std::move(contents)), manifest_(std::move(descriptor)) {};
 
 }  // namespace tooling

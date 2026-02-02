@@ -2,7 +2,7 @@
 
 #include <string_view>
 
-#include <rfl/toml/read.hpp>
+#include <glaze/toml/read.hpp>
 
 #include <vanadium/format/AstPrinter.h>
 
@@ -24,26 +24,26 @@ struct PartialManifest {
 };
 
 std::optional<Error> TryReadOptionsFromManifest(std::string_view contents, format::PrintOptions& opts) {
-  rfl::Result<PartialManifest> result = rfl::toml::read<PartialManifest>(contents);
-  if (result.has_value()) {
-    if (result->tools && result->tools->fmt) {
-      const auto& c = *result->tools->fmt;
+  PartialManifest result;
+  if (auto ec = glz::read<glz::opts{.format = glz::TOML, .error_on_unknown_keys = false}>(result, contents); ec) {
+    return Error{glz::format_error(ec, contents)};
+  }
+  if (result.tools && result.tools->fmt) {
+    const auto& c = *result.tools->fmt;
 #define COPY_OPT_IF_PRESENT(OPT)        \
   do {                                  \
     if (const auto& opt = c.OPT; opt) { \
       opts.OPT = *opt;                  \
     }                                   \
   } while (0)
-      //
-      COPY_OPT_IF_PRESENT(tab_width);
-      COPY_OPT_IF_PRESENT(print_width);
-      COPY_OPT_IF_PRESENT(max_empty_newlines);
-      //
+    //
+    COPY_OPT_IF_PRESENT(tab_width);
+    COPY_OPT_IF_PRESENT(print_width);
+    COPY_OPT_IF_PRESENT(max_empty_newlines);
+    //
 #undef COPY_OPT_IF_PRESENT
-    }
-    return std::nullopt;
   }
-  return Error{result.error().what()};
+  return std::nullopt;
 }
 
 }  // namespace vanadium::bin::fmt

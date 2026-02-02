@@ -5,8 +5,6 @@
 
 #pragma once
 
-#define LSPROTOCOL_CODEC
-
 // clang-format off
 #include <glaze/json.hpp>
 #include "LSProtocol.h"

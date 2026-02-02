@@ -4,9 +4,11 @@ set(GLAZE_SOURCE_PATCH_COMMAND git apply
 )
 
 FetchContent_Declare(
-  glaze          # 7.0.2
-  GIT_REPOSITORY https://github.com/stephenberry/glaze.git
-  GIT_TAG        459946d325c497c274fa59d666bd7cb6e2dd7ad0
+  glaze          # 7.6.0+
+  # TODO: switch back to upstream (https://github.com/stephenberry/glaze/pull/2575)
+  # GIT_REPOSITORY https://github.com/stephenberry/glaze.git
+  GIT_REPOSITORY https://github.com/makekryl/glaze.git
+  GIT_TAG        ceec28f302e4db0d9d40058b123f4a8809eca6e4
   GIT_SHALLOW 1
 
   PATCH_COMMAND ${GLAZE_SOURCE_PATCH_COMMAND}

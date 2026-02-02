@@ -12,5 +12,5 @@ target_link_libraries(vanadium_fmt PRIVATE
   vanadium_bin_boostrap
   vanadium_format
   argparse::argparse
-  reflectcpp
+  glaze::glaze
 )
