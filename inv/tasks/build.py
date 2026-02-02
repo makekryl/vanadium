@@ -3,6 +3,7 @@ from pathlib import Path
 
 from invoke import Context, task
 
+from inv.common.fsutils import force_create_symlink
 from inv.config import (
   CMAKE_PRESETS,
   TOOLCHAINS,
@@ -10,6 +11,10 @@ from inv.config import (
   get_preset_build_dir,
 )
 from inv.params.build import with_build_params
+
+
+def _cmake_bool(b: bool):
+  return "ON" if b else "OFF"
 
 
 def _get_cmake_params(c: Context):
@@ -41,12 +46,22 @@ def configure(
   c: Context,
 ):
   preset, build_dir = _get_cmake_params(c)
+
+  use_compile_commands = True
+
   c.run(
     f"cmake -DCMAKE_GENERATOR=Ninja --preset '{preset}' -B '{build_dir}'",
     env={
-      "CMAKE_COLOR_DIAGNOSTICS": "ON" if sys.stdout.isatty() else "OFF",
+      "CMAKE_EXPORT_COMPILE_COMMANDS": _cmake_bool(use_compile_commands),
+      "CMAKE_COLOR_DIAGNOSTICS": _cmake_bool(sys.stdout.isatty()),
     },
   )
+
+  if use_compile_commands:
+    compile_commands_filename = "compile_commands.json"
+    force_create_symlink(
+      build_dir / compile_commands_filename, Path(compile_commands_filename)
+    )
 
 
 @task(default=True)

@@ -1,9 +1,8 @@
-import errno
-import os
 from pathlib import Path
 
 from invoke import Context, task
 
+from inv.common.fsutils import force_create_symlink
 from inv.config import OUTPUT_DIR
 from inv.params.build import with_build_options_params, with_build_params
 
@@ -19,17 +18,7 @@ def symlink_lsp(c: Context):
   lsp_bin_path = build_dir / "bin/lsp/vanadiumd"
 
   print(f"Creating symlink to '{lsp_bin_path}'")
-
-  def _create_symlink():
-    return os.symlink(lsp_bin_path.absolute(), dst)
-
-  try:
-    _create_symlink()
-  except OSError as err:
-    if err.errno != errno.EEXIST:
-      raise err
-    dst.unlink()
-    _create_symlink()
+  force_create_symlink(lsp_bin_path, dst)
 
 
 @task
