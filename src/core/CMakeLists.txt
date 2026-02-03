@@ -19,7 +19,7 @@ target_link_libraries(vanadium_core PUBLIC
   vanadium_asn1_ast_transformer
   vanadium_lib_common
   vanadium_lib_arena
-  TBB::tbb
+  vanadium_lib_concurrency
 )
 target_link_libraries(vanadium_core PRIVATE
   magic_enum

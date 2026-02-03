@@ -7,8 +7,6 @@
 #include <unordered_set>
 #include <vector>
 
-#include <oneapi/tbb/spin_mutex.h>
-
 #include <vanadium/asn1/ast/Asn1ModuleBasket.h>
 #include <vanadium/ast/AST.h>
 #include <vanadium/ast/ASTNodes.h>
@@ -19,6 +17,7 @@
 
 #include "vanadium/core/Semantic.h"
 #include "vanadium/core/TypeChecker.h"
+#include "vanadium/lib/concurrency/SpinMutex.h"
 
 namespace vanadium::core {
 
@@ -76,7 +75,7 @@ struct ModuleDescriptor {
   ModuleExternals externals;
   std::vector<const ast::nodes::Ident*> unresolved;
 
-  tbb::speculative_spin_mutex crossbind_mutex_;
+  lib::concurrency::SpinMutex crossbind_mutex_;
 
   auto ImportsOf(std::string_view import) const {
     const auto [begin, end] = imports.equal_range(import);
@@ -214,7 +213,7 @@ class Program {
   void Analyze();
 
   std::unordered_map<std::string, SourceFile> files_;
-  tbb::speculative_spin_mutex files_mutex_;
+  lib::concurrency::SpinMutex files_mutex_;
 
   std::unordered_map<std::string_view, ModuleDescriptor*> modules_;
   asn1::ast::Asn1ModuleBasket asn_modules_;

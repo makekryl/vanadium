@@ -8,10 +8,10 @@
 #include <argparse/argparse.hpp>
 #include <fmt/color.h>
 #include <fmt/core.h>
-#include <oneapi/tbb/task_arena.h>
 
 #include <vanadium/bin/Bootstrap.h>
 #include <vanadium/core/Program.h>
+#include <vanadium/lib/concurrency/TaskArena.h>
 #include <vanadium/lint/Context.h>
 #include <vanadium/lint/Linter.h>
 #include <vanadium/lint/rules/NoEmpty.h>
@@ -49,13 +49,15 @@ int main(int argc, char* argv[]) {
   PARSE_CLI_ARGS_OR_EXIT(ap, argc, argv, 1);
   //
 
-  tbb::task_arena task_arena(jobs);
+  vanadium::lib::concurrency::TaskArena task_arena(jobs);
 
   const auto t_load_begin = std::chrono::steady_clock::now();
-  auto solution_opt = task_arena.execute([&] {
+  vanadium::lib::concurrency::TaskArena tttt(jobs);
+  auto solution_opt = task_arena.Execute([&] {
     return vanadium::tooling::Solution::Load(
         vanadium::tooling::fs::Root<vanadium::tooling::fs::SystemFS>(solution_path));
   });
+
   if (!solution_opt) {
     fmt::println("{} {}", fmt::format(fmt::fg(fmt::color::red) | fmt::emphasis::bold, "error:"),
                  solution_opt.error().String());
@@ -86,7 +88,7 @@ int main(int argc, char* argv[]) {
       fmt::print(fmt::emphasis::underline | fmt::emphasis::bold, "{}\n", project.Directory().Join(sf.path));
       if (!sf.ast.errors.empty()) {
         fmt::println("\tFile has syntax errors");
-        return 2;
+        continue;
       }
 
       auto problems = linter.Lint(sf);

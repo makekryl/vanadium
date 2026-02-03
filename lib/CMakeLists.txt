@@ -1,6 +1,7 @@
 add_subdirectory(testing)
 add_subdirectory(common)
 add_subdirectory(arena)
+add_subdirectory(concurrency)
 add_subdirectory(jsonrpc)
 add_subdirectory(lsprotocol)
 add_subdirectory(lserver)

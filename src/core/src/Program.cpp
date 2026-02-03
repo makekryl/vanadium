@@ -11,10 +11,6 @@
 #include <type_traits>
 #include <unordered_map>
 
-#include <oneapi/tbb/parallel_for_each.h>
-#include <oneapi/tbb/spin_mutex.h>
-#include <oneapi/tbb/task_group.h>
-
 #include <vanadium/asn1/ast/Asn1ModuleBasket.h>
 #include <vanadium/ast/AST.h>
 #include <vanadium/ast/ASTNodes.h>
@@ -22,6 +18,8 @@
 #include <vanadium/ast/utils/ASTUtils.h>
 #include <vanadium/lib/Arena.h>
 #include <vanadium/lib/Bitset.h>
+#include <vanadium/lib/concurrency/Algorithm.h>
+#include <vanadium/lib/concurrency/TaskGroup.h>
 
 #include "vanadium/core/Semantic.h"
 #include "vanadium/core/TypeChecker.h"
@@ -40,22 +38,22 @@ bool IsAsnModule(const SourceFile& sf) {
 }  // namespace
 
 void Program::Update(const lib::Consumer<const ProgramModifier&>& modify) {
-  tbb::task_group wg;
+  lib::concurrency::TaskGroup wg;
   modify({
       .update =
           [&](const std::string& path, const FileReadFn& read) {
-            wg.run([this, path, read] {
+            wg.Run([this, path, read] {
               UpdateFile(path, read);
             });
           },
       .drop =
           [&](const std::string& path) {
-            wg.run([this, path] {
+            wg.Run([this, path] {
               DropFile(path);
             });
           },
   });
-  wg.wait();
+  wg.Wait();
 }
 
 void Program::Commit(const lib::Consumer<const ProgramModifier&>& modify) {
@@ -419,7 +417,7 @@ extern thread_local bool do_reanalyse_program_deps;
 thread_local bool do_reanalyse_program_deps = true;
 
 void Program::Analyze() {
-  tbb::parallel_for_each(asn_modules_.Keys<SourceFile>(), [&](SourceFile* sf) {
+  lib::concurrency::ParallelFor(asn_modules_.Keys<SourceFile>(), [&](SourceFile* sf) {
     if (sf->analysis_state != AnalysisState::kDirty) {
       // Hereby, incrementalized ASN.1 modules analysis resides here, in Program
       // Possible problems:
@@ -441,7 +439,7 @@ void Program::Analyze() {
     AttachFile(*sf);
   });
 
-  tbb::parallel_for_each(files_ | std::views::values, [&](SourceFile& sf) {
+  lib::concurrency::ParallelFor(files_ | std::views::values, [&](SourceFile& sf) {
     auto& module = *sf.module;
 
     if (sf.analysis_state == AnalysisState::kDirty) {
@@ -465,7 +463,7 @@ void Program::Analyze() {
       sf.analysis_state |= AnalysisState::kFullCrossbind;
     }
   });
-  tbb::parallel_for_each(files_ | std::views::values, [&](SourceFile& sf) {
+  lib::concurrency::ParallelFor(files_ | std::views::values, [&](SourceFile& sf) {
     if (!sf.skip_analysis && !(sf.analysis_state & AnalysisState::kTypecheck)) {
       checker::PerformTypeCheck(sf);
 
