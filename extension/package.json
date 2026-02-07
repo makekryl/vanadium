@@ -18,7 +18,7 @@
     "Snippets"
   ],
   "activationEvents": [
-    "workspaceContains:**/*.ttcn",
+    "workspaceContains:**/*.{ttcn,ttcn3}",
     "workspaceContains:**/.vanadiumrc.toml"
   ],
   "main": "./out/extension.js",

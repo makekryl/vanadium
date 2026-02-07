@@ -35,12 +35,12 @@ void methods::initialized::invoke(LsContext& ctx, const lib::jsonrpc::Empty&) {
                       .registerOptions = generify(lsp::DidChangeWatchedFilesRegistrationOptions{
                           .watchers = [&] -> std::vector<lsp::FileSystemWatcher> {
                             std::vector<lsp::FileSystemWatcher> watchers = {
-                                lsp::FileSystemWatcher{.globPattern = "**/*.ttcn"},
+                                lsp::FileSystemWatcher{.globPattern = "**/*.{{ttcn,ttcn3}}"},
                             };
                             for (const auto& sproj : ctx.solution->Projects()) {
                               for (const auto& search_path : sproj.project.SearchPaths()) {
-                                watchers.emplace_back(
-                                    ctx.Temp<std::string>(std::format("{}/**/*.ttcn", search_path.base_path)));
+                                watchers.emplace_back(ctx.Temp<std::string>(
+                                    std::format("{}/**/*.{{ttcn,ttcn3}}", search_path.base_path)));
                               }
                             }
                             return watchers;
