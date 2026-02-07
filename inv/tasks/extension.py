@@ -1,24 +1,9 @@
-from pathlib import Path
-
 from invoke import Context, task
 
-from inv.common.fsutils import force_create_symlink
 from inv.config import OUTPUT_DIR
-from inv.params.build import with_build_options_params, with_build_params
+from inv.params.build import with_build_params
 
 from . import build
-
-
-@task
-@with_build_options_params
-def symlink_lsp(c: Context):
-  dst = Path("extension/bin/vanadiumd")
-
-  _, build_dir = build._get_cmake_params(c)
-  lsp_bin_path = build_dir / "bin/lsp/vanadiumd"
-
-  print(f"Creating symlink to '{lsp_bin_path}'")
-  force_create_symlink(lsp_bin_path, dst)
 
 
 @task

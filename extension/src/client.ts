@@ -36,8 +36,15 @@ export class LsClient {
   async start(ctx: vscode.ExtensionContext): Promise<vscode.Disposable> {
     this.launchOptions = this.getLaunchOptions(ctx);
     const serverOptions: ServerOptions = {
-      ...this.launchOptions,
-      transport: TransportKind.stdio,
+      run: {
+        ...this.launchOptions,
+        transport: TransportKind.stdio,
+      },
+      debug: {
+        command: `${ctx.extensionPath}/../out/build/bin/lsp/vanadiumd`,
+        args: this.launchOptions.args,
+        transport: TransportKind.stdio,
+      },
     };
 
     this.client = new LanguageClient('ttcn3', 'Vanadium', serverOptions, this.clientOptions);

@@ -22,4 +22,4 @@ def get_preset(config: str, toolchain: str = DEFAULT_TOOLCHAIN):
 
 
 def get_preset_build_dir(preset: str) -> Path:
-  return OUTPUT_DIR / "build" / preset
+  return OUTPUT_DIR / "builds" / preset

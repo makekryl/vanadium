@@ -6,6 +6,7 @@ from invoke import Context, task
 from inv.common.fsutils import force_create_symlink
 from inv.config import (
   CMAKE_PRESETS,
+  OUTPUT_DIR,
   TOOLCHAINS,
   get_preset,
   get_preset_build_dir,
@@ -57,10 +58,16 @@ def configure(
     },
   )
 
+  force_create_symlink(
+    src=build_dir,
+    dst=OUTPUT_DIR / "build",
+  )
+
   if use_compile_commands:
     compile_commands_filename = "compile_commands.json"
     force_create_symlink(
-      build_dir / compile_commands_filename, Path(compile_commands_filename)
+      src=build_dir / compile_commands_filename,
+      dst=Path(compile_commands_filename),
     )
 
 
