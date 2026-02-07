@@ -51,7 +51,7 @@ def _generate_struct(struct: model.Structure, spec: model.LSPModel) -> TypeEntry
     ):  # TODO: cleanup
       hdr_buf.write(f"SelectionRange* {prop.name}{{nullptr}};")
     elif typename != "LiteralStub":  # TODO: not supported
-      hdr_buf.write(f"{typename} {prop.name};")
+      hdr_buf.write(f"{typename} {prop.name}{{}};")
 
   hdr_buf.unindent()
   hdr_buf.write("};")
