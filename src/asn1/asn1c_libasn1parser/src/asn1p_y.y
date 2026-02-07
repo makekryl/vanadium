@@ -44,6 +44,7 @@ typedef struct {
 #include <assert.h>
 
 #include "asn1parser.h"
+#include "asn1p_expr_str.h"
 #include "asn1p_alloc.h"
 
 #include "asn1p_y.h"

@@ -39,7 +39,7 @@ asn1p_parse_buffer(const char *buffer, int size, asn1p_errs_t *errs) {
 	}
 
   asn1p_set_lineno(1, scanner);
-  ret = asn1p_parse(&parser_ctx, &a, scanner);
+  ret = asn1p_parse(&parser_ctx, (void**)&a, scanner);
 
   asn1p__delete_buffer(ybuf, scanner);
   asn1p_lex_destroy(scanner);

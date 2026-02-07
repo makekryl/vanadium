@@ -46,7 +46,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        toolchain: [clang]  # TODO: fix gcc build
+        toolchain: [clang, gcc]
         kind: [unit, e2e]
     steps:
       - uses: actions/checkout@v5

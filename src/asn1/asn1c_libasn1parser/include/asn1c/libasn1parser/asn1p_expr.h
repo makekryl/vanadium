@@ -105,8 +105,6 @@ typedef enum asn1p_expr_type {
 } asn1p_expr_type_e;
 
 #include "asn1c/libasn1common/asn1p_src_range.h"
-#include "asn1p_expr_str.h"
-#include "asn1p_expr2uclass.h"
 
 struct asn1p_module_s;	/* Forward declaration */
 struct asn1p_ioc_table_s;	/* Forward declaration */

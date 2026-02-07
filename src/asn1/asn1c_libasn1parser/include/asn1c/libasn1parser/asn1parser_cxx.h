@@ -1,9 +1,5 @@
 #pragma once
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wc99-designator"
-#pragma GCC diagnostic ignored "-Wwritable-strings"
-
 extern "C" {
 // clang-format off
 #include "asn1parser.h"                      // IWYU pragma: export
@@ -22,5 +18,3 @@ extern "C" {
 #include "asn1p_expr.h"                      // IWYU pragma: export
 // clang-format on
 }
-
-#pragma GCC diagnostic pop

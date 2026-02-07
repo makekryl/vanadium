@@ -569,7 +569,8 @@ class AstTransformer {
      */
 
     const asn1p_expr_t* se = TQ_FIRST(&(expr->members));
-    const auto transform_version = [&](this auto&& self, std::uint16_t current_level,
+    const auto transform_version = [&, pthis = this /* gcc bug WA */](
+                                       this auto&& self, std::uint16_t current_level,
                                        std::vector<ttcn_ast::nodes::Field*>& current_fields) -> void {
       std::uint16_t current_ver = 0;
       while (se) {
@@ -579,10 +580,10 @@ class AstTransformer {
 
         if (se->eag_level.value > current_level) {
           ++current_ver;
-          current_fields.push_back(NewNode<ttcn_ast::nodes::Field>([&](ttcn_ast::nodes::Field& f) {
-            EmplaceIdent(f.name, AppendSource(std::format("ver{}", current_ver)));
+          current_fields.push_back(pthis->template NewNode<ttcn_ast::nodes::Field>([&](ttcn_ast::nodes::Field& f) {
+            pthis->EmplaceIdent(f.name, pthis->AppendSource(std::format("ver{}", current_ver)));
             f.optional = true;
-            f.type = NewNode<ttcn_ast::nodes::StructSpec>([&](ttcn_ast::nodes::StructSpec& m) {
+            f.type = pthis->template NewNode<ttcn_ast::nodes::StructSpec>([&](ttcn_ast::nodes::StructSpec& m) {
               m.kind = Tok(ttcn_ast::TokenKind::RECORD);
               self(se->eag_level.value, m.fields);  // <--
             });
@@ -593,7 +594,7 @@ class AstTransformer {
         if (!current_fields.empty() && se->eag_level.is_first) {
           break;
         }
-        if (auto* dn = TransformComponent(se); dn) {
+        if (auto* dn = pthis->TransformComponent(se); dn) {
           current_fields.push_back(dn);
         }
 
