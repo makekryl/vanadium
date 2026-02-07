@@ -102,10 +102,12 @@ std::expected<Solution, Error> Solution::Load(const fs::Path& path, lib::Consume
       auto [it, inserted] =
           solution.projects_.try_emplace(ext_name, Project(path.Resolve(ext_desc.path), "",
                                                            ProjectManifest{
+                                                               .root = false,
                                                                .project =
                                                                    {
                                                                        .name = ext_name,
                                                                        .references = ext_desc.references,
+                                                                       .subprojects = {},
                                                                    },
                                                            }));
 

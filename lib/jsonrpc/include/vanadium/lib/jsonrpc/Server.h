@@ -56,7 +56,8 @@ class Server {
     };
 
     if (auto parse_err{glz::validate_json(json_request)}) {
-      return write_json(GenericResponse{.error = Error{
+      return write_json(GenericResponse{.id = -1,
+                                        .error = Error{
                                             .code = ErrorCode::kParseError,
                                             .data = glz::format_error(parse_err, json_request),
                                         }});
@@ -65,12 +66,9 @@ class Server {
     const glz::expected<GenericRequest, glz::error_ctx> request{glz::read_json<GenericRequest>(json_request)};
 
     if (!request.has_value()) {
-      GenericResponse res{.error = Error::invalid(request.error(), json_request)};
       auto id{glz::get_as_json<id_t, "/id">(json_request)};
-      if (id.has_value()) {
-        res.id = std::move(*id);
-      }
-      return write_json(res);
+      return write_json(GenericResponse{.id = id.has_value() ? std::move(*id) : -1,
+                                        .error = Error::invalid(request.error(), json_request)});
     }
 
     if (request->version != kJsonRpcVersion) {
@@ -146,5 +144,4 @@ class Server {
   );
   std::unordered_map<std::string_view, InternalHandlerFn> handlers_;
 };
-
 };  // namespace vanadium::lib::jsonrpc

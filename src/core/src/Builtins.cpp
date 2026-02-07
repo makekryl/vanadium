@@ -63,7 +63,7 @@ constexpr std::string_view kBuiltinsSource{
 };
 
 const semantic::Scope* const kBuiltinsScope = [] {
-  static SourceFile sf{.path = ""};
+  static SourceFile sf{.arena = {}, .path = ""};
   auto& arena = sf.arena;
   sf.ast = ast::Parse(arena, kBuiltinsSource), sf.ast.root->file = &sf;
 

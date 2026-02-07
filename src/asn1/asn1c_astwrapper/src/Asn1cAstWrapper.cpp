@@ -18,7 +18,7 @@ void WithArenaAsn1cAllocator(lib::Arena& arena, std::invocable auto f) {
       .alloc = [](void* ctx, std::size_t size) -> void* {
         return reinterpret_cast<vanadium::lib::Arena*>(ctx)->AllocBuffer(size);
       },
-      .free = [](void* ctx, void* p) {},
+      .free = []([[maybe_unused]] void* ctx, [[maybe_unused]] void* p) {},
   });
   f();
   asn1p_mem_set_allocator(previous_allocator);

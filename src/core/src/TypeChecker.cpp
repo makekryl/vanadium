@@ -123,8 +123,7 @@ template <typename F>
 concept ErrorEmitterFn = std::invocable<F, TypeError&&>;
 
 template <typename F>
-concept ErrorEmitterProviderFn =
-    requires(F&& with_error_emitter) { with_error_emitter([](ErrorEmitterFn auto emit_error) {}); };
+concept ErrorEmitterProviderFn = requires(F&& with_error_emitter) { with_error_emitter([](ErrorEmitterFn auto) {}); };
 
 template <typename F>
 concept InstantiatedTypeResolverFn =

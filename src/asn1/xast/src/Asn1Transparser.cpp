@@ -459,7 +459,7 @@ ttcn_ast::nodes::TypeSpec* Transparser::ParseTypeSpec() {
         Expect(TokenKind::OF);
 
         auto* ret = NewNode<ttcn_ast::nodes::ListSpec>([&](ttcn_ast::nodes::ListSpec& ls) {
-          ls.kind = {.kind = ttcn_ast::TokenKind::RECORD};
+          ls.kind = {.kind = ttcn_ast::TokenKind::RECORD, .range = {}};
           ls.elemtype = ParseTypeSpec();
         });
 
