@@ -10,8 +10,11 @@ namespace vanadium::lib::concurrency {
 
 class TaskArena {
  public:
-  TaskArena(std::size_t concurrency) : pool_(concurrency) {
-    current_arena_ = this;
+  TaskArena() : pool_(ThreadPool::LateinitTag{}) {}
+  TaskArena(std::size_t concurrency) : pool_(concurrency) {}
+
+  void Initialize(std::size_t concurrency) {
+    pool_.Initialize(concurrency);
   }
 
   [[nodiscard]] std::size_t Concurrency() const noexcept(noexcept(pool_.Concurrency())) {
@@ -34,12 +37,15 @@ class TaskArena {
 
   static TaskArena& Current();
 
+  static std::size_t CurrentThreadIndex() {
+    return ThreadPool::CurrentThreadIndex();
+  }
+
  private:
   ThreadPool pool_;
 
   static thread_local TaskArena* current_arena_;
 
-  TaskArena(ThreadPool::LateinitTag) : pool_(ThreadPool::LateinitTag{}) {}
   static TaskArena global_arena_;
 };
 

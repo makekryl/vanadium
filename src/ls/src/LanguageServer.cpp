@@ -86,7 +86,7 @@ void Serve(lserver::Transport& transport, std::size_t concurrency, std::size_t j
     const auto begin_ts = std::chrono::steady_clock::now();
 
     auto res_token = conn.AcquireToken();
-    ctx->task_arena.execute([&] {
+    ctx->task_arena.Execute([&] {
       rpc_server.Call(*ctx, res_token->buf, token->buf);
     });
 
@@ -109,7 +109,7 @@ void Serve(lserver::Transport& transport, std::size_t concurrency, std::size_t j
     });
   }
 
-  ctx->task_arena.initialize(jobs);
+  ctx->task_arena.Initialize(jobs);
 
   ctx->linter.RegisterRule<lint::rules::NoEmpty>();
   ctx->linter.RegisterRule<lint::rules::NoUnusedVars>();

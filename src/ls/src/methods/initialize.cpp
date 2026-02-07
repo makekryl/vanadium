@@ -21,8 +21,7 @@ bool do_not_skip_full_analysis{false};
 
 rpc::ExpectedResult<lsp::InitializeResult> methods::initialize::invoke(LsContext& ctx,
                                                                        const lsp::InitializeParams& params) {
-  VLS_INFO("Initializing... (jobs={}, concurrency={})", ctx.task_arena.max_concurrency(),
-           ctx.connection->GetConcurrency());
+  VLS_INFO("Initializing... (jobs={}, concurrency={})", ctx.task_arena.Concurrency(), ctx.connection->GetConcurrency());
 
   if (params.workspaceFolders) {
     const auto& folders = *params.workspaceFolders;

@@ -1,9 +1,12 @@
 #include "vanadium/lib/concurrency/ThreadPool.h"
 
-#include <print>
 #include <thread>
 
 namespace vanadium::lib::concurrency {
+
+namespace {
+thread_local std::size_t tl_pooled_thread_idx{0};
+}
 
 ThreadPool::ThreadPool(std::size_t n) {
   Initialize(n);
@@ -21,7 +24,8 @@ ThreadPool::~ThreadPool() {
 void ThreadPool::Initialize(std::size_t n) {
   workers_.reserve(n);
   for (std::size_t i = 0; i < n; ++i) {
-    workers_.emplace_back([this] {
+    workers_.emplace_back([this, this_thread_idx = i] {
+      tl_pooled_thread_idx = this_thread_idx;
       while (true) {
         std::function<void()> task;
         {
@@ -50,6 +54,10 @@ void ThreadPool::Terminate() {
   for (auto& t : workers_) {
     t.join();
   }
+}
+
+std::size_t ThreadPool::CurrentThreadIndex() {
+  return tl_pooled_thread_idx;
 }
 
 }  // namespace vanadium::lib::concurrency

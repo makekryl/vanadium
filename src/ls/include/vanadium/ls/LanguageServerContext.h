@@ -5,12 +5,11 @@
 #include <unordered_map>
 #include <utility>
 
-#include <tbb/enumerable_thread_specific.h>
-#include <tbb/task_arena.h>
-
 #include <vanadium/core/Program.h>
 #include <vanadium/lib/Arena.h>
 #include <vanadium/lib/Metaprogramming.h>
+#include <vanadium/lib/concurrency/TaskArena.h>
+#include <vanadium/lib/concurrency/ThreadSpecific.h>
 #include <vanadium/lib/lserver/Connection.h>
 #include <vanadium/lint/Linter.h>
 #include <vanadium/tooling/Solution.h>
@@ -30,7 +29,7 @@ concept IsDocumentBoundParams = requires(Params params) {
 struct LsContext {
   lserver::Connection* const connection;
 
-  tbb::task_arena task_arena;
+  lib::concurrency::TaskArena task_arena;
 
   std::optional<tooling::Solution> solution;
   std::unordered_map<std::string, std::int32_t> file_versions;
@@ -44,7 +43,7 @@ struct LsContext {
   //
 
   lib::Arena& TemporaryArena() {
-    return temporary_arena_.local();
+    return temporary_arena_.Local();
   }
 
   template <typename T, typename... Args>
@@ -59,7 +58,7 @@ struct LsContext {
     return f({
         .solution = *solution,
         .linter = linter,
-        .arena = temporary_arena_.local(),
+        .arena = TemporaryArena(),
     });
   }
 
@@ -98,7 +97,7 @@ struct LsContext {
   }
 
  private:
-  tbb::enumerable_thread_specific<lib::Arena> temporary_arena_;
+  lib::concurrency::ThreadSpecific<lib::Arena> temporary_arena_;
 };
 
 }  // namespace vanadium::ls

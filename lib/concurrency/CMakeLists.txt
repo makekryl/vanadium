@@ -1,6 +1,7 @@
 add_library(vanadium_lib_concurrency STATIC
   src/TaskArena.cpp
   src/ThreadPool.cpp
+  src/ThreadSpecific.cpp
 )
 
 target_include_directories(vanadium_lib_concurrency PUBLIC

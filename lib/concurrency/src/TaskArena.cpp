@@ -9,7 +9,7 @@ namespace vanadium::lib::concurrency {
 
 thread_local TaskArena* TaskArena::current_arena_{nullptr};
 
-TaskArena TaskArena::global_arena_(ThreadPool::LateinitTag{});
+TaskArena TaskArena::global_arena_;
 namespace {
 std::once_flag global_task_arena_init_flag;
 }

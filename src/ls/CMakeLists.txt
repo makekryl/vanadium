@@ -18,6 +18,7 @@ target_include_directories(vanadium_ls PRIVATE
 
 target_link_libraries(vanadium_ls PRIVATE
   vanadium_lib_common
+  vanadium_lib_concurrency
   vanadium_lib_lsprotocol
   vanadium_lib_lserver
   vanadium_lib_jsonrpc

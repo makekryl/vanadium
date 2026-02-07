@@ -8,17 +8,25 @@ class TaskGroup {
  public:
   template <std::invocable F>
   void Run(F&& f) {
+    if (cancelled_.load(std::memory_order_relaxed)) {
+      return;
+    }
+
     active_tasks_.fetch_add(1, std::memory_order_relaxed);
     TaskArena::Current().Enqueue([this, func = std::forward<F>(f)] {
 #if __cpp_exceptions
       try {
-        func();
+        if (!cancelled_.load(std::memory_order_relaxed)) {
+          func();
+        }
       } catch (...) {
         std::lock_guard<std::mutex> lock(exc_mtx_);
         exc_ = std::current_exception();
       }
 #else
-      func();
+      if (!cancelled_.load(std::memory_order_relaxed)) {
+        func();
+      }
 #endif
       active_tasks_.fetch_sub(1, std::memory_order_relaxed);
       cv_.notify_all();
@@ -37,7 +45,12 @@ class TaskGroup {
 #endif
   }
 
+  void Cancel() noexcept {
+    cancelled_.store(true, std::memory_order_relaxed);
+  }
+
  private:
+  std::atomic<bool> cancelled_{false};
   std::atomic<std::uint16_t> active_tasks_{0};
   std::condition_variable cv_;
   std::mutex wait_mtx_;

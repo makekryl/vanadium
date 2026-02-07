@@ -3,14 +3,15 @@
 #include <condition_variable>
 #include <cstddef>
 #include <expected>
+#include <mutex>
+#include <shared_mutex>
 #include <type_traits>
 
 #include <glaze/json.hpp>
-#include <oneapi/tbb/concurrent_unordered_map.h>
-#include <oneapi/tbb/spin_rw_mutex.h>
-#include <oneapi/tbb/task_arena.h>
-#include <oneapi/tbb/task_group.h>
 
+#include <vanadium/lib/concurrency/ConcurrentQueue.h>
+#include <vanadium/lib/concurrency/TaskArena.h>
+#include <vanadium/lib/concurrency/TaskGroup.h>
 #include <vanadium/lib/jsonrpc/Common.h>
 
 #include "vanadium/lib/lserver/Channel.h"
@@ -38,7 +39,7 @@ class Connection {
   void Stop();
 
   [[nodiscard]] std::size_t GetConcurrency() const noexcept {
-    return task_arena_.max_concurrency() - kServiceWorkerThreads;
+    return task_arena_.Concurrency() - kServiceWorkerThreads;
   }
   [[nodiscard]] std::size_t GetBacklog() const noexcept {
     return backlog_;
@@ -74,7 +75,7 @@ class Connection {
   std::expected<Result, lib::jsonrpc::Error> Request(Params&& params) {
     const auto assign_wait_token = [&](WaitToken* tokenptr) {
       std::unique_lock l(channel_read_mutex_);
-      pending_outbound_requests_[tbb::this_task_arena::current_thread_index()] = tokenptr;
+      pending_outbound_requests_[lib::concurrency::TaskArena::CurrentThreadIndex()] = tokenptr;
     };
     const auto free_wait_token = [&] {
       assign_wait_token(nullptr);
@@ -174,16 +175,16 @@ class Connection {
   Channel channel_;
 
   std::size_t backlog_;
-  tbb::task_arena task_arena_;
-  tbb::task_group wg_;
-  static constexpr decltype(task_arena_.max_concurrency()) kServiceWorkerThreads = 3;  // Read+Write+Poll
+  lib::concurrency::TaskArena task_arena_;
+  lib::concurrency::TaskGroup wg_;
+  static constexpr std::size_t kServiceWorkerThreads = 3;  // Read+Write+Poll
 
   std::atomic<bool> is_running_;
 
   // It suspends incoming message routing during initiating a Server->Client request
-  tbb::speculative_spin_rw_mutex channel_read_mutex_;
+  std::shared_mutex channel_read_mutex_;
 
-  tbb::concurrent_bounded_queue<PooledMessageToken> inbound_requests_queue_;
+  lib::concurrency::ConcurrentQueue<PooledMessageToken> inbound_requests_queue_;
 
   std::atomic<rpc_id_t> outbound_id_{1};
   std::vector<WaitToken*> pending_outbound_requests_;  // <-- should be protected by exclusive channel_read_mutex_

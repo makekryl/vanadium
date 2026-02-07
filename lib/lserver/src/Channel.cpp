@@ -27,12 +27,11 @@ void Channel::Read() {
   buf.resize(message_size);
   transport_->Read(buf);
 
-  ready_.emplace(std::move(token));
+  ready_.push(std::move(token));
 }
 
 void Channel::Write() {
-  PooledMessageToken token;
-  out_queue_.pop(token);
+  PooledMessageToken token = out_queue_.pop();
 
   transport_->Write("Content-Length: ");
   transport_->Write(std::to_string(token->buf.size()));
@@ -42,12 +41,11 @@ void Channel::Write() {
 }
 
 void Channel::Enqueue(PooledMessageToken&& token) {
-  out_queue_.emplace(std::move(token));
+  out_queue_.push(std::move(token));
 }
 
 PooledMessageToken Channel::Poll() {
-  PooledMessageToken token;
-  ready_.pop(token);
+  PooledMessageToken token = ready_.pop();
   return token;
 }
 

@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <condition_variable>
 #include <cstddef>
+#include <shared_mutex>
 
 #include "vanadium/lib/lserver/Channel.h"
 #include "vanadium/lib/lserver/MessageToken.h"
@@ -21,13 +22,13 @@ Connection::Connection(HandlerFn handler, Transport& transport, std::size_t conc
 void Connection::Listen() {
   is_running_ = true;
 
-  task_arena_.execute([&] {
-    wg_.run([&] {
+  task_arena_.Execute([&] {
+    wg_.Run([&] {
       while (is_running_.load()) {
         channel_.Read();
       }
     });
-    wg_.run([&] {
+    wg_.Run([&] {
       while (is_running_.load()) {
         channel_.Write();
       }
@@ -35,10 +36,9 @@ void Connection::Listen() {
 
     const auto concurrency = GetConcurrency();
     for (std::size_t i = 0; i < concurrency; ++i) {
-      wg_.run([&] {
+      wg_.Run([&] {
         while (is_running_.load()) {
-          PooledMessageToken token;
-          inbound_requests_queue_.pop(token);
+          PooledMessageToken token = inbound_requests_queue_.pop();
           handler_(*this, std::move(token));
         }
       });
@@ -59,13 +59,13 @@ void Connection::Listen() {
         token = std::move(*inbound_request);
       }
     }
-    inbound_requests_queue_.emplace(std::move(token));
+    inbound_requests_queue_.push(std::move(token));
   }
 }
 
 void Connection::Stop() {
   is_running_ = false;
-  wg_.cancel();
+  wg_.Cancel();
 }
 
 bool Connection::AwaitsResponse() const noexcept {

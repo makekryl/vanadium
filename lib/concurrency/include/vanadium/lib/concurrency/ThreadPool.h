@@ -37,6 +37,8 @@ class ThreadPool {
   struct LateinitTag {};
   explicit ThreadPool(LateinitTag);
 
+  static std::size_t CurrentThreadIndex();
+
  private:
   std::vector<std::thread> workers_;
   std::queue<std::function<void()>> tasks_;

@@ -1,9 +1,10 @@
 #pragma once
 
+#include <string>
 #include <utility>
 #include <vector>
 
-#include <oneapi/tbb/concurrent_queue.h>
+#include <vanadium/lib/concurrency/ConcurrentQueue.h>
 
 namespace vanadium::lserver {
 
@@ -54,8 +55,7 @@ class TokenPool {
   }
 
   PooledMessageToken Acquire() {
-    PooledMessageToken result;
-    pool_.pop(result);
+    PooledMessageToken result = pool_.pop();
 
     result->buf.clear();
 
@@ -63,7 +63,7 @@ class TokenPool {
   }
 
   void Release(PooledMessageToken&& token) {
-    pool_.emplace(std::move(token));
+    pool_.push(std::move(token));
   }
 
   [[nodiscard]] bool Full() noexcept {
@@ -72,7 +72,7 @@ class TokenPool {
 
  private:
   std::vector<MessageToken> storage_;
-  tbb::concurrent_bounded_queue<PooledMessageToken> pool_;
+  lib::concurrency::ConcurrentQueue<PooledMessageToken> pool_;
 };
 
 inline PooledMessageToken::~PooledMessageToken() {
