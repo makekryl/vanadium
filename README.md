@@ -147,7 +147,6 @@ Vanadium is organized as a monorepo in this matter, i.e. both the language serve
 
 ```sh
 $ inv build --target vanadiumd --sanitizers --reconfigure
-$ inv extension.symlink-lsp --sanitizers
 ```
 
 Now you can launch the extension.
