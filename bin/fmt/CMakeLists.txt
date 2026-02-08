@@ -7,5 +7,9 @@ target_include_directories(vanadium_fmt PRIVATE
 )
 
 target_link_libraries(vanadium_fmt PRIVATE
-  vanadium_ast
+  vanadium_bin_boostrap
+  vanadium_format
+  vanadium_tooling
+  argparse::argparse
+  fmt::fmt
 )
