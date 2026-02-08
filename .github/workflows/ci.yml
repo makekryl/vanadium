@@ -85,7 +85,8 @@ jobs:
         uses: ./.github/workflows/composite/run-in-devcontainer
         with:
           run: |
-            uv run inv build --target vanadium_tools --release
+            uv run inv build --target vanadium_tools --release \
+              --jobs $(nproc)
 
       - name: Install Vanadium tools
         uses: ./.github/workflows/composite/run-in-devcontainer
