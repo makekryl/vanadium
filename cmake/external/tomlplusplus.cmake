@@ -4,4 +4,7 @@ FetchContent_Declare(
   GIT_TAG        30172438cee64926dc41fdd9c11fb3ba5b2ba9de
   GIT_SHALLOW 1
 )
+
+set(TOML_ENABLE_FORMATTERS OFF CACHE BOOL "" FORCE)
+
 FetchContent_MakeAvailable(tomlplusplus)
