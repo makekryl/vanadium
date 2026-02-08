@@ -8,9 +8,9 @@ Field:
   default_tok: Token*?
   type: TypeSpec*
   name: Ident
+  pars: FormalPars*?
   arraydef: ParenExpr*[]?
   length: LengthExpr*?
-  pars: FormalPars*?
   value_constraint: ParenExpr*?
   optional: bool
 RefSpec:

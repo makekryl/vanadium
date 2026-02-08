@@ -18,9 +18,9 @@ case NodeKind::Field: {
     Dump("default_tok", nn->default_tok);
     Dump("type", nn->type);
     Dump("name", nn->name);
+    Dump("pars", nn->pars);
     Dump("arraydef", nn->arraydef);
     Dump("length", nn->length);
-    Dump("pars", nn->pars);
     Dump("value_constraint", nn->value_constraint);
     Dump("optional", nn->optional);
   });

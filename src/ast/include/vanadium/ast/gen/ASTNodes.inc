@@ -1041,9 +1041,9 @@ struct Field : Node {
   Token* default_tok{nullptr};
   TypeSpec* type;
   std::optional<Ident> name;
+  FormalPars* pars{nullptr};
   std::vector<ParenExpr*> arraydef;
   LengthExpr* length{nullptr};
-  FormalPars* pars{nullptr};
   ParenExpr* value_constraint{nullptr};
   bool optional{false};
 
@@ -1052,6 +1052,9 @@ struct Field : Node {
     if (name.has_value()) {
       Inspect(std::addressof(*name), inspector);
     }
+    if (pars != nullptr) {
+      Inspect(pars, inspector);
+    }
     for (const auto* n : arraydef) {
       if (n != nullptr) {
         Inspect(n, inspector);
@@ -1059,9 +1062,6 @@ struct Field : Node {
     }
     if (length != nullptr) {
       Inspect(length, inspector);
-    }
-    if (pars != nullptr) {
-      Inspect(pars, inspector);
     }
     if (value_constraint != nullptr) {
       Inspect(value_constraint, inspector);
