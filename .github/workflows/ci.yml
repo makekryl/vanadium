@@ -86,7 +86,7 @@ jobs:
         with:
           run: |
             uv run inv build --target vanadium_tools --release \
-              --jobs $(nproc)
+              --cmake-jobs $(nproc)
 
       - name: Install Vanadium tools
         uses: ./.github/workflows/composite/run-in-devcontainer
