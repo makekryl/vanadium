@@ -14,7 +14,7 @@ namespace vanadium::format {
 namespace {
 class SerialAstPrinter {
  public:
-  SerialAstPrinter(std::string_view src, PrinterOptions options) : src_(src), options_(std::move(options)) {}
+  SerialAstPrinter(std::string_view src, PrintOptions options) : src_(src), options_(std::move(options)) {}
 
   std::string Print(const Unit& u) {
     AppendUnit(u);
@@ -39,7 +39,7 @@ class SerialAstPrinter {
   std::size_t line_length_{0};
 
   std::string_view src_;
-  const PrinterOptions options_;
+  const PrintOptions options_;
 };
 
 void SerialAstPrinter::AppendUnit(const Unit& cu) {
@@ -91,7 +91,7 @@ void SerialAstPrinter::AppendUnit(const Unit& cu) {
 }
 }  // namespace
 
-std::string PrintAst(std::string_view src, const ast::Node* n, PrinterOptions options) {
+std::string PrintAst(std::string_view src, const ast::Node* n, PrintOptions options) {
   lib::Arena arena;  // todo: accept as an argument
   auto unit = SerializeAst(src, n, arena);
 

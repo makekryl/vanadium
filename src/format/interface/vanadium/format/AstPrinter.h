@@ -10,12 +10,12 @@ struct Node;
 
 namespace format {
 
-struct PrinterOptions {
+struct PrintOptions {
   std::size_t tab_width;
   std::size_t print_width;
 };
 
-std::string PrintAst(std::string_view src, const ast::Node*, PrinterOptions);
+std::string PrintAst(std::string_view src, const ast::Node*, PrintOptions);
 
 }  // namespace format
 
