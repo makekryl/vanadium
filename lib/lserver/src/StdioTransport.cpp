@@ -1,5 +1,4 @@
 #include <cstdio>
-#include <iostream>
 #include <print>
 #include <span>
 #include <string_view>
@@ -22,11 +21,6 @@ void StdioTransport::Write(std::string_view buf) {
 
 void StdioTransport::Flush() {
   std::fflush(stdout);
-}
-
-void StdioTransport::Setup() {
-  std::ios_base::sync_with_stdio(false);
-  std::cin.tie(nullptr);
 }
 
 }  // namespace vanadium::lserver

@@ -79,7 +79,9 @@ int main(int argc, char* argv[]) {
     vanadium::ls::testflags::do_not_skip_full_analysis = true;
   }
 
-  vanadium::lserver::StdioTransport::Setup();
+  std::ios_base::sync_with_stdio(false);
+  std::cin.tie(nullptr);
+  //
   vanadium::lserver::StdioTransport stdio_transport;
 
   vanadium::lserver::Transport* transport{&stdio_transport};

@@ -1,8 +1,6 @@
 #include "vanadium/lib/Arena.h"
 
 #include <algorithm>
-#include <format>
-#include <iostream>
 #include <utility>
 
 namespace {
@@ -35,7 +33,6 @@ Arena& Arena::operator=(Arena&& other) noexcept {
 }
 
 Arena::~Arena() {
-  // std::cerr << std::format(" ~Arena({} / {} B)\n", bytes_used_, bytes_allocated_);
   Release();
 }
 

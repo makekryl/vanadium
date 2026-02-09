@@ -15,7 +15,6 @@ target_link_libraries(vanadium_asn1_xast PRIVATE
   vanadium_lib_common
   vanadium_lib_arena
   magic_enum
-  stdc++exp # TODO: remove
 )
 
 add_gtest_executable(vanadium_asn1_xast)

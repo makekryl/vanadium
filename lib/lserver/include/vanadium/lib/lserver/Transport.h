@@ -20,8 +20,6 @@ class StdioTransport : public Transport {
   void ReadLine(std::span<char> chunk) final;
   void Write(std::string_view) final;
   void Flush() final;
-
-  static void Setup();
 };
 
 }  // namespace vanadium::lserver

@@ -7,11 +7,8 @@
 #include <cstdint>
 #include <cstring>
 #include <format>
-#include <iomanip>
-#include <iostream>
 #include <memory>
 #include <optional>
-#include <stacktrace>
 #include <string_view>
 #include <utility>
 
@@ -735,11 +732,6 @@ Token Transparser::Expect(TokenKind expected) {
 }
 
 void Transparser::EmitError(const ttcn_ast::Range& range, std::string&& message) {
-  // TODO: remove after finishing xparser
-  std::cerr << std::quoted(src_.substr(0, 256)) << "\n---\n"
-            << std::stacktrace::current() << std::endl
-            << "LAST CONSUMED POS: " << last_consumed_pos_ << std::endl
-            << std::flush;
   errors_.emplace_back(range, std::move(message));
   throw ParsingCancellationSignal{};
 }

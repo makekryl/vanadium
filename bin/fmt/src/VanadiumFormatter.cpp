@@ -1,6 +1,5 @@
 #include <format>
 #include <fstream>
-#include <iostream>
 #include <print>
 #include <sstream>
 
@@ -28,7 +27,7 @@ std::optional<std::string> ReadFile(const std::string& path) {
 namespace {
 int main(int argc, char* argv[]) {
   argparse::ArgumentParser ap("vanadium_fmt");
-  ap.add_description("TTCN-3 source code pretty printer");
+  ap.add_description("TTCN-3 source code pretty-printer");
   //
   std::string filepath;
   ap.add_argument("path").store_into(filepath).help("file path");
