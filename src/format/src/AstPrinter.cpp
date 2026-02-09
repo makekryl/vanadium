@@ -61,6 +61,10 @@ void SerialAstPrinter::AppendUnit(const Unit& cu) {
             WriteNewline();
             break;
           }
+          case PrintDirective::kSoftLine: {
+            // WriteNewline();
+            break;
+          }
           case PrintDirective::kSpaceOrLine: {
             buf_ += " ";
             break;
