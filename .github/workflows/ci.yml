@@ -95,8 +95,20 @@ jobs:
             mkdir out/install
             uv run inv build.install --dir out/install --release
 
-      - name: Upload artifact
+      - name: Strip binaries
+        uses: ./.github/workflows/composite/run-in-devcontainer
+        with:
+          run: |
+            ./scripts/strip_binaries.sh out/install out/symbols
+
+      - name: Upload tools
         uses: actions/upload-artifact@v6
         with:
           name: release
           path: out/install/
+
+      - name: Upload symbols
+        uses: actions/upload-artifact@v6
+        with:
+          name: release-symbols
+          path: out/symbols/
