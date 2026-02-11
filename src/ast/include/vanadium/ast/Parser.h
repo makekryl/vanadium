@@ -109,7 +109,7 @@ class Parser {
   nodes::CaseClause* ParseCaseClause();
   nodes::CommClause* ParseAltGuard();
   //
-  nodes::Stmt* ParseSimpleStmt();
+  nodes::ExprStmt* ParseExprStmt();
   //
   nodes::Expr* ParseExpr();
   nodes::Expr* ParseBinaryExpr(int prec);

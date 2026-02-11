@@ -628,7 +628,7 @@ struct ForStmt : Stmt {
 
   Stmt* init;
   Expr* cond;
-  Stmt* post;
+  ExprStmt* post;
   BlockStmt* body;
 
   void Accept(const NodeInspector& inspector) const {
@@ -732,7 +732,7 @@ struct CommClause : Stmt {
 
   bool is_else{false};
   Expr* x{nullptr};
-  Stmt* comm;
+  ExprStmt* comm;
   BlockStmt* body{nullptr};
 
   void Accept(const NodeInspector& inspector) const {

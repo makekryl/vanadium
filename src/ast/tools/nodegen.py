@@ -40,6 +40,8 @@ class AstNodeField:
       "Node",
       "Expr",
       "Stmt",
+      "ExprStmt",
+      "DeclStmt",
       "TypeSpec",
     ]
 

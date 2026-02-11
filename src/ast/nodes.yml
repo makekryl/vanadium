@@ -98,7 +98,7 @@ CallStmt:
 ForStmt:
   init: Stmt*
   cond: Expr*
-  post: Stmt*
+  post: ExprStmt*
   body: BlockStmt*
 ForRangeStmt:
   init: Stmt*
@@ -124,7 +124,7 @@ CaseClause:
 CommClause:
   is_else: bool
   x: Expr*?
-  comm: Stmt*
+  comm: ExprStmt*
   body: BlockStmt*?
 LanguageSpec:
   list: Token[]

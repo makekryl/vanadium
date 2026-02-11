@@ -384,7 +384,7 @@ nodes::Definition* Parser::ParseDefinition() {
 nodes::Decl* Parser::ParseModulePar() {
   auto modulepar_tok = ConsumeInvariant(TokenKind::MODULEPAR);
   if (tok_ == TokenKind::LBRACE) {
-    return NewNode<nodes::ModuleParameterGroup>([&](auto& mpg) {
+    auto* ret = NewNode<nodes::ModuleParameterGroup>([&](auto& mpg) {
       Consume();  // LBrace
       while (tok_ != TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
         mpg.decls.push_back(NewNode<nodes::ValueDecl>([&](auto& vd) {
@@ -397,6 +397,8 @@ nodes::Decl* Parser::ParseModulePar() {
       Expect(TokenKind::RBRACE);
       mpg.with = ParseWith();
     });
+    ret->nrange.begin = modulepar_tok.range.begin;
+    return ret;
   }
   auto* r = NewNode<nodes::ValueDecl>([&](auto& vd) {
     vd.kind = TokAlloc(std::move(modulepar_tok));
@@ -1613,7 +1615,7 @@ nodes::Stmt* Parser::ParseStmt() {
     case TokenKind::MAP:
     case TokenKind::UNMAP:
     case TokenKind::MTC: {
-      auto* x = ParseSimpleStmt();
+      auto* x = ParseExprStmt();
 
       if (tok_ == TokenKind::LBRACE) {
         if (x->nkind != NodeKind::CallExpr) {
@@ -1652,7 +1654,7 @@ nodes::Stmt* Parser::ParseStmt() {
     case TokenKind::NONE:
     case TokenKind::INCONC:
     case TokenKind::ERROR:
-      return ParseSimpleStmt();
+      return ParseExprStmt();
 
     default:
       EmitErrorExpected("statement");
@@ -1724,7 +1726,7 @@ nodes::Stmt* Parser::ParseForLoop() {  // CRITICAL TODO : for loop
       Expect(TokenKind::SEMICOLON);
       s.cond = ParseExpr();
       Expect(TokenKind::SEMICOLON);
-      s.post = ParseSimpleStmt();
+      s.post = ParseExprStmt();
       Expect(TokenKind::RPAREN);
       s.body = ParseBlockStmt();
     });
@@ -1844,14 +1846,14 @@ nodes::CommClause* Parser::ParseAltGuard() {
       c.x = ParseExpr();
     }
     Expect(TokenKind::RBRACK);
-    c.comm = ParseSimpleStmt();
+    c.comm = ParseExprStmt();
     if (tok_ == TokenKind::LBRACE) {
       c.body = ParseBlockStmt();
     }
   });
 }
 
-nodes::Stmt* Parser::ParseSimpleStmt() {
+nodes::ExprStmt* Parser::ParseExprStmt() {
   return NewNode<nodes::ExprStmt>([&](auto& s) {
     s.expr = ParseExpr();
   });
