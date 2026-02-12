@@ -409,7 +409,7 @@ struct RegexpExpr : Expr {
 
   RegexpExpr() : Expr(NodeKind::RegexpExpr) {}
 
-  bool nocase{false};
+  Token* nocase{nullptr};
   Expr* x;
 
   void Accept(const NodeInspector& inspector) const {
@@ -422,7 +422,7 @@ struct PatternExpr : Expr {
 
   PatternExpr() : Expr(NodeKind::PatternExpr) {}
 
-  bool nocase{false};
+  Token* nocase{nullptr};
   Expr* x;
 
   void Accept(const NodeInspector& inspector) const {
@@ -1327,6 +1327,7 @@ struct PortTypeDecl : Decl {
 
   std::optional<Ident> name;
   FormalPars* pars{nullptr};
+  Token kind;
   bool realtime{false};
   std::vector<Node*> attrs;
   WithSpec* with{nullptr};

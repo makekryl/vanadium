@@ -668,10 +668,10 @@ nodes::PortTypeDecl* Parser::ParsePortTypeDecl() {
       case TokenKind::MIXED:
       case TokenKind::MESSAGE:
       case TokenKind::PROCEDURE:
-        Consume();  // KindTok
+        ptd.kind = Consume();  // KindTok
         break;
       default:
-        EmitErrorExpected("'message' or 'procedure'");
+        EmitErrorExpected("'mixed', 'message' or 'procedure'");
         break;
     }
 
@@ -705,7 +705,7 @@ Node* Parser::ParsePortAttribute() {
     case TokenKind::MAP:
     case TokenKind::UNMAP:
       return NewNode<nodes::PortMapAttribute>([&](auto& pma) {
-        Consume();  // MapTok
+        pma.kind = Consume();
         Expect(TokenKind::PARAM);
         pma.params = ParseFormalPars();
       });
@@ -760,14 +760,14 @@ nodes::StructTypeDecl* Parser::ParseStructTypeDecl() {
 
 nodes::ClassTypeDecl* Parser::ParseClassTypeDecl() {
   return NewNode<nodes::ClassTypeDecl>([&](auto& ctd) {
-    Consume();  // TypeTok
+    ConsumeInvariant(TokenKind::TYPE);
     if (tok_ == TokenKind::EXTERNAL) [[unlikely]] {
       // seems to be a titan extension
       Consume();
       ctd.external = true;
       ext_state_.is_inside_external_scope = true;
     }
-    ctd.kind = Consume();  // KindTok
+    ctd.kind = ConsumeInvariant(TokenKind::CLASS);
     if (tok_ == TokenKind::MODIF) {
       ctd.modif = TokAlloc(Consume());
     }
@@ -2363,8 +2363,7 @@ nodes::RegexpExpr* Parser::ParseCallRegexp() {
   return NewNode<nodes::RegexpExpr>([&](auto& re) {
     Expect(TokenKind::REGEXP);
     if (tok_ == TokenKind::MODIF) {
-      Consume();
-      re.nocase = true;
+      re.nocase = TokAlloc(Consume());
     }
     re.x = ParseParenExpr();
   });
@@ -2374,8 +2373,7 @@ nodes::PatternExpr* Parser::ParseCallPattern() {
   return NewNode<nodes::PatternExpr>([&](auto& pe) {
     Expect(TokenKind::PATTERN);
     if (tok_ == TokenKind::MODIF) {
-      Consume();
-      pe.nocase = true;
+      pe.nocase = TokAlloc(Consume());
     }
     pe.x = ParseExpr();
   });

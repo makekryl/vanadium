@@ -10,6 +10,7 @@
 #include <vanadium/ast/AST.h>
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/lib/Arena.h>
+#include <vanadium/lib/Assert.h>
 #include <vanadium/lib/Metaprogramming.h>
 
 namespace vanadium::format {
@@ -52,13 +53,15 @@ class AstSerializer {
     return seq;
   }
 
-  void Join(Sequence& target, std::ranges::range auto items, Unit separator) {
+  void Join(Sequence& target, const std::ranges::range auto& items, Unit separator) {
     const auto count = std::size(items);
-    for (auto [i, n] : std::views::enumerate(items)) {
+    std::size_t i{0};  // std::views::enumerate uses a signed type (iter diff) as counter, so
+    for (const auto& n : items) {
       target += S(n);
       if (i + 1 != count) {
         target += separator;
       }
+      ++i;
     }
   }
 
@@ -81,6 +84,15 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     case ast::NodeKind::Ident: {
       const auto* m = n->As<ast::nodes::Ident>();
       return m->On(src_);
+    }
+
+    case ast::NodeKind::CompositeIdent: {
+      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+        const auto* m = n->As<ast::nodes::CompositeIdent>();
+        seq += S(m->tok1);
+        seq += " ";
+        seq += S(m->tok2);
+      });
     }
 
     case ast::NodeKind::Module: {
@@ -117,14 +129,6 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
           seq += " ";
         }
         seq += S(m->def);
-        switch (m->def->nkind) {
-          case ast::NodeKind::StructTypeDecl:
-          case ast::NodeKind::PortTypeDecl:
-          case ast::NodeKind::FuncDecl:
-            break;
-          default:
-            seq += ";";
-        }
       });
     }
 
@@ -141,7 +145,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
         seq += "{";
         seq += PrintDirective::kHardLine;
         seq += NewSequence(Sequence::Attribute::kIndented, [&](auto& fseq) {
-          Join(fseq, m->fields, NewSequence(Sequence::Attribute::kNone, [&](auto& sseq) {
+          Join(fseq, m->fields, NewSequence(Sequence::Attribute::kNone, [](auto& sseq) {
                  sseq += ",";
                  sseq += PrintDirective::kHardLine;
                }));
@@ -269,7 +273,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
       const auto* m = n->As<ast::nodes::FormalPars>();
       return NewSequence(Sequence::Attribute::kGrouped, [&](auto& seq) {
         seq += PrintDirective::kSoftLine;
-        Join(seq, m->list, NewSequence(Sequence::Attribute::kNone, [&](auto& sseq) {
+        Join(seq, m->list, NewSequence(Sequence::Attribute::kNone, [](auto& sseq) {
                sseq += ",";
                sseq += PrintDirective::kSpaceOrLine;
              }));
@@ -281,28 +285,32 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
       const auto* m = n->As<ast::nodes::BlockStmt>();
       return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
         seq += "{";
-        seq += PrintDirective::kHardLine;
-        seq += NewSequence(Sequence::Attribute::kIndented, [&](auto& iseq) {
-          Join(iseq, m->stmts, NewSequence(Sequence::Attribute::kNone, [&](auto& sseq) {
-                 sseq += ";";
-                 sseq += PrintDirective::kHardLine;
-               }));
-          if (!m->stmts.empty()) {
-            iseq += ";";
-          }
-        });
-        seq += PrintDirective::kHardLine;
+        if (!m->stmts.empty()) {
+          seq += PrintDirective::kHardLine;
+          seq += NewSequence(Sequence::Attribute::kIndented, [&](auto& iseq) {
+            Join(iseq, m->stmts, PrintDirective::kHardLine);
+          });
+          seq += PrintDirective::kHardLine;
+        } else {
+          seq += " ";
+        }
         seq += "}";
       });
     }
 
     case ast::NodeKind::ExprStmt: {
       const auto* m = n->As<ast::nodes::ExprStmt>();
-      return S(m->expr);
+      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+        seq += S(m->expr);
+        seq += ";";
+      });
     }
     case ast::NodeKind::DeclStmt: {
       const auto* m = n->As<ast::nodes::DeclStmt>();
-      return S(m->decl);
+      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+        seq += S(m->decl);
+        seq += ";";
+      });
     }
 
     case ast::NodeKind::ValueDecl: {
@@ -323,7 +331,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
         seq += S(m->type);
         seq += " ";
         seq += NewSequence(Sequence::Attribute::kGrouped, [&](auto& dseq) {
-          Join(dseq, m->decls, NewSequence(Sequence::Attribute::kNone, [&](auto& sseq) {
+          Join(dseq, m->decls, NewSequence(Sequence::Attribute::kNone, [](auto& sseq) {
                  sseq += ",";
                  sseq += PrintDirective::kSpaceOrLine;
                }));
@@ -362,7 +370,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
         seq += "{";
         if (!m->list.empty()) {
           seq += PrintDirective::kSpaceOrLine;
-          Join(seq, m->list, NewSequence(Sequence::Attribute::kNone, [&](auto& sseq) {
+          Join(seq, m->list, NewSequence(Sequence::Attribute::kNone, [](auto& sseq) {
                  sseq += ",";
                  sseq += PrintDirective::kSpaceOrLine;
                }));
@@ -384,7 +392,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
         seq += "{";
         seq += PrintDirective::kHardLine;
         seq += NewSequence(Sequence::Attribute::kIndented, [&](auto& fseq) {
-          Join(fseq, m->fields, NewSequence(Sequence::Attribute::kNone, [&](auto& sseq) {
+          Join(fseq, m->fields, NewSequence(Sequence::Attribute::kNone, [](auto& sseq) {
                  sseq += ",";
                  sseq += PrintDirective::kHardLine;
                }));
@@ -397,26 +405,36 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     case ast::NodeKind::MapSpec: {
       const auto* m = n->As<ast::nodes::MapSpec>();
       return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+        seq += "map";
+        seq += " ";
+        seq += "from";
+        seq += " ";
         seq += S(m->from);
+        seq += " ";
+        seq += "to";
+        seq += " ";
         seq += S(m->to);
       });
       break;
     }
-    // case ast::NodeKind::EnumSpec: {
-    //   const auto* m = n->As<ast::nodes::EnumSpec>();
-    //   return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
-    //     seq += S(m->values);
-    //   });
-    //   break;
-    // }
     case ast::NodeKind::BehaviourSpec: {
       const auto* m = n->As<ast::nodes::BehaviourSpec>();
       return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
         seq += S(m->kind);
+        seq += " ";
         seq += S(m->params);
-        seq += S(m->runs_on);
-        seq += S(m->system);
-        seq += S(m->ret);
+        if (m->runs_on) {
+          seq += " ";
+          seq += S(m->runs_on);
+        }
+        if (m->system) {
+          seq += " ";
+          seq += S(m->system);
+        }
+        if (m->ret) {
+          seq += " ";
+          seq += S(m->ret);
+        }
       });
       break;
     }
@@ -459,35 +477,78 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
       });
       break;
     }
-    // case ast::NodeKind::ModuleParameterGroup: {
-    //   const auto* m = n->As<ast::nodes::ModuleParameterGroup>();
-    //   return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
-    //     seq += S(m->decls);
-    //     seq += S(m->with);
-    //   });
-    //   break;
-    // }
-    case ast::NodeKind::ConstructorDecl: {
-      const auto* m = n->As<ast::nodes::ConstructorDecl>();
+    case ast::NodeKind::ModuleParameterGroup: {
+      const auto* m = n->As<ast::nodes::ModuleParameterGroup>();
       return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
-        seq += S(m->params);
-        seq += S(m->body);
+        seq += "modulepar";
+        seq += " ";
+        seq += "{";
+        if (!m->decls.empty()) {
+          seq += PrintDirective::kSpaceOrLine;
+          seq += NewSequence(Sequence::Attribute::kGrouped, [&](auto& dseq) {
+            Join(dseq, m->decls, NewSequence(Sequence::Attribute::kNone, [](auto& sseq) {
+                   sseq += ";";
+                   sseq += PrintDirective::kHardLine;
+                 }));
+            dseq += ";";
+            dseq += PrintDirective::kSpaceOrLine;
+          });
+        }
+        seq += "}";
+        if (m->with) {
+          seq += " ";
+          seq += S(m->with);
+        }
       });
       break;
     }
-    // case ast::NodeKind::SignatureDecl: {
-    //   const auto* m = n->As<ast::nodes::SignatureDecl>();
-    //   return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
-    //     seq += S(m->name);
-    //     seq += S(m->pars);
-    //     seq += S(m->params);
-    //     seq += S(m->noblock);
-    //     seq += S(m->ret);
-    //     seq += S(m->exception);
-    //     seq += S(m->with);
-    //   });
-    //   break;
-    // }
+    case ast::NodeKind::ConstructorDecl: {
+      const auto* m = n->As<ast::nodes::ConstructorDecl>();
+      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+        seq += "constructor";
+        seq += "(";
+        seq += S(m->params);
+        seq += ")";
+        if (m->body) {
+          seq += " ";
+          seq += S(m->body);
+        }
+      });
+      break;
+    }
+    case ast::NodeKind::SignatureDecl: {
+      const auto* m = n->As<ast::nodes::SignatureDecl>();
+      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+        seq += "signature";
+        seq += " ";
+        seq += S(m->name);
+        if (m->pars) {
+          seq += "<";
+          seq += S(m->pars);
+          seq += ">";
+        }
+        seq += S(m->params);
+        if (m->noblock) {
+          seq += " ";
+          seq += "noblock";
+        }
+        if (m->ret) {
+          seq += " ";
+          seq += S(m->ret);
+        }
+        if (m->exception) {
+          seq += " ";
+          seq += "exception";
+          seq += " ";
+          seq += S(m->exception);
+        }
+        if (m->with) {
+          seq += " ";
+          seq += S(m->with);
+        }
+      });
+      break;
+    }
     case ast::NodeKind::BranchStmt: {
       const auto* m = n->As<ast::nodes::BranchStmt>();
       return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
@@ -496,6 +557,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
           seq += " ";
           seq += S(m->label);
         }
+        seq += ";";
       });
       break;
     }
@@ -507,6 +569,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
           seq += " ";
           seq += S(m->result);
         }
+        seq += ";";
       });
       break;
     }
@@ -537,13 +600,23 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
         seq += "for";
         seq += " ";
         seq += "(";
-        seq += S(m->init);
+        seq += S([&] -> const ast::Node* {
+          // to avoid inserting a semicolon while serializing a statement
+          switch (m->init->nkind) {
+            case ast::NodeKind::DeclStmt:
+              return m->init->As<ast::nodes::DeclStmt>()->decl;
+            case ast::NodeKind::ExprStmt:
+              return m->init->As<ast::nodes::ExprStmt>()->expr;
+            default:
+              return m;
+          }
+        }());
         seq += ";";
         seq += " ";
         seq += S(m->cond);
         seq += ";";
         seq += " ";
-        seq += S(m->post);
+        seq += S(m->post->expr);
         seq += ")";
         seq += " ";
         seq += S(m->body);
@@ -553,8 +626,16 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     case ast::NodeKind::ForRangeStmt: {
       const auto* m = n->As<ast::nodes::ForRangeStmt>();
       return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+        seq += "for";
+        seq += " ";
+        seq += "(";
         seq += S(m->init);
+        seq += " ";
+        seq += "in";
+        seq += " ";
         seq += S(m->range);
+        seq += ")";
+        seq += " ";
         seq += S(m->body);
       });
       break;
@@ -562,7 +643,10 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     case ast::NodeKind::WhileStmt: {
       const auto* m = n->As<ast::nodes::WhileStmt>();
       return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+        seq += "while";
+        seq += " ";
         seq += S(m->cond);
+        seq += " ";
         seq += S(m->body);
       });
       break;
@@ -570,7 +654,12 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     case ast::NodeKind::DoWhileStmt: {
       const auto* m = n->As<ast::nodes::DoWhileStmt>();
       return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+        seq += "do";
+        seq += " ";
         seq += S(m->body);
+        seq += " ";
+        seq += "while";
+        seq += " ";
         seq += S(m->cond);
       });
       break;
@@ -644,10 +733,12 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
         }
         seq += "]";
         seq += " ";
-        seq += S(m->comm);
+        seq += S(m->comm->expr);
         if (m->body) {
           seq += " ";
           seq += S(m->body);
+        } else {
+          seq += ";";
         }
       });
       break;
@@ -742,7 +833,12 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     case ast::NodeKind::ModifiesExpr: {
       const auto* m = n->As<ast::nodes::ModifiesExpr>();
       return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+        seq += "modifies";
+        seq += " ";
         seq += S(m->x);
+        seq += " ";
+        seq += ":=";
+        seq += " ";
         seq += S(m->y);
       });
       break;
@@ -829,7 +925,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
           seq += "{";
           seq += " ";
           seq += NewSequence(Sequence::Attribute::kGrouped, [&](auto& fseq) {
-            Join(fseq, m->list, NewSequence(Sequence::Attribute::kNone, [&](auto& sseq) {
+            Join(fseq, m->list, NewSequence(Sequence::Attribute::kNone, [](auto& sseq) {
                    sseq += ";";
                    sseq += PrintDirective::kSpaceOrLine;
                  }));
@@ -844,15 +940,25 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
       });
       break;
     }
-    // case ast::NodeKind::GroupDecl: {
-    //   const auto* m = n->As<ast::nodes::GroupDecl>();
-    //   return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
-    //     seq += S(m->name);
-    //     seq += S(m->defs);
-    //     seq += S(m->with);
-    //   });
-    //   break;
-    // }
+    case ast::NodeKind::GroupDecl: {
+      const auto* m = n->As<ast::nodes::GroupDecl>();
+      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+        seq += "group";
+        seq += " ";
+        seq += S(m->name);
+        seq += NewSequence(Sequence::Attribute::kIndented, [&](auto& fseq) {
+          Join(fseq, m->defs, NewSequence(Sequence::Attribute::kNone, [](auto& sseq) {
+                 sseq += ";";
+                 sseq += PrintDirective::kHardLine;
+               }));
+        });
+        if (m->with) {
+          seq += " ";
+          seq += S(m->with);
+        }
+      });
+      break;
+    }
     case ast::NodeKind::FriendDecl: {
       const auto* m = n->As<ast::nodes::FriendDecl>();
       return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
@@ -866,42 +972,157 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
       });
       break;
     }
-    // case ast::NodeKind::ClassTypeDecl: {
-    //   const auto* m = n->As<ast::nodes::ClassTypeDecl>();
-    //   return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
-    //     seq += S(m->external);
-    //     seq += S(m->kind);
-    //     seq += S(m->modif);
-    //     seq += S(m->name);
-    //     seq += S(m->extends);
-    //     seq += S(m->runs_on);
-    //     seq += S(m->mtc);
-    //     seq += S(m->system);
-    //     seq += S(m->defs);
-    //     seq += S(m->with);
-    //   });
-    //   break;
-    // }
-    case ast::NodeKind::MapTypeDecl: {
-      const auto* m = n->As<ast::nodes::MapTypeDecl>();
+    case ast::NodeKind::ClassTypeDecl: {
+      const auto* m = n->As<ast::nodes::ClassTypeDecl>();
       return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
-        seq += S(m->spec);
+        if (m->external) {
+          seq += "external";
+          seq += " ";
+        }
+        seq += "type";
+        seq += " ";
+        seq += "class";
+        seq += " ";
         seq += S(m->name);
-        seq += S(m->pars);
-        seq += S(m->with);
+        if (!m->extends.empty()) {
+          seq += " ";
+          seq += "extends";
+          seq += " ";
+          Join(seq, m->extends, ", ");
+        }
+        if (m->runs_on) {
+          seq += " ";
+          seq += S(m->runs_on);
+        }
+        if (m->mtc) {
+          seq += " ";
+          seq += S(m->mtc);
+        }
+        if (m->system) {
+          seq += " ";
+          seq += S(m->system);
+        }
+        seq += PrintDirective::kHardLine;
+        seq += "{";
+        seq += PrintDirective::kHardLine;
+        seq += NewSequence(Sequence::Attribute::kIndented, [&](auto& iseq) {
+          Join(iseq, m->defs, PrintDirective::kHardLine);
+        });
+        seq += PrintDirective::kHardLine;
+        seq += "}";
+        if (m->with) {
+          seq += " ";
+          seq += S(m->with);
+        }
       });
       break;
     }
-    // case ast::NodeKind::EnumTypeDecl: {
-    //   const auto* m = n->As<ast::nodes::EnumTypeDecl>();
-    //   return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
-    //     seq += S(m->name);
-    //     seq += S(m->pars);
-    //     seq += S(m->values);
-    //     seq += S(m->with);
-    //   });
-    //   break;
-    // }
+    case ast::NodeKind::MapTypeDecl: {
+      const auto* m = n->As<ast::nodes::MapTypeDecl>();
+      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+        seq += "map";
+        seq += " ";
+        seq += S(m->spec);
+        seq += " ";
+        seq += S(m->name);
+        if (m->pars) {
+          seq += "<";
+          seq += S(m->pars);
+          seq += ">";
+        }
+        if (m->with) {
+          seq += " ";
+          seq += S(m->with);
+        }
+      });
+      break;
+    }
+    case ast::NodeKind::EnumTypeDecl: {
+      const auto* m = n->As<ast::nodes::EnumTypeDecl>();
+      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+        seq += "type";
+        seq += " ";
+        seq += "enumerated";
+        seq += " ";
+        seq += S(m->name);
+        if (m->pars) {
+          seq += "<";
+          seq += S(m->pars);
+          seq += ">";
+        }
+        seq += " ";
+        seq += "{";
+        seq += PrintDirective::kHardLine;
+        seq += NewSequence(Sequence::Attribute::kIndented, [&](auto& vseq) {
+          const auto count = std::size(m->values);
+          std::size_t i{0};
+          for (const auto& ev : m->values) {
+            switch (ev->nkind) {
+              case ast::NodeKind::CallExpr: {
+                const auto* ce = ev->As<ast::nodes::CallExpr>();
+                vseq += S(ce->fun);
+                vseq += " ";
+                vseq += S(ce->args);
+                break;
+              }
+              default: {
+                vseq += S(ev);
+                break;
+              }
+            }
+            if (i + 1 != count) {
+              vseq += ",";
+              vseq += PrintDirective::kHardLine;
+            }
+            ++i;
+          }
+        });
+        seq += PrintDirective::kHardLine;
+        seq += "}";
+        if (m->with) {
+          seq += " ";
+          seq += S(m->with);
+        }
+      });
+      break;
+    }
+    case ast::NodeKind::EnumSpec: {
+      const auto* m = n->As<ast::nodes::EnumSpec>();
+      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+        seq += "enumerated";
+        seq += " ";
+        seq += " ";
+        seq += "{";
+        seq += PrintDirective::kHardLine;
+        seq += NewSequence(Sequence::Attribute::kIndented, [&](auto& vseq) {
+          const auto count = std::size(m->values);
+          std::size_t i{0};
+          for (const auto& ev : m->values) {
+            switch (ev->nkind) {
+              case ast::NodeKind::CallExpr: {
+                const auto* ce = ev->As<ast::nodes::CallExpr>();
+                vseq += S(ce->fun);
+                vseq += " ";
+                vseq += S(ce->args);
+                break;
+              }
+              default: {
+                vseq += S(ev);
+                break;
+              }
+            }
+            if (i + 1 != count) {
+              vseq += ",";
+              vseq += PrintDirective::kHardLine;
+            }
+            ++i;
+          }
+        });
+        seq += PrintDirective::kHardLine;
+        seq += "}";
+      });
+      break;
+    }
     case ast::NodeKind::BehaviourTypeDecl: {
       const auto* m = n->As<ast::nodes::BehaviourTypeDecl>();
       return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
@@ -911,8 +1132,9 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
         seq += " ";
         seq += S(m->name);
         if (m->pars) {
-          seq += " ";
+          seq += "<";
           seq += S(m->pars);
+          seq += ">";
         }
         seq += S(m->params);
         if (m->runs_on) {
@@ -934,44 +1156,91 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
       });
       break;
     }
-    // case ast::NodeKind::PortTypeDecl: {
-    //   const auto* m = n->As<ast::nodes::PortTypeDecl>();
-    //   return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
-    //     seq += S(m->name);
-    //     seq += S(m->pars);
-    //     seq += S(m->realtime);
-    //     seq += S(m->attrs);
-    //     seq += S(m->with);
-    //   });
-    //   break;
-    // }
-    // case ast::NodeKind::PortAttribute: {
-    //   const auto* m = n->As<ast::nodes::PortAttribute>();
-    //   return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
-    //     seq += S(m->kind);
-    //     seq += S(m->types);
-    //   });
-    //   break;
-    // }
+    case ast::NodeKind::PortTypeDecl: {
+      const auto* m = n->As<ast::nodes::PortTypeDecl>();
+      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+        seq += "type";
+        seq += " ";
+        seq += "port";
+        seq += " ";
+        seq += S(m->name);
+        if (m->pars) {
+          seq += "<";
+          seq += S(m->pars);
+          seq += ">";
+        }
+        seq += " ";
+        seq += S(m->kind);
+        if (m->realtime) {
+          seq += " ";
+          seq += "realtime";
+        }
+        if (!m->attrs.empty()) {
+          seq += NewSequence(Sequence::Attribute::kGrouped, [&](auto& dseq) {
+            dseq += PrintDirective::kSpaceOrLine;
+            Join(dseq, m->attrs, NewSequence(Sequence::Attribute::kNone, [](auto& sseq) {
+                   sseq += ";";
+                   sseq += PrintDirective::kHardLine;
+                 }));
+            dseq += ";";
+            dseq += PrintDirective::kSpaceOrLine;
+          });
+        }
+        if (m->with) {
+          seq += " ";
+          seq += S(m->with);
+        }
+      });
+      break;
+    }
+    case ast::NodeKind::PortAttribute: {
+      const auto* m = n->As<ast::nodes::PortAttribute>();
+      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+        seq += S(m->kind);
+        seq += " ";
+        Join(seq, m->types, ", ");
+      });
+      break;
+    }
     case ast::NodeKind::PortMapAttribute: {
       const auto* m = n->As<ast::nodes::PortMapAttribute>();
       return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
         seq += S(m->kind);
+        seq += " ";
+        seq += "param";
+        seq += " ";
         seq += S(m->params);
       });
       break;
     }
-    // case ast::NodeKind::ComponentTypeDecl: {
-    //   const auto* m = n->As<ast::nodes::ComponentTypeDecl>();
-    //   return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
-    //     seq += S(m->name);
-    //     seq += S(m->pars);
-    //     seq += S(m->extends);
-    //     seq += S(m->body);
-    //     seq += S(m->with);
-    //   });
-    //   break;
-    // }
+    case ast::NodeKind::ComponentTypeDecl: {
+      const auto* m = n->As<ast::nodes::ComponentTypeDecl>();
+      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+        seq += "type";
+        seq += " ";
+        seq += "component";
+        seq += " ";
+        seq += S(m->name);
+        if (m->pars) {
+          seq += "<";
+          seq += S(m->pars);
+          seq += ">";
+        }
+        if (!m->extends.empty()) {
+          seq += " ";
+          seq += "extends";
+          seq += " ";
+          Join(seq, m->extends, ", ");
+        }
+        seq += " ";
+        seq += S(m->body);
+        if (m->with) {
+          seq += " ";
+          seq += S(m->with);
+        }
+      });
+      break;
+    }
     case ast::NodeKind::FormalPar: {
       const auto* m = n->As<ast::nodes::FormalPar>();
       return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
@@ -1159,22 +1428,32 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
       });
       break;
     }
-    // case ast::NodeKind::RegexpExpr: {
-    //   const auto* m = n->As<ast::nodes::RegexpExpr>();
-    //   return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
-    //     seq += S(m->nocase);
-    //     seq += S(m->x);
-    //   });
-    //   break;
-    // }
-    // case ast::NodeKind::PatternExpr: {
-    //   const auto* m = n->As<ast::nodes::PatternExpr>();
-    //   return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
-    //     seq += S(m->nocase);
-    //     seq += S(m->x);
-    //   });
-    //   break;
-    // }
+    case ast::NodeKind::RegexpExpr: {
+      const auto* m = n->As<ast::nodes::RegexpExpr>();
+      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+        seq += "regexp";
+        if (m->nocase) {
+          seq += " ";
+          seq += S(m->nocase);
+        }
+        seq += " ";
+        seq += S(m->x);
+      });
+      break;
+    }
+    case ast::NodeKind::PatternExpr: {
+      const auto* m = n->As<ast::nodes::PatternExpr>();
+      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+        seq += "pattern";
+        if (m->nocase) {
+          seq += " ";
+          seq += S(m->nocase);
+        }
+        seq += " ";
+        seq += S(m->x);
+      });
+      break;
+    }
     case ast::NodeKind::DecodedExpr: {
       const auto* m = n->As<ast::nodes::DecodedExpr>();
       return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
@@ -1229,8 +1508,8 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
 
     default: {
-      // todo: PANIC
-      return magic_enum::enum_name(n->nkind);
+      VANADIUM_DEBUG_ASSERT("Unhandled node '{}'", magic_enum::enum_name(n->nkind));
+      return n->nrange.String(src_);
     }
   }
 }

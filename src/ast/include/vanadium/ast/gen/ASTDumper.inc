@@ -498,6 +498,7 @@ case NodeKind::PortTypeDecl: {
   DumpGroup("PortTypeDecl", [&] {
     Dump("name", nn->name);
     Dump("pars", nn->pars);
+    Dump("kind", nn->kind);
     Dump("realtime", nn->realtime);
     Dump("attrs", nn->attrs);
     Dump("with", nn->with);
