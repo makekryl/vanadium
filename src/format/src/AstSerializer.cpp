@@ -53,11 +53,20 @@ class AstSerializer {
     return seq;
   }
 
-  void Join(Sequence& target, const std::ranges::range auto& items, Unit separator) {
+  template <typename T>
+  void Join(Sequence& target, const std::vector<T>& items, Unit separator) {
+    Join(target, items, separator, [&](T const x) {
+      target += S(x);
+    });
+  }
+
+  template <typename T>
+  static void Join(Sequence& target, const std::vector<T>& items, Unit separator,
+                   mp::Consumer<T const> auto transform) {
     const auto count = std::size(items);
     std::size_t i{0};  // std::views::enumerate uses a signed type (iter diff) as counter, so
     for (const auto& n : items) {
-      target += S(n);
+      transform(n);
       if (i + 1 != count) {
         target += separator;
       }
@@ -70,6 +79,13 @@ class AstSerializer {
 };
 
 Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size)
+  // NOLINTNEXTLINE(readability-identifier-naming)
+  const auto S_pars = [this](Sequence& seq, const ast::nodes::FormalPars* pars) -> void {
+    seq += "<";
+    seq += S(pars);
+    seq += ">";
+  };
+
   switch (n->nkind) {
     case ast::NodeKind::RootNode: {
       const auto* m = n->As<ast::RootNode>();
@@ -129,6 +145,15 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
           seq += " ";
         }
         seq += S(m->def);
+        switch (m->def->nkind) {
+          case ast::NodeKind::ImportDecl:
+          case ast::NodeKind::SubTypeDecl:
+          case ast::NodeKind::ValueDecl:
+            seq += ";";
+            break;
+          default:
+            break;
+        }
       });
     }
 
@@ -162,7 +187,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
         seq += " ";
         seq += S(m->name);
         if (m->pars) {
-          seq += S(m->pars);
+          S_pars(seq, m->pars);
         }
         for (const auto* pe : m->arraydef) {
           seq += "[";
@@ -235,9 +260,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
         seq += " ";
         seq += S(m->name);
         if (m->pars) {
-          seq += "<";
-          seq += S(m->pars);
-          seq += ">";
+          S_pars(seq, m->pars);
         }
         if (m->params) {
           seq += "(";
@@ -264,7 +287,6 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
         if (!m->external) {
           seq += PrintDirective::kHardLine;
           seq += S(m->body);
-          seq += NewSequence(Sequence::Attribute::kIndented, [&](auto& bseq) {});
         }
       });
     }
@@ -288,7 +310,17 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
         if (!m->stmts.empty()) {
           seq += PrintDirective::kHardLine;
           seq += NewSequence(Sequence::Attribute::kIndented, [&](auto& iseq) {
-            Join(iseq, m->stmts, PrintDirective::kHardLine);
+            Join(iseq, m->stmts, PrintDirective::kHardLine, [&](const ast::nodes::Stmt* const stmt) {
+              iseq += S(stmt);
+              switch (stmt->nkind) {
+                case ast::NodeKind::ReturnStmt:
+                case ast::NodeKind::BranchStmt:
+                  iseq += ";";
+                  break;
+                default:
+                  break;
+              }
+            });
           });
           seq += PrintDirective::kHardLine;
         } else {
@@ -300,17 +332,11 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
 
     case ast::NodeKind::ExprStmt: {
       const auto* m = n->As<ast::nodes::ExprStmt>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
-        seq += S(m->expr);
-        seq += ";";
-      });
+      return S(m->expr);
     }
     case ast::NodeKind::DeclStmt: {
       const auto* m = n->As<ast::nodes::DeclStmt>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
-        seq += S(m->decl);
-        seq += ";";
-      });
+      return S(m->decl);
     }
 
     case ast::NodeKind::ValueDecl: {
@@ -455,7 +481,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
         seq += " ";
         seq += S(m->name);
         if (m->pars) {
-          seq += S(m->pars);
+          S_pars(seq, m->pars);
         }
         if (m->params) {
           seq += S(m->params);
@@ -523,9 +549,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
         seq += " ";
         seq += S(m->name);
         if (m->pars) {
-          seq += "<";
-          seq += S(m->pars);
-          seq += ">";
+          S_pars(seq, m->pars);
         }
         seq += S(m->params);
         if (m->noblock) {
@@ -557,7 +581,6 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
           seq += " ";
           seq += S(m->label);
         }
-        seq += ";";
       });
       break;
     }
@@ -569,7 +592,6 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
           seq += " ";
           seq += S(m->result);
         }
-        seq += ";";
       });
       break;
     }
@@ -600,17 +622,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
         seq += "for";
         seq += " ";
         seq += "(";
-        seq += S([&] -> const ast::Node* {
-          // to avoid inserting a semicolon while serializing a statement
-          switch (m->init->nkind) {
-            case ast::NodeKind::DeclStmt:
-              return m->init->As<ast::nodes::DeclStmt>()->decl;
-            case ast::NodeKind::ExprStmt:
-              return m->init->As<ast::nodes::ExprStmt>()->expr;
-            default:
-              return m;
-          }
-        }());
+        seq += S(m->init);
         seq += ";";
         seq += " ";
         seq += S(m->cond);
@@ -1026,9 +1038,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
         seq += " ";
         seq += S(m->name);
         if (m->pars) {
-          seq += "<";
-          seq += S(m->pars);
-          seq += ">";
+          S_pars(seq, m->pars);
         }
         if (m->with) {
           seq += " ";
@@ -1046,11 +1056,9 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
         seq += " ";
         seq += S(m->name);
         if (m->pars) {
-          seq += "<";
-          seq += S(m->pars);
-          seq += ">";
+          S_pars(seq, m->pars);
         }
-        seq += " ";
+        seq += PrintDirective::kHardLine;
         seq += "{";
         seq += PrintDirective::kHardLine;
         seq += NewSequence(Sequence::Attribute::kIndented, [&](auto& vseq) {
@@ -1132,9 +1140,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
         seq += " ";
         seq += S(m->name);
         if (m->pars) {
-          seq += "<";
-          seq += S(m->pars);
-          seq += ">";
+          S_pars(seq, m->pars);
         }
         seq += S(m->params);
         if (m->runs_on) {
@@ -1165,9 +1171,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
         seq += " ";
         seq += S(m->name);
         if (m->pars) {
-          seq += "<";
-          seq += S(m->pars);
-          seq += ">";
+          S_pars(seq, m->pars);
         }
         seq += " ";
         seq += S(m->kind);
@@ -1222,9 +1226,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
         seq += " ";
         seq += S(m->name);
         if (m->pars) {
-          seq += "<";
-          seq += S(m->pars);
-          seq += ">";
+          S_pars(seq, m->pars);
         }
         if (!m->extends.empty()) {
           seq += " ";
