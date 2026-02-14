@@ -57,6 +57,14 @@ void SerialAstPrinter::AppendUnit(const Unit& cu) {
       },
       [&](PrintDirective pd) -> void {
         switch (pd) {
+          case PrintDirective::kSpace: {
+            buf_ += " ";
+            break;
+          }
+          case PrintDirective::kSpaceOrLine: {
+            buf_ += " ";
+            break;
+          }
           case PrintDirective::kHardLine: {
             WriteNewline();
             break;
@@ -65,8 +73,8 @@ void SerialAstPrinter::AppendUnit(const Unit& cu) {
             // WriteNewline();
             break;
           }
-          case PrintDirective::kSpaceOrLine: {
-            buf_ += " ";
+          case PrintDirective::kSemicolon: {
+            buf_ += ";";
             break;
           }
           default: {
