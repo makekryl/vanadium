@@ -76,6 +76,9 @@ class AstSerializer {
     f(*seq);
     return seq;
   }
+  Sequence* NewSequence(mp::Consumer<Sequence&> auto f) {
+    return NewSequence(Sequence::Attribute::kNone, f);
+  }
 
   template <typename T>
   void Join(Sequence& target, const std::vector<T>& items, std::initializer_list<Unit> separators) {
@@ -164,7 +167,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
   switch (n->nkind) {
     case ast::NodeKind::RootNode: {
       const auto* m = n->As<ast::RootNode>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         m->Accept([&](const auto* cn) {
           A(seq, S(cn));
           return false;
@@ -178,7 +181,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
 
     case ast::NodeKind::CompositeIdent: {
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         const auto* m = n->As<ast::nodes::CompositeIdent>();
         A(seq, S(m->tok1));
         A(seq, PrintDirective::kSpace);
@@ -188,7 +191,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
 
     case ast::NodeKind::Module: {
       const auto* m = n->As<ast::nodes::Module>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, "module");
         A(seq, PrintDirective::kSpace);
         A(seq, S(m->name));
@@ -218,7 +221,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
 
     case ast::NodeKind::Definition: {
       const auto* m = n->As<ast::nodes::Definition>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         if (m->visibility) {
           A(seq, S(m->visibility));
           A(seq, PrintDirective::kSpace);
@@ -238,7 +241,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
 
     case ast::NodeKind::StructTypeDecl: {
       const auto* m = n->As<ast::nodes::StructTypeDecl>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, "type");
         A(seq, PrintDirective::kSpace);
         A(seq, S(m->kind));
@@ -258,7 +261,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
 
     case ast::NodeKind::Field: {
       const auto* m = n->As<ast::nodes::Field>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, S(m->type));
         A(seq, PrintDirective::kSpace);
         A(seq, S(m->name));
@@ -290,7 +293,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
 
     case ast::NodeKind::SubTypeDecl: {
       const auto* m = n->As<ast::nodes::SubTypeDecl>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, "type");
         A(seq, PrintDirective::kSpace);
         A(seq, S(m->field));
@@ -308,7 +311,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
 
     case ast::NodeKind::ListSpec: {
       const auto* m = n->As<ast::nodes::ListSpec>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, S(m->kind));
         if (m->length) {
           A(seq, PrintDirective::kSpace);
@@ -323,7 +326,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
 
     case ast::NodeKind::FuncDecl: {
       const auto* m = n->As<ast::nodes::FuncDecl>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         if (m->external) {
           A(seq, "external");
           A(seq, PrintDirective::kSpace);
@@ -378,7 +381,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
 
     case ast::NodeKind::BlockStmt: {
       const auto* m = n->As<ast::nodes::BlockStmt>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, "{");
         if (!m->stmts.empty()) {
           A(seq, PrintDirective::kHardLine);
@@ -422,7 +425,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
 
     case ast::NodeKind::ValueDecl: {
       const auto* m = n->As<ast::nodes::ValueDecl>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         if (m->kind) {
           A(seq, S(m->kind));
           A(seq, PrintDirective::kSpace);
@@ -449,7 +452,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
 
     case ast::NodeKind::Declarator: {
       const auto* m = n->As<ast::nodes::Declarator>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, S(m->name));
         for (const auto* pe : m->arraydef) {
           A(seq, "[");
@@ -488,7 +491,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
 
     case ast::NodeKind::StructSpec: {
       const auto* m = n->As<ast::nodes::StructSpec>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, S(m->kind));
         A(seq, "{");
         A(seq, PrintDirective::kHardLine);
@@ -502,7 +505,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::MapSpec: {
       const auto* m = n->As<ast::nodes::MapSpec>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, "map");
         A(seq, PrintDirective::kSpace);
         A(seq, "from");
@@ -517,7 +520,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::BehaviourSpec: {
       const auto* m = n->As<ast::nodes::BehaviourSpec>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, S(m->kind));
         A(seq, PrintDirective::kSpace);
         A(seq, S(m->params));
@@ -538,7 +541,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::TemplateDecl: {
       const auto* m = n->As<ast::nodes::TemplateDecl>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, "template");
         if (m->restriction) {
           A(seq, PrintDirective::kSpace);
@@ -577,7 +580,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::ModuleParameterGroup: {
       const auto* m = n->As<ast::nodes::ModuleParameterGroup>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, "modulepar");
         A(seq, PrintDirective::kSpace);
         A(seq, "{");
@@ -599,7 +602,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::ConstructorDecl: {
       const auto* m = n->As<ast::nodes::ConstructorDecl>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, "create");
         A(seq, "(");
         A(seq, S(m->params));
@@ -613,7 +616,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::SignatureDecl: {
       const auto* m = n->As<ast::nodes::SignatureDecl>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, "signature");
         A(seq, PrintDirective::kSpace);
         A(seq, S(m->name));
@@ -644,7 +647,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::BranchStmt: {
       const auto* m = n->As<ast::nodes::BranchStmt>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, S(m->kind));
         if (m->label) {
           A(seq, PrintDirective::kSpace);
@@ -655,7 +658,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::ReturnStmt: {
       const auto* m = n->As<ast::nodes::ReturnStmt>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, "return");
         if (m->result) {
           A(seq, PrintDirective::kSpace);
@@ -666,7 +669,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::AltStmt: {
       const auto* m = n->As<ast::nodes::AltStmt>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, S(m->kind));
         if (m->no_default) {
           A(seq, PrintDirective::kSpace);
@@ -679,7 +682,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::CallStmt: {
       const auto* m = n->As<ast::nodes::CallStmt>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, S(m->stmt));
         A(seq, S(m->body));
       });
@@ -687,7 +690,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::ForStmt: {
       const auto* m = n->As<ast::nodes::ForStmt>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, "for");
         A(seq, PrintDirective::kSpace);
         A(seq, "(");
@@ -706,7 +709,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::ForRangeStmt: {
       const auto* m = n->As<ast::nodes::ForRangeStmt>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, "for");
         A(seq, PrintDirective::kSpace);
         A(seq, "(");
@@ -723,7 +726,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::WhileStmt: {
       const auto* m = n->As<ast::nodes::WhileStmt>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, "while");
         A(seq, PrintDirective::kSpace);
         A(seq, S(m->cond));
@@ -734,7 +737,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::DoWhileStmt: {
       const auto* m = n->As<ast::nodes::DoWhileStmt>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, "do");
         A(seq, PrintDirective::kSpace);
         A(seq, S(m->body));
@@ -747,7 +750,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::IfStmt: {
       const auto* m = n->As<ast::nodes::IfStmt>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, "if");
         A(seq, PrintDirective::kSpace);
         A(seq, "(");
@@ -766,7 +769,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::SelectStmt: {
       const auto* m = n->As<ast::nodes::SelectStmt>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, "select");
         if (m->is_union) {
           A(seq, PrintDirective::kSpace);
@@ -789,7 +792,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::CaseClause: {
       const auto* m = n->As<ast::nodes::CaseClause>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, "case");
         A(seq, PrintDirective::kSpace);
         // todo: "case else" proper chk
@@ -807,7 +810,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::CommClause: {
       const auto* m = n->As<ast::nodes::CommClause>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, "[");
         if (m->x) {
           A(seq, S(m->x));
@@ -826,7 +829,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::LanguageSpec: {
       const auto* m = n->As<ast::nodes::LanguageSpec>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, "language");
         A(seq, PrintDirective::kSpace);
         Join(seq, m->list, ", ");
@@ -835,7 +838,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::WithSpec: {
       const auto* m = n->As<ast::nodes::WithSpec>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, "with");
         A(seq, PrintDirective::kSpace);
         A(seq, "{");
@@ -856,7 +859,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::WithStmt: {
       const auto* m = n->As<ast::nodes::WithStmt>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, S(m->kind));
         if (m->overrides) {
           // TODO: CHECK PARSER
@@ -876,7 +879,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::SelectorExpr: {
       const auto* m = n->As<ast::nodes::SelectorExpr>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, S(m->x));
         A(seq, ".");
         A(seq, S(m->sel));
@@ -885,7 +888,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::DefKindExpr: {
       const auto* m = n->As<ast::nodes::DefKindExpr>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, S(m->kind));
         A(seq, PrintDirective::kSpace);
         Join(seq, m->list, ", ");
@@ -894,7 +897,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::ExceptExpr: {
       const auto* m = n->As<ast::nodes::ExceptExpr>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, S(m->x));
         Join(seq, m->list, ", ");
       });
@@ -902,7 +905,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::FromExpr: {
       const auto* m = n->As<ast::nodes::FromExpr>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, S(m->kind));
         A(seq, PrintDirective::kSpace);
         A(seq, S(m->from));
@@ -913,7 +916,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::ModifiesExpr: {
       const auto* m = n->As<ast::nodes::ModifiesExpr>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, "modifies");
         A(seq, PrintDirective::kSpace);
         A(seq, S(m->x));
@@ -926,7 +929,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::ParenExpr: {
       const auto* m = n->As<ast::nodes::ParenExpr>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, "(");
         A(seq, NewSequence(Sequence::Attribute::kGrouped, [&](auto& eseq) {
             Join(eseq, m->list, ", ");
@@ -937,7 +940,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::PostExpr: {
       const auto* m = n->As<ast::nodes::PostExpr>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, S(m->x));
         A(seq, S(m->op));
       });
@@ -945,7 +948,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::BinaryExpr: {
       const auto* m = n->As<ast::nodes::BinaryExpr>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         const bool spacing = m->op.kind != ast::TokenKind::COLON && m->op.kind != ast::TokenKind::RANGE;
         A(seq, S(m->x));
         if (spacing) {
@@ -961,7 +964,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::UnaryExpr: {
       const auto* m = n->As<ast::nodes::UnaryExpr>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, S(m->op));
         if (m->op.range.Length() > 1) {
           A(seq, PrintDirective::kSpace);
@@ -972,7 +975,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::ValueExpr: {
       const auto* m = n->As<ast::nodes::ValueExpr>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, S(m->x));
         A(seq, S(m->y));
       });
@@ -980,7 +983,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::ParamExpr: {
       const auto* m = n->As<ast::nodes::ParamExpr>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, S(m->x));
         A(seq, S(m->y));
       });
@@ -988,7 +991,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::ImportDecl: {
       const auto* m = n->As<ast::nodes::ImportDecl>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, "import");
         A(seq, PrintDirective::kSpace);
         A(seq, "from");
@@ -1020,7 +1023,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::GroupDecl: {
       const auto* m = n->As<ast::nodes::GroupDecl>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, "group");
         A(seq, PrintDirective::kSpace);
         A(seq, S(m->name));
@@ -1036,7 +1039,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::FriendDecl: {
       const auto* m = n->As<ast::nodes::FriendDecl>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, "friend");
         A(seq, PrintDirective::kSpace);
         A(seq, "module");
@@ -1051,7 +1054,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::ClassTypeDecl: {
       const auto* m = n->As<ast::nodes::ClassTypeDecl>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         if (m->external) {
           A(seq, "external");
           A(seq, PrintDirective::kSpace);
@@ -1096,7 +1099,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::MapTypeDecl: {
       const auto* m = n->As<ast::nodes::MapTypeDecl>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, "map");
         A(seq, PrintDirective::kSpace);
         A(seq, S(m->spec));
@@ -1114,7 +1117,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::EnumTypeDecl: {
       const auto* m = n->As<ast::nodes::EnumTypeDecl>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, "type");
         A(seq, PrintDirective::kSpace);
         A(seq, "enumerated");
@@ -1161,7 +1164,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::EnumSpec: {
       const auto* m = n->As<ast::nodes::EnumSpec>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, "enumerated");
         A(seq, PrintDirective::kSpace);
         A(seq, PrintDirective::kSpace);
@@ -1198,7 +1201,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::BehaviourTypeDecl: {
       const auto* m = n->As<ast::nodes::BehaviourTypeDecl>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, "type");
         A(seq, PrintDirective::kSpace);
         A(seq, S(m->kind));
@@ -1229,7 +1232,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::PortTypeDecl: {
       const auto* m = n->As<ast::nodes::PortTypeDecl>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, "type");
         A(seq, PrintDirective::kSpace);
         A(seq, "port");
@@ -1261,7 +1264,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::PortAttribute: {
       const auto* m = n->As<ast::nodes::PortAttribute>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, S(m->kind));
         A(seq, PrintDirective::kSpace);
         Join(seq, m->types, ", ");
@@ -1270,7 +1273,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::PortMapAttribute: {
       const auto* m = n->As<ast::nodes::PortMapAttribute>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, S(m->kind));
         A(seq, PrintDirective::kSpace);
         A(seq, "param");
@@ -1281,7 +1284,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::ComponentTypeDecl: {
       const auto* m = n->As<ast::nodes::ComponentTypeDecl>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, "type");
         A(seq, PrintDirective::kSpace);
         A(seq, "component");
@@ -1307,7 +1310,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::FormalPar: {
       const auto* m = n->As<ast::nodes::FormalPar>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         if (m->direction) {
           A(seq, S(m->direction));
           A(seq, PrintDirective::kSpace);
@@ -1342,7 +1345,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::LengthExpr: {
       const auto* m = n->As<ast::nodes::LengthExpr>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         if (m->x) {
           A(seq, S(m->x));
           A(seq, PrintDirective::kSpace);
@@ -1355,7 +1358,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::RunsOnSpec: {
       const auto* m = n->As<ast::nodes::RunsOnSpec>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, "runs");
         A(seq, PrintDirective::kSpace);
         A(seq, "on");
@@ -1366,7 +1369,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::SystemSpec: {
       const auto* m = n->As<ast::nodes::SystemSpec>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, "system");
         A(seq, PrintDirective::kSpace);
         A(seq, S(m->comp));
@@ -1375,7 +1378,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::MtcSpec: {
       const auto* m = n->As<ast::nodes::MtcSpec>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, "mtc");
         A(seq, PrintDirective::kSpace);
         A(seq, S(m->comp));
@@ -1384,7 +1387,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::ReturnSpec: {
       const auto* m = n->As<ast::nodes::ReturnSpec>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, "return");
         if (m->restriction) {
           A(seq, PrintDirective::kSpace);
@@ -1401,7 +1404,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::RestrictionSpec: {
       const auto* m = n->As<ast::nodes::RestrictionSpec>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         if (m->is_template) {
           A(seq, "template");
         }
@@ -1420,7 +1423,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::IndexExpr: {
       const auto* m = n->As<ast::nodes::IndexExpr>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, S(m->x));
         A(seq, "[");
         A(seq, S(m->index));
@@ -1430,7 +1433,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::CallExpr: {
       const auto* m = n->As<ast::nodes::CallExpr>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, S(m->fun));
         A(seq, S(m->args));
       });
@@ -1477,7 +1480,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::RedirectToIndex: {
       const auto* m = n->As<ast::nodes::RedirectToIndex>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         if (m->value) {
           A(seq, "value");
           A(seq, PrintDirective::kSpace);
@@ -1488,7 +1491,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::ParametrizedIdent: {
       const auto* m = n->As<ast::nodes::ParametrizedIdent>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, S(m->ident));
         A(seq, S(m->params));
       });
@@ -1496,7 +1499,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::RegexpExpr: {
       const auto* m = n->As<ast::nodes::RegexpExpr>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, "regexp");
         if (m->nocase) {
           A(seq, PrintDirective::kSpace);
@@ -1509,7 +1512,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::PatternExpr: {
       const auto* m = n->As<ast::nodes::PatternExpr>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, "pattern");
         if (m->nocase) {
           A(seq, PrintDirective::kSpace);
@@ -1522,7 +1525,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::DecodedExpr: {
       const auto* m = n->As<ast::nodes::DecodedExpr>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, S(m->params));
         A(seq, S(m->x));
       });
@@ -1530,14 +1533,14 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::DynamicExpr: {
       const auto* m = n->As<ast::nodes::DynamicExpr>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, S(m->body));
       });
       break;
     }
     case ast::NodeKind::DecmatchExpr: {
       const auto* m = n->As<ast::nodes::DecmatchExpr>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, "decmatch");
         if (m->params) {
           A(seq, PrintDirective::kSpace);
@@ -1550,7 +1553,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::ControlPart: {
       const auto* m = n->As<ast::nodes::ControlPart>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, "control");
         A(seq, PrintDirective::kSpace);
         A(seq, S(m->body));
@@ -1563,7 +1566,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::AssignmentExpr: {
       const auto* m = n->As<ast::nodes::AssignmentExpr>();
-      return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
+      return NewSequence([&](auto& seq) {
         A(seq, S(m->property));
         A(seq, PrintDirective::kSpace);
         A(seq, ":=");
