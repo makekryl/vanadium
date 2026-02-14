@@ -45,7 +45,7 @@ int main(int argc, char* argv[]) {
   lib::Arena arena;
   auto ast = ast::Parse(arena, *src);
 
-  std::println("{}", format::PrintAst(ast.src, ast.root,
+  std::println("{}", format::PrintAst(ast, ast.root,
                                       format::PrintOptions{
                                           .tab_width = 2,
                                           .print_width = 80,

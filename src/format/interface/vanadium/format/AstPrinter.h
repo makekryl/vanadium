@@ -5,8 +5,9 @@
 namespace vanadium {
 
 namespace ast {
+struct AST;
 struct Node;
-}
+}  // namespace ast
 
 namespace format {
 
@@ -15,7 +16,7 @@ struct PrintOptions {
   std::size_t print_width;
 };
 
-std::string PrintAst(std::string_view src, const ast::Node*, PrintOptions);
+std::string PrintAst(const ast::AST& ast, const ast::Node*, PrintOptions);
 
 }  // namespace format
 

@@ -5,14 +5,12 @@
 #endif
 
 #ifndef NDEBUG
-#define VANADIUM_DEBUG_ASSERT(msg, ...)                                    \
-  do {                                                                     \
+#define VANADIUM_DEBUG_ASSERT(cond, msg, ...)                              \
+  if (!(cond)) {                                                           \
     std::println(stderr, __FILE__ ":{} :: " msg, __LINE__, ##__VA_ARGS__); \
     std::fflush(stderr);                                                   \
-    if (0) {                                                               \
-      std::exit(42);                                                       \
-    }                                                                      \
-  } while (0)
+    std::exit(42);                                                         \
+  }
 #else
 #define VANADIUM_DEBUG_ASSERT(msg, ...)
 #endif

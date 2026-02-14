@@ -20,12 +20,37 @@ namespace vanadium::format {
 
 namespace {
 
+class TokenWindow {
+ public:
+  TokenWindow(std::string_view src, ast::pos_t off) : scanner_(src, off) {
+    next_ = scanner_.Scan();
+  }
+
+  ast::Token Scan() {
+    cur_ = next_;
+    next_ = scanner_.Scan();
+    return cur_;
+  }
+
+  [[nodiscard]] const ast::Token& Current() const {
+    return cur_;
+  }
+  [[nodiscard]] const ast::Token& Next() const {
+    return next_;
+  }
+
+ private:
+  ast::parser::Scanner scanner_;
+  ast::Token cur_;
+  ast::Token next_;
+};
+
 class AstSerializer {
  public:
-  AstSerializer(std::string_view src, lib::Arena& arena) : src_(src), arena_(arena) {}
+  AstSerializer(const ast::AST& ast, lib::Arena& arena) : ast_(ast), arena_(arena) {}
 
   Unit Serialize(const ast::Node* n) {
-    scanner_.emplace(src_, n->nrange.begin);
+    tokens_.emplace(ast_.src, n->nrange.begin);
     return S(n);
   }
 
@@ -40,7 +65,7 @@ class AstSerializer {
   }
 
   Unit S(const ast::Token& tok) {
-    return tok.On(src_);
+    return tok.On(ast_.src);
   }
   Unit S(const ast::Token* tok) {
     return S(*tok);
@@ -76,28 +101,55 @@ class AstSerializer {
     if (std::holds_alternative<EmptyUnit>(u)) {
       return;
     }
-    if (const auto* const s = std::get_if<std::string_view>(&u)) {
-      auto tok = scanner_->Scan();
-      if (tok.kind == ast::TokenKind::SEMICOLON) {
-        tok = scanner_->Scan();
+
+    const auto chk_comments = [&] {
+      while (tokens_->Next().kind == ast::TokenKind::COMMENT) {
+        const auto prev_tok = tokens_->Current();
+        const auto comment_tok = tokens_->Scan();
+
+        const ast::pos_t prev_line = ast_.lines.LineOf(prev_tok.range.end);
+        const ast::pos_t comment_line = ast_.lines.LineOf(comment_tok.range.begin);
+        for (ast::pos_t i = 0; i < (comment_line - prev_line); ++i) {
+          seq.units.emplace_back(PrintDirective::kHardLine);
+        }
+
+        seq.units.emplace_back(Comment{comment_tok.On(ast_.src)});
       }
-      if (tok.kind == ast::TokenKind::COMMENT) {
-        tok = scanner_->Scan();
+    };
+
+    if (const auto* pd = std::get_if<PrintDirective>(&u); pd && *pd == PrintDirective::kSemicolon) {
+      chk_comments();
+      //
+      seq.units.push_back(std::move(u));
+      //
+      if (tokens_->Next().kind == ast::TokenKind::SEMICOLON) {
+        tokens_->Scan();
       }
-      std::println("s='{}' <-> tok='{}'", *s, tok.On(src_));
-      seq.units.emplace_back(tok.On(src_));
-      if (*s != tok.On(src_)) {
-        std::println("mismatch {} <-> {}", *s, tok.On(src_));
-        std::exit(2);
-      }
+      chk_comments();
+      return;
     }
+
+    if (!std::holds_alternative<std::string_view>(u)) {
+      seq.units.push_back(std::move(u));
+      return;
+    }
+
+    const auto& s = std::get<std::string_view>(u);
+
+    chk_comments();
+    VANADIUM_DEBUG_ASSERT(s == tokens_->Next().On(ast_.src), "mismatch fmt('{}') <-> real('{}')", s,
+                          tokens_->Next().On(ast_.src));
+    tokens_->Scan();
+    //
     seq.units.push_back(std::move(u));
+    //
+    chk_comments();
   }
 
   //
 
-  std::string_view src_;
-  std::optional<ast::parser::Scanner> scanner_;
+  const ast::AST& ast_;
+  std::optional<TokenWindow> tokens_;
   lib::Arena& arena_;
 };
 
@@ -122,7 +174,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
 
     case ast::NodeKind::Ident: {
       const auto* m = n->As<ast::nodes::Ident>();
-      return m->On(src_);
+      return m->On(ast_.src);
     }
 
     case ast::NodeKind::CompositeIdent: {
@@ -431,7 +483,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
 
     case ast::NodeKind::ValueLiteral: {
       const auto* m = n->As<ast::nodes::ValueLiteral>();
-      return m->tok.On(src_);
+      return m->tok.On(ast_.src);
     }
 
     case ast::NodeKind::StructSpec: {
@@ -791,7 +843,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
           A(seq, NewSequence(Sequence::Attribute::kIndented, [&](auto& cseq) {
               A(cseq, PrintDirective::kHardLine);
               Join(cseq, m->list, PrintDirective::kHardLine);
-              if (m->list.back()->value->On(src_).ends_with("\n\"")) {
+              if (m->list.back()->value->On(ast_.src).ends_with("\n\"")) {
                 A(cseq, PrintDirective::kSpace);
               } else {
                 A(cseq, PrintDirective::kHardLine);
@@ -1522,16 +1574,16 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
 
     default: {
-      VANADIUM_DEBUG_ASSERT("Unhandled node '{}'", magic_enum::enum_name(n->nkind));
-      return n->nrange.String(src_);
+      VANADIUM_DEBUG_ASSERT(false, "Unhandled node '{}'", magic_enum::enum_name(n->nkind));
+      return n->nrange.String(ast_.src);
     }
   }
 }
 
 }  // namespace
 
-Unit SerializeAst(std::string_view src, const ast::Node* n, lib::Arena& arena) {
-  return AstSerializer(src, arena).Serialize(n);
+Unit SerializeAst(const ast::AST& ast, const ast::Node* n, lib::Arena& arena) {
+  return AstSerializer(ast, arena).Serialize(n);
 }
 
 }  // namespace vanadium::format

@@ -10,8 +10,9 @@
 namespace vanadium {
 
 namespace ast {
+struct AST;
 struct Node;
-}
+}  // namespace ast
 
 namespace lib {
 class Arena;
@@ -29,10 +30,14 @@ enum class PrintDirective : std::uint8_t {
   kSemicolon,
 };
 
+struct Comment {
+  std::string_view content;
+};
+
 struct Sequence;
 
 using EmptyUnit = std::monostate;
-using Unit = std::variant<const Sequence*, PrintDirective, std::string_view, EmptyUnit>;
+using Unit = std::variant<const Sequence*, PrintDirective, std::string_view, Comment, EmptyUnit>;
 
 struct Sequence {
   enum class Attribute : std::uint8_t {
@@ -45,7 +50,7 @@ struct Sequence {
 };
 ENUM_FLAGS_TRAITS(Sequence::Attribute);
 
-Unit SerializeAst(std::string_view src, const ast::Node* n, lib::Arena& arena);
+Unit SerializeAst(const ast::AST& ast, const ast::Node* n, lib::Arena& arena);
 
 }  // namespace format
 

@@ -4,6 +4,7 @@
 #include <string_view>
 #include <utility>
 
+#include <vanadium/ast/AST.h>
 #include <vanadium/lib/Arena.h>
 #include <vanadium/lib/Metaprogramming.h>
 
@@ -93,17 +94,21 @@ void SerialAstPrinter::AppendUnit(const Unit& cu) {
         }
         buf_ += text;
       },
+      [&](const Comment& comment) -> void {
+        // todo: force wrap
+        buf_ += comment.content;
+      },
       [&](EmptyUnit) -> void {},
   };
   std::visit(visitor, cu);
 }
 }  // namespace
 
-std::string PrintAst(std::string_view src, const ast::Node* n, PrintOptions options) {
+std::string PrintAst(const ast::AST& ast, const ast::Node* n, PrintOptions options) {
   lib::Arena arena;  // todo: accept as an argument
-  auto unit = SerializeAst(src, n, arena);
+  auto unit = SerializeAst(ast, n, arena);
 
-  return SerialAstPrinter(src, options).Print(unit);
+  return SerialAstPrinter(ast.src, options).Print(unit);
 }
 
 }  // namespace vanadium::format
