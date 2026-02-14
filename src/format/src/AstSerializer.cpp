@@ -55,22 +55,12 @@ class AstSerializer {
 
   template <typename T>
   void Join(Sequence& target, const std::vector<T>& items, Unit separator) {
-    Join(target, items, separator, [&](T const x) {
-      target += S(x);
-    });
-  }
-
-  template <typename T>
-  static void Join(Sequence& target, const std::vector<T>& items, Unit separator,
-                   mp::Consumer<T const> auto transform) {
-    const auto count = std::size(items);
-    std::size_t i{0};  // std::views::enumerate uses a signed type (iter diff) as counter, so
-    for (const auto& n : items) {
-      transform(n);
-      if (i + 1 != count) {
-        target += separator;
-      }
-      ++i;
+    for (std::size_t i = 0; i + 1 < items.size(); ++i) {
+      target += S(items[i]);
+      target += separator;
+    }
+    if (!items.empty()) {
+      target += S(items.back());
     }
   }
 
@@ -125,10 +115,14 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
         seq += PrintDirective::kHardLine;
         seq += "{";
         seq += PrintDirective::kHardLine;
-        seq += PrintDirective::kHardLine;
-        Join(seq, m->defs, PrintDirective::kHardLine);
-        seq += PrintDirective::kHardLine;
-        seq += PrintDirective::kHardLine;
+        if (!m->defs.empty()) {
+          if (m->defs.front()->def->nkind != ast::NodeKind::ImportDecl) {
+            seq += PrintDirective::kHardLine;
+          }
+          Join(seq, m->defs, PrintDirective::kHardLine);
+          seq += PrintDirective::kHardLine;
+          seq += PrintDirective::kHardLine;
+        }
         seq += "}";
         if (m->with) {
           seq += " ";
