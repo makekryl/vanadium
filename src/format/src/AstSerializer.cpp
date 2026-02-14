@@ -985,7 +985,9 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     case ast::NodeKind::FriendDecl: {
       const auto* m = n->As<ast::nodes::FriendDecl>();
       return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
-        A(seq, "friend module");
+        A(seq, "friend");
+        A(seq, PrintDirective::kSpace);
+        A(seq, "module");
         A(seq, PrintDirective::kSpace);
         A(seq, S(m->module));
         if (m->with) {
@@ -1302,7 +1304,9 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     case ast::NodeKind::RunsOnSpec: {
       const auto* m = n->As<ast::nodes::RunsOnSpec>();
       return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
-        A(seq, "runs on");
+        A(seq, "runs");
+        A(seq, PrintDirective::kSpace);
+        A(seq, "on");
         A(seq, PrintDirective::kSpace);
         A(seq, S(m->comp));
       });
