@@ -258,12 +258,12 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
       const auto* m = n->As<ast::nodes::ListSpec>();
       return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
         A(seq, S(m->kind));
-        A(seq, PrintDirective::kSpace);
-        A(seq, "of");
         if (m->length) {
           A(seq, PrintDirective::kSpace);
           A(seq, S(m->length));
         }
+        A(seq, PrintDirective::kSpace);
+        A(seq, "of");
         A(seq, PrintDirective::kSpace);
         A(seq, S(m->elemtype));
       });
@@ -548,7 +548,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     case ast::NodeKind::ConstructorDecl: {
       const auto* m = n->As<ast::nodes::ConstructorDecl>();
       return NewSequence(Sequence::Attribute::kNone, [&](auto& seq) {
-        A(seq, "constructor");
+        A(seq, "create");
         A(seq, "(");
         A(seq, S(m->params));
         A(seq, ")");
