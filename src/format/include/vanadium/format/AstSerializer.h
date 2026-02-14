@@ -20,15 +20,13 @@ class Arena;
 namespace format {
 
 enum class PrintDirective : std::uint8_t {
+  kSpace,
   kSpaceOrLine,
 
   kHardLine,
   kSoftLine,
 
-  kIndent,
-  kUnindent,
-
-  kForceWrap,
+  kSemicolon,
 };
 
 struct Sequence;
