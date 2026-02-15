@@ -1,5 +1,6 @@
 add_executable(vanadium_fmt
   src/VanadiumFormatter.cpp
+  src/FmtTreeDumper.cpp
 )
 
 target_include_directories(vanadium_fmt PRIVATE

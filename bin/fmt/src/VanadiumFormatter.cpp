@@ -10,6 +10,8 @@
 #include <vanadium/format/AstPrinter.h>
 #include <vanadium/lib/Arena.h>
 
+#include "vanadium/bin/fmt/FmtTreeDumper.h"
+
 using namespace vanadium;
 
 namespace {
@@ -31,6 +33,9 @@ int main(int argc, char* argv[]) {
   //
   std::string filepath;
   ap.add_argument("path").store_into(filepath).help("file path");
+  //
+  bool just_dump_tree{false};
+  ap.add_argument("--dump-tree").store_into(just_dump_tree).help("dump serialized AST tree");
 
   //
   PARSE_CLI_ARGS_OR_EXIT(ap, argc, argv, 1);
@@ -45,9 +50,16 @@ int main(int argc, char* argv[]) {
   lib::Arena arena;
   auto ast = ast::Parse(arena, *src);
 
+  if (just_dump_tree) {
+    std::ios_base::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+    vanadium::bin::fmt::DumpSerializedTree(std::cout, ast, ast.root);
+    return 0;
+  }
+
   std::println("{}", format::PrintAst(ast, ast.root,
                                       format::PrintOptions{
-                                          .tab_width = 2,
+                                          .tab_width = 8,
                                           .print_width = 80,
                                       }));
 
