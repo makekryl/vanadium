@@ -34,10 +34,14 @@ struct Comment {
   std::string_view content;
 };
 
+struct PreferredNewlines {
+  std::size_t count;
+};
+
 struct Sequence;
 
 using EmptyUnit = std::monostate;
-using Unit = std::variant<const Sequence*, PrintDirective, std::string_view, Comment, EmptyUnit>;
+using Unit = std::variant<const Sequence*, PrintDirective, std::string_view, Comment, PreferredNewlines, EmptyUnit>;
 
 struct Sequence {
   enum class Attribute : std::uint8_t {

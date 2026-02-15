@@ -1,9 +1,11 @@
 #include "vanadium/format/AstSerializer.h"
 
+#include <cstddef>
 #include <initializer_list>
+#include <iterator>
 #include <optional>
-#include <print>
 #include <string_view>
+#include <type_traits>
 #include <variant>
 #include <vector>
 
@@ -19,6 +21,13 @@
 namespace vanadium::format {
 
 namespace {
+
+const ast::Range& RangeOf(const ast::Token& tok) {
+  return tok.range;
+}
+const ast::Range& RangeOf(const ast::IsNode auto* n) {
+  return n->nrange;
+}
 
 class TokenWindow {
  public:
@@ -80,21 +89,34 @@ class AstSerializer {
     return NewSequence(Sequence::Attribute::kNone, f);
   }
 
-  template <typename T>
-  void Join(Sequence& target, const std::vector<T>& items, std::initializer_list<Unit> separators) {
+  template <typename T, typename Serializer = std::nullptr_t>
+  void Join(Sequence& target, const std::vector<T>& items, std::initializer_list<Unit> separators,
+            Serializer f_serialize = nullptr) {
+    const auto serialize = [&](const T item) {
+      if constexpr (std::is_same_v<Serializer, std::nullptr_t>) {
+        A(target, S(item));
+      } else {
+        f_serialize(item);
+      }
+    };
     for (std::size_t i = 0; i + 1 < items.size(); ++i) {
-      A(target, S(items[i]));
+      serialize(items[i]);
       for (const auto& su : separators) {
         A(target, su);
       }
+      const ast::pos_t current_line = std::max(ast_.lines.LineOf(RangeOf(items[i]).end), last_comment_line_);
+      const ast::pos_t next_line = ast_.lines.LineOf(RangeOf(items[i + 1]).begin);
+      if (current_line != next_line) {
+        A(target, PreferredNewlines{next_line - current_line});
+      }
     }
     if (!items.empty()) {
-      A(target, S(items.back()));
+      serialize(items.back());
     }
   }
-  template <typename T>
-  void Join(Sequence& target, const std::vector<T>& items, Unit separator) {
-    Join(target, items, {separator});
+  template <typename T, typename Serializer = std::nullptr_t>
+  void Join(Sequence& target, const std::vector<T>& items, Unit separator, Serializer f_serialize = nullptr) {
+    Join(target, items, {separator}, f_serialize);
   }
 
   //
@@ -115,6 +137,7 @@ class AstSerializer {
         for (ast::pos_t i = 0; i < (comment_line - prev_line); ++i) {
           seq.units.emplace_back(PrintDirective::kHardLine);
         }
+        last_comment_line_ = comment_line;
 
         seq.units.emplace_back(Comment{comment_tok.On(ast_.src)});
       }
@@ -153,6 +176,7 @@ class AstSerializer {
 
   const ast::AST& ast_;
   std::optional<TokenWindow> tokens_;
+  ast::pos_t last_comment_line_{0};
   lib::Arena& arena_;
 };
 
@@ -386,7 +410,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
         if (!m->stmts.empty()) {
           A(seq, PrintDirective::kHardLine);
           A(seq, NewSequence(Sequence::Attribute::kIndented, [&](auto& iseq) {
-              const auto t_stmt = [&](const ast::nodes::Stmt* stmt) {
+              Join(iseq, m->stmts, PrintDirective::kHardLine, [&](const ast::nodes::Stmt* stmt) {
                 A(iseq, S(stmt));
                 switch (stmt->nkind) {
                   case ast::NodeKind::ReturnStmt:
@@ -396,15 +420,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
                   default:
                     break;
                 }
-              };
-              for (std::size_t i = 0; i + 1 < m->stmts.size(); ++i) {
-                t_stmt(m->stmts[i]);
-                A(iseq, PrintDirective::kHardLine);
-                // todo: chk [i+1]
-              }
-              if (!m->stmts.empty()) {
-                t_stmt(m->stmts.back());
-              }
+              });
             }));
           A(seq, PrintDirective::kHardLine);
         } else {

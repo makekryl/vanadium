@@ -98,6 +98,12 @@ void SerialAstPrinter::AppendUnit(const Unit& cu) {
         // todo: force wrap
         buf_ += comment.content;
       },
+      [&](const PreferredNewlines& pnl) -> void {
+        // todo: force wrap
+        for (std::size_t i = 0; i < pnl.count; ++i) {
+          WriteNewline();
+        }
+      },
       [&](EmptyUnit) -> void {},
   };
   std::visit(visitor, cu);
