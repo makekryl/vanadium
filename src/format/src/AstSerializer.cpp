@@ -274,8 +274,8 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
         A(seq, PrintDirective::kSpace);
         A(seq, PrintDirective::kHardLine);
         A(seq, "{");
-        A(seq, PrintDirective::kHardLine);
         A(seq, NewSequence(Sequence::Attribute::kIndented, [&](auto& fseq) {
+            A(fseq, PrintDirective::kHardLine);
             Join(fseq, m->fields, {",", PrintDirective::kHardLine});
           }));
         A(seq, PrintDirective::kHardLine);
@@ -408,8 +408,8 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
       return NewSequence([&](auto& seq) {
         A(seq, "{");
         if (!m->stmts.empty()) {
-          A(seq, PrintDirective::kHardLine);
           A(seq, NewSequence(Sequence::Attribute::kIndented, [&](auto& iseq) {
+              A(iseq, PrintDirective::kHardLine);
               Join(iseq, m->stmts, PrintDirective::kHardLine, [&](const ast::nodes::Stmt* stmt) {
                 A(iseq, S(stmt));
                 switch (stmt->nkind) {
@@ -510,8 +510,8 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
       return NewSequence([&](auto& seq) {
         A(seq, S(m->kind));
         A(seq, "{");
-        A(seq, PrintDirective::kHardLine);
         A(seq, NewSequence(Sequence::Attribute::kIndented, [&](auto& fseq) {
+            A(fseq, PrintDirective::kHardLine);
             Join(fseq, m->fields, {",", PrintDirective::kHardLine});
           }));
         A(seq, PrintDirective::kHardLine);
@@ -601,8 +601,8 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
         A(seq, PrintDirective::kSpace);
         A(seq, "{");
         if (!m->decls.empty()) {
-          A(seq, PrintDirective::kSpaceOrLine);
           A(seq, NewSequence(Sequence::Attribute::kGrouped, [&](auto& dseq) {
+              A(dseq, PrintDirective::kSpaceOrLine);
               Join(dseq, m->decls, {PrintDirective::kSemicolon, PrintDirective::kHardLine});
               A(dseq, PrintDirective::kSemicolon);
               A(dseq, PrintDirective::kSpaceOrLine);
@@ -797,8 +797,8 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
         A(seq, ")");
         A(seq, PrintDirective::kHardLine);
         A(seq, "{");
-        A(seq, PrintDirective::kHardLine);
         A(seq, NewSequence(Sequence::Attribute::kIndented, [&](auto& cseq) {
+            A(cseq, PrintDirective::kHardLine);
             Join(cseq, m->clauses, PrintDirective::kHardLine);
           }));
         A(seq, PrintDirective::kHardLine);
@@ -945,11 +945,13 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::ParenExpr: {
       const auto* m = n->As<ast::nodes::ParenExpr>();
-      return NewSequence([&](auto& seq) {
+      return NewSequence(Sequence::Attribute::kGrouped, [&](auto& seq) {
         A(seq, "(");
-        A(seq, NewSequence(Sequence::Attribute::kGrouped, [&](auto& eseq) {
+        A(seq, NewSequence(Sequence::Attribute::kIndented, [&](auto& eseq) {
+            A(eseq, PrintDirective::kSoftLine);
             Join(eseq, m->list, {",", PrintDirective::kSpace});
           }));
+        A(seq, PrintDirective::kSoftLine);
         A(seq, ")");
       });
       break;
@@ -1100,8 +1102,8 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
         }
         A(seq, PrintDirective::kHardLine);
         A(seq, "{");
-        A(seq, PrintDirective::kHardLine);
         A(seq, NewSequence(Sequence::Attribute::kIndented, [&](auto& iseq) {
+            A(iseq, PrintDirective::kHardLine);
             Join(iseq, m->defs, PrintDirective::kHardLine);
           }));
         A(seq, PrintDirective::kHardLine);
@@ -1144,8 +1146,8 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
         }
         A(seq, PrintDirective::kHardLine);
         A(seq, "{");
-        A(seq, PrintDirective::kHardLine);
         A(seq, NewSequence(Sequence::Attribute::kIndented, [&](auto& vseq) {
+            A(vseq, PrintDirective::kHardLine);
             const auto count = std::size(m->values);
             std::size_t i{0};
             for (const auto& ev : m->values) {
@@ -1185,8 +1187,8 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
         A(seq, PrintDirective::kSpace);
         A(seq, PrintDirective::kSpace);
         A(seq, "{");
-        A(seq, PrintDirective::kHardLine);
         A(seq, NewSequence(Sequence::Attribute::kIndented, [&](auto& vseq) {
+            A(vseq, PrintDirective::kHardLine);
             const auto count = std::size(m->values);
             std::size_t i{0};
             for (const auto& ev : m->values) {
