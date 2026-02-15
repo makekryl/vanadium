@@ -800,7 +800,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
           A(seq, "else");
         } else {
           A(seq, "(");
-          Join(seq, m->cond, ", ");
+          Join(seq, m->cond, {",", PrintDirective::kSpace});
           A(seq, ")");
         }
         A(seq, PrintDirective::kSpace);
@@ -832,7 +832,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
       return NewSequence([&](auto& seq) {
         A(seq, "language");
         A(seq, PrintDirective::kSpace);
-        Join(seq, m->list, ", ");
+        Join(seq, m->list, {",", PrintDirective::kSpace});
       });
       break;
     }
@@ -869,7 +869,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
         if (!m->list.empty()) {
           A(seq, PrintDirective::kSpace);
           A(seq, "(");
-          Join(seq, m->list, ", ");
+          Join(seq, m->list, {",", PrintDirective::kSpace});
           A(seq, ")");
         }
         A(seq, PrintDirective::kSpace);
@@ -891,7 +891,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
       return NewSequence([&](auto& seq) {
         A(seq, S(m->kind));
         A(seq, PrintDirective::kSpace);
-        Join(seq, m->list, ", ");
+        Join(seq, m->list, {",", PrintDirective::kSpace});
       });
       break;
     }
@@ -899,7 +899,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
       const auto* m = n->As<ast::nodes::ExceptExpr>();
       return NewSequence([&](auto& seq) {
         A(seq, S(m->x));
-        Join(seq, m->list, ", ");
+        Join(seq, m->list, {",", PrintDirective::kSpace});
       });
       break;
     }
@@ -932,7 +932,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
       return NewSequence([&](auto& seq) {
         A(seq, "(");
         A(seq, NewSequence(Sequence::Attribute::kGrouped, [&](auto& eseq) {
-            Join(eseq, m->list, ", ");
+            Join(eseq, m->list, {",", PrintDirective::kSpace});
           }));
         A(seq, ")");
       });
@@ -1068,7 +1068,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
           A(seq, PrintDirective::kSpace);
           A(seq, "extends");
           A(seq, PrintDirective::kSpace);
-          Join(seq, m->extends, ", ");
+          Join(seq, m->extends, {",", PrintDirective::kSpace});
         }
         if (m->runs_on) {
           A(seq, PrintDirective::kSpace);
@@ -1267,7 +1267,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
       return NewSequence([&](auto& seq) {
         A(seq, S(m->kind));
         A(seq, PrintDirective::kSpace);
-        Join(seq, m->types, ", ");
+        Join(seq, m->types, {",", PrintDirective::kSpace});
       });
       break;
     }
@@ -1297,7 +1297,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
           A(seq, PrintDirective::kSpace);
           A(seq, "extends");
           A(seq, PrintDirective::kSpace);
-          Join(seq, m->extends, ", ");
+          Join(seq, m->extends, {",", PrintDirective::kSpace});
         }
         A(seq, PrintDirective::kSpace);
         A(seq, S(m->body));
@@ -1449,13 +1449,13 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
           A(seq, PrintDirective::kSpace);
           A(seq, "value");
           A(seq, PrintDirective::kSpace);
-          Join(seq, m->value, ", ");
+          Join(seq, m->value, {",", PrintDirective::kSpace});
         }
         if (!m->param.empty()) {
           A(seq, PrintDirective::kSpace);
           A(seq, "param");
           A(seq, PrintDirective::kSpace);
-          Join(seq, m->param, ", ");
+          Join(seq, m->param, {",", PrintDirective::kSpace});
         }
         if (m->sender) {
           A(seq, PrintDirective::kSpace);
