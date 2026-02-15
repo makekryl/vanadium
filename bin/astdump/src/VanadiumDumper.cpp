@@ -13,8 +13,8 @@
 #include <vanadium/ast/Parser.h>
 #include <vanadium/bin/Bootstrap.h>
 #include <vanadium/lib/Arena.h>
+#include <vanadium/lib/AsciiColors.h>
 
-#include "vanadium/bin/astdump/AsciiColors.h"
 #include "vanadium/bin/astdump/TextDumper.h"
 
 using namespace vanadium;

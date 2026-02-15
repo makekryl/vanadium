@@ -14,8 +14,7 @@
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/ASTTypes.h>
 #include <vanadium/ast/defs/magic_enum_defs.h>
-
-#include "vanadium/bin/astdump/AsciiColors.h"
+#include <vanadium/lib/AsciiColors.h>
 
 class TextASTDumper {
  private:
