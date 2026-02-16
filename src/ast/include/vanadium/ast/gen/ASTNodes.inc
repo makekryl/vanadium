@@ -361,6 +361,23 @@ struct PortAttribute : Node {
   }
 };
 
+struct TypePar : Node {
+  static constexpr NodeKind kKind = NodeKind::TypePar;
+
+  TypePar() : Node(NodeKind::TypePar) {}
+
+  Token* direction{nullptr};
+  Expr* type;
+  Expr* value{nullptr};
+
+  void Accept(const NodeInspector& inspector) const {
+    Inspect(type, inspector);
+    if (value != nullptr) {
+      Inspect(value, inspector);
+    }
+  }
+};
+
 struct IndexExpr : Expr {
   static constexpr NodeKind kKind = NodeKind::IndexExpr;
 
@@ -772,6 +789,20 @@ struct WithSpec : TypeSpec {
   }
 };
 
+struct TypePars : Node {
+  static constexpr NodeKind kKind = NodeKind::TypePars;
+
+  TypePars() : Node(NodeKind::TypePars) {}
+
+  std::vector<TypePar*> list;
+
+  void Accept(const NodeInspector& inspector) const {
+    for (const auto* n : list) {
+      Inspect(n, inspector);
+    }
+  }
+};
+
 struct RedirectExpr : Expr {
   static constexpr NodeKind kKind = NodeKind::RedirectExpr;
 
@@ -1041,7 +1072,7 @@ struct Field : Node {
   Token* default_tok{nullptr};
   TypeSpec* type;
   std::optional<Ident> name;
-  FormalPars* pars{nullptr};
+  TypePars* pars{nullptr};
   std::vector<ParenExpr*> arraydef;
   LengthExpr* length{nullptr};
   ParenExpr* value_constraint{nullptr};
@@ -1065,6 +1096,114 @@ struct Field : Node {
     }
     if (value_constraint != nullptr) {
       Inspect(value_constraint, inspector);
+    }
+  }
+};
+
+struct MapTypeDecl : Decl {
+  static constexpr NodeKind kKind = NodeKind::MapTypeDecl;
+
+  MapTypeDecl() : Decl(NodeKind::MapTypeDecl) {}
+
+  MapSpec* spec;
+  std::optional<Ident> name;
+  TypePars* pars{nullptr};
+  WithSpec* with{nullptr};
+
+  void Accept(const NodeInspector& inspector) const {
+    Inspect(spec, inspector);
+    if (name.has_value()) {
+      Inspect(std::addressof(*name), inspector);
+    }
+    if (pars != nullptr) {
+      Inspect(pars, inspector);
+    }
+    if (with != nullptr) {
+      Inspect(with, inspector);
+    }
+  }
+};
+
+struct EnumTypeDecl : Decl {
+  static constexpr NodeKind kKind = NodeKind::EnumTypeDecl;
+
+  EnumTypeDecl() : Decl(NodeKind::EnumTypeDecl) {}
+
+  std::optional<Ident> name;
+  TypePars* pars{nullptr};
+  std::vector<Expr*> values;
+  WithSpec* with{nullptr};
+
+  void Accept(const NodeInspector& inspector) const {
+    if (name.has_value()) {
+      Inspect(std::addressof(*name), inspector);
+    }
+    if (pars != nullptr) {
+      Inspect(pars, inspector);
+    }
+    for (const auto* n : values) {
+      Inspect(n, inspector);
+    }
+    if (with != nullptr) {
+      Inspect(with, inspector);
+    }
+  }
+};
+
+struct PortTypeDecl : Decl {
+  static constexpr NodeKind kKind = NodeKind::PortTypeDecl;
+
+  PortTypeDecl() : Decl(NodeKind::PortTypeDecl) {}
+
+  std::optional<Ident> name;
+  TypePars* pars{nullptr};
+  Token kind;
+  bool realtime{false};
+  std::vector<Node*> attrs;
+  WithSpec* with{nullptr};
+
+  void Accept(const NodeInspector& inspector) const {
+    if (name.has_value()) {
+      Inspect(std::addressof(*name), inspector);
+    }
+    if (pars != nullptr) {
+      Inspect(pars, inspector);
+    }
+    for (const auto* n : attrs) {
+      Inspect(n, inspector);
+    }
+    if (with != nullptr) {
+      Inspect(with, inspector);
+    }
+  }
+};
+
+struct ComponentTypeDecl : Decl {
+  static constexpr NodeKind kKind = NodeKind::ComponentTypeDecl;
+
+  ComponentTypeDecl() : Decl(NodeKind::ComponentTypeDecl) {}
+
+  std::optional<Ident> name;
+  TypePars* pars{nullptr};
+  std::vector<Expr*> extends;
+  BlockStmt* body;
+  WithSpec* with{nullptr};
+
+  void Accept(const NodeInspector& inspector) const {
+    if (name.has_value()) {
+      Inspect(std::addressof(*name), inspector);
+    }
+    if (pars != nullptr) {
+      Inspect(pars, inspector);
+    }
+    for (const auto* n : extends) {
+      if (n != nullptr) {
+        Inspect(n, inspector);
+      }
+    }
+    Inspect(body, inspector);
+    if (with != nullptr) {
+      Inspect(with, inspector);
     }
   }
 };
@@ -1103,7 +1242,7 @@ struct TemplateDecl : Decl {
   Token* modif{nullptr};
   Expr* type;
   std::optional<Ident> name;
-  FormalPars* pars{nullptr};
+  TypePars* pars{nullptr};
   FormalPars* params{nullptr};
   Expr* base{nullptr};
   Expr* value;
@@ -1142,7 +1281,7 @@ struct FuncDecl : Decl {
   Token kind;
   std::optional<Ident> name;
   Token* modif{nullptr};
-  FormalPars* pars{nullptr};
+  TypePars* pars{nullptr};
   FormalPars* params{nullptr};
   RunsOnSpec* runs_on{nullptr};
   MtcSpec* mtc{nullptr};
@@ -1206,7 +1345,7 @@ struct SignatureDecl : Decl {
   SignatureDecl() : Decl(NodeKind::SignatureDecl) {}
 
   std::optional<Ident> name;
-  FormalPars* pars{nullptr};
+  TypePars* pars{nullptr};
   FormalPars* params;
   bool noblock{false};
   ReturnSpec* ret{nullptr};
@@ -1233,56 +1372,6 @@ struct SignatureDecl : Decl {
   }
 };
 
-struct MapTypeDecl : Decl {
-  static constexpr NodeKind kKind = NodeKind::MapTypeDecl;
-
-  MapTypeDecl() : Decl(NodeKind::MapTypeDecl) {}
-
-  MapSpec* spec;
-  std::optional<Ident> name;
-  FormalPars* pars{nullptr};
-  WithSpec* with{nullptr};
-
-  void Accept(const NodeInspector& inspector) const {
-    Inspect(spec, inspector);
-    if (name.has_value()) {
-      Inspect(std::addressof(*name), inspector);
-    }
-    if (pars != nullptr) {
-      Inspect(pars, inspector);
-    }
-    if (with != nullptr) {
-      Inspect(with, inspector);
-    }
-  }
-};
-
-struct EnumTypeDecl : Decl {
-  static constexpr NodeKind kKind = NodeKind::EnumTypeDecl;
-
-  EnumTypeDecl() : Decl(NodeKind::EnumTypeDecl) {}
-
-  std::optional<Ident> name;
-  FormalPars* pars{nullptr};
-  std::vector<Expr*> values;
-  WithSpec* with{nullptr};
-
-  void Accept(const NodeInspector& inspector) const {
-    if (name.has_value()) {
-      Inspect(std::addressof(*name), inspector);
-    }
-    if (pars != nullptr) {
-      Inspect(pars, inspector);
-    }
-    for (const auto* n : values) {
-      Inspect(n, inspector);
-    }
-    if (with != nullptr) {
-      Inspect(with, inspector);
-    }
-  }
-};
-
 struct BehaviourTypeDecl : Decl {
   static constexpr NodeKind kKind = NodeKind::BehaviourTypeDecl;
 
@@ -1290,7 +1379,7 @@ struct BehaviourTypeDecl : Decl {
 
   Token kind;
   std::optional<Ident> name;
-  FormalPars* pars{nullptr};
+  TypePars* pars{nullptr};
   FormalPars* params;
   RunsOnSpec* runs_on{nullptr};
   SystemSpec* system{nullptr};
@@ -1320,34 +1409,6 @@ struct BehaviourTypeDecl : Decl {
   }
 };
 
-struct PortTypeDecl : Decl {
-  static constexpr NodeKind kKind = NodeKind::PortTypeDecl;
-
-  PortTypeDecl() : Decl(NodeKind::PortTypeDecl) {}
-
-  std::optional<Ident> name;
-  FormalPars* pars{nullptr};
-  Token kind;
-  bool realtime{false};
-  std::vector<Node*> attrs;
-  WithSpec* with{nullptr};
-
-  void Accept(const NodeInspector& inspector) const {
-    if (name.has_value()) {
-      Inspect(std::addressof(*name), inspector);
-    }
-    if (pars != nullptr) {
-      Inspect(pars, inspector);
-    }
-    for (const auto* n : attrs) {
-      Inspect(n, inspector);
-    }
-    if (with != nullptr) {
-      Inspect(with, inspector);
-    }
-  }
-};
-
 struct PortMapAttribute : Node {
   static constexpr NodeKind kKind = NodeKind::PortMapAttribute;
 
@@ -1358,36 +1419,6 @@ struct PortMapAttribute : Node {
 
   void Accept(const NodeInspector& inspector) const {
     Inspect(params, inspector);
-  }
-};
-
-struct ComponentTypeDecl : Decl {
-  static constexpr NodeKind kKind = NodeKind::ComponentTypeDecl;
-
-  ComponentTypeDecl() : Decl(NodeKind::ComponentTypeDecl) {}
-
-  std::optional<Ident> name;
-  FormalPars* pars{nullptr};
-  std::vector<Expr*> extends;
-  BlockStmt* body;
-  WithSpec* with{nullptr};
-
-  void Accept(const NodeInspector& inspector) const {
-    if (name.has_value()) {
-      Inspect(std::addressof(*name), inspector);
-    }
-    if (pars != nullptr) {
-      Inspect(pars, inspector);
-    }
-    for (const auto* n : extends) {
-      if (n != nullptr) {
-        Inspect(n, inspector);
-      }
-    }
-    Inspect(body, inspector);
-    if (with != nullptr) {
-      Inspect(with, inspector);
-    }
   }
 };
 
@@ -1448,7 +1479,7 @@ struct StructTypeDecl : Decl {
   Token kind;
   std::vector<Field*> fields;
   std::optional<Ident> name;
-  FormalPars* pars{nullptr};
+  TypePars* pars{nullptr};
   WithSpec* with{nullptr};
 
   void Accept(const NodeInspector& inspector) const {

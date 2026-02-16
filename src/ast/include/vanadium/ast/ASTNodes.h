@@ -279,6 +279,7 @@ enum class NodeKind : std::uint8_t {
   PortMapAttribute,
   ComponentTypeDecl,
   FormalPar,
+  TypePar,
   decl_end_,
 
   module_begin_,
@@ -298,6 +299,7 @@ enum class NodeKind : std::uint8_t {
   MtcSpec,
   ReturnSpec,
   FormalPars,
+  TypePars,
   WithSpec,
   WithStmt,
   RedirectToIndex,

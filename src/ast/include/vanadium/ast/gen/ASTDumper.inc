@@ -552,6 +552,22 @@ case NodeKind::FormalPar: {
   });
   break;
 }
+case NodeKind::TypePars: {
+  const auto* nn = n->As<nodes::TypePars>();
+  DumpGroup("TypePars", [&] {
+    Dump("list", nn->list);
+  });
+  break;
+}
+case NodeKind::TypePar: {
+  const auto* nn = n->As<nodes::TypePar>();
+  DumpGroup("TypePar", [&] {
+    Dump("direction", nn->direction);
+    Dump("type", nn->type);
+    Dump("value", nn->value);
+  });
+  break;
+}
 case NodeKind::LengthExpr: {
   const auto* nn = n->As<nodes::LengthExpr>();
   DumpGroup("LengthExpr", [&] {

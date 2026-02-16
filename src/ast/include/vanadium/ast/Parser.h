@@ -81,8 +81,8 @@ class Parser {
   nodes::FormalPars* ParseFormalPars();
   nodes::FormalPar* ParseFormalPar();
   //
-  nodes::FormalPars* ParseTypeFormalPars();
-  nodes::FormalPar* ParseTypeFormalPar();
+  nodes::TypePars* ParseTypeFormalPars();
+  nodes::TypePar* ParseTypeFormalPar();
   //
   std::vector<nodes::ParenExpr*> ParseArrayDefs();
   nodes::ParenExpr* ParseArrayDef();

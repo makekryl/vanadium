@@ -728,7 +728,7 @@ nodes::ComponentTypeDecl* Parser::ParseComponentTypeDecl() {
       Consume();  // ExtendsTok
       ctd.extends = ParseRefList();
     }
-    ctd.body = ParseBlockStmt();
+    ctd.body = ParseBlockStmt();  // TODO(!!!): it should strictly be a vector<ValueDecl>
     ctd.with = ParseWith();
   });
 }
@@ -1281,8 +1281,8 @@ nodes::FormalPar* Parser::ParseFormalPar() {
   });
 }
 
-nodes::FormalPars* Parser::ParseTypeFormalPars() {
-  return NewNode<nodes::FormalPars>([&](auto& p) {
+nodes::TypePars* Parser::ParseTypeFormalPars() {
+  return NewNode<nodes::TypePars>([&](auto& p) {
     Expect(TokenKind::GT);
     while (tok_ != TokenKind::GT) {
       p.list.push_back(ParseTypeFormalPar());
@@ -1295,8 +1295,8 @@ nodes::FormalPars* Parser::ParseTypeFormalPars() {
   });
 }
 
-nodes::FormalPar* Parser::ParseTypeFormalPar() {
-  return NewNode<nodes::FormalPar>([&](auto& p) {
+nodes::TypePar* Parser::ParseTypeFormalPar() {
+  return NewNode<nodes::TypePar>([&](auto& p) {
     if (tok_ == TokenKind::IN) {
       p.direction = TokAlloc(Consume());
     }

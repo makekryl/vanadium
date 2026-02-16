@@ -8,7 +8,7 @@ Field:
   default_tok: Token*?
   type: TypeSpec*
   name: Ident
-  pars: FormalPars*?
+  pars: TypePars*?
   arraydef: ParenExpr*[]?
   length: LengthExpr*?
   value_constraint: ParenExpr*?
@@ -49,7 +49,7 @@ TemplateDecl:
   modif: Token*?
   type: Expr*
   name: Ident
-  pars: FormalPars*?
+  pars: TypePars*?
   params: FormalPars*?
   base: Expr*?
   value: Expr*
@@ -62,7 +62,7 @@ FuncDecl:
   kind: Token
   name: Ident
   modif: Token*?
-  pars: FormalPars*?
+  pars: TypePars*? # TODO: rename all pars -> type_pars
   params: FormalPars*?
   runs_on: RunsOnSpec*?
   mtc: MtcSpec*?
@@ -75,7 +75,7 @@ ConstructorDecl:
   body: BlockStmt*?
 SignatureDecl:
   name: Ident
-  pars: FormalPars*?
+  pars: TypePars*?
   params: FormalPars*
   noblock: bool
   ret: ReturnSpec*?
@@ -193,7 +193,7 @@ StructTypeDecl:
   kind: Token
   fields: Field*[]  # keep this order for branchless GetStructFields
   name: Ident
-  pars: FormalPars*?
+  pars: TypePars*?
   with: WithSpec*?
 ClassTypeDecl:
   external: bool
@@ -209,17 +209,17 @@ ClassTypeDecl:
 MapTypeDecl:
   spec: MapSpec*
   name: Ident
-  pars: FormalPars*?
+  pars: TypePars*?
   with: WithSpec*?
 EnumTypeDecl:
   name: Ident
-  pars: FormalPars*?
+  pars: TypePars*?
   values: Expr*[]
   with: WithSpec*?
 BehaviourTypeDecl:
   kind: Token
   name: Ident
-  pars: FormalPars*?
+  pars: TypePars*?
   params: FormalPars*
   runs_on: RunsOnSpec*?
   system: SystemSpec*?
@@ -227,7 +227,7 @@ BehaviourTypeDecl:
   with: WithSpec*?
 PortTypeDecl:
   name: Ident
-  pars: FormalPars*?
+  pars: TypePars*?
   kind: Token
   realtime: bool
   attrs: Node*[]
@@ -240,7 +240,7 @@ PortMapAttribute:
   params: FormalPars*
 ComponentTypeDecl:
   name: Ident
-  pars: FormalPars*?
+  pars: TypePars*?
   extends: Expr*[]?
   body: BlockStmt*
   with: WithSpec*?
@@ -253,6 +253,12 @@ FormalPar:
   type: Expr*
   name: Ident
   arraydef: ParenExpr*[]?
+  value: Expr*?
+TypePars:
+  list: TypePar*[]
+TypePar:
+  direction: Token*?
+  type: Expr*
   value: Expr*?
 LengthExpr:
   x: Expr*?
