@@ -978,7 +978,7 @@ InstantiatedType ResolveDeclarationType(const SourceFile* file, const ast::Node*
           .sym = ResolveExprSymbol(file, file->module->scope, vd->type).sym,
           .restriction = ParseTemplateRestriction(vd->template_restriction),
           .is_instance = true,
-          .depth = static_cast<std::uint32_t>(ast::utils::GetArrayDef(m)->size()),
+          .depth = static_cast<std::uint32_t>(ast::utils::GetArrayDefCap(ast::utils::GetArrayDef(m))),
       };
     }
     case ast::NodeKind::FormalPar: {
@@ -987,7 +987,7 @@ InstantiatedType ResolveDeclarationType(const SourceFile* file, const ast::Node*
           .sym = ResolveExprSymbol(file, file->module->scope, m->type).sym,
           .restriction = ParseTemplateRestriction(m->restriction),
           .is_instance = true,
-          .depth = static_cast<std::uint32_t>(ast::utils::GetArrayDef(m)->size()),
+          .depth = static_cast<std::uint32_t>(ast::utils::GetArrayDefCap(ast::utils::GetArrayDef(m))),
       };
     }
     case ast::NodeKind::Field: {
@@ -996,7 +996,7 @@ InstantiatedType ResolveDeclarationType(const SourceFile* file, const ast::Node*
           .sym = ResolveTypeSpecSymbol(file, m->type),
           .restriction = m->optional ? TemplateRestrictionKind::kOptionalField : TemplateRestrictionKind::kNone,
           .is_instance = true,
-          .depth = static_cast<std::uint32_t>(m->arraydef.size()),
+          .depth = static_cast<std::uint32_t>(ast::utils::GetArrayDefCap(m->arraydef)),
       };
     }
     case ast::NodeKind::StructTypeDecl: {
@@ -1965,7 +1965,7 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
             .sym = expected_type.sym,
             .restriction = ParseTemplateRestriction(m->template_restriction),
             .is_instance = true,
-            .depth = static_cast<std::uint32_t>(declarator->arraydef.size()),
+            .depth = static_cast<std::uint32_t>(ast::utils::GetArrayDefCap(declarator->arraydef)),
         };
         const auto actual_type = CheckType(declarator->value, expected_decl_type);
         MatchTypes(declarator->value->nrange, actual_type, expected_decl_type);

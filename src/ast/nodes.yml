@@ -9,7 +9,7 @@ Field:
   type: TypeSpec*
   name: Ident
   pars: TypePars*?
-  arraydef: ParenExpr*[]?
+  arraydef: ArrayExpr*?
   length: LengthExpr*?
   value_constraint: ParenExpr*?
   optional: bool
@@ -42,7 +42,7 @@ ValueDecl:
   with: WithSpec*?
 Declarator:
   name: Ident
-  arraydef: ParenExpr*[]?
+  arraydef: ArrayExpr*?
   value: Expr*?
 TemplateDecl:
   restriction: RestrictionSpec*?
@@ -252,7 +252,7 @@ FormalPar:
   modif: Token*?
   type: Expr*
   name: Ident
-  arraydef: ParenExpr*[]?
+  arraydef: ArrayExpr*?
   value: Expr*?
 TypePars:
   list: TypePar*[]
@@ -260,6 +260,8 @@ TypePar:
   direction: Token*?
   type: Expr*
   value: Expr*?
+ArrayExpr:
+  list: Expr*[]
 LengthExpr:
   x: Expr*?
   size: ParenExpr*

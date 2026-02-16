@@ -214,6 +214,7 @@ enum class NodeKind : std::uint8_t {
   AssignmentExpr,
   BinaryExpr,
   ParenExpr,
+  ArrayExpr,
   SelectorExpr,
   IndexExpr,
   CallExpr,

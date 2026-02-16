@@ -568,6 +568,13 @@ case NodeKind::TypePar: {
   });
   break;
 }
+case NodeKind::ArrayExpr: {
+  const auto* nn = n->As<nodes::ArrayExpr>();
+  DumpGroup("ArrayExpr", [&] {
+    Dump("list", nn->list);
+  });
+  break;
+}
 case NodeKind::LengthExpr: {
   const auto* nn = n->As<nodes::LengthExpr>();
   DumpGroup("LengthExpr", [&] {

@@ -28,6 +28,20 @@ struct Definition : Node {
   }
 };
 
+struct ArrayExpr : Expr {
+  static constexpr NodeKind kKind = NodeKind::ArrayExpr;
+
+  ArrayExpr() : Expr(NodeKind::ArrayExpr) {}
+
+  std::vector<Expr*> list;
+
+  void Accept(const NodeInspector& inspector) const {
+    for (const auto* n : list) {
+      Inspect(n, inspector);
+    }
+  }
+};
+
 struct ParenExpr : Expr {
   static constexpr NodeKind kKind = NodeKind::ParenExpr;
 
@@ -499,17 +513,15 @@ struct Declarator : Node {
   Declarator() : Node(NodeKind::Declarator) {}
 
   std::optional<Ident> name;
-  std::vector<ParenExpr*> arraydef;
+  ArrayExpr* arraydef{nullptr};
   Expr* value{nullptr};
 
   void Accept(const NodeInspector& inspector) const {
     if (name.has_value()) {
       Inspect(std::addressof(*name), inspector);
     }
-    for (const auto* n : arraydef) {
-      if (n != nullptr) {
-        Inspect(n, inspector);
-      }
+    if (arraydef != nullptr) {
+      Inspect(arraydef, inspector);
     }
     if (value != nullptr) {
       Inspect(value, inspector);
@@ -571,7 +583,7 @@ struct FormalPar : Node {
   Token* modif{nullptr};
   Expr* type;
   std::optional<Ident> name;
-  std::vector<ParenExpr*> arraydef;
+  ArrayExpr* arraydef{nullptr};
   Expr* value{nullptr};
 
   void Accept(const NodeInspector& inspector) const {
@@ -582,10 +594,8 @@ struct FormalPar : Node {
     if (name.has_value()) {
       Inspect(std::addressof(*name), inspector);
     }
-    for (const auto* n : arraydef) {
-      if (n != nullptr) {
-        Inspect(n, inspector);
-      }
+    if (arraydef != nullptr) {
+      Inspect(arraydef, inspector);
     }
     if (value != nullptr) {
       Inspect(value, inspector);
@@ -1073,7 +1083,7 @@ struct Field : Node {
   TypeSpec* type;
   std::optional<Ident> name;
   TypePars* pars{nullptr};
-  std::vector<ParenExpr*> arraydef;
+  ArrayExpr* arraydef{nullptr};
   LengthExpr* length{nullptr};
   ParenExpr* value_constraint{nullptr};
   bool optional{false};
@@ -1086,10 +1096,8 @@ struct Field : Node {
     if (pars != nullptr) {
       Inspect(pars, inspector);
     }
-    for (const auto* n : arraydef) {
-      if (n != nullptr) {
-        Inspect(n, inspector);
-      }
+    if (arraydef != nullptr) {
+      Inspect(arraydef, inspector);
     }
     if (length != nullptr) {
       Inspect(length, inspector);

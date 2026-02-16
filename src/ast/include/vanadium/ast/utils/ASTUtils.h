@@ -73,14 +73,22 @@ inline std::span<const nodes::Expr* const> GetExtendsBase(const Node* n) {
   }
 }
 
-inline const std::vector<nodes::ParenExpr*>* GetArrayDef(const Node* n) {
+inline std::size_t GetArrayDefCap(const nodes::ArrayExpr* m) {
+  return m ? m->list.size() : 0;
+}
+
+inline const nodes::ArrayExpr* GetArrayDef(const IsNode auto* n) {
+  return n->arraydef;
+}
+
+inline const nodes::ArrayExpr* GetArrayDef(const Node* n) {
   switch (n->nkind) {
     case NodeKind::Field:
-      return &n->As<nodes::Field>()->arraydef;
+      return n->As<nodes::Field>()->arraydef;
     case NodeKind::Declarator:
-      return &n->As<nodes::Declarator>()->arraydef;
+      return n->As<nodes::Declarator>()->arraydef;
     case NodeKind::FormalPar:
-      return &n->As<nodes::FormalPar>()->arraydef;
+      return n->As<nodes::FormalPar>()->arraydef;
     default:
       return nullptr;
   }

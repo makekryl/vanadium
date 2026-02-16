@@ -891,7 +891,7 @@ nodes::Field* Parser::ParseField() {
       f.pars = ParseTypeFormalPars();
     }
     if (tok_ == TokenKind::LBRACK) {
-      f.arraydef = ParseArrayDefs();
+      f.arraydef = ParseArrayExpr();
     }
     if (tok_ == TokenKind::LENGTH) {
       f.length = ParseLengthExpr(nullptr);
@@ -1104,7 +1104,7 @@ nodes::Declarator* Parser::ParseDeclarator() {
   return NewNode<nodes::Declarator>([&](auto& d) {
     ParseName(d.name);
     if (tok_ == TokenKind::LBRACK) {
-      d.arraydef = ParseArrayDefs();
+      d.arraydef = ParseArrayExpr();
     }
     if (tok_ == TokenKind::ASSIGN) {
       Consume();
@@ -1272,7 +1272,7 @@ nodes::FormalPar* Parser::ParseFormalPar() {
     fp.type = ParseTypeRef();
     ParseName(fp.name);
     if (tok_ == TokenKind::LBRACK) {
-      fp.arraydef = ParseArrayDefs();
+      fp.arraydef = ParseArrayExpr();
     }
     if (tok_ == TokenKind::ASSIGN) {
       Consume();
@@ -1318,19 +1318,13 @@ nodes::TypePar* Parser::ParseTypeFormalPar() {
   });
 }
 
-std::vector<nodes::ParenExpr*> Parser::ParseArrayDefs() {
-  std::vector<nodes::ParenExpr*> v;
-  while (tok_ == TokenKind::LBRACK) {
-    v.push_back(ParseArrayDef());
-  }
-  return v;
-}
-
-nodes::ParenExpr* Parser::ParseArrayDef() {
-  return NewNode<nodes::ParenExpr>([&](auto& e) {
-    Expect(TokenKind::LBRACK);
-    e.list = ParseExprList();
-    Expect(TokenKind::RBRACK);
+nodes::ArrayExpr* Parser::ParseArrayExpr() {
+  return NewNode<nodes::ArrayExpr>([&](auto& m) {
+    while (tok_ == TokenKind::LBRACK) {
+      Consume();
+      m.list.emplace_back(ParseExpr());
+      Expect(TokenKind::RBRACK);
+    }
   });
 }
 

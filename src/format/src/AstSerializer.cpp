@@ -286,13 +286,8 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
         if (m->pars) {
           A(seq, S(m->pars));
         }
-        for (const auto* pe : m->arraydef) {
-          A(seq, "[");
-          // TODO: check why it is being parsed as a list
-          for (const auto* expr : pe->list) {
-            A(seq, S(expr));
-          }
-          A(seq, "]");
+        if (m->arraydef) {
+          A(seq, S(m->arraydef));
         }
         if (m->length) {
           A(seq, PrintDirective::kSpace);
@@ -455,13 +450,8 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
       const auto* m = n->As<ast::nodes::Declarator>();
       return NewSequence([&](auto& seq) {
         A(seq, S(m->name));
-        for (const auto* pe : m->arraydef) {
-          A(seq, "[");
-          // TODO: check why it is being parsed as a list
-          for (const auto* expr : pe->list) {
-            A(seq, S(expr));
-          }
-          A(seq, "]");
+        if (m->arraydef) {
+          A(seq, S(m->arraydef));
         }
         if (m->value) {
           A(seq, PrintDirective::kSpace);
@@ -941,6 +931,16 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
       });
       break;
     }
+    case ast::NodeKind::ArrayExpr: {
+      const auto* m = n->As<ast::nodes::ArrayExpr>();
+      return NewSequence([&](auto& seq) {
+        for (const auto* dim : m->list) {
+          A(seq, "[");
+          A(seq, S(dim));
+          A(seq, "]");
+        }
+      });
+    }
     case ast::NodeKind::PostExpr: {
       const auto* m = n->As<ast::nodes::PostExpr>();
       return NewSequence([&](auto& seq) {
@@ -1345,13 +1345,8 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
         A(seq, S(m->type));
         A(seq, PrintDirective::kSpace);
         A(seq, S(m->name));
-        for (const auto* pe : m->arraydef) {
-          A(seq, "[");
-          // TODO: check why it is being parsed as a list
-          for (const auto* expr : pe->list) {
-            A(seq, S(expr));
-          }
-          A(seq, "]");
+        if (m->arraydef) {
+          A(seq, S(m->arraydef));
         }
         if (m->value) {
           A(seq, PrintDirective::kSpace);
