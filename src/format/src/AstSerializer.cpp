@@ -1624,7 +1624,13 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
 
     default: {
       VANADIUM_DEBUG_ASSERT(false, "Unhandled node '{}'", magic_enum::enum_name(n->nkind));
-      return n->nrange.String(ast_.src);
+      while (tokens_->Current().range.end != n->nrange.end) {
+        tokens_->Scan();
+      }
+      return NewSequence([&](auto& seq) {
+        // push directly to seq.units - avoid token matching against this giant blob
+        seq.units.push_back(n->nrange.String(ast_.src));
+      });
     }
   }
 }
