@@ -32,7 +32,8 @@
           "ttcn"
         ],
         "extensions": [
-          ".ttcn"
+          ".ttcn",
+          ".ttcn3"
         ],
         "configuration": "./language-configuration.json",
         "icon": {
