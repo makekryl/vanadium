@@ -9,6 +9,7 @@
 #include <vanadium/bin/Bootstrap.h>
 #include <vanadium/format/AstPrinter.h>
 #include <vanadium/lib/Arena.h>
+#include <vanadium/version.h>
 
 #include "vanadium/bin/fmt/FmtTreeDumper.h"
 
@@ -39,7 +40,7 @@ void WriteFile(const std::string& path, std::string_view content) {
 
 namespace {
 int main(int argc, char* argv[]) {
-  argparse::ArgumentParser ap("vanadium_fmt");
+  argparse::ArgumentParser ap("vanadium_fmt", vanadium::bin::kVersion);
   ap.add_description("TTCN-3 source code pretty-printer");
   //
   std::string filepath;

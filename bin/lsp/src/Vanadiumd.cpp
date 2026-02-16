@@ -45,7 +45,7 @@ class OutputCapturingTransport : public vanadium::lserver::Transport {
 
 namespace {
 int main(int argc, char* argv[]) {
-  argparse::ArgumentParser ap("vanadiumd");
+  argparse::ArgumentParser ap("vanadiumd", vanadium::bin::kVersion);
   ap.add_description("TTCN-3 language server");
   //
   std::uint32_t jobs{std::clamp(std::thread::hardware_concurrency(), 1U, 4U)};

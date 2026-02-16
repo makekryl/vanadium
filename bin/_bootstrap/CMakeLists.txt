@@ -6,6 +6,10 @@ target_include_directories(vanadium_bin_boostrap PUBLIC
   include
 )
 
+target_link_libraries(vanadium_bin_boostrap PUBLIC
+  vanadium_bin_version
+)
+
 target_link_libraries(vanadium_bin_boostrap PRIVATE
   stdc++exp
 )

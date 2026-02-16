@@ -20,6 +20,7 @@
 #include <vanadium/tooling/Filesystem.h>
 #include <vanadium/tooling/Solution.h>
 #include <vanadium/tooling/impl/SystemFS.h>
+#include <vanadium/version.h>
 
 namespace {
 vanadium::lint::Linter CreateLinter() {
@@ -36,7 +37,7 @@ int main(int argc, char* argv[]) {
   bool use_autofix{false};
   std::string solution_path;
 
-  argparse::ArgumentParser ap("vanadium-tidy");
+  argparse::ArgumentParser ap("vanadium-tidy", vanadium::bin::kVersion);
   ap.add_description("TTCN-3 source code static analyzer");
   //
   ap.add_argument("--fix").store_into(use_autofix).help("apply autofixes where possible");

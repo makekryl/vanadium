@@ -14,6 +14,7 @@
 #include <vanadium/bin/Bootstrap.h>
 #include <vanadium/lib/Arena.h>
 #include <vanadium/lib/AsciiColors.h>
+#include <vanadium/version.h>
 
 #include "vanadium/bin/astdump/TextDumper.h"
 
@@ -37,7 +38,7 @@ bool IsAsnFile(std::string_view path) {
 
 namespace {
 int main(int argc, char* argv[]) {
-  argparse::ArgumentParser ap("astdump");
+  argparse::ArgumentParser ap("astdump", vanadium::bin::kVersion);
   ap.add_description("Vanadium TTCN-3 syntax tree dumper");
   //
   std::vector<std::string> asn_include_filepaths;
