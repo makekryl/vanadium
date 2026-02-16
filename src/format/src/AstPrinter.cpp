@@ -200,7 +200,7 @@ void SerialAstPrinter::AppendUnit(const Unit& cu, Wrap wrap) {
         if (IsCurrentLineEmpty()) {
           --count;
         }
-        count = std::min(count, options_.max_newlines);
+        count = std::min(count, options_.max_empty_newlines);
         for (std::size_t i = 0; i < count; ++i) {
           WriteNewline();
         }

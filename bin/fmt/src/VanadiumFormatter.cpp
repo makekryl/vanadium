@@ -59,7 +59,7 @@ int main(int argc, char* argv[]) {
 
   std::println("{}", format::PrintAst(ast, ast.root,
                                       format::PrintOptions{
-                                          .tab_width = 8,
+                                          .tab_width = 4,
                                           .print_width = 80,
                                       }));
 
