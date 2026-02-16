@@ -747,7 +747,7 @@ bool Binder::Inspect(const ast::Node* n) {
       const auto* m = n->As<ast::nodes::SubTypeDecl>();
 
       const auto* field = m->field;
-      Visit(field->arraydef);
+      MaybeVisit(field->arraydef);
       MaybeVisit(field->pars);
       MaybeVisit(field->value_constraint);
 
