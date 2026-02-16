@@ -6,11 +6,9 @@ It provides:
 
 - A feature-complete **language server** for VS Code and other editors, supporting auto-import, ASN.1 and more
 - An easy-to-integrate **static code analyzer** that identifies and reports problematic code patterns
-- An opinionated **formatter** to keep code stylish and avoid code style discussions and related merge conflicts\*
+- An opinionated **formatter** to keep code stylish and avoid code style discussions and related merge conflicts
 
 Currently, Vanadium does not _replace_ existing solutions but instead _complements_ them. There is a rough concept for a compiler and a runtime, which may be worked on after the compiler frontend - currently under active development - has stabilized.
-
-> \* - there's a working prototype of the formatter that needs some work to be rebuild according to the current state of the project, it will be published soon
 
 ## Getting started
 
@@ -93,7 +91,7 @@ Vanadium written in modern C++23, with CMake used as the build system. Python is
 
 Following is required to build the project:
 
-- `cmake`
+- `cmake >= 3.31`
 - `clang >= 19` or `gcc >= 14`
 - `python >= 3.11` for AST stuff generation
 - `flex` and `bison` to generate ASN.1 parser
@@ -206,3 +204,7 @@ It would have been impossible to build this project without these wonderful open
 - **[stephenberry/glaze](https://github.com/stephenberry/glaze)** - _glaze_ is an efficient, modern C++ JSON and reflection library that made building the language server straightforward and painless
 
 - & more: **[fmtlib/fmt](https://github.com/fmtlib/fmt)**, **[Neargye/magic_enum](https://github.com/Neargye/magic_enum)**, **[p-ranav/argparse](https://github.com/p-ranav/argparse)**, **[getml/reflect-cpp](https://github.com/getml/reflect-cpp)**, **[uxlfoundation/oneTBB](https://github.com/uxlfoundation/oneTBB)**
+
+---
+
+*Made with ❤️ without AI*
