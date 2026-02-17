@@ -945,7 +945,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
         A(seq, "(");
         A(seq, NewSequence(Sequence::Attribute::kIndented, [&](auto& eseq) {
             A(eseq, PrintDirective::kSoftLine);
-            Join(eseq, m->list, {",", PrintDirective::kSoftLine});
+            Join(eseq, m->list, {",", PrintDirective::kSpaceOrLine});
           }));
         A(seq, PrintDirective::kSoftLine);
         A(seq, ")");
