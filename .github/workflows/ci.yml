@@ -61,10 +61,11 @@ jobs:
           run: |
             uv run inv test.${{ matrix.kind }} --sanitizers \
               --toolchain ${{ matrix.toolchain }} \
-              --jobs $(nproc) --no-run
+              --jobs $(nproc) --cmake-jobs $(nproc) --no-run
 
       - name: Run tests
         uses: ./.github/workflows/composite/run-in-devcontainer
+        timeout-minutes: 5  # TODO: check why it's hanging occasionally
         with:
           run: |
             uv run inv test.${{ matrix.kind }} --sanitizers \
