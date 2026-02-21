@@ -56,6 +56,22 @@ references = [
 
 The difference between a "regular" projects and external projects is that external projects do not have to be a Vanadium projects, they may be just a directories with a bunch of TTCN-3 files.
 
+#### Configuring tools
+
+Vanadium tools read their responsive options from the manifest file in the working directory.
+
+If an option is omitted, the default value is used. \
+Default values are specified in the list of all supported values below.
+
+##### Formatter
+
+```toml
+[tools.fmt]
+tab_width = 4
+print_width = 80
+max_empty_newlines = 2
+```
+
 ## Comparison to other projects
 
 Unfortunately, the TTCN-3 ecosystem is quite underserved, and there are only a few open-source tools available. As of January 2026, these include:
