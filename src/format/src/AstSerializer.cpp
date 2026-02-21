@@ -35,7 +35,7 @@ class TokenWindow {
     next_ = scanner_.Scan();
   }
 
-  ast::Token Scan() {
+  ast::Token Advance() {
     cur_ = next_;
     next_ = scanner_.Scan();
     return cur_;
@@ -92,26 +92,31 @@ class AstSerializer {
   template <typename T, typename Serializer = std::nullptr_t>
   void Join(Sequence& target, const std::vector<T>& items, std::initializer_list<Unit> separators,
             Serializer f_serialize = nullptr) {
-    const auto serialize = [&](const T item) {
+    const auto serialize = [&](const T& item) {
       if constexpr (std::is_same_v<Serializer, std::nullptr_t>) {
         A(target, S(item));
       } else {
         f_serialize(item);
       }
     };
-    for (std::size_t i = 0; i + 1 < items.size(); ++i) {
-      serialize(items[i]);
-      for (const auto& su : separators) {
-        A(target, su);
-      }
-      const ast::pos_t current_line = std::max(ast_.lines.LineOf(RangeOf(items[i]).end), last_comment_line_);
-      const ast::pos_t next_line = ast_.lines.LineOf(RangeOf(items[i + 1]).begin);
-      if (current_line != next_line) {
-        A(target, PreferredNewlines{next_line - current_line});
-      }
-    }
     if (!items.empty()) {
-      serialize(items.back());
+      serialize(items.front());
+      for (std::size_t i = 1; i < items.size(); ++i) {
+        for (const auto& su : separators) {
+          A(target, su);
+        }
+
+        // if there's a leading comment, PreferredNewlines would be inserted by the comment scanner
+        if (tokens_->Next().kind != ast::TokenKind::COMMENT) {
+          const ast::pos_t prev_line = std::max(ast_.lines.LineOf(RangeOf(items[i - 1]).end), last_comment_line_);
+          const ast::pos_t current_line = ast_.lines.LineOf(RangeOf(items[i]).begin);
+          if (current_line != prev_line) {
+            A(target, PreferredNewlines{current_line - prev_line});
+          }
+        }
+
+        serialize(items[i]);
+      }
     }
   }
   template <typename T, typename Serializer = std::nullptr_t>
@@ -121,37 +126,69 @@ class AstSerializer {
 
   //
 
+  template <bool TrailingOnly = false>
+  void ScanComments(Sequence& tgt) {
+    ast::Token comment_tok;
+    while ((comment_tok = tokens_->Next()).kind == ast::TokenKind::COMMENT) {
+      const auto ctok = tokens_->Current();
+      const ast::pos_t prev_line = ast_.lines.LineOf(ctok.range.end);
+      const ast::pos_t comment_line = ast_.lines.LineOf(comment_tok.range.begin);
+
+      if constexpr (TrailingOnly) {
+        if (prev_line != comment_line) {
+          return;
+        }
+      }
+      tokens_->Advance();  // consume comment_tok
+
+      if (comment_line != prev_line) {
+        const ast::pos_t dy = ctok.kind == ast::TokenKind::COMMENT ? 0 : 1;
+        for (ast::pos_t i = 0; i < (comment_line - prev_line - dy); ++i) {
+          tgt.units.emplace_back(PrintDirective::kHardLine);
+        }
+      }
+      last_comment_line_ = comment_line;
+
+      tgt.units.emplace_back(Comment{comment_tok.On(ast_.src)});
+    }
+  }
+
   void A(Sequence& seq, Unit u) {
     // todo: optimize
     if (std::holds_alternative<EmptyUnit>(u)) {
       return;
     }
 
-    const auto chk_comments = [&] {
-      while (tokens_->Next().kind == ast::TokenKind::COMMENT) {
-        const auto prev_tok = tokens_->Current();
-        const auto comment_tok = tokens_->Scan();
+    const auto chk_trailing_comments = [&] {
+      ScanComments<true>(seq);
+    };
+    const auto chk_leading_comments = [&] {
+      if (tokens_->Next().kind != ast::TokenKind::COMMENT) {
+        return;
+      }
+      ScanComments(seq);
 
-        const ast::pos_t prev_line = ast_.lines.LineOf(prev_tok.range.end);
-        const ast::pos_t comment_line = ast_.lines.LineOf(comment_tok.range.begin);
-        for (ast::pos_t i = 0; i < (comment_line - prev_line); ++i) {
-          seq.units.emplace_back(PrintDirective::kHardLine);
-        }
-        last_comment_line_ = comment_line;
-
-        seq.units.emplace_back(Comment{comment_tok.On(ast_.src)});
+      const ast::pos_t current_line = ast_.lines.LineOf(RangeOf(tokens_->Next()).begin);
+      if (current_line > last_comment_line_) {
+        A(seq, PreferredNewlines{current_line - last_comment_line_});
       }
     };
 
     if (const auto* pd = std::get_if<PrintDirective>(&u); pd && *pd == PrintDirective::kSemicolon) {
-      chk_comments();
-      //
-      seq.units.push_back(std::move(u));
-      //
       if (tokens_->Next().kind == ast::TokenKind::SEMICOLON) {
-        tokens_->Scan();
+        chk_leading_comments();
+        //
+        seq.units.push_back(std::move(u));
+        tokens_->Advance();
+        //
+        chk_trailing_comments();
+      } else {
+        seq.units.push_back(std::move(u));
+        if (tokens_->Next().kind == ast::TokenKind::SEMICOLON) {
+          tokens_->Advance();
+          chk_trailing_comments();
+        }
       }
-      chk_comments();
       return;
     }
 
@@ -160,16 +197,18 @@ class AstSerializer {
       return;
     }
 
-    [[maybe_unused]] const auto& s = std::get<std::string_view>(u);
-
-    chk_comments();
-    VANADIUM_DEBUG_ASSERT(s == tokens_->Next().On(ast_.src), "mismatch fmt('{}') <-> real('{}':{}-{})", s,
-                          tokens_->Next().On(ast_.src), tokens_->Next().range.begin, tokens_->Next().range.end);
-    tokens_->Scan();
+    chk_leading_comments();
+    {
+      [[maybe_unused]] const auto& s = std::get<std::string_view>(u);
+      [[maybe_unused]] const auto next_tok = tokens_->Next();
+      VANADIUM_DEBUG_ASSERT(s == next_tok.On(ast_.src), "fmt('{}') <-> actual('{}', {}-{})", s,  //
+                            next_tok.On(ast_.src), next_tok.range.begin, next_tok.range.end);
+    }
+    tokens_->Advance();
     //
     seq.units.push_back(std::move(u));
     //
-    chk_comments();
+    chk_trailing_comments();
   }
 
   //
@@ -189,6 +228,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
           A(seq, S(cn));
           return false;
         });
+        ScanComments(seq);
       });
     }
 
@@ -421,6 +461,10 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
           A(seq, PrintDirective::kSpace);
         }
         A(seq, "}");
+
+        if (tokens_->Next().kind == ast::TokenKind::SEMICOLON) {
+          tokens_->Advance();
+        }
       });
     }
 
@@ -1655,7 +1699,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     default: {
       VANADIUM_DEBUG_ASSERT(false, "Unhandled node '{}'", magic_enum::enum_name(n->nkind));
       while (tokens_->Current().range.end != n->nrange.end) {
-        tokens_->Scan();
+        tokens_->Advance();
       }
       return NewSequence([&](auto& seq) {
         // push directly to seq.units - avoid token matching against this giant blob
