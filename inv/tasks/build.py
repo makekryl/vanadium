@@ -11,7 +11,7 @@ from inv.config import (
   get_preset,
   get_preset_build_dir,
 )
-from inv.params.build import build_opts, cmake_opts, with_build_params
+from inv.params.build import build_opts, with_build_params
 
 
 def _cmake_bool(b: bool):
@@ -79,14 +79,14 @@ def build(
 ):
   build_dir = get_build_dir(c)
 
-  if cmake_opts(c).reconfigure or not build_dir.exists():
+  if build_opts(c).reconfigure or not build_dir.exists():
     configure(c)
 
   args = []
   if target:
     args.append(f"--target {target}")
-  if cmake_opts(c).cmake_jobs:
-    args.append(f"-j {cmake_opts(c).cmake_jobs}")
+  if build_opts(c).cmake_jobs:
+    args.append(f"-j {build_opts(c).cmake_jobs}")
 
   c.run(f"cmake --build '{build_dir}' {' '.join(args)}")
 

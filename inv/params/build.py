@@ -14,6 +14,10 @@ class BuildOptions:
   release: bool = False
   static: bool = False
 
+  # cmake
+  reconfigure: bool = False
+  cmake_jobs: int | None = None
+
 
 def build_opts(c: Context):
   return cast(BuildOptions, c.config.vanadium["build"])
@@ -21,17 +25,3 @@ def build_opts(c: Context):
 
 def with_build_params(tfunc: TaskCallable) -> TaskCallable:
   return inject_task_params(tfunc, "build", BuildOptions)
-
-
-@dataclass(slots=True)
-class CMakeOptions:
-  reconfigure: bool = False
-  cmake_jobs: int | None = None
-
-
-def cmake_opts(c: Context):
-  return cast(CMakeOptions, c.config.vanadium["cmake"])
-
-
-def with_cmake_params(tfunc: TaskCallable) -> TaskCallable:
-  return inject_task_params(tfunc, "cmake", CMakeOptions)

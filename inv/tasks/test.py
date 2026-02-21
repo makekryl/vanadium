@@ -1,7 +1,7 @@
 from invoke import Context, task
 
 from inv.params import override_params_defaults
-from inv.params.build import with_build_params, with_cmake_params
+from inv.params.build import with_build_params
 from inv.params.test import test_opts, with_test_params
 
 from . import build
@@ -10,7 +10,6 @@ from . import build
 @task(default=True)
 @override_params_defaults(sanitizers=True)
 @with_build_params
-@with_cmake_params
 @with_test_params
 def test(c: Context, label: str):
   if not test_opts(c).skip_build:
@@ -39,7 +38,6 @@ def test(c: Context, label: str):
 @task
 @override_params_defaults(sanitizers=True)
 @with_build_params
-@with_cmake_params
 @with_test_params
 def unit(c: Context):
   test(c, label="unit")
@@ -48,7 +46,6 @@ def unit(c: Context):
 @task
 @override_params_defaults(sanitizers=True)
 @with_build_params
-@with_cmake_params
 @with_test_params
 def e2e(
   c: Context,
