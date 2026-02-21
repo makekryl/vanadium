@@ -215,7 +215,7 @@ std::string PrintAst(const ast::AST& ast, const ast::Node* n, PrintOptions optio
   lib::Arena arena;  // todo: accept as an argument
   auto unit = SerializeAst(ast, n, arena);
 
-  return SerialAstPrinter(ast.src, options).Print(unit);
+  return SerialAstPrinter(ast.src, std::move(options)).Print(unit);
 }
 
 }  // namespace vanadium::format

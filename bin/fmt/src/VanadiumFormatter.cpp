@@ -1,3 +1,4 @@
+#include <filesystem>
 #include <format>
 #include <fstream>
 #include <print>
@@ -12,6 +13,7 @@
 #include <vanadium/version.h>
 
 #include "vanadium/bin/fmt/FmtTreeDumper.h"
+#include "vanadium/bin/fmt/OptionsReader.h"
 
 using namespace vanadium;
 
@@ -87,11 +89,22 @@ int main(int argc, char* argv[]) {
     return 0;
   }
 
-  const auto result = format::PrintAst(ast, ast.root,
-                                       format::PrintOptions{
-                                           .tab_width = 4,
-                                           .print_width = 80,
-                                       });
+  format::PrintOptions print_opts{};
+  if (const auto manifest_path = std::filesystem::current_path() / ".vanadiumrc.toml";
+      std::filesystem::exists(manifest_path)) {
+    const auto manifest_contents = ReadFile(manifest_path.string());
+    if (!manifest_contents) {
+      std::println(stderr, "Failed to read manifest at '{}'", filepath);
+      return 3;
+    }
+    const auto err = bin::fmt::TryReadOptionsFromManifest(*manifest_contents, print_opts);
+    if (err) {
+      std::println(stderr, "Failed to read options from manifest: {}", err->String());
+      return 5;
+    }
+  }
+
+  const auto result = format::PrintAst(ast, ast.root, print_opts) + "\n";
   if (use_dryrun) {
     const bool no_diffs = ast.src == result;
     return no_diffs ? 0 : 1;
