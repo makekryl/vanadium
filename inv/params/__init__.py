@@ -1,8 +1,8 @@
 import inspect
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 from functools import wraps
 from inspect import Parameter, Signature, _empty, signature
-from typing import Callable, ParamSpec, TypeVar
+from typing import Any, Callable, TypeVar
 
 from invoke import Context
 
@@ -10,7 +10,7 @@ from invoke import Context
 @dataclass(frozen=True, slots=True)
 class InjectableParam:
   name: str
-  default: str | int | bool | None | type[_empty] = _empty
+  default: Any | None | type[_empty] = _empty
   description: str | None = None
 
 
@@ -22,10 +22,18 @@ TaskCallable = TypeVar("TaskCallable", bound=Callable)
 
 def inject_task_params(
   tfunc: TaskCallable,
-  params: list[InjectableParam],
-  accept: Callable[..., None],
+  key: str,
+  ParamsDescriptor: type,
 ) -> TaskCallable:
   params_group = inspect.stack()[1].function
+
+  params = [
+    InjectableParam(
+      name=f.name,
+      default=f.default,
+    )
+    for f in fields(ParamsDescriptor)
+  ]
 
   @wraps(tfunc)
   def wrapper(
@@ -38,7 +46,15 @@ def inject_task_params(
       (injected_kwargs if kw in param_names else task_kwargs)[kw] = val
 
     if params_group not in _injected_params:
-      accept(c=c, **injected_kwargs)
+      # c.config is DataProxy so it should be overriden like below
+      # TODO: write a very tiny pyinvoke replacement
+      storage = (
+        c.config.vanadium[key] if key in c.config.vanadium else ParamsDescriptor()
+      )
+      for kw, val in injected_kwargs.items():
+        setattr(storage, kw, val)
+      c.config.vanadium[key] = storage
+      #
       _injected_params.add(params_group)
 
     return tfunc(

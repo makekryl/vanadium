@@ -11,7 +11,7 @@ from inv.config import (
   get_preset,
   get_preset_build_dir,
 )
-from inv.params.build import with_build_params
+from inv.params.build import build_opts, cmake_opts, with_build_params
 
 
 def _cmake_bool(b: bool):
@@ -25,12 +25,12 @@ def _get_cmake_params(c: Context):
   preset = get_preset(
     config="-".join(
       (
-        "release" if c.config.vanadium.build.release else "debug",
-        *opt("sanitizers", c.config.vanadium.build.sanitizers),
-        *opt("static", c.config.vanadium.build.static),
+        "release" if build_opts(c).release else "debug",
+        *opt("sanitizers", build_opts(c).sanitizers),
+        *opt("static", build_opts(c).static),
       )
     ),
-    toolchain=c.config.vanadium.build.toolchain,
+    toolchain=build_opts(c).toolchain,
   )
   build_dir = get_preset_build_dir(preset)
   return preset, build_dir
@@ -79,14 +79,14 @@ def build(
 ):
   build_dir = get_build_dir(c)
 
-  if c.config.vanadium.build.reconfigure or not build_dir.exists():
+  if cmake_opts(c).reconfigure or not build_dir.exists():
     configure(c)
 
   args = []
   if target:
     args.append(f"--target {target}")
-  if c.config.vanadium.build.jobs:
-    args.append(f"-j {c.config.vanadium.build.jobs}")
+  if cmake_opts(c).cmake_jobs:
+    args.append(f"-j {cmake_opts(c).cmake_jobs}")
 
   c.run(f"cmake --build '{build_dir}' {' '.join(args)}")
 
