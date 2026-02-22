@@ -22,6 +22,8 @@ namespace vanadium::format {
 
 namespace {
 
+constexpr std::string_view kSuppressDirective = "// vanadium-fmt ignore";
+
 const ast::Range& RangeOf(const ast::Token& tok) {
   return tok.range;
 }
@@ -44,7 +46,7 @@ class TokenWindow {
   [[nodiscard]] const ast::Token& Current() const {
     return cur_;
   }
-  [[nodiscard]] const ast::Token& Next() const {
+  [[nodiscard]] const ast::Token& Peek() const {
     return next_;
   }
 
@@ -65,6 +67,7 @@ class AstSerializer {
 
  private:
   Unit S(const ast::Node*);
+  Unit S_AsIs(const ast::Node*);
 
   Unit S(const std::optional<ast::nodes::Ident>& ident) {
     if (!ident) {
@@ -107,7 +110,7 @@ class AstSerializer {
         }
 
         // if there's a leading comment, PreferredNewlines would be inserted by the comment scanner
-        if (tokens_->Next().kind != ast::TokenKind::COMMENT) {
+        if (tokens_->Peek().kind != ast::TokenKind::COMMENT) {
           const ast::pos_t prev_line = std::max(ast_.lines.LineOf(RangeOf(items[i - 1]).end), last_comment_line_);
           const ast::pos_t current_line = ast_.lines.LineOf(RangeOf(items[i]).begin);
           if (current_line != prev_line) {
@@ -129,7 +132,7 @@ class AstSerializer {
   template <bool TrailingOnly = false>
   void ScanComments(Sequence& tgt) {
     ast::Token comment_tok;
-    while ((comment_tok = tokens_->Next()).kind == ast::TokenKind::COMMENT) {
+    while ((comment_tok = tokens_->Peek()).kind == ast::TokenKind::COMMENT) {
       const auto ctok = tokens_->Current();
       const ast::pos_t prev_line = ast_.lines.LineOf(ctok.range.end);
       const ast::pos_t comment_line = ast_.lines.LineOf(comment_tok.range.begin);
@@ -163,19 +166,19 @@ class AstSerializer {
       ScanComments<true>(seq);
     };
     const auto chk_leading_comments = [&] {
-      if (tokens_->Next().kind != ast::TokenKind::COMMENT) {
+      if (tokens_->Peek().kind != ast::TokenKind::COMMENT) {
         return;
       }
       ScanComments(seq);
 
-      const ast::pos_t current_line = ast_.lines.LineOf(RangeOf(tokens_->Next()).begin);
+      const ast::pos_t current_line = ast_.lines.LineOf(RangeOf(tokens_->Peek()).begin);
       if (current_line > last_comment_line_) {
         A(seq, PreferredNewlines{current_line - last_comment_line_});
       }
     };
 
     if (const auto* pd = std::get_if<PrintDirective>(&u); pd && *pd == PrintDirective::kSemicolon) {
-      if (tokens_->Next().kind == ast::TokenKind::SEMICOLON) {
+      if (tokens_->Peek().kind == ast::TokenKind::SEMICOLON) {
         chk_leading_comments();
         //
         seq.units.push_back(std::move(u));
@@ -184,7 +187,7 @@ class AstSerializer {
         chk_trailing_comments();
       } else {
         seq.units.push_back(std::move(u));
-        if (tokens_->Next().kind == ast::TokenKind::SEMICOLON) {
+        if (tokens_->Peek().kind == ast::TokenKind::SEMICOLON) {
           tokens_->Advance();
           chk_trailing_comments();
         }
@@ -200,7 +203,7 @@ class AstSerializer {
     chk_leading_comments();
     {
       [[maybe_unused]] const auto& s = std::get<std::string_view>(u);
-      [[maybe_unused]] const auto next_tok = tokens_->Next();
+      [[maybe_unused]] const auto next_tok = tokens_->Peek();
       VANADIUM_DEBUG_ASSERT(s == next_tok.On(ast_.src), "fmt('{}') <-> actual('{}', {}-{})", s,  //
                             next_tok.On(ast_.src), next_tok.range.begin, next_tok.range.end);
     }
@@ -219,7 +222,29 @@ class AstSerializer {
   lib::Arena& arena_;
 };
 
+Unit AstSerializer::S_AsIs(const ast::Node* n) {
+  const ast::Range range{
+      .begin = tokens_->Peek().range.begin,
+      .end = n->nrange.end,
+  };
+  while (tokens_->Current().range.end != n->nrange.end) {
+    tokens_->Advance();
+  }
+  return NewSequence([&](auto& seq) {
+    // push directly to seq.units - avoid token matching against this giant blob
+    seq.units.push_back(range.String(ast_.src));
+    ScanComments<true>(seq);
+  });
+}
+
 Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size)
+  if (tokens_->Peek().kind == ast::TokenKind::COMMENT) {
+    const auto& comment_tok = tokens_->Peek();
+    if (kSuppressDirective == comment_tok.On(ast_.src)) {
+      return S_AsIs(n);
+    }
+  }
+
   switch (n->nkind) {
     case ast::NodeKind::RootNode: {
       const auto* m = n->As<ast::RootNode>();
@@ -462,7 +487,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
         }
         A(seq, "}");
 
-        if (tokens_->Next().kind == ast::TokenKind::SEMICOLON) {
+        if (tokens_->Peek().kind == ast::TokenKind::SEMICOLON) {
           tokens_->Advance();
         }
       });
@@ -1698,13 +1723,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
 
     default: {
       VANADIUM_DEBUG_ASSERT(false, "Unhandled node '{}'", magic_enum::enum_name(n->nkind));
-      while (tokens_->Current().range.end != n->nrange.end) {
-        tokens_->Advance();
-      }
-      return NewSequence([&](auto& seq) {
-        // push directly to seq.units - avoid token matching against this giant blob
-        seq.units.push_back(n->nrange.String(ast_.src));
-      });
+      return S_AsIs(n);
     }
   }
 }
