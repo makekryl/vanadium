@@ -9,10 +9,10 @@
 namespace vanadium::bin::fmt {
 
 struct PartialPrintOptions {
-  rfl::DefaultVal<std::size_t> tab_width{4};
-  rfl::DefaultVal<std::size_t> print_width{80};
+  std::optional<std::size_t> tab_width;
+  std::optional<std::size_t> print_width;
 
-  rfl::DefaultVal<std::size_t> max_empty_newlines{2};
+  std::optional<std::size_t> max_empty_newlines;
 };
 
 struct PartialToolsSection {
@@ -28,9 +28,19 @@ std::optional<Error> TryReadOptionsFromManifest(std::string_view contents, forma
   if (result.has_value()) {
     if (result->tools && result->tools->fmt) {
       const auto& c = *result->tools->fmt;
-      opts.tab_width = c.tab_width.value();
-      opts.print_width = c.print_width.value();
-      opts.max_empty_newlines = c.max_empty_newlines.value();
+      printf("has val ? %d\n", c.print_width.has_value());
+#define COPY_OPT_IF_PRESENT(OPT) \
+  do {                           \
+    if (c.OPT.has_value()) {     \
+      opts.OPT = *c.OPT;         \
+    }                            \
+  } while (0)
+      //
+      COPY_OPT_IF_PRESENT(tab_width);
+      COPY_OPT_IF_PRESENT(print_width);
+      COPY_OPT_IF_PRESENT(max_empty_newlines);
+      //
+#undef COPY_OPT_IF_PRESENT
     }
     return std::nullopt;
   }
