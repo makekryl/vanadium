@@ -8,36 +8,43 @@ class TaskGroup {
  public:
   template <std::invocable F>
   void Run(F&& f) {
-    if (cancelled_.load(std::memory_order_relaxed)) {
+    if (cancelled_.load(std::memory_order_acquire)) {
       return;
     }
 
-    active_tasks_.fetch_add(1, std::memory_order_relaxed);
-    TaskArena::Current().Enqueue([this, func = std::forward<F>(f)] {
+    active_tasks_.fetch_add(1, std::memory_order_acq_rel);
+
+    TaskArena::Current().Enqueue([this, func = std::forward<F>(f)]() mutable {
 #if __cpp_exceptions
       try {
-        if (!cancelled_.load(std::memory_order_relaxed)) {
+        if (!cancelled_.load(std::memory_order_acquire)) {
           func();
         }
       } catch (...) {
-        std::lock_guard<std::mutex> lock(exc_mtx_);
+        std::lock_guard l(exc_mtx_);
         exc_ = std::current_exception();
+        if (exc_) {
+          std::rethrow_exception(exc_);
+        }
       }
 #else
-      if (!cancelled_.load(std::memory_order_relaxed)) {
+      if (!cancelled_.load(std::memory_order_acquire)) {
         func();
       }
 #endif
-      active_tasks_.fetch_sub(1, std::memory_order_relaxed);
-      cv_.notify_all();
+
+      if (active_tasks_.fetch_sub(1, std::memory_order_acq_rel) == 1) {
+        active_tasks_.notify_all();
+      }
     });
   }
 
   void Wait() {
-    std::unique_lock<std::mutex> lock(wait_mtx_);
-    cv_.wait(lock, [this] {
-      return active_tasks_.load(std::memory_order_relaxed) == 0;
-    });
+    std::size_t expected;
+    while ((expected = active_tasks_.load(std::memory_order_acquire)) != 0) {
+      active_tasks_.wait(expected, std::memory_order_acquire);
+    }
+
 #if __cpp_exceptions
     if (exc_) {
       std::rethrow_exception(exc_);
@@ -46,17 +53,15 @@ class TaskGroup {
   }
 
   void Cancel() noexcept {
-    cancelled_.store(true, std::memory_order_relaxed);
+    cancelled_.store(true, std::memory_order_release);
   }
 
  private:
+  std::atomic<std::size_t> active_tasks_{0};
   std::atomic<bool> cancelled_{false};
-  std::atomic<std::uint16_t> active_tasks_{0};
-  std::condition_variable cv_;
-  std::mutex wait_mtx_;
 
 #if __cpp_exceptions
-  std::exception_ptr exc_;
+  std::exception_ptr exc_{nullptr};
   std::mutex exc_mtx_;
 #endif
 };
