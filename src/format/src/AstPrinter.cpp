@@ -211,8 +211,7 @@ void SerialAstPrinter::AppendUnit(const Unit& cu, Wrap wrap) {
 }
 }  // namespace
 
-std::string PrintAst(const ast::AST& ast, const ast::Node* n, PrintOptions options) {
-  lib::Arena arena;  // todo: accept as an argument
+std::string PrintAst(const ast::AST& ast, const ast::Node* n, lib::Arena& arena, PrintOptions options) {
   auto unit = SerializeAst(ast, n, arena);
 
   return SerialAstPrinter(ast.src, std::move(options)).Print(unit);

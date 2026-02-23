@@ -104,7 +104,8 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  const auto result = format::PrintAst(ast, ast.root, print_opts) + "\n";
+  lib::Arena fmt_arena;
+  const auto result = format::PrintAst(ast, ast.root, fmt_arena, print_opts) + "\n";
   if (use_dryrun) {
     const bool no_diffs = ast.src == result;
     return no_diffs ? 0 : 1;

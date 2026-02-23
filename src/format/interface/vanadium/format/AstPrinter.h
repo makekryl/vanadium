@@ -5,6 +5,10 @@
 
 namespace vanadium {
 
+namespace lib {
+class Arena;
+}
+
 namespace ast {
 struct AST;
 struct Node;
@@ -19,7 +23,7 @@ struct PrintOptions {
   std::size_t max_empty_newlines{2};
 };
 
-std::string PrintAst(const ast::AST& ast, const ast::Node*, PrintOptions);
+std::string PrintAst(const ast::AST& ast, const ast::Node*, lib::Arena&, PrintOptions);
 
 }  // namespace format
 
