@@ -20,8 +20,9 @@
   "cmake.copyCompileCommands": "${workspaceFolder}/compile_commands.json",
   "cmake.useCMakePresets": "always",
   "cmake.automaticReconfigure": false,
+  "cmake.configureOnEdit": false,
   "files.associations": {
     // "*.inc": "cpp"
   },
-  "python.analysis.autoImportCompletions": true
+  "python.analysis.autoImportCompletions": true,
 }
