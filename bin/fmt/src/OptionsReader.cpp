@@ -28,11 +28,11 @@ std::optional<Error> TryReadOptionsFromManifest(std::string_view contents, forma
   if (result.has_value()) {
     if (result->tools && result->tools->fmt) {
       const auto& c = *result->tools->fmt;
-#define COPY_OPT_IF_PRESENT(OPT) \
-  do {                           \
-    if (c.OPT.has_value()) {     \
-      opts.OPT = *c.OPT;         \
-    }                            \
+#define COPY_OPT_IF_PRESENT(OPT)        \
+  do {                                  \
+    if (const auto& opt = c.OPT; opt) { \
+      opts.OPT = *opt;                  \
+    }                                   \
   } while (0)
       //
       COPY_OPT_IF_PRESENT(tab_width);
