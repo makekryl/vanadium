@@ -1,3 +1,7 @@
+// clang-format off
+#include <LSProtocolGeneric.h>
+// clang-format on
+
 #include <glaze/json/generic.hpp>
 
 #include <LSProtocol.h>

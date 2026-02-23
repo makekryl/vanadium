@@ -1,3 +1,7 @@
+// clang-format off
+#include <LSProtocolGeneric.h>
+// clang-format on
+
 #include "vanadium/ls/detail/InlayHint.h"
 
 #include <algorithm>

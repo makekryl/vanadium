@@ -1,5 +1,6 @@
 #include "vanadium/ls/LanguageServerClientMessaging.h"
 
+#include <LSProtocolCodec.h>
 #include <LSProtocolEx.h>
 
 #include <vanadium/lib/lserver/Connection.h>

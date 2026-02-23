@@ -49,33 +49,31 @@ def generate_enum(enum: model.Enum) -> TypeEntry:
   buf.write("};")
   buf.newline()
 
-  sbuf = None
+  codecbuf = None
   if is_str:
-    sbuf = SourceCodeBuilder()
-    sbuf.write("template<>")
-    sbuf.write(f"struct glz::meta<lsp::{enum.name}> {{")
-    with sbuf.indented():
-      sbuf.write(f"using enum lsp::{enum.name};")
-      sbuf.write("static constexpr auto value = enumerate(")
-      with sbuf.indented():
+    codecbuf = SourceCodeBuilder()
+    codecbuf.write("template<>")
+    codecbuf.write(f"struct glz::meta<lsp::{enum.name}> {{")
+    with codecbuf.indented():
+      codecbuf.write(f"using enum lsp::{enum.name};")
+      codecbuf.write("static constexpr auto value = enumerate(")
+      with codecbuf.indented():
         total = len(list(enum.values))
         for i, item in enumerate(enum.values):
           comma = "," if i != (total - 1) else ""
-          sbuf.write(f'"{item.value}", {as_enum_v(item.name)}{comma}')
-      sbuf.write(");")
-    sbuf.write("};")
+          codecbuf.write(f'"{item.value}", {as_enum_v(item.name)}{comma}')
+      codecbuf.write(");")
+    codecbuf.write("};")
 
+  sbuf = None
   if "SemanticToken" in enum.name:
-    if not sbuf:
-      sbuf = SourceCodeBuilder()
-    else:
-      sbuf.newline()
+    sbuf = SourceCodeBuilder()
     valuelist = ", ".join([f'"{item.value}"' for item in enum.values])
     sbuf.write(
       f"namespace lsp {{ inline const std::vector<std::string_view> kBuiltin{enum.name}{{{valuelist}}}; }}"
     )
 
-  return TypeEntry(buf, appendix=sbuf)
+  return TypeEntry(buf, appendix=sbuf, codec=codecbuf)
 
 
 def generate_enums(spec: model.LSPModel) -> TypesRegistry:

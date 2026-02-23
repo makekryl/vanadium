@@ -1,6 +1,7 @@
 #include <utility>
 
 #include <LSProtocol.h>
+#include <LSProtocolCodec.h>
 
 #include <vanadium/core/Program.h>
 #include <vanadium/lib/lserver/Connection.h>

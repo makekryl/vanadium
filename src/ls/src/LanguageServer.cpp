@@ -5,6 +5,8 @@
 
 #include <glaze/json.hpp>
 
+#include <LSProtocolCodec.h>
+
 #include <vanadium/lib/Metaprogramming.h>
 #include <vanadium/lib/concurrency/TaskArena.h>
 #include <vanadium/lib/jsonrpc/Server.h>
