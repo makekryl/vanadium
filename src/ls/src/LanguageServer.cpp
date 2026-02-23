@@ -6,6 +6,7 @@
 #include <glaze/json.hpp>
 
 #include <vanadium/lib/Metaprogramming.h>
+#include <vanadium/lib/concurrency/TaskArena.h>
 #include <vanadium/lib/jsonrpc/Server.h>
 #include <vanadium/lib/lserver/Connection.h>
 #include <vanadium/lint/rules/NoEmpty.h>
@@ -55,10 +56,13 @@ using ServerMethods = mp::Typelist<methods::initialize,   //
                                    >;                           //
 
 void Serve(lserver::Transport& transport, std::size_t concurrency, std::size_t jobs) {
+  VLS_INFO("Starting language server... (jobs={}, concurrency={})", jobs, concurrency);
+  lib::concurrency::TaskArena task_arena(jobs);
+
   lib::jsonrpc::Server<LsContext> rpc_server;
   std::optional<LsContext> ctx;
 
-  const auto handle_message = [&rpc_server, &ctx](lserver::Connection& conn, lserver::PooledMessageToken&& token) {
+  const auto handle_message = [&](lserver::Connection& conn, lserver::PooledMessageToken&& token) {
     if (const auto result_field = glz::get_as_json<glz::raw_json_view, "/result">(token->buf); result_field)
         [[unlikely]] {
       const auto id = glz::get_as_json<lserver::Connection::rpc_id_t, "/id">(token->buf);
@@ -86,7 +90,7 @@ void Serve(lserver::Transport& transport, std::size_t concurrency, std::size_t j
     const auto begin_ts = std::chrono::steady_clock::now();
 
     auto res_token = conn.AcquireToken();
-    ctx->task_arena.Execute([&] {
+    task_arena.Execute([&] {
       rpc_server.Call(*ctx, res_token->buf, token->buf);
     });
 
@@ -108,13 +112,6 @@ void Serve(lserver::Transport& transport, std::size_t concurrency, std::size_t j
       rpc_server.Bind<P::invoke>(P::kMethodName);
     });
   }
-
-  ctx->task_arena.Initialize(jobs);
-
-  ctx->linter.RegisterRule<lint::rules::NoEmpty>();
-  ctx->linter.RegisterRule<lint::rules::NoUnusedVars>();
-  ctx->linter.RegisterRule<lint::rules::NoUnusedImports>();
-  ctx->linter.RegisterRule<lint::rules::NoUnnecessaryValueof>();
 
   connection.Listen();
 }

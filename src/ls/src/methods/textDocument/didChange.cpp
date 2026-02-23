@@ -4,6 +4,7 @@
 #include <LSProtocol.h>
 
 #include <vanadium/core/Program.h>
+#include <vanadium/lib/lserver/Connection.h>
 
 #include "vanadium/ls/LanguageServerContext.h"
 #include "vanadium/ls/LanguageServerConv.h"

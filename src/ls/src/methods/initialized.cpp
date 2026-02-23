@@ -2,8 +2,10 @@
 
 #include <LSProtocol.h>
 
-#include "vanadium/lib/jsonrpc/Common.h"
-#include "vanadium/lib/lserver/Connection.h"
+#include <vanadium/lib/jsonrpc/Common.h>
+#include <vanadium/lib/lserver/Connection.h>
+#include <vanadium/tooling/Solution.h>
+
 #include "vanadium/ls/LanguageServerContext.h"
 #include "vanadium/ls/LanguageServerMethods.h"
 

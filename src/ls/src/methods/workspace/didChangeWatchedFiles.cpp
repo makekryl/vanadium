@@ -5,6 +5,7 @@
 #include <LSProtocol.h>
 
 #include <vanadium/core/Program.h>
+#include <vanadium/tooling/Solution.h>
 
 #include "vanadium/ls/LanguageServerContext.h"
 #include "vanadium/ls/LanguageServerLogger.h"

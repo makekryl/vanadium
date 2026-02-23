@@ -3,12 +3,19 @@
 #include <optional>
 #include <string_view>
 
-#include <vanadium/tooling/Solution.h>
+namespace vanadium {
 
-namespace vanadium::ls {
+namespace tooling {
+class Solution;
+struct SolutionProject;
+}  // namespace tooling
+
+namespace ls {
 
 [[nodiscard]] std::optional<std::pair<tooling::SolutionProject&, std::string>> ResolveFileUri(
     tooling::Solution& solution, std::string_view file_uri);
 [[nodiscard]] std::string PathToFileUri(const tooling::Solution& solution, std::string_view path);
 
-}  // namespace vanadium::ls
+}  // namespace ls
+
+}  // namespace vanadium

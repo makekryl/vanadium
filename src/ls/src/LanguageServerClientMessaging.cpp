@@ -2,6 +2,8 @@
 
 #include <LSProtocolEx.h>
 
+#include <vanadium/lib/lserver/Connection.h>
+
 namespace vanadium::ls::clientMessaging {
 
 lsp::ShowMessageRequestResult ShowMessage(LsContext& ctx, lsp::ShowMessageRequestParams&& params) {

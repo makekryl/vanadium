@@ -3,6 +3,7 @@
 #include <LSProtocol.h>
 
 #include <vanadium/core/Program.h>
+#include <vanadium/lib/concurrency/TaskArena.h>
 #include <vanadium/tooling/Filesystem.h>
 #include <vanadium/tooling/Solution.h>
 #include <vanadium/tooling/impl/SystemFS.h>
@@ -12,6 +13,7 @@
 #include "vanadium/ls/LanguageServerLogger.h"
 #include "vanadium/ls/LanguageServerMethods.h"
 #include "vanadium/ls/LanguageServerTestFlags.h"
+#include "vanadium/ls/LanguageServerTools.h"
 
 namespace vanadium::ls {
 
@@ -21,8 +23,6 @@ bool do_not_skip_full_analysis{false};
 
 rpc::ExpectedResult<lsp::InitializeResult> methods::initialize::invoke(LsContext& ctx,
                                                                        const lsp::InitializeParams& params) {
-  VLS_INFO("Initializing... (jobs={}, concurrency={})", ctx.task_arena.Concurrency(), ctx.connection->GetConcurrency());
-
   if (params.workspaceFolders) {
     const auto& folders = *params.workspaceFolders;
 
@@ -45,7 +45,7 @@ rpc::ExpectedResult<lsp::InitializeResult> methods::initialize::invoke(LsContext
       auto result =
           tooling::Solution::Load(tooling::fs::Root<tooling::fs::SystemFS>(root_directory.string()), precommit);
       if (result.has_value()) {
-        ctx.solution = std::move(*result);
+        ctx.solution = std::make_unique<tooling::Solution>(std::move(*result));
       } else {
         const auto& err_message = result.error().String();
         VLS_ERROR("Failed to load solution: {}", err_message);
@@ -60,7 +60,7 @@ rpc::ExpectedResult<lsp::InitializeResult> methods::initialize::invoke(LsContext
     }
   }
 
-  if (ctx.solution.has_value()) {
+  if (ctx.solution) {
     const auto& solution = *ctx.solution;
     VLS_INFO("Loaded solution with {} projects", solution.Projects().size());
     std::size_t total_units{0};
@@ -70,6 +70,8 @@ rpc::ExpectedResult<lsp::InitializeResult> methods::initialize::invoke(LsContext
       VLS_INFO(" * '{}' [{}]: {} units", project.Name(), project.Directory().base_path, units);
     }
     VLS_INFO(" # Total units: {}", total_units);
+
+    SetupTools(ctx);
   }
 
   return lsp::InitializeResult{

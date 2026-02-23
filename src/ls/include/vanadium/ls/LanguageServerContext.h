@@ -5,40 +5,55 @@
 #include <unordered_map>
 #include <utility>
 
-#include <vanadium/core/Program.h>
 #include <vanadium/lib/Arena.h>
 #include <vanadium/lib/Metaprogramming.h>
-#include <vanadium/lib/concurrency/TaskArena.h>
 #include <vanadium/lib/concurrency/ThreadSpecific.h>
-#include <vanadium/lib/lserver/Connection.h>
-#include <vanadium/lint/Linter.h>
-#include <vanadium/tooling/Solution.h>
 
 #include "LanguageServerSession.h"
 #include "LanguageServerSolution.h"
 
-// TODO: support overlapping projects paths
+namespace vanadium {
 
-namespace vanadium::ls {
+namespace core {
+struct SourceFile;
+}
+
+namespace lint {
+class Linter;
+}
+
+namespace format {
+struct PrintOptions;
+}
+
+namespace tooling {
+struct SolutionProject;
+}
+
+namespace lserver {
+class Connection;
+}
+
+namespace ls {
 
 template <typename Params>
 concept IsDocumentBoundParams = requires(Params params) {
   { params.textDocument.uri } -> std::convertible_to<std::string_view>;
 };
 
-struct LsContext {
-  lserver::Connection* const connection;
-
-  lib::concurrency::TaskArena task_arena;
-
-  std::optional<tooling::Solution> solution;
-  std::unordered_map<std::string, std::int32_t> file_versions;
-
-  lint::Linter linter;
+class LsContext {
+ public:
+  LsContext(lserver::Connection&);
+  ~LsContext();
 
   //
 
-  LsContext(lserver::Connection& conn) : connection(&conn) {}
+  lserver::Connection* const connection;
+
+  std::unique_ptr<tooling::Solution> solution{nullptr};
+  std::unordered_map<std::string, std::int32_t> file_versions;
+
+  std::unique_ptr<lint::Linter> linter{nullptr};
 
   //
 
@@ -51,13 +66,15 @@ struct LsContext {
     return *TemporaryArena().Alloc<T>(std::forward<Args>(args)...);
   }
 
+  //
+
   template <typename F>
     requires(std::is_invocable_v<F, LsSessionRef &&>)
   auto LockData(F f) {
     // TODO: lock data, RWmutex with writer preference
     return f({
         .solution = *solution,
-        .linter = linter,
+        .linter = *linter,
         .arena = TemporaryArena(),
     });
   }
@@ -67,17 +84,12 @@ struct LsContext {
   std::optional<Result> WithFile(const Params& params,
                                  mp::Invocable<Result, const Params&, const core::SourceFile&, LsSessionRef> auto f) {
     return LockData([&](LsSessionRef&& d) -> std::optional<Result> {
-      if (auto resolution = ResolveFileUri(params.textDocument.uri)) {
-        auto& [project, path] = *resolution;
-        const auto* file = project.program.GetFile(path);
-        if (file) {
-          // VLS_INFO("LOCK :: {}#'{}'", project.Name(), file->path);
-          return f(params, *file, std::move(d));
-        }
+      if (const auto* file = ResolveSourceFile(params.textDocument.uri)) {
+        // VLS_INFO("LOCK :: {}#'{}'", project.Name(), file->path);
+        return f(params, *file, std::move(d));
       }
       return std::nullopt;
     });
-    return std::nullopt;
   }
   template <IsDocumentBoundParams Params>
   void WithFile(const Params& params, mp::Consumer<const Params&, const core::SourceFile&, LsSessionRef> auto f) {
@@ -88,8 +100,9 @@ struct LsContext {
     });
   }
 
+  [[nodiscard]] const core::SourceFile* ResolveSourceFile(std::string_view file_uri) const;
   [[nodiscard]] std::optional<std::pair<tooling::SolutionProject&, std::string>> ResolveFileUri(
-      std::string_view file_uri) {
+      std::string_view file_uri) const {
     return ls::ResolveFileUri(*solution, file_uri);
   }
   [[nodiscard]] std::string PathToFileUri(std::string_view path) const {
@@ -100,4 +113,6 @@ struct LsContext {
   lib::concurrency::ThreadSpecific<lib::Arena> temporary_arena_;
 };
 
-}  // namespace vanadium::ls
+}  // namespace ls
+
+}  // namespace vanadium
