@@ -67,6 +67,7 @@ int main(int argc, char* argv[]) {
   //
 
   std::println(stderr, "vanadiumd version {}", vanadium::bin::kVersion);
+  vanadium::ls::testflags::version_name = vanadium::bin::kVersion;
 
   if (ap.get<bool>("--wait-dbg")) {
     constexpr auto kSecondsToWait{12};

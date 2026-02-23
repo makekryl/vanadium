@@ -18,8 +18,9 @@
 namespace vanadium::ls {
 
 namespace testflags {
+const char* version_name{"unknown"};
 bool do_not_skip_full_analysis{false};
-}
+}  // namespace testflags
 
 rpc::ExpectedResult<lsp::InitializeResult> methods::initialize::invoke(LsContext& ctx,
                                                                        const lsp::InitializeParams& params) {
@@ -118,7 +119,7 @@ rpc::ExpectedResult<lsp::InitializeResult> methods::initialize::invoke(LsContext
       .serverInfo =
           lsp::ServerInfo{
               .name = "vanadiumd",
-              .version = "0.0.1.0",
+              .version = testflags::version_name,
           },
   };
 }
