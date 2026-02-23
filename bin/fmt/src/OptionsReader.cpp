@@ -28,7 +28,6 @@ std::optional<Error> TryReadOptionsFromManifest(std::string_view contents, forma
   if (result.has_value()) {
     if (result->tools && result->tools->fmt) {
       const auto& c = *result->tools->fmt;
-      printf("has val ? %d\n", c.print_width.has_value());
 #define COPY_OPT_IF_PRESENT(OPT) \
   do {                           \
     if (c.OPT.has_value()) {     \
