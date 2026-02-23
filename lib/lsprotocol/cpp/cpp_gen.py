@@ -38,30 +38,11 @@ def _build_header(spec: model.LSPModel, reg: TypesRegistry):
   _write_heading(buf, spec)
   buf.write("#pragma once")
   buf.newline()
-  for incl in (
-    "cstdint",
-    "optional",
-    "string",
-    "string_view",
-    "tuple",
-    "variant",
-    "unordered_map",
-    "vector",
-  ):
-    buf.write(f"#include <{incl}>")
+  buf.write('#include "LSProtocolBase.h"')
   buf.newline()
   buf.write("// NOLINTBEGIN(readability-identifier-naming)")
   buf.newline()
   buf.write("namespace lsp {")
-  buf.newline()
-  buf.write("#ifdef LSPROTOCOL_CODEC")
-  buf.write("using LSPAny = glz::generic;")
-  buf.write("#else")
-  buf.write("struct LSPAny {};")
-  buf.write("#endif")
-  buf.write("using LSPArray = std::vector<LSPAny>;")
-  buf.write("using LSPObject = LSPAny;")
-  buf.write("struct LiteralStub {};  // TODO")
   buf.newline()
   _write_types(reg, buf)
   buf.newline()

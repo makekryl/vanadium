@@ -5,27 +5,11 @@
 
 #pragma once
 
-#include <cstdint>
-#include <optional>
-#include <string>
-#include <string_view>
-#include <tuple>
-#include <unordered_map>
-#include <variant>
-#include <vector>
+#include "LSProtocolBase.h"
 
 // NOLINTBEGIN(readability-identifier-naming)
 
 namespace lsp {
-
-#ifdef LSPROTOCOL_CODEC
-using LSPAny = glz::generic;
-#else
-struct LSPAny {};
-#endif
-using LSPArray = std::vector<LSPAny>;
-using LSPObject = LSPAny;
-struct LiteralStub {};  // TODO
 
 /**
  * A set of predefined token types. This set is not fixed
