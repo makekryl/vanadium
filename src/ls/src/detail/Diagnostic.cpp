@@ -54,7 +54,7 @@ void CollectModuleDiagnostics(const core::SourceFile& file, std::vector<lsp::Dia
     // item.data. // TODO
   }
 
-  const auto& problems = *d.arena.Alloc<lint::ProblemSet>(d.linter.Lint(file));
+  const auto& problems = *d.arena.Alloc<lint::ProblemSet>(d.tools.linter.Lint(file));
   for (const auto& problem : problems) {
     diags.emplace_back(lsp::Diagnostic{
         .range = conv::ToLSPRange(problem.range, file.ast),

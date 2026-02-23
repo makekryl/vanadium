@@ -20,6 +20,7 @@ using InlayHintResult = std::variant<std::vector<InlayHint>, std::nullptr_t>;
 using DocumentSybmolResult = std::variant<std::vector<DocumentSymbol>, std::vector<SymbolInformation>, std::nullptr_t>;
 using SignatureHelpResult = std::variant<SignatureHelp, std::nullptr_t>;
 using SemanticTokensRangeResult = std::variant<SemanticTokens, std::nullptr_t>;
+using DocumentFormattingResult = std::variant<std::vector<TextEdit>, std::nullptr_t>;
 }  // namespace lsp
 
 // Client -> Server

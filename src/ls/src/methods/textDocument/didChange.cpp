@@ -1,7 +1,6 @@
 #include <string_view>
 #include <variant>
 
-#include <LSProtocol.h>
 #include <LSProtocolCodec.h>
 
 #include <vanadium/core/Program.h>

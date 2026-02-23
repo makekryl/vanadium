@@ -94,6 +94,7 @@ rpc::ExpectedResult<lsp::InitializeResult> methods::initialize::invoke(LsContext
               .documentHighlightProvider = true,
               .documentSymbolProvider = true,
               .codeActionProvider = true,
+              .documentFormattingProvider = lsp::DocumentFormattingOptions{},
               .renameProvider = true,
               .semanticTokensProvider =
                   lsp::SemanticTokensOptions{

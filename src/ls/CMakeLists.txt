@@ -6,6 +6,7 @@ add_library(vanadium_ls STATIC
   src/LanguageServerContext.cpp
   src/LanguageServerSolution.cpp
   src/LanguageServerTools.cpp
+  src/LanguageServerToolsOptions.cpp
   src/LanguageServerClientMessaging.cpp
   ${DETAIL_SOURCE_FILES}
   ${METHODS_SOURCE_FILES}
@@ -27,6 +28,8 @@ target_link_libraries(vanadium_ls PRIVATE
   vanadium_core
   vanadium_tooling
   vanadium_lint
+  vanadium_format
+
   glaze::glaze
   magic_enum
 )

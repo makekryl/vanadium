@@ -47,6 +47,7 @@ using ServerMethods = mp::Typelist<methods::initialize,   //
                                    methods::textDocument::completion,             //
                                    methods::textDocument::inlayHint,              //
                                    methods::textDocument::documentSymbol,         //
+                                   methods::textDocument::formatting,             //
                                    methods::textDocument::signatureHelp,          //
                                    methods::textDocument::semanticTokens::range,  //
                                    //

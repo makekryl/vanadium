@@ -70,6 +70,7 @@ DECL_REQUEST_1(textDocument, rename, lsp::RenameParams, lsp::RenameResult);
 DECL_REQUEST_1(textDocument, completion, lsp::CompletionParams, lsp::CompletionResult);
 DECL_REQUEST_1(textDocument, inlayHint, lsp::InlayHintParams, lsp::InlayHintResult);
 DECL_REQUEST_1(textDocument, documentSymbol, lsp::DocumentSymbolParams, lsp::DocumentSybmolResult);
+DECL_REQUEST_1(textDocument, formatting, lsp::DocumentFormattingParams, lsp::DocumentFormattingResult);
 DECL_REQUEST_1(textDocument, signatureHelp, lsp::SignatureHelpParams, lsp::SignatureHelpResult);
 DECL_REQUEST_2(textDocument, semanticTokens, range, lsp::SemanticTokensRangeParams, lsp::SemanticTokensRangeResult);
 

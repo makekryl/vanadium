@@ -13,6 +13,6 @@ template <typename T>
   if (result.has_value()) {
     return result.value();
   }
-  return Error{result.error().what()};
+  return std::unexpected{Error{result.error().what()}};
 }
 }  // namespace vanadium::tooling

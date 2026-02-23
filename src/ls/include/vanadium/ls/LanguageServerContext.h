@@ -12,6 +12,9 @@
 #include "LanguageServerSession.h"
 #include "LanguageServerSolution.h"
 
+// A lot of stuff here is wrapped in unique_ptr to reduce build times
+// by preventing the leakage of a lot of headers to a lot of unrelated TUs
+
 namespace vanadium {
 
 namespace core {
@@ -53,7 +56,8 @@ class LsContext {
   std::unique_ptr<tooling::Solution> solution{nullptr};
   std::unordered_map<std::string, std::int32_t> file_versions;
 
-  std::unique_ptr<lint::Linter> linter{nullptr};
+  const std::unique_ptr<lint::Linter> linter;
+  std::unique_ptr<format::PrintOptions> fmt_opts{nullptr};
 
   //
 
@@ -72,11 +76,12 @@ class LsContext {
     requires(std::is_invocable_v<F, LsSessionRef &&>)
   auto LockData(F f) {
     // TODO: lock data, RWmutex with writer preference
-    return f({
-        .solution = *solution,
-        .linter = *linter,
-        .arena = TemporaryArena(),
-    });
+    return f({.solution = *solution,
+              .arena = TemporaryArena(),
+              .tools = {
+                  .linter = *linter,
+                  .fmt_opts = fmt_opts.get(),
+              }});
   }
 
   template <typename Result, IsDocumentBoundParams Params>
