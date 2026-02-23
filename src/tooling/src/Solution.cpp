@@ -6,7 +6,7 @@
 #include <vanadium/core/Program.h>
 #include <vanadium/lib/Error.h>
 
-#include "vanadium/tooling/CompilerExtensionManager.h"
+#include "vanadium/tooling/CompilerExtensions.h"
 #include "vanadium/tooling/Filesystem.h"
 #include "vanadium/tooling/Project.h"
 #include "vanadium/tooling/ProjectSorter.h"
