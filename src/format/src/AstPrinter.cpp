@@ -115,12 +115,14 @@ void SerialAstPrinter::AppendUnit(const Unit& cu, Wrap wrap) {
           ++indent_;
         }
 
-        Wrap children_wrap = wrap;
-        if (children_wrap == Wrap::kAuto && (seq->attributes & Sequence::Attribute::kGrouped)) {
+        Wrap children_wrap;
+        if (seq->attributes & Sequence::Attribute::kGrouped) {
           const auto width = Width(*seq);
           if (width > options_.print_width) {
             children_wrap = Wrap::kEnabled;
           }
+        } else {
+          children_wrap = wrap;
         }
 
         for (const auto& u : seq->units) {
