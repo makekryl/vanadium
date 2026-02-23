@@ -2,27 +2,12 @@ import * as vscode from 'vscode';
 
 import { LsClient } from './client';
 
-import * as ttcn3fmt from './ttcn3fmt';
 import { LazyOutputChannel, logger } from './logger';
 import { config } from './config';
 
 let lsClient: LsClient | undefined;
 
 export async function activate(context: vscode.ExtensionContext) {
-  if (config.get<string>('formattingEngine') === 'ttcn3fmt') {
-    const ttcn3fmtPath = ttcn3fmt.searchExecutable(context);
-    if (ttcn3fmtPath) {
-      logger.info(`Using ttcn3fmt found at '${ttcn3fmtPath}'`);
-      context.subscriptions.push(
-        vscode.languages.registerDocumentFormattingEditProvider('ttcn3', {
-          provideDocumentFormattingEdits: ttcn3fmt.provideDocumentFormattingEdits,
-        })
-      );
-    } else {
-      logger.error('Cannot find ttcn3fmt in PATH');
-    }
-  }
-
   context.subscriptions.push(
     vscode.commands.registerCommand('vanadiumd.restart', async () => {
       if (!config.get<boolean>('enable') && !lsClient) {

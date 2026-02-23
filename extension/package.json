@@ -72,24 +72,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Arguments for vanadiumd server."
-        },
-        "vanadiumd.formattingEngine": {
-          "type": "string",
-          "enum": [
-            "vanadium",
-            "ttcn3fmt"
-          ],
-          "markdownEnumDescriptions": [
-            "built-in",
-            "if available"
-          ],
-          "enumItemLabels": [
-            "vanadium-fmt",
-            "ttcn3fmt"
-          ],
-          "default": "vanadium",
-          "description": "TTCN-3 formatting engine"
+          "description": "Arguments for vanadiumd server"
         },
         "vanadiumd.enable": {
           "type": "boolean",
