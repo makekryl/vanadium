@@ -1,0 +1,10 @@
+./PlainArrays.ttcn:
+  12:6: expected value of type 'integer', got 'charstring'
+        {"3"}  // EXPECT_ERROR
+         ~~~                  
+  21:6: expected value of type 'integer', got 'charstring'
+        {"3"}  // EXPECT_ERROR
+         ~~~                  
+  30:12: expected value of type 'integer', got 'charstring'
+        [5] := "1",  // EXPECT_ERROR
+               ~~~                  

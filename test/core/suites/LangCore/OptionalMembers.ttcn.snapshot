@@ -1,0 +1,4 @@
+./OptionalMembers.ttcn:
+  12:10: expected value, got template
+      s.y := omit;  // EXPECT_ERROR
+             ~~~~                  

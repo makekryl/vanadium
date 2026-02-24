@@ -1,0 +1,7 @@
+./ComponentMultiInheritance.ttcn:
+  19:3: unresolved symbol 'y'
+      y := 1;  // EXPECT_ERROR
+      ~                       
+  22:3: unresolved symbol 'x'
+      x := 1;  // EXPECT_ERROR
+      ~                       

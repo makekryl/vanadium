@@ -1,0 +1,4 @@
+./SelectorIndexChain.ttcn:
+  23:12: property 'x' does not exist on type 'record Inner'
+      w.o[1].d.x := 1;  // EXPECT_ERROR
+               ~                       

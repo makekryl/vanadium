@@ -1,0 +1,28 @@
+./Enums.ttcn:
+  71:16: unresolved symbol 'Invalid'
+      MyEnum e2 := Invalid,  // EXPECT_ERROR
+                   ~~~~~~~                  
+  23:20: unresolved symbol 'Invalid'
+      var MyEnum e2 := Invalid;  // EXPECT_ERROR
+                       ~~~~~~~                  
+  24:9: unresolved symbol 'Invalid'
+      e2 := Invalid;  // EXPECT_ERROR
+            ~~~~~~~                  
+  36:12: unresolved symbol 'Invalid'
+      eh1 := { Invalid };  // EXPECT_ERROR
+               ~~~~~~~                    
+  39:12: unresolved symbol 'Invalid'
+      eh1.e := Invalid;  // EXPECT_ERROR
+               ~~~~~~~                  
+  45:12: unresolved symbol 'Invalid'
+      eh2.e := Invalid;  // EXPECT_ERROR
+               ~~~~~~~                  
+  54:5: unresolved symbol 'Invalid'
+        Invalid,  // EXPECT_ERROR
+        ~~~~~~~                  
+  63:7: unresolved symbol 'Invalid'
+          Invalid,  // EXPECT_ERROR
+          ~~~~~~~                  
+  88:6: unresolved symbol 'Invalid'
+    ) := Invalid  // EXPECT_ERROR
+         ~~~~~~~                 

@@ -1,0 +1,38 @@
+module PlainArrays {
+
+type record Struct {
+  integer x
+}
+type record of Struct RoStruct;
+
+function precondition() {
+  var RoStruct l := {
+    {1},
+    {2},
+    {"3"}  // EXPECT_ERROR
+  };
+  var Struct el := l[0];
+}
+
+function f() {
+  var Struct arr[2] := {
+    {1},
+    {2},
+    {"3"}  // EXPECT_ERROR
+  };
+  var Struct el := arr[0];
+
+  var integer mapping[16] := {
+    [1] := 1,
+    [2] := 1,
+    [3] := 1,
+    [4] := 1,
+    [5] := "1",  // EXPECT_ERROR
+    [6] := 1,
+    [7] := 1,
+    [8] := 1,
+    [9] := 1
+  };
+}
+
+}

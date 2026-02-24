@@ -1,0 +1,26 @@
+module SelectorIndexChain {
+
+type record Inner {
+  integer i
+}
+
+type record Outer {
+  Inner d
+}
+
+type record of Outer RoOuter;
+
+type record Wrapper {
+  RoOuter o
+}
+
+function f() {
+  var template Wrapper w;
+
+  w.o[1].d := { 1 };
+
+  w.o[1].d.i := 1;
+  w.o[1].d.x := 1;  // EXPECT_ERROR
+}
+
+}

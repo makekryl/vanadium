@@ -18,4 +18,7 @@ function invalid() {
   x := ?;  // EXPECT_ERROR
 }
 
+template integer t_int1 := 1;
+template integer t_int2 := omit;
+
 }

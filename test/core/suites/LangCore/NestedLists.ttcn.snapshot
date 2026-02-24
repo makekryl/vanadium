@@ -1,0 +1,4 @@
+./NestedLists.ttcn:
+  45:11: 1 arguments expected, 2 provided
+              { 11, 12 }  // EXPECT_ERROR
+              ~~~~~~~~~~                 

@@ -1,0 +1,56 @@
+module NestedLists {
+
+type record Deep {
+  integer i
+}
+
+type record of Deep RoDeep;
+
+type record L1 {
+  record {
+    record {
+      integer checkpoint,
+      record of record {
+        integer i
+      } l4s,
+      RoDeep l4sRo,
+      Deep direct
+    } l3
+  } l2
+}
+
+function f() {
+  var L1 l1;
+
+  l1 := {
+    l2 := {
+      l3 := {
+        checkpoint := 1,
+        l4s := {
+          { 11 }
+        },
+        l4sRo := {
+          { 13 }
+        },
+        direct := { 15 }
+      }
+    }
+  };
+
+  l1 := {
+    l2 := {
+      l3 := {
+        checkpoint := 1,
+        l4s := {
+          { 11, 12 }  // EXPECT_ERROR
+        },
+        l4sRo := {
+          { i := 13 }
+        },
+        direct := { 15 }
+      }
+    }
+  };
+}
+
+}

@@ -1,0 +1,31 @@
+module ComponentMultiInheritance {
+
+// NOTE: it does not check correctness on Crossbind level
+//       Crossbind requires additional runner with test suites
+//       + there's necessity of integrating Binder semantic checks to Crossbind counterparts
+
+type component CompX {
+  var integer x;
+}
+type component CompY {
+  var integer y;
+}
+type component CompXY extends CompX, CompY {
+  var integer xy;
+}
+
+testcase TC_X() runs on CompX {
+  x := 1;
+  y := 1;  // EXPECT_ERROR
+}
+testcase TC_Y() runs on CompY {
+  x := 1;  // EXPECT_ERROR
+  y := 1;
+}
+testcase TC_XY() runs on CompXY {
+  x := 1;
+  y := 1;
+  xy := 1;
+}
+
+}

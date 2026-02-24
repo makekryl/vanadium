@@ -1,0 +1,15 @@
+module OptionalMembers {
+
+type record Struct {
+  integer x optional,
+  integer y
+}
+
+function f() {
+  var Struct s;
+
+  s.x := omit;
+  s.y := omit;  // EXPECT_ERROR
+}
+
+}

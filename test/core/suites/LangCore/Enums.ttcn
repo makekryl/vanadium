@@ -1,0 +1,90 @@
+module Enums {
+
+type enumerated MyEnum {
+  Aa,
+  Bb,
+  Cc
+}
+
+type record of MyEnum RoMyEnum;
+
+type record RoeWrapper {
+  record of MyEnum roe
+}
+
+type record EnumHolder {
+  MyEnum e
+}
+
+function f() {
+  var MyEnum e1 := Aa;
+  e1 := Aa;
+
+  var MyEnum e2 := Invalid;  // EXPECT_ERROR
+  e2 := Invalid;  // EXPECT_ERROR
+
+  var MyEnum e3 := e1;
+  e3 := e1;
+
+  var template MyEnum e4 := e1;
+  e4 := e1;
+  e4 := omit;
+
+  //
+
+  var EnumHolder eh1 := { Aa };
+  eh1 := { Invalid };  // EXPECT_ERROR
+  eh1 := { Bb };
+  eh1.e := Aa;
+  eh1.e := Invalid;  // EXPECT_ERROR
+  eh1.e := Bb;
+
+  var template EnumHolder eh2;
+  eh2.e := omit;
+  eh2.e := Aa;
+  eh2.e := Invalid;  // EXPECT_ERROR
+  eh2.e := Bb;
+
+  //
+
+  var RoMyEnum ro := {
+    Aa,
+    Bb,
+    Cc,
+    Invalid,  // EXPECT_ERROR
+    e1
+  };
+
+  var RoeWrapper w := {
+    roe := {
+      Aa,
+      Bb,
+      Cc,
+      Invalid,  // EXPECT_ERROR
+      e1
+    }
+  };
+}
+
+function acceptsAsArgument(
+  MyEnum e1 := Aa,
+  MyEnum e2 := Invalid,  // EXPECT_ERROR
+  template MyEnum e3 := omit,
+  template MyEnum e4 := Bb
+) {
+
+}
+
+template MyEnum t_MyEnum1(
+  in template MyEnum e := Aa
+) := Bb
+
+template MyEnum t_MyEnum2(
+  in template MyEnum e := Aa
+) := omit
+
+template MyEnum t_MyEnum3(
+  in template MyEnum e := Aa
+) := Invalid  // EXPECT_ERROR
+
+}
