@@ -1018,13 +1018,13 @@ nodes::BehaviourSpec* Parser::ParseBehaviourSpec() {
 nodes::TemplateDecl* Parser::ParseTemplateDecl() {
   return NewNode<nodes::TemplateDecl>([&](auto& td) {
     Consume();  // TemplateTok
-    if (tok_ == TokenKind::LPAREN) {
-      Consume();  // LParen
-      td.restriction = NewNode<nodes::RestrictionSpec>([&](auto& n) {
+    td.restriction = NewNode<nodes::RestrictionSpec>([&](auto& n) {
+      if (tok_ == TokenKind::LPAREN) {
+        Consume();           // LParen
         n.type = Consume();  // omit/value/...
-      });
-      Expect(TokenKind::RPAREN);
-    }
+        Expect(TokenKind::RPAREN);
+      }
+    });
     if (tok_ == TokenKind::MODIF) {
       td.modif = TokAlloc(Consume());
     }
