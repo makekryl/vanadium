@@ -1,8 +1,8 @@
+#include "vanadium/tooling/CompilerExtensions.h"
+
 #include <ranges>
 
 #include <vanadium/lib/StaticMap.h>
-
-#include "vanadium/tooling/CompilerExtensions.h"
 
 #define DEFINE_COMPILER_EXTENSION(ns, name) \
   namespace ns::compilerExtensions {        \
