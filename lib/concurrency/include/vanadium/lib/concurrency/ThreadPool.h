@@ -19,7 +19,6 @@ class ThreadPool {
 
   ~ThreadPool();
 
-  void Initialize(std::size_t n);
   void Terminate();
 
   [[nodiscard]] std::size_t Concurrency() const noexcept {
@@ -33,9 +32,6 @@ class ThreadPool {
     }
     cv_.notify_one();
   }
-
-  struct LateinitTag {};
-  explicit ThreadPool(LateinitTag);
 
   static std::size_t CurrentThreadIndex();
 

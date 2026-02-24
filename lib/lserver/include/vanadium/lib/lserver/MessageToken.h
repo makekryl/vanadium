@@ -36,8 +36,9 @@ class PooledMessageToken {
   PooledMessageToken(PooledMessageToken&& other) noexcept
       : token_(std::exchange(other.token_, nullptr)), pool_(std::exchange(other.pool_, nullptr)) {};
   PooledMessageToken& operator=(PooledMessageToken&& other) noexcept {
-    std::swap(token_, other.token_);
-    std::swap(pool_, other.pool_);
+    PooledMessageToken tmp(std::move(other));
+    std::swap(token_, tmp.token_);
+    std::swap(pool_, tmp.pool_);
     return *this;
   }
 

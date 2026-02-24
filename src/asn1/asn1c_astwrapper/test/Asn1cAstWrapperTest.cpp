@@ -10,7 +10,7 @@
 using namespace vanadium;
 using namespace vanadium::asn1::ast;
 
-TEST(Asn1cAstWrapper, ParseSuccess) {
+TEST(Asn1cAstWrapperTest, ParseSuccess) {
   vanadium::lib::Arena arena;
 
   auto res = Parse(arena, R"(
@@ -34,7 +34,7 @@ TEST(Asn1cAstWrapper, ParseSuccess) {
   EXPECT_TRUE(res);
 }
 
-TEST(Asn1cAstWrapper, ParseFailure) {
+TEST(Asn1cAstWrapperTest, ParseFailure) {
   vanadium::lib::Arena arena;
 
   auto res = Parse(arena, R"(

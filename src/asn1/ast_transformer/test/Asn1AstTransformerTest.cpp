@@ -8,12 +8,6 @@
 using namespace vanadium;
 using namespace vanadium::asn1::ast;
 
-namespace {
-const asn1p_t* StubModuleProvider(const char*) {
-  return nullptr;
-}
-}  // namespace
-
 TEST(Asn1AstTransformerTest, ParametrizedConstructs) {
   // Inspired by the [TITAN Programmers' Technical Reference Guide] par. 6.4
   constexpr std::string_view kAsnSource = R"(

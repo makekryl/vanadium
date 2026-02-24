@@ -46,9 +46,11 @@ class Bitset {
   }
 
   void Flip() {
-    for (std::size_t i = 0; i < cells_.Size(); i++) {
+    const auto sz = cells_.Size();
+    for (std::size_t i = 0; i < sz - 1; i++) {
       cells_[i] = ~cells_[i];
     }
+    cells_[sz - 1] = cells_[sz - 1] ^ (~storage_t{0} >> (kCellBits - (bits_ & (kCellBits - 1))));
   }
 
   void Reset() {

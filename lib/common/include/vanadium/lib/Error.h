@@ -1,7 +1,6 @@
 #pragma once
 
 #include <memory>
-#include <optional>
 #include <string>
 
 class Error {
@@ -13,9 +12,9 @@ class Error {
     return what_;
   }
 
-  [[nodiscard]] std::optional<Error*> Cause() const {
+  [[nodiscard]] const Error* Cause() const {
     if (!cause_) {
-      return std::nullopt;
+      return nullptr;
     }
     return cause_.get();
   }

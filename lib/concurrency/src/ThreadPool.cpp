@@ -9,19 +9,6 @@ thread_local std::size_t tl_pooled_thread_idx{0};
 }
 
 ThreadPool::ThreadPool(std::size_t n) {
-  Initialize(n);
-}
-
-ThreadPool::ThreadPool(LateinitTag) {}
-
-ThreadPool::~ThreadPool() {
-  if (stop_) {
-    return;
-  }
-  Terminate();
-}
-
-void ThreadPool::Initialize(std::size_t n) {
   workers_.reserve(n);
   for (std::size_t i = 0; i < n; ++i) {
     workers_.emplace_back([this, this_thread_idx = i] {
@@ -43,6 +30,13 @@ void ThreadPool::Initialize(std::size_t n) {
       }
     });
   }
+}
+
+ThreadPool::~ThreadPool() {
+  if (stop_) {
+    return;
+  }
+  Terminate();
 }
 
 void ThreadPool::Terminate() {

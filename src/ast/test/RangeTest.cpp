@@ -5,7 +5,7 @@
 using namespace vanadium;
 using namespace vanadium::ast;
 
-TEST(Range, ContainsPos) {
+TEST(RangeTest, ContainsPos) {
   const Range range{.begin = 10, .end = 20};
   ASSERT_EQ(range.Length(), 10);
 
@@ -16,7 +16,7 @@ TEST(Range, ContainsPos) {
   EXPECT_FALSE(range.Contains(21));
 }
 
-TEST(Range, ContainsPos_EmptyRange) {
+TEST(RangeTest, ContainsPos_EmptyRange) {
   const Range range{.begin = 20, .end = 20};
   ASSERT_EQ(range.Length(), 0);
 
@@ -29,7 +29,7 @@ TEST(Range, ContainsPos_EmptyRange) {
   }
 }
 
-TEST(Range, ContainsRange) {
+TEST(RangeTest, ContainsRange) {
   const Range range{.begin = 10, .end = 20};
   ASSERT_EQ(range.Length(), 10);
 
@@ -48,7 +48,7 @@ TEST(Range, ContainsRange) {
   EXPECT_TRUE(range.Contains(Range{.begin = 12, .end = 18}));
 }
 
-TEST(Range, ContainsRange_EmptyRange) {
+TEST(RangeTest, ContainsRange_EmptyRange) {
   const Range range{.begin = 20, .end = 20};
   ASSERT_EQ(range.Length(), 0);
 

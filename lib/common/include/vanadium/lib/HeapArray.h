@@ -4,6 +4,8 @@
 #include <cstddef>
 #include <utility>
 
+namespace vanadium::lib {
+
 template <typename T>
 class HeapArray {
  public:
@@ -20,11 +22,6 @@ class HeapArray {
   HeapArray& operator=(HeapArray other) {
     HeapArray tmp(std::move(other));
     swap(*this, tmp);
-    return *this;
-  }
-
-  HeapArray& operator=(HeapArray&& other) noexcept {
-    swap(*this, other);
     return *this;
   }
 
@@ -48,3 +45,5 @@ class HeapArray {
   std::size_t size_;
   T* ptr_;
 };
+
+}  // namespace vanadium::lib

@@ -5,7 +5,7 @@
 using namespace vanadium;
 using namespace vanadium::ast;
 
-TEST(LineMapping, StartOf) {
+TEST(LineMappingTest, StartOf) {
   const LineMapping lm(std::vector<pos_t>{0, 5, 15, 24, 30});
   ASSERT_EQ(lm.Count(), 5);
 
@@ -16,14 +16,14 @@ TEST(LineMapping, StartOf) {
   EXPECT_EQ(lm.StartOf(4), 30);
 }
 
-TEST(LineMapping, StartOf_Oneline) {
+TEST(LineMappingTest, StartOf_Oneline) {
   const LineMapping lm(std::vector<pos_t>{0});
   ASSERT_EQ(lm.Count(), 1);
 
   EXPECT_EQ(lm.StartOf(0), 0);
 }
 
-TEST(LineMapping, LineOf) {
+TEST(LineMappingTest, LineOf) {
   const LineMapping lm(std::vector<pos_t>{0, 5, 15, 24, 30});
   ASSERT_EQ(lm.Count(), 5);
 
@@ -44,7 +44,7 @@ TEST(LineMapping, LineOf) {
   }
 }
 
-TEST(LineMapping, LineOf_Oneline) {
+TEST(LineMappingTest, LineOf_Oneline) {
   const LineMapping lm(std::vector<pos_t>{0});
   ASSERT_EQ(lm.Count(), 1);
 
@@ -53,7 +53,7 @@ TEST(LineMapping, LineOf_Oneline) {
   }
 }
 
-TEST(LineMapping, Translate) {
+TEST(LineMappingTest, Translate) {
   const LineMapping lm(std::vector<pos_t>{0, 5, 15, 24, 30});
   ASSERT_EQ(lm.Count(), 5);
 
@@ -79,7 +79,7 @@ TEST(LineMapping, Translate) {
   }
 }
 
-TEST(LineMapping, Translate_Oneline) {
+TEST(LineMappingTest, Translate_Oneline) {
   const LineMapping lm(std::vector<pos_t>{0});
   ASSERT_EQ(lm.Count(), 1);
 
@@ -89,7 +89,7 @@ TEST(LineMapping, Translate_Oneline) {
   }
 }
 
-TEST(LineMapping, GetPosition) {
+TEST(LineMappingTest, GetPosition) {
   const LineMapping lm(std::vector<pos_t>{0, 5, 15, 24, 30});
   ASSERT_EQ(lm.Count(), 5);
 
@@ -115,7 +115,7 @@ TEST(LineMapping, GetPosition) {
   }
 }
 
-TEST(LineMapping, GetPosition_Oneline) {
+TEST(LineMappingTest, GetPosition_Oneline) {
   const LineMapping lm(std::vector<pos_t>{0});
   ASSERT_EQ(lm.Count(), 1);
 
@@ -125,7 +125,7 @@ TEST(LineMapping, GetPosition_Oneline) {
   }
 }
 
-TEST(LineMapping, RangeOf) {
+TEST(LineMappingTest, RangeOf) {
   const LineMapping lm(std::vector<pos_t>{0, 5, 15, 24, 30});
   ASSERT_EQ(lm.Count(), 5);
 
@@ -151,7 +151,7 @@ TEST(LineMapping, RangeOf) {
   }
 }
 
-TEST(LineMapping, RangeOf_Oneline) {
+TEST(LineMappingTest, RangeOf_Oneline) {
   const LineMapping lm(std::vector<pos_t>{0});
   ASSERT_EQ(lm.Count(), 1);
 

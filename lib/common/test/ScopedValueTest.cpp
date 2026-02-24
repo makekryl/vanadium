@@ -4,7 +4,7 @@
 
 using namespace vanadium::lib;
 
-TEST(ScopedValue, Nested) {
+TEST(ScopedValueTest, Nested) {
   int i = 1;
   ASSERT_EQ(i, 1);
 

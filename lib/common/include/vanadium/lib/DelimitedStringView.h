@@ -11,7 +11,7 @@ class DelimitedStringView {
  public:
   DelimitedStringView(std::string_view s = {}) : s_(std::move(s)) {}
 
-  constexpr auto range() {
+  constexpr auto range() const {
     return s_ | std::views::split(Delimiter) | std::views::transform([](auto segment) {
              const auto is_space_or_newline = [](char c) {
                return std::isspace(c) || (c == '\n');
@@ -25,7 +25,7 @@ class DelimitedStringView {
            });
   }
 
-  constexpr std::string_view sv() {
+  [[nodiscard]] constexpr std::string_view sv() const {
     return s_;
   }
 

@@ -16,18 +16,18 @@ class StaticMap final {
     std::ranges::sort(storage_);
   }
 
-  [[nodiscard]] std::optional<std::reference_wrapper<const V>> get(const K& key) const noexcept {
+  [[nodiscard]] const V* get(const K& key) const noexcept {
     if (auto it = find(key); it != storage_.end() && it->first == key) {
-      return it->second;
+      return &(it->second);
     }
-    return std::nullopt;
+    return nullptr;
   }
 
   const V& operator[](const K& key) const noexcept {
-    return *find_it(key);
+    return *get(key);
   }
 
-  auto Entries() const {
+  auto& Entries() const {
     return storage_;
   }
 
