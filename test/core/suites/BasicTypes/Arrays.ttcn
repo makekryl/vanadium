@@ -1,4 +1,6 @@
-module PlainArrays {
+module Arrays {
+
+// TODO: add simple bounds checking on TypeChecker level
 
 type record Struct {
   integer x
@@ -33,6 +35,19 @@ function f() {
     [8] := 1,
     [9] := 1
   };
+}
+
+function multidimensional() {
+  var integer arr[2][3] := {
+    { 1 },
+    { {} },  // EXPECT_ERROR
+    { "1" }  // EXPECT_ERROR
+  };
+
+  var integer x := arr[0][0];
+  var boolean y := arr[0][0];  // EXPECT_ERROR
+
+  var integer badDepth := arr[0];  // EXPECT_ERROR
 }
 
 }

@@ -1,0 +1,22 @@
+./Arrays.ttcn:
+  14:6: expected value of type 'integer', got 'charstring'
+        {"3"}  // EXPECT_ERROR
+         ~~~                  
+  23:6: expected value of type 'integer', got 'charstring'
+        {"3"}  // EXPECT_ERROR
+         ~~~                  
+  32:12: expected value of type 'integer', got 'charstring'
+        [5] := "1",  // EXPECT_ERROR
+               ~~~                  
+  43:7: expected value of type 'integer', got '<error-type>'
+        { {} },  // EXPECT_ERROR
+          ~~                    
+  44:7: expected value of type 'integer', got 'charstring'
+        { "1" }  // EXPECT_ERROR
+          ~~~                   
+  48:20: expected value of type 'boolean', got 'integer'
+      var boolean y := arr[0][0];  // EXPECT_ERROR
+                       ~~~~~~~~~                  
+  50:27: expected value of array depth 1, got with depth 0
+      var integer badDepth := arr[0];  // EXPECT_ERROR
+                              ~~~~~~                  
