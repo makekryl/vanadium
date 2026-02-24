@@ -108,6 +108,10 @@ class LsContext {
   [[nodiscard]] const core::SourceFile* ResolveSourceFile(std::string_view file_uri) const;
   [[nodiscard]] std::optional<std::pair<tooling::SolutionProject&, std::string>> ResolveFileUri(
       std::string_view file_uri) const {
+    if (!solution) {
+      // TODO: add checks to PathToFileUri, LockData
+      return std::nullopt;
+    }
     return ls::ResolveFileUri(*solution, file_uri);
   }
   [[nodiscard]] std::string PathToFileUri(std::string_view path) const {
