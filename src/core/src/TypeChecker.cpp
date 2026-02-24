@@ -1,6 +1,7 @@
 #include "vanadium/core/TypeChecker.h"
 
 #include <algorithm>
+#include <cassert>
 #include <cstdlib>
 #include <format>
 #include <string_view>
@@ -1219,15 +1220,26 @@ void BasicTypeChecker::MatchTypes(const ast::Range& range, InstantiatedType actu
     return;
   }
 
-  const auto template_spec_providen = bool(actual->Flags() & semantic::SymbolFlags::kTemplateSpec);
-  const bool got_template_instead_of_value{
-      (expected.restriction == TemplateRestrictionKind::kNone) &&
-      (template_spec_providen || (actual.restriction != TemplateRestrictionKind::kNone))  //
-  };
-  if (got_template_instead_of_value) {
+  TemplateRestrictionKind actual_template_restriction;
+  const auto is_template_spec_providen = bool(actual->Flags() & semantic::SymbolFlags::kTemplateSpec);
+  if (is_template_spec_providen) {
+    if (actual.sym == &symbols::kTemplateOmitType || actual.sym == &symbols::kTemplateNotUsedType) {
+      actual_template_restriction = TemplateRestrictionKind::kOmit;
+    } else if (actual.sym == &symbols::kTemplateWildcardType) {
+      actual_template_restriction = TemplateRestrictionKind::kPresent;
+    } else if (actual.sym == &symbols::kTemplateOptionalType) {
+      actual_template_restriction = TemplateRestrictionKind::kRegular;
+    } else {
+      assert(false && "Unhandled template spec");
+      actual_template_restriction = TemplateRestrictionKind::kRegular;
+    }
+  } else {
+    actual_template_restriction = actual.restriction;
+  }
+  if ((expected.restriction & actual_template_restriction) != actual_template_restriction) {
     const bool is_legit{(actual.restriction == TemplateRestrictionKind::kOptionalField) ||
                         ((expected.restriction & TemplateRestrictionKind::kOptionalField) &&
-                         (actual.sym == &symbols::kTemplateOmitType))};
+                         (actual_template_restriction == TemplateRestrictionKind::kOmit))};
     if (!is_legit) {
       EmitError(TypeError{
           .range = range,
@@ -1235,7 +1247,7 @@ void BasicTypeChecker::MatchTypes(const ast::Range& range, InstantiatedType actu
       });
     }
   }
-  if (template_spec_providen) {
+  if (is_template_spec_providen) {
     return;
   }
 

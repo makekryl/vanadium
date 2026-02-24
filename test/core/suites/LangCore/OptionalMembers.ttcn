@@ -1,15 +1,41 @@
 module OptionalMembers {
 
-type record Struct {
-  integer x optional,
-  integer y
+type record InnerStruct {
+  integer i
 }
 
-function f() {
+type record Struct {
+  integer x optional,
+  integer y,
+  InnerStruct optionalInner optional
+}
+
+function f_val() {
   var Struct s;
 
   s.x := omit;
+  s.x := *;  // EXPECT_ERROR
+  s.x := ?;  // EXPECT_ERROR
+
   s.y := omit;  // EXPECT_ERROR
+  s.y := *;     // EXPECT_ERROR
+  s.y := ?;     // EXPECT_ERROR
+
+  s.optionalInner.i := omit;  // EXPECT_ERROR
+}
+
+function f_template() {
+  var template Struct s;
+
+  s.x := omit;
+  s.x := *;
+  s.x := ?;
+
+  s.y := omit;
+  s.y := *;
+  s.y := ?;
+
+  s.optionalInner.i := omit;
 }
 
 }
