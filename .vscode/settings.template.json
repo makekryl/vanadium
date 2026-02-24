@@ -21,5 +21,6 @@
   "cmake.useCMakePresets": "always",
   "cmake.automaticReconfigure": false,
   "cmake.configureOnEdit": false,
+  "cmake.configureOnOpen": false,
   "python.analysis.autoImportCompletions": true
 }
