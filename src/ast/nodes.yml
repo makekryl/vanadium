@@ -35,7 +35,7 @@ BehaviourSpec:
   ret: ReturnSpec*?
 ValueDecl:
   kind: Token*?
-  template_restriction: RestrictionSpec*?
+  restriction: RestrictionSpec*?
   modif: Token*?
   type: Expr*
   decls: Declarator*[]
@@ -45,7 +45,7 @@ Declarator:
   arraydef: ArrayExpr*?
   value: Expr*?
 TemplateDecl:
-  restriction: RestrictionSpec*?
+  restriction: RestrictionSpec*
   modif: Token*?
   type: Expr*
   name: Ident
@@ -276,8 +276,7 @@ ReturnSpec:
   modif: Token*?
   type: Expr*
 RestrictionSpec:
-  is_template: bool
-  type: Token
+  type: Token?
 IndexExpr:
   x: Expr*?
   index: Expr*

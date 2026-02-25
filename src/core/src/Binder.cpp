@@ -827,7 +827,7 @@ bool Binder::Inspect(const ast::Node* n) {
 
                     pseudopar->arraydef = cd->arraydef;
                     pseudopar->modif = cvd->modif;
-                    pseudopar->restriction = cvd->template_restriction;
+                    pseudopar->restriction = cvd->restriction;
                     pseudopar->type = cvd->type;
 
                     pseudopar->name.emplace();

@@ -55,7 +55,10 @@ const semantic::Symbol kTemplateNotUsedType{
   if (!spec) {
     return TemplateRestrictionKind::kNone;
   }
-  switch (spec->type.kind) {
+  if (!spec->type) {
+    return TemplateRestrictionKind::kRegular;
+  }
+  switch (spec->type->kind) {
     case ast::TokenKind::OMIT:
       return TemplateRestrictionKind::kOmit;
     case ast::TokenKind::VALUE:
@@ -63,6 +66,7 @@ const semantic::Symbol kTemplateNotUsedType{
     case ast::TokenKind::PRESENT:
       return TemplateRestrictionKind::kPresent;
     default:
+      assert(false && "Unhandled template restriction kind token");
       return TemplateRestrictionKind::kRegular;
   }
 }
@@ -977,7 +981,7 @@ InstantiatedType ResolveDeclarationType(const SourceFile* file, const ast::Node*
       const auto* vd = m->parent->As<ast::nodes::ValueDecl>();
       return InstantiatedType{
           .sym = ResolveExprSymbol(file, file->module->scope, vd->type).sym,
-          .restriction = ParseTemplateRestriction(vd->template_restriction),
+          .restriction = ParseTemplateRestriction(vd->restriction),
           .is_instance = true,
           .depth = static_cast<std::uint32_t>(ast::utils::GetArrayDefCap(ast::utils::GetArrayDef(m))),
       };
@@ -1975,7 +1979,7 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
 
         const InstantiatedType expected_decl_type{
             .sym = expected_type.sym,
-            .restriction = ParseTemplateRestriction(m->template_restriction),
+            .restriction = ParseTemplateRestriction(m->restriction),
             .is_instance = true,
             .depth = static_cast<std::uint32_t>(ast::utils::GetArrayDefCap(declarator->arraydef)),
         };

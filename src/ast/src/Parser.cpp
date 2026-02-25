@@ -388,7 +388,7 @@ nodes::Decl* Parser::ParseModulePar() {
       Consume();  // LBrace
       while (tok_ != TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
         mpg.decls.push_back(NewNode<nodes::ValueDecl>([&](auto& vd) {
-          vd.template_restriction = ParseRestrictionSpec();
+          vd.restriction = ParseRestrictionSpec();
           vd.type = ParseTypeRef();
           vd.decls = ParseDeclList();
           ExpectSemi();
@@ -402,7 +402,7 @@ nodes::Decl* Parser::ParseModulePar() {
   }
   auto* r = NewNode<nodes::ValueDecl>([&](auto& vd) {
     vd.kind = TokAlloc(std::move(modulepar_tok));
-    vd.template_restriction = ParseRestrictionSpec();
+    vd.restriction = ParseRestrictionSpec();
     vd.type = ParseTypeRef();
     vd.decls = ParseDeclList();
     vd.with = ParseWith();
@@ -1017,7 +1017,7 @@ nodes::BehaviourSpec* Parser::ParseBehaviourSpec() {
 
 nodes::TemplateDecl* Parser::ParseTemplateDecl() {
   return NewNode<nodes::TemplateDecl>([&](auto& td) {
-    Consume();  // TemplateTok
+    ConsumeInvariant(TokenKind::TEMPLATE);
     td.restriction = NewNode<nodes::RestrictionSpec>([&](auto& n) {
       if (tok_ == TokenKind::LPAREN) {
         Consume();           // LParen
@@ -1054,7 +1054,7 @@ nodes::ValueDecl* Parser::ParseValueDecl() {
   return NewNode<nodes::ValueDecl>([&](auto& vd) {
     if (tok_ != TokenKind::TIMER) {
       vd.kind = TokAlloc(Consume());
-      vd.template_restriction = ParseRestrictionSpec();
+      vd.restriction = ParseRestrictionSpec();
       if (tok_ == TokenKind::MODIF) {
         vd.modif = TokAlloc(Consume());
       }
@@ -1069,14 +1069,11 @@ nodes::RestrictionSpec* Parser::ParseRestrictionSpec() {
   switch (tok_) {
     case TokenKind::TEMPLATE:
       return NewNode<nodes::RestrictionSpec>([&](auto& rs) {
-        Consume();  // TemplateTok
-        rs.is_template = true;
+        ConsumeInvariant(TokenKind::TEMPLATE);
         if (tok_ == TokenKind::LPAREN) {
           Consume();
           rs.type = Consume();
           Expect(TokenKind::RPAREN);
-        } else {
-          rs.type = {.kind = TokenKind::kSentinel, .range = {}};
         }
       });
     case TokenKind::OMIT:

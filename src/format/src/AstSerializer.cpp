@@ -509,8 +509,8 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
           A(seq, S(m->kind));
           A(seq, PrintDirective::kSpace);
         }
-        if (m->template_restriction) {
-          A(seq, S(m->template_restriction));
+        if (m->restriction) {
+          A(seq, S(m->restriction));
           A(seq, PrintDirective::kSpace);
         }
         if (m->modif) {
@@ -618,11 +618,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     case ast::NodeKind::TemplateDecl: {
       const auto* m = n->As<ast::nodes::TemplateDecl>();
       return NewSequence([&](auto& seq) {
-        A(seq, "template");
-        if (m->restriction) {
-          A(seq, PrintDirective::kSpace);
-          A(seq, S(m->restriction));
-        }
+        A(seq, S(m->restriction));  // <-- includes "template" token
         if (m->modif) {
           A(seq, PrintDirective::kSpace);
           A(seq, S(m->modif));
@@ -1544,18 +1540,12 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     case ast::NodeKind::RestrictionSpec: {
       const auto* m = n->As<ast::nodes::RestrictionSpec>();
       return NewSequence([&](auto& seq) {
-        if (m->is_template) {
-          A(seq, "template");
-        }
-        if (m->type.kind != ast::TokenKind::kSentinel) {
-          if (m->is_template) {
-            A(seq, PrintDirective::kSpace);
-            A(seq, "(");
-          }
-          A(seq, S(m->type));
-          if (m->is_template) {
-            A(seq, ")");
-          }
+        A(seq, "template");
+        if (m->type) {
+          A(seq, PrintDirective::kSpace);
+          A(seq, "(");
+          A(seq, S(*m->type));
+          A(seq, ")");
         }
       });
       break;

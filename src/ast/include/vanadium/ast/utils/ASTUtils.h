@@ -48,9 +48,9 @@ inline const nodes::FormalPars* GetCallableDeclParams(const nodes::Decl* decl) {
 inline const nodes::RestrictionSpec* GetTemplateRestriction(const Node* n) {
   switch (n->nkind) {
     case NodeKind::ValueDecl:
-      return n->As<nodes::ValueDecl>()->template_restriction;
+      return n->As<nodes::ValueDecl>()->restriction;
     case NodeKind::Declarator:
-      return n->parent->As<nodes::ValueDecl>()->template_restriction;
+      return n->parent->As<nodes::ValueDecl>()->restriction;
     case NodeKind::TemplateDecl:
       return n->As<nodes::TemplateDecl>()->restriction;
     case NodeKind::FormalPar:

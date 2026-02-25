@@ -80,7 +80,7 @@ case NodeKind::ValueDecl: {
   const auto* nn = n->As<nodes::ValueDecl>();
   DumpGroup("ValueDecl", [&] {
     Dump("kind", nn->kind);
-    Dump("template_restriction", nn->template_restriction);
+    Dump("restriction", nn->restriction);
     Dump("modif", nn->modif);
     Dump("type", nn->type);
     Dump("decls", nn->decls);
@@ -616,7 +616,6 @@ case NodeKind::ReturnSpec: {
 case NodeKind::RestrictionSpec: {
   const auto* nn = n->As<nodes::RestrictionSpec>();
   DumpGroup("RestrictionSpec", [&] {
-    Dump("is_template", nn->is_template);
     Dump("type", nn->type);
   });
   break;

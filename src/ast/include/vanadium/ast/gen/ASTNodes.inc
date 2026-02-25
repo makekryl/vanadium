@@ -125,8 +125,7 @@ struct RestrictionSpec : TypeSpec {
 
   RestrictionSpec() : TypeSpec(NodeKind::RestrictionSpec) {}
 
-  bool is_template{false};
-  Token type;
+  std::optional<Token> type;
 
   void Accept(const NodeInspector&) const {
   }
@@ -929,15 +928,15 @@ struct ValueDecl : Decl {
   ValueDecl() : Decl(NodeKind::ValueDecl) {}
 
   Token* kind{nullptr};
-  RestrictionSpec* template_restriction{nullptr};
+  RestrictionSpec* restriction{nullptr};
   Token* modif{nullptr};
   Expr* type;
   std::vector<Declarator*> decls;
   WithSpec* with{nullptr};
 
   void Accept(const NodeInspector& inspector) const {
-    if (template_restriction != nullptr) {
-      Inspect(template_restriction, inspector);
+    if (restriction != nullptr) {
+      Inspect(restriction, inspector);
     }
     Inspect(type, inspector);
     for (const auto* n : decls) {
@@ -1246,7 +1245,7 @@ struct TemplateDecl : Decl {
 
   TemplateDecl() : Decl(NodeKind::TemplateDecl) {}
 
-  RestrictionSpec* restriction{nullptr};
+  RestrictionSpec* restriction;
   Token* modif{nullptr};
   Expr* type;
   std::optional<Ident> name;
@@ -1257,9 +1256,7 @@ struct TemplateDecl : Decl {
   WithSpec* with{nullptr};
 
   void Accept(const NodeInspector& inspector) const {
-    if (restriction != nullptr) {
-      Inspect(restriction, inspector);
-    }
+    Inspect(restriction, inspector);
     Inspect(type, inspector);
     if (name.has_value()) {
       Inspect(std::addressof(*name), inspector);
