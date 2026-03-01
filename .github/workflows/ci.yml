@@ -85,7 +85,7 @@ jobs:
         uses: ./.github/workflows/composite/run-in-devcontainer
         with:
           run: |
-            uv run inv test --coverage \
+            uv run inv test --coverage --no-sanitizers \
               --toolchain clang \
               --jobs $(nproc) --cmake-jobs $(nproc) --no-run
 
@@ -94,11 +94,19 @@ jobs:
         timeout-minutes: 5  # TODO: check why it's hanging occasionally
         with:
           run: |
-            uv run inv test --coverage --report-coverage \
+            uv run inv test --coverage --no-sanitizers \
               --toolchain clang \
               --jobs $(nproc) --skip-build
 
-      - name: Upload coverage
+      - name: Generate coverage report
+        uses: ./.github/workflows/composite/run-in-devcontainer
+        with:
+          run: |
+            uv run inv test.report-coverage --no-sanitizers \
+              --toolchain clang \
+              --jobs $(nproc)
+
+      - name: Upload coverage report
         uses: actions/upload-artifact@v6
         with:
           name: coverage-report

@@ -12,9 +12,11 @@ from . import build
 
 COVERAGE_DIR = OUTPUT_DIR / "coverage"
 
+TEST_PARAMS_DEFAULTS = {"sanitizers": True}
+
 
 @task(default=True)
-@override_params_defaults(sanitizers=True)
+@override_params_defaults(**TEST_PARAMS_DEFAULTS)
 @with_build_params
 @with_test_params
 def test(c: Context, label: str = "all"):
@@ -46,34 +48,11 @@ def test(c: Context, label: str = "all"):
   )
 
   if test_opts(c).report_coverage:
-    if COVERAGE_DIR.exists():
-      old_coverage_dir = COVERAGE_DIR.with_suffix(".old")
-      if old_coverage_dir.exists():
-        shutil.rmtree(old_coverage_dir)
-      os.rename(COVERAGE_DIR, old_coverage_dir)
-    COVERAGE_DIR.mkdir()
-
-    excluded_src_dirs = {
-      build_dir / "_deps",
-    }
-    excluded_src_dirs_args = " ".join(f"--exclude '{dir}'" for dir in excluded_src_dirs)
-
-    gcov_exec = "llvm-cov gcov" if build_opts(c).toolchain == "clang" else "gcov"
-    c.run(
-      f"gcovr"
-      f" --root .."
-      f" --object-directory '{build_dir}'"
-      f" --gcov-executable '{gcov_exec}'"
-      f" {excluded_src_dirs_args}"
-      f" --print-summary"
-      f" --html --html-details -o '{COVERAGE_DIR}/index.html'"
-      f" -j {test_opts(c).jobs}"
-    )
-    print(f"Coverage report is available at '{COVERAGE_DIR}'")
+    report_coverage(c, jobs=test_opts(c).jobs or 1)
 
 
 @task
-@override_params_defaults(sanitizers=True)
+@override_params_defaults(**TEST_PARAMS_DEFAULTS)
 @with_build_params
 @with_test_params
 def unit(c: Context):
@@ -81,7 +60,7 @@ def unit(c: Context):
 
 
 @task
-@override_params_defaults(sanitizers=True)
+@override_params_defaults(**TEST_PARAMS_DEFAULTS)
 @with_build_params
 @with_test_params
 def e2e(
@@ -89,6 +68,38 @@ def e2e(
   overwrite_snapshots: bool = False,
 ):
   test(c, label="e2e")
+
+
+@task
+@override_params_defaults(**TEST_PARAMS_DEFAULTS)
+@with_build_params
+def report_coverage(c: Context, jobs: int = 1):
+  build_dir = build.get_build_dir(c)
+
+  if COVERAGE_DIR.exists():
+    old_coverage_dir = COVERAGE_DIR.with_suffix(".old")
+    if old_coverage_dir.exists():
+      shutil.rmtree(old_coverage_dir)
+    os.rename(COVERAGE_DIR, old_coverage_dir)
+  COVERAGE_DIR.mkdir()
+
+  excluded_src_dirs = {
+    build_dir / "_deps",
+  }
+  excluded_src_dirs_args = " ".join(f"--exclude '{dir}'" for dir in excluded_src_dirs)
+
+  gcov_exec = "llvm-cov gcov" if build_opts(c).toolchain == "clang" else "gcov"
+  c.run(
+    f"gcovr"
+    f" --root .."
+    f" --object-directory '{build_dir}'"
+    f" --gcov-executable '{gcov_exec}'"
+    f" {excluded_src_dirs_args}"
+    f" --print-summary"
+    f" --html --html-details -o '{COVERAGE_DIR}/index.html'"
+    f" -j {jobs}"
+  )
+  print(f"Coverage report is available at '{COVERAGE_DIR}'")
 
 
 @task
