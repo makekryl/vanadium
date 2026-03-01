@@ -50,8 +50,20 @@ def configure(
 
   use_compile_commands = True
 
+  # convenience thing: interesting flags that impact build are to be put in defs, flags that does not to be put in env
+  defs = {
+    "CMAKE_GENERATOR": "Ninja",
+  }
+  if build_opts(c).coverage:
+    # way too specific to add a separate preset for it
+    defs["VANADIUM_USE_COVERAGE"] = _cmake_bool(True)
+
   c.run(
-    f"cmake -DCMAKE_GENERATOR=Ninja --preset '{preset}' -B '{build_dir}'",
+    f"cmake"
+    f" {' '.join(f'-D{k}={v}' for k, v in defs.items())}"
+    f" --preset '{preset}'"
+    f" -B '{build_dir}'",
+    #
     env={
       "CMAKE_EXPORT_COMPILE_COMMANDS": _cmake_bool(use_compile_commands),
       "CMAKE_COLOR_DIAGNOSTICS": _cmake_bool(sys.stdout.isatty()),

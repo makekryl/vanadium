@@ -9,10 +9,15 @@ from inv.params import TaskCallable, inject_task_params
 @dataclass(slots=True)
 class TestOptions:
   jobs: int | None = None
+
   filter: str | None = None
   exclude: str | None = None
+
   skip_build: bool = False
   no_run: bool = False
+
+  report_coverage: bool = False
+
   ctest_args: str | None = None
 
 

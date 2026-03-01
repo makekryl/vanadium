@@ -1,10 +1,16 @@
+import os
+import shutil
+
 from invoke import Context, task
 
+from inv.config import OUTPUT_DIR
 from inv.params import override_params_defaults
-from inv.params.build import with_build_params
+from inv.params.build import build_opts, with_build_params
 from inv.params.test import test_opts, with_test_params
 
 from . import build
+
+COVERAGE_DIR = OUTPUT_DIR / "coverage"
 
 
 @task(default=True)
@@ -31,8 +37,38 @@ def test(c: Context, label: str):
     args.append(test_opts(c).ctest_args)
 
   c.run(
-    f"ctest -L '{label}' --output-on-failure --test-dir '{str(build_dir)}' {' '.join(args)}"
+    f"ctest"
+    f" -L '{label}'"
+    f" --output-on-failure"
+    f" --test-dir '{str(build_dir)}'"
+    f" {' '.join(args)}"
   )
+
+  if test_opts(c).report_coverage:
+    if COVERAGE_DIR.exists():
+      old_coverage_dir = COVERAGE_DIR.with_suffix(".old")
+      if old_coverage_dir.exists():
+        shutil.rmtree(old_coverage_dir)
+      os.rename(COVERAGE_DIR, old_coverage_dir)
+    COVERAGE_DIR.mkdir()
+
+    excluded_src_dirs = {
+      build_dir / "_deps",
+    }
+    excluded_src_dirs_args = " ".join(f"--exclude '{dir}'" for dir in excluded_src_dirs)
+
+    gcov_exec = "llvm-cov gcov" if build_opts(c).toolchain == "clang" else "gcov"
+    c.run(
+      f"gcovr"
+      f" --root .."
+      f" --object-directory '{build_dir}'"
+      f" --gcov-executable '{gcov_exec}'"
+      f" {excluded_src_dirs_args}"
+      f" --print-summary"
+      f" --html --html-details -o '{COVERAGE_DIR}/index.html'"
+      f" -j {test_opts(c).jobs}"
+    )
+    print(f"Coverage report is available at '{COVERAGE_DIR}'")
 
 
 @task
@@ -52,3 +88,13 @@ def e2e(
   overwrite_snapshots: bool = False,
 ):
   test(c, label="e2e")
+
+
+@task
+def serve_coverage(c: Context):
+  if not COVERAGE_DIR.exists():
+    print(f"Coverage report not found at '{COVERAGE_DIR}'")
+    exit(1)  # TODO(inv): add something like failure(err_msg) that exits
+    return
+
+  c.run(f"python3 -m http.server -d '{COVERAGE_DIR}'")

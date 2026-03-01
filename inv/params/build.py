@@ -10,7 +10,10 @@ from inv.params import TaskCallable, inject_task_params
 @dataclass(slots=True)
 class BuildOptions:
   toolchain: str = DEFAULT_TOOLCHAIN
+
   sanitizers: bool = False
+  coverage: bool = False
+
   release: bool = False
   static: bool = False
 

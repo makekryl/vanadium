@@ -12,6 +12,7 @@ include(python)
 include(externals)
 include(diagnostics)
 include(testing)
+include(coverage)
 
 enable_testing()
 
@@ -21,3 +22,4 @@ add_subdirectory(bin)
 add_subdirectory(test)
 
 add_tests_build_target()
+enable_coverage_if_used()
