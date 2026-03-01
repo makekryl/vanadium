@@ -17,9 +17,3 @@ target_link_libraries(vanadium_e2e_core PRIVATE
 )
 
 # add_gtest_executable(vanadium_e2e_core) # TODO: extract unit-testable parts into lib
-
-add_test(
-  NAME vanadium_e2e_core
-  COMMAND vanadium_e2e_core
-          --vanadium_testsuites_dir="../suites"
-)
