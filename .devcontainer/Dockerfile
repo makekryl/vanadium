@@ -13,6 +13,7 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
         valgrind \
         ninja-build \
         flex bison \
+        gcovr \
     && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
@@ -25,8 +26,10 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     \
     && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100 \
     && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 100 \
+    && update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-14 100 \
     \
     && update-alternatives --install /usr/bin/clang clang /usr/bin/clang-19 100 \
     && update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-19 100 \
+    && update-alternatives --install /usr/bin/llvm-cov llvm-cov /usr/bin/llvm-cov-19 100 \
     \
     && update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-19 100
