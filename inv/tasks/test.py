@@ -17,7 +17,7 @@ COVERAGE_DIR = OUTPUT_DIR / "coverage"
 @override_params_defaults(sanitizers=True)
 @with_build_params
 @with_test_params
-def test(c: Context, label: str):
+def test(c: Context, label: str = "all"):
   if not test_opts(c).skip_build:
     build_dir = build.build(c, target=f"build_{label}_tests")
   else:
@@ -36,9 +36,10 @@ def test(c: Context, label: str):
   if test_opts(c).ctest_args:
     args.append(test_opts(c).ctest_args)
 
+  label_opt = f"-L '{label}'" if label != "all" else ""
   c.run(
     f"ctest"
-    f" -L '{label}'"
+    f" {label_opt}"
     f" --output-on-failure"
     f" --test-dir '{str(build_dir)}'"
     f" {' '.join(args)}"
