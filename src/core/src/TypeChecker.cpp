@@ -1431,8 +1431,8 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, InstantiatedTyp
     case ast::NodeKind::CallExpr: {
       const auto* m = n->As<ast::nodes::CallExpr>();
       const auto* callee_sym = CheckType(m->fun).sym;
-      if (!callee_sym) {
-        // error is raised by the semantic analyzer in such case
+      if (!callee_sym || callee_sym == &symbols::kTypeError) {
+        // error is raised by the semantic analyzer or SelectorExpr resolver in such case
         Visit(m->args);
         break;
       }
@@ -1444,9 +1444,7 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, InstantiatedTyp
         }
         EmitError(TypeError{
             .range = tgt_errnode->nrange,
-            .message = callee_sym == &symbols::kTypeError
-                           ? std::format("'<error-type>.{}' is not callable", sf_.Text(tgt_errnode))
-                           : std::format("'{}' is not callable", sf_.Text(tgt_errnode)),
+            .message = std::format("'{}' is not callable", sf_.Text(tgt_errnode)),
         });
         Visit(m->args);
         break;

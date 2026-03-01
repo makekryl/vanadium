@@ -1,0 +1,40 @@
+module Unions {
+
+type record RecordA { integer a }
+type record RecordB { integer b }
+
+type union MyUnion {
+  RecordA ra,
+  RecordB rb,
+  integer i,
+  float f,
+  boolean b
+}
+
+function f() {
+  var MyUnion u;
+
+  u.ra := { a := 1 };
+  u.ra := { a := 1.0 }; // EXPECT_ERROR
+
+  u := { i := 1 };
+  u := {  // EXPECT_ERROR
+    i := 1,
+    f := 2.0
+  };
+
+  select union (u) {
+    case (ra) { }
+    case (rb) { }
+    case (i) { }
+    case (f) { }
+    case (b) { }
+    case (non_existent) { }  // EXPECT_ERROR
+    case (1) { }  // EXPECT_ERROR
+    case (1.0) { }  // EXPECT_ERROR
+    case (false) { }  // EXPECT_ERROR
+    case else { }
+  }
+}
+
+}

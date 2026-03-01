@@ -1,0 +1,100 @@
+module OOP {
+
+type class MyClass {
+  var integer m_x;
+  var float m_y;
+
+  create(integer x, float y) {
+    m_x := x;
+    m_y := y;
+    //
+    this.m_x := x;
+    this.m_y := y;
+
+    m_x := y;  // EXPECT_ERROR
+    m_y := x;  // EXPECT_ERROR
+    //
+    non_existent := x;       // EXPECT_ERROR
+    this.non_existent := x;  // EXPECT_ERROR
+  }
+
+  public function memberf(integer x, float y) {
+    m_x := x;
+    m_y := y;
+    //
+    this.m_x := x;
+    this.m_y := y;
+
+    m_x := y;  // EXPECT_ERROR
+    m_y := x;  // EXPECT_ERROR
+    //
+    non_existent := x;       // EXPECT_ERROR
+    this.non_existent := x;  // EXPECT_ERROR
+  }
+}
+
+function basic() {
+  var MyClass clz := MyClass.create(1, 2.0);
+  clz := MyClass.create(1, 2.0);
+  clz := MyClass.create(x := 1, y := 2.0);
+  //
+  clz := MyClass.create(
+    1.0,  // EXPECT_ERROR
+    2   // EXPECT_ERROR
+  );
+  clz := MyClass.create(
+    x := 1.0,  // EXPECT_ERROR
+    y := 2   // EXPECT_ERROR
+  );
+  clz := MyClass.create();  // EXPECT_ERROR
+
+  clz.memberf(1, 2.0);
+  clz.memberf(x := 1, y := 2.0);
+  clz.memberf(
+    x := 1.0,  // EXPECT_ERROR
+    y := 2     // EXPECT_ERROR
+  );
+  clz.memberf();  // EXPECT_ERROR
+  //
+  clz.non_existent_member_func(1, 2);  // EXPECT_ERROR
+
+  clz.this;  // EXPECT_ERROR
+}
+
+//
+
+type class @abstract MyAbstractClass {
+  var float m_val;
+
+  create() { }
+
+  public function @abstract afun(float x);
+
+  public function nafun(float x) {
+    m_val := x;
+    this.m_val := x;
+  }
+}
+
+// TODO: match abstract functions arguments and return types
+type class MyDerivedClass extends MyAbstractClass {
+  public function afun(float x) {
+    m_val := x;
+    this.m_val := x;
+  }
+}
+
+function inheritance() {
+  // TODO: check inheritance hierachy - it is not checked now
+  // TODO: constructor inheritance
+  // TODO: access modifiers
+
+  var MyDerivedClass clz := MyDerivedClass.create();
+  clz.nafun(1.0);
+  clz.afun(1.0);
+
+  clz.nafun(1);  // EXPECT_ERROR
+  clz.afun(1);   // EXPECT_ERROR
+}
+
+}

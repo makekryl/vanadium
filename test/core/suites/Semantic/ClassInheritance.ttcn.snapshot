@@ -1,0 +1,16 @@
+./ClassInheritance.ttcn:
+  12:5: unresolved symbol 'b'
+        b := 2;  // EXPECT_ERROR
+        ~                       
+  13:5: unresolved symbol 'c'
+        c := 3;  // EXPECT_ERROR
+        ~                       
+  14:5: unresolved symbol 'd'
+        d := 4;  // EXPECT_ERROR
+        ~                       
+  24:5: unresolved symbol 'c'
+        c := 3;  // EXPECT_ERROR
+        ~                       
+  25:5: unresolved symbol 'd'
+        d := 4;  // EXPECT_ERROR
+        ~                       

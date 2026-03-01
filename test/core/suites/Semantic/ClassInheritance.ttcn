@@ -1,0 +1,41 @@
+module ClassMultiInheritance {
+
+// NOTE: it does not check correctness on Crossbind level
+//       Crossbind requires additional runner with test suites
+//       + there's necessity of integrating Binder semantic checks to Crossbind counterparts
+
+type class ClassA {
+  var integer a;
+
+  function fb() {
+    a := 1;
+    b := 2;  // EXPECT_ERROR
+    c := 3;  // EXPECT_ERROR
+    d := 4;  // EXPECT_ERROR
+  }
+}
+
+type class ClassB extends ClassA {
+  var integer b;
+
+  function fb() {
+    a := 1;
+    b := 2;
+    c := 3;  // EXPECT_ERROR
+    d := 4;  // EXPECT_ERROR
+  }
+}
+
+// TODO: fix test
+// type class ClassC extends ClassB {
+//   var integer c;
+//
+//   function fc() {
+//     a := 1;
+//     b := 2;
+//     c := 3;
+//     d := 4;  // WIP:EXPECT_ERROR
+//   }
+// }
+
+}

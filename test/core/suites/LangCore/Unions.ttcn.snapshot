@@ -1,0 +1,23 @@
+./Unions.ttcn:
+  18:18: expected value of type 'integer', got 'float'
+      u.ra := { a := 1.0 }; // EXPECT_ERROR
+                     ~~~                   
+  21:8: exactly one named argument is expected in union
+      u := {  // EXPECT_ERROR
+           ~~~~~~~~~~~~~~~~~~
+        i := 1,
+        ~ ~~ ~~
+        f := 2.0
+        ~ ~~ ~~~
+  32:11: property 'non_existent' does not exist on type 'union MyUnion'
+        case (non_existent) { }  // EXPECT_ERROR
+              ~~~~~~~~~~~~                      
+  33:11: property '1' does not exist on type 'union MyUnion'
+        case (1) { }  // EXPECT_ERROR
+              ~                      
+  34:11: property '1.0' does not exist on type 'union MyUnion'
+        case (1.0) { }  // EXPECT_ERROR
+              ~~~                      
+  35:11: property 'false' does not exist on type 'union MyUnion'
+        case (false) { }  // EXPECT_ERROR
+              ~~~~~                      

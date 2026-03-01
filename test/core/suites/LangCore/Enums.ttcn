@@ -32,6 +32,16 @@ function f() {
 
   //
 
+  if (e1 == Aa) {}
+  if (e1 == Invalid) {}  // EXPECT_ERROR
+  select (e1) {
+    case (Aa) { }
+    case (Invalid) { }  // EXPECT_ERROR
+    case else { }
+  }
+
+  //
+
   var EnumHolder eh1 := { Aa };
   eh1 := { Invalid };  // EXPECT_ERROR
   eh1 := { Bb };
@@ -44,6 +54,16 @@ function f() {
   eh2.e := Aa;
   eh2.e := Invalid;  // EXPECT_ERROR
   eh2.e := Bb;
+
+  //
+
+  if (eh1.e == Aa) {}
+  if (eh1.e == Invalid) {}  // EXPECT_ERROR
+  select (eh1.e) {
+    case (Aa) { }
+    case (Invalid) { }  // EXPECT_ERROR
+    case else { }
+  }
 
   //
 

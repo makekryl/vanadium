@@ -1,0 +1,61 @@
+./OOP.ttcn:
+  17:5: unresolved symbol 'non_existent'
+        non_existent := x;       // EXPECT_ERROR
+        ~~~~~~~~~~~~                            
+  31:5: unresolved symbol 'non_existent'
+        non_existent := x;       // EXPECT_ERROR
+        ~~~~~~~~~~~~                            
+  14:12: expected value of type 'integer', got 'float'
+        m_x := y;  // EXPECT_ERROR
+               ~                  
+  15:12: expected value of type 'float', got 'integer'
+        m_y := x;  // EXPECT_ERROR
+               ~                  
+  18:10: property 'non_existent' does not exist on type 'class MyClass'
+        this.non_existent := x;  // EXPECT_ERROR
+             ~~~~~~~~~~~~                       
+  28:12: expected value of type 'integer', got 'float'
+        m_x := y;  // EXPECT_ERROR
+               ~                  
+  29:12: expected value of type 'float', got 'integer'
+        m_y := x;  // EXPECT_ERROR
+               ~                  
+  32:10: property 'non_existent' does not exist on type 'class MyClass'
+        this.non_existent := x;  // EXPECT_ERROR
+             ~~~~~~~~~~~~                       
+  42:5: expected value of type 'integer', got 'float'
+        1.0,  // EXPECT_ERROR
+        ~~~                  
+  43:5: expected value of type 'float', got 'integer'
+        2   // EXPECT_ERROR
+        ~                  
+  46:10: expected value of type 'integer', got 'float'
+        x := 1.0,  // EXPECT_ERROR
+             ~~~                  
+  47:10: expected value of type 'float', got 'integer'
+        y := 2   // EXPECT_ERROR
+             ~                  
+  49:25: 2 arguments expected, 0 provided
+      clz := MyClass.create();  // EXPECT_ERROR
+                            ~                  
+  54:10: expected value of type 'integer', got 'float'
+        x := 1.0,  // EXPECT_ERROR
+             ~~~                  
+  55:10: expected value of type 'float', got 'integer'
+        y := 2     // EXPECT_ERROR
+             ~                    
+  57:15: 2 arguments expected, 0 provided
+      clz.memberf();  // EXPECT_ERROR
+                  ~                  
+  59:7: property 'non_existent_member_func' does not exist on type 'class MyClass'
+      clz.non_existent_member_func(1, 2);  // EXPECT_ERROR
+          ~~~~~~~~~~~~~~~~~~~~~~~~                        
+  61:7: property 'this' does not exist on type 'class MyClass'
+      clz.this;  // EXPECT_ERROR
+          ~~~~                  
+  96:13: expected value of type 'float', got 'integer'
+      clz.nafun(1);  // EXPECT_ERROR
+                ~                   
+  97:12: expected value of type 'float', got 'integer'
+      clz.afun(1);   // EXPECT_ERROR
+               ~                    

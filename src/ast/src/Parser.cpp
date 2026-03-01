@@ -1114,6 +1114,9 @@ nodes::FuncDecl* Parser::ParseFuncDecl() {
   return NewNode<nodes::FuncDecl>([&](auto& d) {
     d.kind = Consume();
     if (tok_ == TokenKind::MODIF) {
+      if (Lit(1) != "@abstract") {
+        EmitErrorExpected("@abstract");
+      }
       d.modif = TokAlloc(Consume());
     }
     ParseName(d.name);
@@ -1139,11 +1142,12 @@ nodes::FuncDecl* Parser::ParseFuncDecl() {
     }
     if (tok_ == TokenKind::LBRACE) [[likely]] {
       d.body = ParseBlockStmt();
-      if (ext_state_.is_inside_external_scope) [[unlikely]] {
+      // TODO: more precise body requirement checks, require to be in a class to allow the @abstract modifier
+      if (ext_state_.is_inside_external_scope || d.modif) [[unlikely]] {
         EmitError(d.body->nrange, "external function cannot have a body");
       }
     } else [[unlikely]] {
-      if (!ext_state_.is_inside_external_scope) [[likely]] {
+      if (!ext_state_.is_inside_external_scope && !d.modif) [[likely]] {
         EmitErrorExpected("function body");
       }
     }
