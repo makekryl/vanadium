@@ -35,6 +35,9 @@ function f() {
     case (false) { }  // EXPECT_ERROR
     case else { }
   }
+
+  select union (u.ra) { }  // EXPECT_ERROR
+  select union (u.i) { }  // EXPECT_ERROR
 }
 
 }

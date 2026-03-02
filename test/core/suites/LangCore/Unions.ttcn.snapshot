@@ -21,3 +21,9 @@
   35:11: property 'false' does not exist on type 'union MyUnion'
         case (false) { }  // EXPECT_ERROR
               ~~~~~                      
+  39:17: union type expected
+      select union (u.ra) { }  // EXPECT_ERROR
+                    ~~~~                      
+  40:17: union type expected
+      select union (u.i) { }  // EXPECT_ERROR
+                    ~~~                      
