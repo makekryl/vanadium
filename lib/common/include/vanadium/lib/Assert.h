@@ -18,6 +18,6 @@
   } while (0);
 
 #else
-#define VANADIUM_DEBUG_ERROR()
-#define VANADIUM_DEBUG_ASSERT()
+#define VANADIUM_DEBUG_ERROR(...)
+#define VANADIUM_DEBUG_ASSERT(...)
 #endif
