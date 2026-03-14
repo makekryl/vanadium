@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <string_view>
+#include <variant>
 
 #include <llvm-19/llvm/IR/Value.h>
 #include <llvm/IR/DerivedTypes.h>
@@ -12,6 +13,8 @@
 namespace vanadium::compiler {
 class RuntimeBindings {
  public:
+  using NativeIntType = std::int64_t;
+
   RuntimeBindings(llvm::LLVMContext&, llvm::Module&);
   //
 
@@ -41,7 +44,7 @@ class RuntimeBindings {
   llvm::StructType* int_ty;
   //
   llvm::Value* int_undef;
-  [[nodiscard]] llvm::Value* GetInt(std::int64_t) const;
+  [[nodiscard]] llvm::Value* GetInt(std::variant<NativeIntType, std::string_view>) const;
   //
   llvm::Function* int_eq_f;
   llvm::Function* int_ne_f;

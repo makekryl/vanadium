@@ -1,5 +1,8 @@
 #include "vanadium/compiler/RuntimeBindings.h"
 
+#include <utility>
+#include <variant>
+
 #include <llvm-19/llvm/IR/Attributes.h>
 #include <llvm/IR/BasicBlock.h>
 #include <llvm/IR/Constants.h>
@@ -197,12 +200,16 @@ RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ct
                                                               });
 }
 
-llvm::Value* RuntimeBindings::GetInt(std::int64_t value) const {
-  return llvm::ConstantStruct::get(int_ty, {
-                                               llvm::ConstantInt::get(llvm::Type::getInt64Ty(ctx_), value, true),
-                                               llvm::ConstantInt::getTrue(ctx_),   // is_bound = true
-                                               llvm::ConstantInt::getFalse(ctx_),  // is_big = false
-                                           });
+llvm::Value* RuntimeBindings::GetInt(std::variant<NativeIntType, std::string_view> value) const {
+  if (const auto* v = std::get_if<NativeIntType>(&value)) {
+    return llvm::ConstantStruct::get(int_ty, {
+                                                 llvm::ConstantInt::get(llvm::Type::getInt64Ty(ctx_), *v, true),
+                                                 llvm::ConstantInt::getTrue(ctx_),   // is_bound = true
+                                                 llvm::ConstantInt::getFalse(ctx_),  // is_big = false
+                                             });
+  }
+  // TODO: big ints -- call something like vrt_int_from_str()
+  std::unreachable();
 }
 
 [[nodiscard]] llvm::Value* RuntimeBindings::GetCharstring(std::string_view value) const {
