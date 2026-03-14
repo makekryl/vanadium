@@ -111,6 +111,7 @@ Following is required to build the project:
 - `clang >= 19` or `gcc >= 14`
 - `python >= 3.11` for AST stuff generation
 - `flex` and `bison` to generate ASN.1 parser
+- `llvm >= 19` to build compiler
 
 Optionally, you may need:
 
