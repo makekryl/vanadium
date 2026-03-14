@@ -7,3 +7,5 @@ add_subdirectory(tooling)
 add_subdirectory(format)
 add_subdirectory(lint)
 add_subdirectory(ls)
+
+add_subdirectory(compiler)

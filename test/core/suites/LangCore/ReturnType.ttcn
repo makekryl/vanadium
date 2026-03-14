@@ -13,17 +13,51 @@ function templateRestrictionMismatch() return integer {
   return i;  // EXPECT_ERROR
 }
 
-function missingReturnStatement() return integer {  // WIP:EXPECT_ERROR
+function ifStmt_noAlternate() return integer {
+  var integer i, j;
+  if (i == 1) {
+    return i;
+  }
+  return j;
+}
+
+function ifStmt_alternate() return integer {
+  var integer i, j;
+  if (i == 1) {
+    return i;
+  } else {
+    return j;
+  }
+}
+
+function selectStmt() return integer {
+  var integer i, j;
+  select (i) {
+    case (1) { }
+    case (2) { }
+  }
+  return j;
+}
+
+function selectStmt_defaultClause() return integer {
+  var integer i, j;
+  select (i) {
+    case (1) { return i; }
+    case else { return j; }
+  }
+}
+
+function missingReturnStatement() return integer {  // EXPECT_ERROR
 
 }
 
-function missingReturnStatementInABranch_1() return integer {  // WIP:EXPECT_ERROR
+function missingReturnStatementInABranch_1() return integer {  // EXPECT_ERROR
   var boolean condition;
   if (condition) {
     return 1;
   }
 }
-function missingReturnStatementInABranch_2() return integer {  // WIP:EXPECT_ERROR
+function missingReturnStatementInABranch_2() return integer {  // EXPECT_ERROR
   var boolean condition;
   if (condition) {
     return 1;
@@ -31,7 +65,7 @@ function missingReturnStatementInABranch_2() return integer {  // WIP:EXPECT_ERR
 
   }
 }
-function missingReturnStatementInABranch_3() return integer {  // WIP:EXPECT_ERROR
+function missingReturnStatementInABranch_3() return integer {  // EXPECT_ERROR
   var boolean condition, condition2, condition3;
   if (condition) {
     return 1;
@@ -42,6 +76,13 @@ function missingReturnStatementInABranch_3() return integer {  // WIP:EXPECT_ERR
       }
       return 2
     }
+  }
+}
+function missingReturnStatement_selectStmt() return integer {  // EXPECT_ERROR
+  var integer i, j;
+  select (i) {
+    case (1) { return j; }
+    case (2) { return j; }
   }
 }
 

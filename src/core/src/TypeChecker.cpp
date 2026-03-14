@@ -879,6 +879,40 @@ const semantic::Symbol* ResolveStructTypeDeclSymbol(const SourceFile* file, cons
   }
   return file->module->scope->ResolveDirect(file->Text(*decl->name));
 }
+
+const semantic::Symbol* DeduceValueLiteralType(const ast::nodes::ValueLiteral* n) {
+  switch (n->tok.kind) {
+    case ast::TokenKind::TRUE:
+    case ast::TokenKind::FALSE:
+      return &builtins::kBoolean;
+    case ast::TokenKind::INT:
+      return &builtins::kInteger;
+    case ast::TokenKind::FLOAT:
+      return &builtins::kFloat;
+    case ast::TokenKind::BITSTRING:
+      return &builtins::kBitstring;
+    case ast::TokenKind::HEXSTRING:
+      return &builtins::kHexstring;
+    case ast::TokenKind::OCTETSTRING:
+      return &builtins::kOctetstring;
+    case ast::TokenKind::STRING:
+      return &builtins::kCharstring;
+    case ast::TokenKind::PASS:
+    case ast::TokenKind::FAIL:
+    case ast::TokenKind::INCONC:
+      return &builtins::kVerdictType;
+    case ast::TokenKind::MUL:
+      return &symbols::kTemplateWildcardType;
+    case ast::TokenKind::ANY:
+      return &symbols::kTemplateOptionalType;
+    case ast::TokenKind::OMIT:
+      return &symbols::kTemplateOmitType;
+    case ast::TokenKind::SUB:
+      return &symbols::kTemplateNotUsedType;
+    default:
+      return nullptr;
+  }
+}
 }  // namespace
 
 const semantic::Symbol* ResolveTypeSpecSymbol(const SourceFile* file, const ast::nodes::TypeSpec* spec) {
@@ -966,6 +1000,19 @@ InstantiatedType ResolveExprSymbol(const SourceFile* file, const semantic::Scope
     case ast::NodeKind::IndexExpr: {
       const auto* m = expr->As<ast::nodes::IndexExpr>();
       return detail::ResolveIndexExprType(file, scope, m);
+    }
+    case ast::NodeKind::BinaryExpr: {
+      const auto* m = expr->As<ast::nodes::BinaryExpr>();
+      // TODO: they are some special cases IIRC (colon operator at least), recheck
+      return ResolveExprSymbol(file, scope, m->x);
+    }
+    case ast::NodeKind::UnaryExpr: {
+      const auto* m = expr->As<ast::nodes::UnaryExpr>();
+      return ResolveExprSymbol(file, scope, m->x);
+    }
+    case ast::NodeKind::ValueLiteral: {
+      const auto* m = expr->As<ast::nodes::ValueLiteral>();
+      return {.sym = DeduceValueLiteralType(m)};
     }
     default: {
       return {.sym = TryResolveExprSymbolViaHierarchy(file, scope, expr)};
@@ -1910,39 +1957,7 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, InstantiatedTyp
     case ast::NodeKind::ValueLiteral: {
       const auto* m = n->As<ast::nodes::ValueLiteral>();
       resulting_type.is_instance = true;
-      resulting_type = [](ast::TokenKind kind) -> const semantic::Symbol* {
-        switch (kind) {
-          case ast::TokenKind::TRUE:
-          case ast::TokenKind::FALSE:
-            return &builtins::kBoolean;
-          case ast::TokenKind::INT:
-            return &builtins::kInteger;
-          case ast::TokenKind::FLOAT:
-            return &builtins::kFloat;
-          case ast::TokenKind::BITSTRING:
-            return &builtins::kBitstring;
-          case ast::TokenKind::HEXSTRING:
-            return &builtins::kHexstring;
-          case ast::TokenKind::OCTETSTRING:
-            return &builtins::kOctetstring;
-          case ast::TokenKind::STRING:
-            return &builtins::kCharstring;
-          case ast::TokenKind::PASS:
-          case ast::TokenKind::FAIL:
-          case ast::TokenKind::INCONC:
-            return &builtins::kVerdictType;
-          case ast::TokenKind::MUL:
-            return &symbols::kTemplateWildcardType;
-          case ast::TokenKind::ANY:
-            return &symbols::kTemplateOptionalType;
-          case ast::TokenKind::OMIT:
-            return &symbols::kTemplateOmitType;
-          case ast::TokenKind::SUB:
-            return &symbols::kTemplateNotUsedType;
-          default:
-            return nullptr;
-        }
-      }(m->tok.kind);
+      resulting_type = DeduceValueLiteralType(m);
       break;
     }
 
@@ -2051,6 +2066,48 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
       return false;
     }
 
+    case ast::NodeKind::FuncDecl: {
+      const auto* m = n->As<ast::nodes::FuncDecl>();
+      if (m->ret) {
+        const auto all_paths_return = [](this auto&& self, const ast::nodes::Stmt* stmt) -> bool {
+          switch (stmt->nkind) {
+            case ast::NodeKind::ReturnStmt:
+              return true;
+            case ast::NodeKind::BlockStmt: {
+              const auto* sm = stmt->As<ast::nodes::BlockStmt>();
+              return !sm->stmts.empty() && self(sm->stmts.back());
+            }
+            case ast::NodeKind::IfStmt: {
+              const auto* sm = stmt->As<ast::nodes::IfStmt>();
+              return sm->alternate && self(sm->consequent) && self(sm->alternate);
+            }
+            case ast::NodeKind::SelectStmt: {
+              const auto* sm = stmt->As<ast::nodes::SelectStmt>();
+              bool has_default{false};
+              for (const auto* clause : sm->clauses) {
+                if (!self(clause->body)) {
+                  return false;
+                }
+                if (clause->cond.empty()) {
+                  has_default = true;
+                }
+              }
+              return has_default;
+            }
+            default:
+              return false;
+          }
+        };
+        if (!all_paths_return(m->body)) {
+          EmitError(TypeError{
+              .range = m->ret->nrange,
+              .message = "not all control paths return a value",
+          });
+        }
+      }
+      return true;
+    }
+
     case ast::NodeKind::ReturnStmt: {
       const auto* m = n->As<ast::nodes::ReturnStmt>();
 
@@ -2058,6 +2115,7 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
 
       if (!fdecl) {
         // TODO: maybe do something with it - we somehow have return outside of a function! (really?)
+        //       ^ this should be a syntax error if it not already is
         break;
       }
 

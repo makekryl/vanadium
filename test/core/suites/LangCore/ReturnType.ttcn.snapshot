@@ -8,3 +8,18 @@
   13:10: expected value, got template
       return i;  // EXPECT_ERROR
              ~                  
+  50:35: not all control paths return a value
+    function missingReturnStatement() return integer {  // EXPECT_ERROR
+                                      ~~~~~~~~~~~~~~                   
+  54:46: not all control paths return a value
+    function missingReturnStatementInABranch_1() return integer {  // EXPECT_ERROR
+                                                 ~~~~~~~~~~~~~~                   
+  60:46: not all control paths return a value
+    function missingReturnStatementInABranch_2() return integer {  // EXPECT_ERROR
+                                                 ~~~~~~~~~~~~~~                   
+  68:46: not all control paths return a value
+    function missingReturnStatementInABranch_3() return integer {  // EXPECT_ERROR
+                                                 ~~~~~~~~~~~~~~                   
+  81:46: not all control paths return a value
+    function missingReturnStatement_selectStmt() return integer {  // EXPECT_ERROR
+                                                 ~~~~~~~~~~~~~~                   

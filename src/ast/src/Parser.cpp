@@ -1807,10 +1807,11 @@ nodes::SelectStmt* Parser::ParseSelect() {
 }
 
 nodes::CaseClause* Parser::ParseCaseClause() {
+  // TODO: multiple "case else" should be a syntax error
   return NewNode<nodes::CaseClause>([&](auto& c) {
     Expect(TokenKind::CASE);
     if (tok_ == TokenKind::ELSE) {
-      Consume();
+      Consume();  // TODO: add a special mark?
     } else {
       Expect(TokenKind::LPAREN);
       c.cond = ParseExprList();

@@ -1,0 +1,20 @@
+add_library(vanadium_rt STATIC
+  src/runtime.cpp
+  src/rt_reflect.cpp
+  src/rt_integer.cpp
+  src/rt_charstring.cpp
+  src/rt_optional.cpp
+  src/Entrypoint.cpp
+)
+
+target_include_directories(vanadium_rt PUBLIC
+  interface
+)
+target_include_directories(vanadium_rt PRIVATE
+  include
+)
+
+# target_link_libraries(vanadium_rt PUBLIC
+# )
+
+add_gtest_executable(vanadium_rt)
