@@ -3,6 +3,8 @@
 #include <string_view>
 #include <variant>
 
+#include <llvm/IR/DerivedTypes.h>
+#include <llvm/IR/Function.h>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
@@ -57,11 +59,18 @@ struct CodegenContext {
 
   //
 
+  llvm::Function* GetFunction(const core::semantic::Symbol*);
+
+  //
+
   std::variant<RuntimeBindings::NativeIntType, std::string_view> ParseInt(const ast::nodes::ValueLiteral*);
   std::string_view ParseCharstring(const ast::nodes::ValueLiteral*);
 };
 
+inline constexpr std::string_view kVarargsAttr = "vrt-varargs";
+
 namespace names {
+std::string Func(const core::semantic::Symbol*);
 std::string Ctor(const core::semantic::Symbol*);
 std::string Dtor(const core::semantic::Symbol*);
 std::string Getter(const core::semantic::Symbol* holder, std::string_view member);
@@ -71,8 +80,7 @@ std::string TInfo(const core::semantic::Symbol*);
 namespace values {}
 
 void CodegenType(CodegenContext&, const core::semantic::Symbol*);
-void CodegenFunction(CodegenContext&, const ast::nodes::FuncDecl*);
-void CodegenFunction(CodegenContext&, const ast::nodes::ControlPart*);
+void CodegenFunction(CodegenContext&, const core::semantic::Symbol*);
 
 void GenerateModuleRegistrationCode(CodegenContext&);
 

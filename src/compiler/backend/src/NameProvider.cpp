@@ -4,6 +4,7 @@
 
 #include "vanadium/ast/utils/ASTUtils.h"
 #include "vanadium/compiler/Codegen.h"
+#include "vanadium/core/Semantic.h"
 
 namespace vanadium::compiler::names {
 
@@ -18,6 +19,14 @@ std::string SymName(const core::semantic::Symbol* sym) {
   return std::format("{}_{}", sf->Text(*modnode->name), sym->GetName());
 }
 }  // namespace
+
+std::string Func(const core::semantic::Symbol* sym) {
+  if (sym->Flags() & core::semantic::SymbolFlags::kBuiltin && sym->GetName() == "log") {
+    // TODO: generify
+    return "vrt_log";
+  }
+  return SymName(sym);
+}
 
 std::string Ctor(const core::semantic::Symbol* sym) {
   return std::format("{}_ctor", SymName(sym));

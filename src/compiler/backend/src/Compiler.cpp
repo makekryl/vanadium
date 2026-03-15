@@ -49,19 +49,11 @@ class Codegen {
   }
 
   void CodegenFunctions() {
-    for (const auto* def : ctx_.sf.ast.root->nodes.front()->As<ast::nodes::Module>()->defs) {
-      const auto* n = def->def;
-      switch (n->nkind) {
-        case ast::NodeKind::FuncDecl:
-          CodegenFunction(ctx_, n->As<ast::nodes::FuncDecl>());
-          break;
-        case ast::NodeKind::ControlPart: {
-          CodegenFunction(ctx_, n->As<ast::nodes::ControlPart>());
-          break;
-        }
-        default:
-          break;
+    for (const auto& sym : ctx_.sf.module->scope->symbols.Enumerate() | std::views::values) {
+      if (!(sym.Flags() & core::semantic::SymbolFlags::kFunction)) {
+        continue;
       }
+      CodegenFunction(ctx_, &sym);
     }
   }
 

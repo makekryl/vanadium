@@ -32,8 +32,6 @@ class RuntimeBindings {
 
   llvm::StructType* generic_val_ty;
 
-  llvm::Function* log_f;
-
   llvm::StructType* optional_ty;
   //
   llvm::Function* optional_get_f;

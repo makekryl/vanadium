@@ -1,4 +1,5 @@
 #include <optional>
+#include <print>
 
 #include <magic_enum/magic_enum.hpp>
 
@@ -8,7 +9,9 @@
 #include <llvm/IR/Module.h>
 
 #include <vanadium/ast/ASTNodes.h>
+#include <vanadium/ast/utils/ASTUtils.h>
 #include <vanadium/core/Program.h>
+#include <vanadium/core/Semantic.h>
 #include <vanadium/core/TypeChecker.h>
 #include <vanadium/core/utils/SemanticUtils.h>
 #include <vanadium/lib/Assert.h>
@@ -75,22 +78,8 @@ class FunctionCodegen {
  public:
   FunctionCodegen(CodegenContext& ctx) : ctx_(ctx) {}
 
-  void Generate(const ast::nodes::FuncDecl* m) {
-    std::vector<llvm::Type*> params;
-    std::vector<core::checker::InstantiatedType> params_syms;
-    params.reserve(m->params->list.size());
-    params_syms.reserve(m->params->list.size());
-    for (const auto* param : m->params->list) {
-      const auto& type =
-          params_syms.emplace_back(core::checker::ResolveExprSymbol(&ctx_.sf, ctx_.sf.module->scope, param->type));
-      params.emplace_back(ctx_.GetSymbolType(type.sym));
-    }
-
-    const auto& ret_sym = core::checker::ResolveCallableReturnType(&ctx_.sf, m);
-    llvm::Type* ret_ty = ctx_.GetSymbolType(ret_sym.sym);
-
-    auto* fn = llvm::Function::Create(llvm::FunctionType::get(ret_ty, params, false), llvm::Function::ExternalLinkage,
-                                      ctx_.sf.Text(*m->name), ctx_.mod);
+  void Generate(const core::semantic::Symbol* sym, const ast::nodes::FuncDecl* m) {
+    auto* fn = ctx_.GetFunction(sym);
     if (m->external) {
       return;
     }
@@ -101,23 +90,33 @@ class FunctionCodegen {
 
     scope_->Push();
     //
-    for (auto [arg, param, type] : std::views::zip(fn->args(), m->params->list, params_syms)) {
-      const auto& name = ctx_.sf.Text(*param->name);
+    for (auto [arg, param] : std::views::zip(fn->args(), m->params->list)) {
+      const auto& isym = core::checker::ResolveExprSymbol(&ctx_.sf, ctx_.sf.module->scope, param->type);
+
+      const auto& name = Lit(param->name);
       arg.setName(name);
-      auto* alloca = scope_->Alloc(ctx_, name, type.sym);
+
+      auto* alloca = scope_->Alloc(ctx_, name, isym.sym);
       ctx_.builder.CreateStore(&arg, alloca);
     }
     CodegenBody(m->body);  // TODO: do not create a new scope there
-    if (ret_sym.sym == &core::checker::symbols::kVoidType) {
+    if (fn->getReturnType() == ctx_.builder.getVoidTy()) {
       ctx_.builder.CreateRetVoid();
     }
     //
     scope_->Pop(ctx_);
   }
 
-  void Generate(const ast::nodes::ControlPart* m) {}
+  void Generate(const core::semantic::Symbol* sym, const ast::nodes::ControlPart* m) {}
 
  private:
+  std::string_view Lit(const std::optional<ast::nodes::Ident>& t) {
+    return ctx_.sf.Text(*t);
+  }
+  std::string_view Lit(const ast::Node* n) {
+    return ctx_.sf.Text(n);
+  }
+
   void CodegenBody(const ast::nodes::BlockStmt* b) {
     scope_->Push();
 
@@ -131,7 +130,7 @@ class FunctionCodegen {
 
           const auto itype = core::checker::ResolveExprType(&ctx_.sf, ctx_.sf.module->scope, m->type);
           for (auto* decl : m->decls) {
-            auto* alloca = scope_->Alloc(ctx_, ctx_.sf.Text(*decl->name), itype.sym);
+            auto* alloca = scope_->Alloc(ctx_, Lit(decl->name), itype.sym);
 
             llvm::Value* init_val;
             if (decl->value) {
@@ -176,7 +175,7 @@ class FunctionCodegen {
       case ast::NodeKind::Ident: {
         const auto* m = expr->As<ast::nodes::Ident>();
 
-        const auto& name = ctx_.sf.Text(m);
+        const auto& name = Lit(m);
         auto* alloca = scope_->Lookup(name)->alloca;
         return ctx_.builder.CreateLoad(alloca->getAllocatedType(), alloca, name);
       }
@@ -189,8 +188,7 @@ class FunctionCodegen {
             core::checker::ResolveExprType(&ctx_.sf, core::semantic::utils::FindScope(ctx_.sf.module->scope, m), m->x)
                 .sym;
         return ctx_.builder.CreateCall(
-            ctx_.getOrDeclareExternalFunc(names::Getter(xsym, ctx_.sf.Text(m->sel)), ctx_.rt.generic_getter_fn_ty),
-            {vx});
+            ctx_.getOrDeclareExternalFunc(names::Getter(xsym, Lit(m->sel)), ctx_.rt.generic_getter_fn_ty), {vx});
       }
 
       case ast::NodeKind::ValueLiteral: {
@@ -248,7 +246,7 @@ class FunctionCodegen {
 
         switch (m->property->nkind) {
           case ast::NodeKind::Ident: {
-            ctx_.builder.CreateStore(vv, scope_->Lookup(ctx_.sf.Text(m->property))->alloca);
+            ctx_.builder.CreateStore(vv, scope_->Lookup(Lit(m->property))->alloca);
             break;
           }
           case ast::NodeKind::SelectorExpr: {
@@ -282,9 +280,13 @@ class FunctionCodegen {
       case ast::NodeKind::CallExpr: {
         const auto* m = expr->As<ast::nodes::CallExpr>();
 
-        // poc, todo: resolve func type, check if arg == kVarargsType
-        if ("log" == ctx_.sf.Text(m->fun)) {
-          std::size_t n = m->args->list.size();
+        const auto* func_sym = core::checker::ResolveExprSymbol(&ctx_.sf, ctx_.sf.module->scope, m->fun).sym;
+        assert(func_sym->Flags() & core::semantic::SymbolFlags::kFunction);
+
+        auto* callee = ctx_.GetFunction(func_sym);
+
+        if (callee->hasFnAttribute(kVarargsAttr)) {
+          const std::size_t n = m->args->list.size();
 
           auto* array_ty = llvm::ArrayType::get(ctx_.rt.generic_val_ty, n);
 
@@ -310,18 +312,17 @@ class FunctionCodegen {
             EmitGenericVal(slot, isym.sym, val_addr);
           }
 
-          auto* res = ctx_.builder.CreateCall(ctx_.rt.log_f, {arr, ctx_.builder.getInt32(n)});
+          auto* res = ctx_.builder.CreateCall(callee, {arr, ctx_.builder.getInt32(n)});
           ctx_.builder.CreateLifetimeEnd(arr);
           return res;
         }
 
-        auto* callee = ctx_.mod.getFunction(ctx_.sf.Text(m->fun));
         std::vector<llvm::Value*> args;
+        args.reserve(m->args->list.size());
         for (const auto* argnode : m->args->list) {
-          args.push_back(CodegenExpr(argnode));
-          if (!args.back()) {
-            std::println("argnode unk '{}'", ctx_.sf.Text(argnode));
-          }
+          auto* av = CodegenExpr(argnode);
+          args.push_back(av);
+          VANADIUM_DEBUG_ASSERT(av != nullptr, "Unknown argument expr type: {}", magic_enum::enum_name(argnode->nkind))
         }
 
         return ctx_.builder.CreateCall(callee, args);
@@ -333,25 +334,6 @@ class FunctionCodegen {
       }
     }
     return nullptr;
-  }
-
-  llvm::Value* CodegenSelectorExpr(const ast::nodes::SelectorExpr* se) {
-    llvm::Value* xval;
-    if (se->x->nkind == ast::NodeKind::SelectorExpr) {
-      xval = CodegenSelectorExpr(se->x->As<ast::nodes::SelectorExpr>());
-    } else {
-      const auto& name = ctx_.sf.Text(se->x);
-      auto* alloca = scope_->Lookup(name)->alloca;
-      xval = ctx_.builder.CreateLoad(alloca->getAllocatedType(), alloca, name);
-    }
-
-    // TODO: this is VERY inefficient TypeChecker usage
-    const auto* xsym =
-        core::checker::ResolveExprType(&ctx_.sf, core::semantic::utils::FindScope(ctx_.sf.module->scope, se), se->x)
-            .sym;
-    return ctx_.builder.CreateCall(
-        ctx_.getOrDeclareExternalFunc(names::Getter(xsym, ctx_.sf.Text(se->sel)), ctx_.rt.generic_getter_fn_ty),
-        {xval});
   }
 
   void EmitGenericVal(llvm::Value* slot, const core::semantic::Symbol* sym, llvm::Value* v) {
@@ -369,11 +351,20 @@ class FunctionCodegen {
 };
 }  // namespace
 
-void CodegenFunction(CodegenContext& ctx, const ast::nodes::FuncDecl* m) {
-  FunctionCodegen(ctx).Generate(m);
-}
-void CodegenFunction(CodegenContext& ctx, const ast::nodes::ControlPart* m) {
-  FunctionCodegen(ctx).Generate(m);
+void CodegenFunction(CodegenContext& ctx, const core::semantic::Symbol* sym) {
+  assert(sym->Flags() & core::semantic::SymbolFlags::kFunction);
+  const auto* n = sym->Declaration();
+  switch (n->nkind) {
+    case ast::NodeKind::FuncDecl:
+      FunctionCodegen(ctx).Generate(sym, n->As<ast::nodes::FuncDecl>());
+      break;
+    case ast::NodeKind::ControlPart:
+      FunctionCodegen(ctx).Generate(sym, n->As<ast::nodes::ControlPart>());
+      break;
+    default:
+      VANADIUM_DEBUG_ERROR("Unhandled node: {}", magic_enum::enum_name(n->nkind));
+      break;
+  }
 }
 
 }  // namespace vanadium::compiler

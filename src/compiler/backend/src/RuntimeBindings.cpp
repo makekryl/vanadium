@@ -119,16 +119,6 @@ RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ct
       builder.getPtrTy()   // const vrt_typeinfo_t* ty
   });
 
-  log_f = llvm::Function::Create(llvm::FunctionType::get(builder.getVoidTy(),
-                                                         {
-                                                             builder.getPtrTy(),    // const vrt_val_t* args
-                                                             builder.getInt64Ty(),  // std::size_t n
-                                                         },
-                                                         false),
-                                 llvm::GlobalValue::ExternalLinkage, "vrt_log", mod);
-  log_f->addParamAttr(0, llvm::Attribute::NoCapture);
-  log_f->addParamAttr(0, llvm::Attribute::ReadOnly);
-
   optional_ty = llvm::StructType::create(ctx, "vrt_optional_t");
   optional_ty->setBody({
       builder.getPtrTy(),   // void* value

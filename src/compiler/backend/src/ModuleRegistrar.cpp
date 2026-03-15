@@ -10,6 +10,7 @@
 
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/core/Program.h>
+#include <vanadium/core/TypeChecker.h>
 #include <vanadium/lib/Metaprogramming.h>
 
 #include "vanadium/compiler/Codegen.h"
@@ -48,16 +49,16 @@ void GenerateModuleRegistrationCode(CodegenContext& ctx) {
   std::vector<llvm::Constant*> testcase_constants;
 
   ForEachTestcase(ctx.sf, [&](const ast::nodes::FuncDecl* f) {
+    const auto* sym = core::checker::ResolveExprSymbol(&ctx.sf, ctx.sf.module->scope, &(*f->name)).sym;
     testcase_constants.emplace_back(llvm::ConstantExpr::getBitCast(
         new llvm::GlobalVariable(
             ctx.mod, testcase_ty, true, llvm::GlobalValue::PrivateLinkage,
-            llvm::ConstantStruct::get(
-                testcase_ty,
-                {
-                    ctx.builder.CreateGlobalStringPtr(ctx.sf.Text(*f->name)),
-                    llvm::ConstantExpr::getBitCast(ctx.mod.getFunction(ctx.sf.Text(*f->name)), ctx.builder.getPtrTy()),
-                    ctx.builder.getInt1(!f->params->list.empty()),
-                })),
+            llvm::ConstantStruct::get(testcase_ty,
+                                      {
+                                          ctx.builder.CreateGlobalStringPtr(ctx.sf.Text(*f->name)),
+                                          llvm::ConstantExpr::getBitCast(ctx.GetFunction(sym), ctx.builder.getPtrTy()),
+                                          ctx.builder.getInt1(!f->params->list.empty()),
+                                      })),
         ctx.builder.getPtrTy()));
   });
   testcase_constants.emplace_back(llvm::ConstantPointerNull::get(ctx.builder.getPtrTy()));
