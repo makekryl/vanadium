@@ -10,7 +10,7 @@
 
 namespace vanadium::compiler {
 
-llvm::Type* CodegenContext::GetSymbolType(const core::semantic::Symbol* sym) {
+llvm::Type* CodegenUnit::GetSymbolType(const core::semantic::Symbol* sym) {
   assert(sym->Flags() & core::semantic::SymbolFlags::kType);
   if (sym->Flags() & core::semantic::SymbolFlags::kBuiltin) {
     if (sym == &core::builtins::kInteger) {
@@ -27,7 +27,7 @@ llvm::Type* CodegenContext::GetSymbolType(const core::semantic::Symbol* sym) {
   return builder.getPtrTy();
 }
 
-llvm::Value* CodegenContext::GetUndef(const core::semantic::Symbol* sym) {
+llvm::Value* CodegenUnit::GetUndef(const core::semantic::Symbol* sym) {
   assert(sym->Flags() & core::semantic::SymbolFlags::kType);
   if (!(sym->Flags() & core::semantic::SymbolFlags::kBuiltin)) {
     return llvm::ConstantPointerNull::get(builder.getPtrTy());
@@ -43,7 +43,7 @@ llvm::Value* CodegenContext::GetUndef(const core::semantic::Symbol* sym) {
   return nullptr;
 }
 
-llvm::Function* CodegenContext::GetFunction(const core::semantic::Symbol* sym) {
+llvm::Function* CodegenUnit::GetFunction(const core::semantic::Symbol* sym) {
   const auto* m = sym->Declaration()->As<ast::nodes::FuncDecl>();
 
   const bool is_variadic = [&] -> bool {
@@ -100,7 +100,7 @@ llvm::Function* CodegenContext::GetFunction(const core::semantic::Symbol* sym) {
   return fn;
 }
 
-std::variant<RuntimeBindings::NativeIntType, std::string_view> CodegenContext::ParseInt(
+std::variant<RuntimeBindings::NativeIntType, std::string_view> CodegenUnit::ParseInt(
     const ast::nodes::ValueLiteral* m) {
   const auto& s = sf.Text(m);
 
@@ -111,7 +111,7 @@ std::variant<RuntimeBindings::NativeIntType, std::string_view> CodegenContext::P
   return result;
 }
 
-std::string_view CodegenContext::ParseCharstring(const ast::nodes::ValueLiteral* m) {
+std::string_view CodegenUnit::ParseCharstring(const ast::nodes::ValueLiteral* m) {
   auto s = sf.Text(m);
   s.remove_prefix(1);
   s.remove_suffix(1);

@@ -25,41 +25,41 @@ namespace {
 
 class Codegen {
  public:
-  Codegen(const core::SourceFile& sf) : ctx_(sf) {}
+  Codegen(const core::SourceFile& sf) : u_(sf) {}
 
   void Gen() {
     CodegenTypes();
     CodegenFunctions();
 
-    GenerateModuleRegistrationCode(ctx_);
+    GenerateModuleRegistrationCode(u_);
 
     std::error_code ec;
-    llvm::raw_fd_ostream dest(std::format("{}.ll", ctx_.sf.path), ec);
-    ctx_.mod.print(dest, nullptr);
+    llvm::raw_fd_ostream dest(std::format("{}.ll", u_.sf.path), ec);
+    u_.mod.print(dest, nullptr);
   }
 
  private:
   void CodegenTypes() {
-    for (const auto& sym : ctx_.sf.module->scope->symbols.Enumerate() | std::views::values) {
+    for (const auto& sym : u_.sf.module->scope->symbols.Enumerate() | std::views::values) {
       if (!(sym.Flags() & core::semantic::SymbolFlags::kType)) {
         continue;
       }
-      CodegenType(ctx_, &sym);
+      CodegenType(u_, &sym);
     }
   }
 
   void CodegenFunctions() {
-    for (const auto& sym : ctx_.sf.module->scope->symbols.Enumerate() | std::views::values) {
+    for (const auto& sym : u_.sf.module->scope->symbols.Enumerate() | std::views::values) {
       if (!(sym.Flags() & core::semantic::SymbolFlags::kFunction)) {
         continue;
       }
-      CodegenFunction(ctx_, &sym);
+      CodegenFunction(u_, &sym);
     }
   }
 
   //
 
-  CodegenContext ctx_;
+  CodegenUnit u_;
 };
 
 }  // namespace

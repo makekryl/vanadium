@@ -19,13 +19,13 @@ namespace vanadium::compiler {
 
 namespace {
 
-llvm::Function* CodegenStructGetter(CodegenContext& ctx, llvm::StructType* sty, std::size_t idx,
+llvm::Function* CodegenStructGetter(CodegenUnit& ctx, llvm::StructType* sty, std::size_t idx,
                                     const core::semantic::Symbol* struct_sym, const core::semantic::Symbol* member_sym,
                                     std::string_view member_name) {
   auto* m_getter_fn = ctx.declareExternalFunc(names::Getter(struct_sym, member_name), ctx.rt.generic_getter_fn_ty);
   auto* p_arg = m_getter_fn->arg_begin();
 
-  auto* bb_entry = llvm::BasicBlock::Create(ctx.llvm_ctx, "", m_getter_fn);
+  auto* bb_entry = llvm::BasicBlock::Create(ctx.ctx, "", m_getter_fn);
   ctx.builder.SetInsertPoint(bb_entry);
 
   if (member_sym->Flags() & core::semantic::SymbolFlags::kBuiltin) {
@@ -36,8 +36,8 @@ llvm::Function* CodegenStructGetter(CodegenContext& ctx, llvm::StructType* sty, 
   llvm::Value* m_ptr = ctx.builder.CreateStructGEP(sty, p_arg, 0, "m_ptr");
   llvm::Value* m_val = ctx.builder.CreateLoad(ctx.builder.getPtrTy(), m_ptr, "m_val");
 
-  auto* bb_init = llvm::BasicBlock::Create(ctx.llvm_ctx, "init", m_getter_fn);
-  auto* bb_merge = llvm::BasicBlock::Create(ctx.llvm_ctx, "merge", m_getter_fn);
+  auto* bb_init = llvm::BasicBlock::Create(ctx.ctx, "init", m_getter_fn);
+  auto* bb_merge = llvm::BasicBlock::Create(ctx.ctx, "merge", m_getter_fn);
 
   ctx.builder.CreateCondBr(ctx.builder.CreateIsNull(m_val), bb_init, bb_merge);
 
@@ -60,69 +60,68 @@ llvm::Function* CodegenStructGetter(CodegenContext& ctx, llvm::StructType* sty, 
   return m_getter_fn;
 }
 
-void CodegenStruct(CodegenContext& ctx, const core::semantic::Symbol* sym, const ast::nodes::StructTypeDecl* m) {
-  auto* ty = llvm::StructType::create(ctx.llvm_ctx, ctx.sf.Text(*m->name));
+void CodegenStruct(CodegenUnit& u, const core::semantic::Symbol* sym, const ast::nodes::StructTypeDecl* m) {
+  auto* ty = llvm::StructType::create(u.ctx, u.sf.Text(*m->name));
 
   std::vector<llvm::Type*> body;
   body.reserve(m->fields.size());
   for (const auto& [idx, f] : m->fields | std::views::enumerate) {
-    const auto& fsym = ctx.sf.module->scope->Resolve(ctx.sf.Text(f->type));
-    body.push_back(ctx.GetSymbolType(fsym));
+    const auto& fsym = u.sf.module->scope->Resolve(u.sf.Text(f->type));
+    body.push_back(u.GetSymbolType(fsym));
   }
   ty->setBody(body);
-  const auto& ty_bytes = ctx.mod.getDataLayout().getTypeAllocSize(ty);
+  const auto& ty_bytes = u.mod.getDataLayout().getTypeAllocSize(ty);
 
-  llvm::IRBuilder<> fn_ctor_builder(ctx.llvm_ctx);
-  auto* fn_ctor = ctx.getOrDeclareExternalFunc(names::Ctor(sym), ctx.rt.type_ctor_fn_ty);
-  fn_ctor_builder.SetInsertPoint(llvm::BasicBlock::Create(ctx.llvm_ctx, "", fn_ctor));
+  llvm::IRBuilder<> fn_ctor_builder(u.ctx);
+  auto* fn_ctor = u.getOrDeclareExternalFunc(names::Ctor(sym), u.rt.type_ctor_fn_ty);
+  fn_ctor_builder.SetInsertPoint(llvm::BasicBlock::Create(u.ctx, "", fn_ctor));
   //
-  llvm::IRBuilder<> fn_dtor_builder(ctx.llvm_ctx);
-  auto* fn_dtor = ctx.getOrDeclareExternalFunc(names::Dtor(sym), ctx.rt.type_dtor_fn_ty);
-  fn_dtor_builder.SetInsertPoint(llvm::BasicBlock::Create(ctx.llvm_ctx, "", fn_dtor));
+  llvm::IRBuilder<> fn_dtor_builder(u.ctx);
+  auto* fn_dtor = u.getOrDeclareExternalFunc(names::Dtor(sym), u.rt.type_dtor_fn_ty);
+  fn_dtor_builder.SetInsertPoint(llvm::BasicBlock::Create(u.ctx, "", fn_dtor));
   auto* fn_dtor_arg = fn_dtor->arg_begin();
   for (const auto& [idx, f] : m->fields | std::views::enumerate) {
-    const auto& fsym = ctx.sf.module->scope->Resolve(ctx.sf.Text(f->type));
+    const auto& fsym = u.sf.module->scope->Resolve(u.sf.Text(f->type));
 
-    CodegenStructGetter(ctx, ty, idx, sym, fsym, ctx.sf.Text(*f->name));
+    CodegenStructGetter(u, ty, idx, sym, fsym, u.sf.Text(*f->name));
 
     if (f->optional) {
-      fn_dtor_builder.CreateCall(ctx.rt.optional_dtor_f, {
-                                                             fn_dtor_builder.CreateStructGEP(ty, fn_dtor_arg, idx),
-                                                         });
+      fn_dtor_builder.CreateCall(u.rt.optional_dtor_f, {
+                                                           fn_dtor_builder.CreateStructGEP(ty, fn_dtor_arg, idx),
+                                                       });
     } else if (!(fsym->Flags() & core::semantic::SymbolFlags::kBuiltin)) {
-      fn_dtor_builder.CreateCall(ctx.mod.getOrInsertFunction(names::Dtor(fsym), ctx.rt.type_dtor_fn_ty),
+      fn_dtor_builder.CreateCall(u.mod.getOrInsertFunction(names::Dtor(fsym), u.rt.type_dtor_fn_ty),
                                  {
                                      fn_dtor_builder.CreateStructGEP(ty, fn_dtor_arg, idx),
                                  });
     }
   }
-  fn_ctor_builder.CreateMemSet(fn_ctor->arg_begin(), ctx.builder.getInt8(0),
-                               ctx.builder.getInt64(ty_bytes.getFixedValue()),
-                               llvm::MaybeAlign(ctx.mod.getDataLayout().getPrefTypeAlign(ty)));
+  fn_ctor_builder.CreateMemSet(fn_ctor->arg_begin(), u.builder.getInt8(0), u.builder.getInt64(ty_bytes.getFixedValue()),
+                               llvm::MaybeAlign(u.mod.getDataLayout().getPrefTypeAlign(ty)));
   fn_ctor_builder.CreateRetVoid();
   //
   fn_dtor_builder.CreateRetVoid();
 
-  ctx.getOrDeclareExternalConst(names::TInfo(sym), ctx.rt.typeinfo_ty)
-      ->setInitializer(llvm::ConstantStruct::get(ctx.rt.typeinfo_ty,
+  u.getOrDeclareExternalConst(names::TInfo(sym), u.rt.typeinfo_ty)
+      ->setInitializer(llvm::ConstantStruct::get(u.rt.typeinfo_ty,
                                                  {
-                                                     ctx.builder.CreateGlobalStringPtr(sym->GetName(), "", 0, &ctx.mod),
-                                                     ctx.builder.getInt8(0),
-                                                     ctx.builder.getInt64(ty_bytes.getFixedValue()),
-                                                     llvm::ConstantPointerNull::get(ctx.builder.getPtrTy()),
-                                                     llvm::ConstantExpr::getBitCast(fn_ctor, ctx.builder.getPtrTy()),
-                                                     llvm::ConstantExpr::getBitCast(fn_dtor, ctx.builder.getPtrTy()),
+                                                     u.builder.CreateGlobalStringPtr(sym->GetName(), "", 0, &u.mod),
+                                                     u.builder.getInt8(0),
+                                                     u.builder.getInt64(ty_bytes.getFixedValue()),
+                                                     llvm::ConstantPointerNull::get(u.builder.getPtrTy()),
+                                                     llvm::ConstantExpr::getBitCast(fn_ctor, u.builder.getPtrTy()),
+                                                     llvm::ConstantExpr::getBitCast(fn_dtor, u.builder.getPtrTy()),
                                                  }));
 }
 
 }  // namespace
 
-void CodegenType(CodegenContext& ctx, const core::semantic::Symbol* sym) {
+void CodegenType(CodegenUnit& u, const core::semantic::Symbol* sym) {
   assert(sym->Flags() & core::semantic::SymbolFlags::kType);
   const auto* n = sym->Declaration();
   switch (n->nkind) {
     case ast::NodeKind::StructTypeDecl:
-      CodegenStruct(ctx, sym, n->As<ast::nodes::StructTypeDecl>());
+      CodegenStruct(u, sym, n->As<ast::nodes::StructTypeDecl>());
       break;
     default:
       VANADIUM_DEBUG_ERROR("Unhandled node: {}", magic_enum::enum_name(n->nkind));

@@ -19,16 +19,16 @@
 
 namespace vanadium::compiler {
 
-struct CodegenContext {
-  CodegenContext(const core::SourceFile& sf_) : sf(sf_) {}
+struct CodegenUnit {
+  CodegenUnit(const core::SourceFile& sf_) : sf(sf_) {}
 
   const core::SourceFile& sf;
 
-  llvm::LLVMContext llvm_ctx;
-  llvm::IRBuilder<> builder{llvm_ctx};
-  llvm::Module mod{sf.module->name, llvm_ctx};
+  llvm::LLVMContext ctx;
+  llvm::IRBuilder<> builder{ctx};
+  llvm::Module mod{sf.module->name, ctx};
 
-  const RuntimeBindings rt{llvm_ctx, mod};
+  const RuntimeBindings rt{ctx, mod};
 
   //
 
@@ -79,9 +79,9 @@ std::string TInfo(const core::semantic::Symbol*);
 
 namespace values {}
 
-void CodegenType(CodegenContext&, const core::semantic::Symbol*);
-void CodegenFunction(CodegenContext&, const core::semantic::Symbol*);
+void CodegenType(CodegenUnit&, const core::semantic::Symbol*);
+void CodegenFunction(CodegenUnit&, const core::semantic::Symbol*);
 
-void GenerateModuleRegistrationCode(CodegenContext&);
+void GenerateModuleRegistrationCode(CodegenUnit&);
 
 }  // namespace vanadium::compiler

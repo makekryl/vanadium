@@ -5,7 +5,7 @@ message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 
 add_library(vanadium_compiler STATIC
   src/Compiler.cpp
-  src/CodegenContext.cpp
+  src/CodegenUnit.cpp
   src/TypeCodegen.cpp
   src/FunctionCodegen.cpp
   src/RuntimeBindings.cpp
