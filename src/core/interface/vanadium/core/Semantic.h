@@ -20,6 +20,7 @@ struct SemanticError {
   ast::Range range;
   enum class Type : std::uint8_t {
     kRedefinition,
+    kNotAllControlPathsReturnAValue,
     kClassCanBeExtendedByClassOnly,
     kCannotHaveAbstractFunctionInNonAbstractClass,
     kFileCanContainOnlyOneModule,

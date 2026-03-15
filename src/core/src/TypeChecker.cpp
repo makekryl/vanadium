@@ -2066,48 +2066,6 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
       return false;
     }
 
-    case ast::NodeKind::FuncDecl: {
-      const auto* m = n->As<ast::nodes::FuncDecl>();
-      if (m->ret) {
-        const auto all_paths_return = [](this auto&& self, const ast::nodes::Stmt* stmt) -> bool {
-          switch (stmt->nkind) {
-            case ast::NodeKind::ReturnStmt:
-              return true;
-            case ast::NodeKind::BlockStmt: {
-              const auto* sm = stmt->As<ast::nodes::BlockStmt>();
-              return !sm->stmts.empty() && self(sm->stmts.back());
-            }
-            case ast::NodeKind::IfStmt: {
-              const auto* sm = stmt->As<ast::nodes::IfStmt>();
-              return sm->alternate && self(sm->consequent) && self(sm->alternate);
-            }
-            case ast::NodeKind::SelectStmt: {
-              const auto* sm = stmt->As<ast::nodes::SelectStmt>();
-              bool has_default{false};
-              for (const auto* clause : sm->clauses) {
-                if (!self(clause->body)) {
-                  return false;
-                }
-                if (clause->cond.empty()) {
-                  has_default = true;
-                }
-              }
-              return has_default;
-            }
-            default:
-              return false;
-          }
-        };
-        if (!all_paths_return(m->body)) {
-          EmitError(TypeError{
-              .range = m->ret->nrange,
-              .message = "not all control paths return a value",
-          });
-        }
-      }
-      return true;
-    }
-
     case ast::NodeKind::ReturnStmt: {
       const auto* m = n->As<ast::nodes::ReturnStmt>();
 
