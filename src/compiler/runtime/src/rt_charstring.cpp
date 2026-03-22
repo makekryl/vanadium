@@ -6,6 +6,7 @@
 #include <utility>
 
 #include "vanadium/runtime/RuntimeHelpers.h"
+#include "vanadium/runtime/rt_alloc.h"
 #include "vanadium/runtime/rt_reflect.h"
 #include "vanadium/runtime/runtime.h"
 #include "vanadium/runtime/runtime.hpp"
@@ -21,12 +22,8 @@ inline void AssertIsBound(const vrt_charstring_t* s) {
   }
 }
 
-// TODO: forward custom alloc
-char* charstring_alloc_buf(std::uint32_t len) {
-  return new char[len];
-}
-void charstring_free_buf(const char* p) {
-  delete[] p;
+char* vrt_alloc_charbuf(std::uint32_t len) {
+  return static_cast<char*>(vrt_alloc(len, 1));
 }
 
 struct LengthUpdateOpts {
@@ -41,12 +38,12 @@ void charstring_update_length(vrt_charstring_t* s, std::uint32_t len) {
       if constexpr (Opts.realloc) {
         std::copy_n(ext_buf, s->length, s->value.intl);
       }
-      charstring_free_buf(ext_buf);
+      vrt_unifree(ext_buf);
       s->is_ext = false;
     }
   } else {
     if (!s->is_ext) {
-      auto* ext_buf = charstring_alloc_buf(len);
+      auto* ext_buf = vrt_alloc_charbuf(len);
       if constexpr (Opts.realloc) {
         std::copy_n(s->value.intl, s->length, ext_buf);
       }
@@ -55,12 +52,12 @@ void charstring_update_length(vrt_charstring_t* s, std::uint32_t len) {
       s->is_ext = true;
     } else if (len > s->value.ext.capacity) {
       if constexpr (Opts.realloc) {
-        auto* new_buf = charstring_alloc_buf(len);
+        auto* new_buf = vrt_alloc_charbuf(len);
         std::copy_n(s->value.ext.data, s->length, new_buf);
-        charstring_free_buf(s->value.ext.data);
+        vrt_unifree(s->value.ext.data);
       } else {
-        charstring_free_buf(s->value.ext.data);
-        s->value.ext.data = charstring_alloc_buf(len);
+        vrt_unifree(s->value.ext.data);
+        s->value.ext.data = vrt_alloc_charbuf(len);
         s->value.ext.capacity = len;
       }
     }
@@ -86,7 +83,7 @@ void vrt_charstring_ctor(vrt_charstring_t* p) {
 }
 void vrt_charstring_dtor(vrt_charstring_t* p) {
   if (p->is_bound && p->is_ext) {
-    charstring_free_buf(p->value.ext.data);
+    vrt_unifree(p->value.ext.data);
   }
 }
 

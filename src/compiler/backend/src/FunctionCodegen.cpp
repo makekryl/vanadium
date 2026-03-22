@@ -46,6 +46,7 @@ class ScopeManager {
   struct Frame {
     enum class Kind : std::uint8_t {
       kRegular,
+      kTemporaries,
       kLoop,
     };
 
@@ -57,7 +58,7 @@ class ScopeManager {
     Kind kind;
   };
 
-  void Enter(Frame::Kind kind = Frame::Kind::kRegular) {
+  void Enter(Frame::Kind kind) {
     frame_stack_.emplace_back(Frame{
         .begin = u_.builder.GetInsertPoint(),
         .kind = kind,
@@ -192,6 +193,17 @@ class ScopeManager {
   llvm::Function* fn_;
 };
 
+class ScopeGuard {
+ public:
+  ScopeGuard(ScopeManager& m) : m_(m) {}
+  ~ScopeGuard() {
+    m_.Exit();
+  }
+
+ private:
+  ScopeManager& m_;
+};
+
 class FunctionCodegen {
  public:
   FunctionCodegen(CodegenUnit& u) : u_(u) {}
@@ -251,6 +263,11 @@ class FunctionCodegen {
     return u_.sf.Text(n);
   }
 
+  [[nodiscard]] ScopeGuard EnterStackFrame(ScopeManager::Frame::Kind kind = ScopeManager::Frame::Kind::kRegular) {
+    scope_->Enter(kind);
+    return *scope_;
+  }
+
   void CodegenStmt(const ast::nodes::Stmt*);
   void CodegenDecl(const ast::nodes::Decl*);
   llvm::Value* CodegenExpr(const ast::nodes::Expr*, llvm::Value* dest = nullptr);
@@ -295,11 +312,10 @@ void FunctionCodegen::CodegenStmt(const ast::nodes::Stmt* n) {
   switch (n->nkind) {
     case ast::NodeKind::BlockStmt: {
       const auto* m = n->As<ast::nodes::BlockStmt>();
-      scope_->Enter();
+      auto stack_frame{EnterStackFrame()};
       for (const auto* stmt : m->stmts) {
         CodegenStmt(stmt);
       }
-      scope_->Exit();
       break;
     }
 
@@ -337,7 +353,7 @@ void FunctionCodegen::CodegenStmt(const ast::nodes::Stmt* n) {
     case ast::NodeKind::ForStmt: {
       const auto* m = n->As<ast::nodes::ForStmt>();
 
-      scope_->Enter();  // fake scope to drop loop variable after ForStmt end
+      auto for_frame{EnterStackFrame()};  // fake scope to drop loop variable after ForStmt end
       //
       CodegenStmt(m->init);
 
@@ -355,20 +371,18 @@ void FunctionCodegen::CodegenStmt(const ast::nodes::Stmt* n) {
       u_.builder.CreateBr(cond_bb);
 
       u_.builder.SetInsertPoint(body_bb);
-      scope_->Enter(ScopeManager::Frame::Kind::kLoop);
       {
-        lib::ScopedValue loop_ctx_guard(loop_ctx_, {.post = post_bb, .end = end_bb});
-        CodegenStmt(m->body);
+        auto loop_frame{EnterStackFrame(ScopeManager::Frame::Kind::kLoop)};
+        {
+          lib::ScopedValue loop_ctx_guard(loop_ctx_, {.post = post_bb, .end = end_bb});
+          CodegenStmt(m->body);
+        }
+        if (!u_.builder.GetInsertBlock()->getTerminator()) {
+          u_.builder.CreateBr(post_bb);
+        }
       }
-      if (!u_.builder.GetInsertBlock()->getTerminator()) {
-        u_.builder.CreateBr(post_bb);
-      }
-      scope_->Exit();
 
       u_.builder.SetInsertPoint(end_bb);
-
-      //
-      scope_->Exit();
 
       break;
     }
@@ -385,15 +399,16 @@ void FunctionCodegen::CodegenStmt(const ast::nodes::Stmt* n) {
       u_.builder.CreateCondBr(CodegenExprAsBool(m->cond), body_bb, end_bb);
 
       u_.builder.SetInsertPoint(body_bb);
-      scope_->Enter(ScopeManager::Frame::Kind::kLoop);
       {
-        lib::ScopedValue loop_ctx_guard(loop_ctx_, {.post = body_bb, .end = end_bb});
-        CodegenStmt(m->body);
+        auto loop_frame{EnterStackFrame(ScopeManager::Frame::Kind::kLoop)};
+        {
+          lib::ScopedValue loop_ctx_guard(loop_ctx_, {.post = body_bb, .end = end_bb});
+          CodegenStmt(m->body);
+        }
+        if (!u_.builder.GetInsertBlock()->getTerminator()) {
+          u_.builder.CreateBr(cond_bb);
+        }
       }
-      if (!u_.builder.GetInsertBlock()->getTerminator()) {
-        u_.builder.CreateBr(cond_bb);
-      }
-      scope_->Exit();
 
       u_.builder.SetInsertPoint(end_bb);
 
@@ -408,15 +423,16 @@ void FunctionCodegen::CodegenStmt(const ast::nodes::Stmt* n) {
       auto* end_bb = llvm::BasicBlock::Create(u_.ctx, "do.end", fn_);
 
       u_.builder.SetInsertPoint(body_bb);
-      scope_->Enter(ScopeManager::Frame::Kind::kLoop);
       {
-        lib::ScopedValue loop_ctx_guard(loop_ctx_, {.post = body_bb, .end = end_bb});
-        CodegenStmt(m->body);
+        auto loop_frame{EnterStackFrame(ScopeManager::Frame::Kind::kLoop)};
+        {
+          lib::ScopedValue loop_ctx_guard(loop_ctx_, {.post = body_bb, .end = end_bb});
+          CodegenStmt(m->body);
+        }
+        if (!u_.builder.GetInsertBlock()->getTerminator()) {
+          u_.builder.CreateBr(cond_bb);
+        }
       }
-      if (!u_.builder.GetInsertBlock()->getTerminator()) {
-        u_.builder.CreateBr(cond_bb);
-      }
-      scope_->Exit();
 
       u_.builder.CreateBr(cond_bb);
       u_.builder.SetInsertPoint(cond_bb);
@@ -485,7 +501,11 @@ void FunctionCodegen::CodegenDecl(const ast::nodes::Decl* n) {
       for (auto* decl : m->decls) {
         auto* alloca = scope_->Alloc(Lit(decl->name), itype.sym);
         if (decl->value) {
-          auto* v = CodegenExpr(decl->value, alloca);
+          llvm::Value* v;
+          {
+            auto tmp_frame{EnterStackFrame(ScopeManager::Frame::Kind::kTemporaries)};
+            v = CodegenExpr(decl->value, alloca);
+          }
           if (IsTrivial(v->getType())) {
             u_.builder.CreateStore(v, alloca);
           }
@@ -654,6 +674,8 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
     case ast::NodeKind::CallExpr: {
       const auto* m = expr->As<ast::nodes::CallExpr>();
 
+      auto tmp_frame{EnterStackFrame(ScopeManager::Frame::Kind::kTemporaries)};
+
       const auto* func_sym = core::checker::ResolveExprSymbol(&u_.sf, u_.sf.module->scope, m->fun).sym;
       assert(func_sym->Flags() & core::semantic::SymbolFlags::kFunction);
 
@@ -695,7 +717,9 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
         VANADIUM_DEBUG_ASSERT(av != nullptr, "Unknown argument expr type: {}", magic_enum::enum_name(argnode->nkind))
       }
 
-      return u_.builder.CreateCall(callee, args);
+      auto* res = u_.builder.CreateCall(callee, args);
+
+      return res;
     }
 
     case ast::NodeKind::ParenExpr: {

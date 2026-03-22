@@ -19,12 +19,12 @@ class StaticArena {
   StaticArena& operator=(const StaticArena&) = delete;
   StaticArena& operator=(StaticArena&&) = delete;
 
-  void* Alloc(std::size_t bytes, std::size_t alignment) {
+  void* Alloc(std::size_t size, std::size_t alignment) {
     void* ptr = cursor_;
     std::size_t space = buf_.end() - cursor_;
 
-    if (std::align(alignment, bytes, ptr, space)) {
-      cursor_ = static_cast<std::byte*>(ptr) + bytes;
+    if (std::align(alignment, size, ptr, space)) {
+      cursor_ = static_cast<std::byte*>(ptr) + size;
       return ptr;
     }
 
@@ -41,6 +41,10 @@ class StaticArena {
   void Sweep() {
     cursor_ = stack_.back();
     stack_.pop_back();
+  }
+
+  [[nodiscard]] bool Contains(void* p) {
+    return buf_.begin() <= p && p <= buf_.end();
   }
 
  private:
