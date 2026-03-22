@@ -144,7 +144,7 @@ class ScopeManager {
 
     if (!frame_stack_.empty()) {
       auto& frame = frame_stack_.back();
-      if (llvm::dyn_cast<llvm::AllocaInst>(&(*frame.begin->getNextNode()))) {
+      if (frame.begin->getNextNode() && llvm::dyn_cast<llvm::AllocaInst>(&(*frame.begin->getNextNode()))) {
         frame.begin++;
       }
     }
