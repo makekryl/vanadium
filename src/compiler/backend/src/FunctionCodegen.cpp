@@ -650,7 +650,7 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
           auto* vtgt = CodegenExpr(m->property);
           u_.builder.CreateCall(
               u_.getOrDeclareExternalFunc(
-                  std::format("copy_{}", propsym->GetName()),
+                  names::CopyCtor(propsym),
                   llvm::FunctionType::get(u_.builder.getVoidTy(), {u_.builder.getPtrTy(), vv->getType()}, false)),
               {vtgt, vv});
           break;

@@ -34,6 +34,10 @@ std::string Dtor(const core::semantic::Symbol* sym) {
   return std::format("{}_dtor", SymName(sym));
 }
 
+std::string CopyCtor(const core::semantic::Symbol* sym) {
+  return std::format("copy_{}", sym->GetName());
+}
+
 std::string Getter(const core::semantic::Symbol* holder, std::string_view member) {
   return std::format("{}_get_{}", SymName(holder), member);
 }

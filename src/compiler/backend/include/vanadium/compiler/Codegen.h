@@ -73,6 +73,7 @@ namespace names {
 std::string Func(const core::semantic::Symbol*);
 std::string Ctor(const core::semantic::Symbol*);
 std::string Dtor(const core::semantic::Symbol*);
+std::string CopyCtor(const core::semantic::Symbol*);
 std::string Getter(const core::semantic::Symbol* holder, std::string_view member);
 std::string TInfo(const core::semantic::Symbol*);
 }  // namespace names
