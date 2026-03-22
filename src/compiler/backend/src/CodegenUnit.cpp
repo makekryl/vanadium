@@ -44,6 +44,11 @@ llvm::Value* CodegenUnit::GetUndef(const core::semantic::Symbol* sym) {
 }
 
 llvm::Function* CodegenUnit::GetFunction(const core::semantic::Symbol* sym) {
+  const auto& name = names::Func(sym);
+  if (auto* fn = mod.getFunction(name)) {
+    return fn;
+  }
+
   const auto* m = sym->Declaration()->As<ast::nodes::FuncDecl>();
 
   const bool is_variadic = [&] -> bool {
@@ -79,12 +84,6 @@ llvm::Function* CodegenUnit::GetFunction(const core::semantic::Symbol* sym) {
 
     return llvm::FunctionType::get(ret_ty, params, false);
   }();
-
-  const auto& name = names::Func(sym);
-
-  if (auto* fn = mod.getFunction(name)) {
-    return fn;
-  }
 
   auto* fn = declareExternalFunc(name, ty);
   if (is_variadic) {
