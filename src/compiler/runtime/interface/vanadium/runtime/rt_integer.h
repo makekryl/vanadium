@@ -11,13 +11,15 @@ using vrt_native_int_t = std::int64_t;
 struct vrt_int_t {
   vrt_native_int_t value;
   bool is_bound;
-  bool is_big;
 };
 
 extern "C" {
 //
 
 extern const vrt_typeinfo_t integer_typeinfo;
+
+void vrt_int_ctor(vrt_int_t*);
+void vrt_int_dtor(vrt_int_t*);
 
 // TODO: inline in codegen as a special case along with other primitives
 void copy_integer(vrt_int_t* dst, vrt_int_t src);

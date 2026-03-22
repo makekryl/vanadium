@@ -44,5 +44,5 @@ add_gtest_executable(vanadium_compiler)
 
 
 # TODO: this is needed to build only compiler itself with sanitizers, remove
-  target_compile_options(vanadium_compiler PRIVATE "-fsanitize=${name}")
-  target_link_options(vanadium_compiler PRIVATE "-fsanitize=${name}")
+  target_compile_options(vanadium_compiler PRIVATE "-fsanitize=address")
+  target_link_options(vanadium_compiler PUBLIC "-fsanitize=address")

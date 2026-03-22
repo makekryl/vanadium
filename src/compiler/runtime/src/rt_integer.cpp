@@ -1,11 +1,14 @@
 #include "vanadium/runtime/rt_integer.h"
 
+#include <cassert>
+
+#include "vanadium/runtime/RuntimeHelpers.h"
 #include "vanadium/runtime/runtime.h"
 
 namespace {
-inline void CheckIsBound(vrt_int_t i) {
+inline void AssertIsBound(vrt_int_t& i) {
   if (!i.is_bound) [[unlikely]] {
-    vrt_panic("UNBOUND");
+    vrt_panic("accessing an unbound integer value");
   }
 }
 }  // namespace
@@ -17,31 +20,45 @@ const vrt_typeinfo_t integer_typeinfo{
 
     .members = nullptr,
 
-    .construct = nullptr,
-    .destruct = nullptr,
+    .construct = vanadium::rt::helpers::VoidErased<vrt_int_ctor>,
+    .destruct = vanadium::rt::helpers::VoidErased<vrt_int_dtor>,
 };
+
+extern "C" {
+void vrt_int_dtor_big(vrt_int_t* p) {
+  // assert(p->is_bound && p->is_big);
+  // TODO: implement big numbers support
+}
+}
+
+void vrt_int_ctor(vrt_int_t* p) {
+  p->is_bound = false;
+  // p->is_big = false;
+}
+void vrt_int_dtor(vrt_int_t* p) {
+  // if (p->is_bound && p->is_big) {
+  //   vrt_int_dtor_big(p);
+  // }
+}
 
 #define DEFINE_BINARY_OP_TO_BOOL(name, op)        \
   bool vrt_int_##name(vrt_int_t a, vrt_int_t b) { \
-    CheckIsBound(a);                              \
-    CheckIsBound(b);                              \
+    AssertIsBound(a);                             \
+    AssertIsBound(b);                             \
     return a.value op b.value;                    \
   }
 #define DEFINE_BINARY_OP_TO_VALUE(name, op)            \
   vrt_int_t vrt_int_##name(vrt_int_t a, vrt_int_t b) { \
-    CheckIsBound(a);                                   \
-    CheckIsBound(b);                                   \
+    AssertIsBound(a);                                  \
+    AssertIsBound(b);                                  \
     return {                                           \
         .value = a.value op b.value,                   \
         .is_bound = true,                              \
-        .is_big = false,                               \
     };                                                 \
   }
 
 void copy_integer(vrt_int_t* dst, vrt_int_t src) {
-  dst->value = src.value;
-  dst->is_big = src.is_big;
-  dst->is_bound = src.is_bound;
+  *dst = src;
 }
 
 DEFINE_BINARY_OP_TO_BOOL(eq, ==);

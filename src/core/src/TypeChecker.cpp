@@ -1014,6 +1014,13 @@ InstantiatedType ResolveExprSymbol(const SourceFile* file, const semantic::Scope
       const auto* m = expr->As<ast::nodes::ValueLiteral>();
       return {.sym = DeduceValueLiteralType(m)};
     }
+    case ast::NodeKind::ParenExpr: {
+      const auto* m = expr->As<ast::nodes::ParenExpr>();
+      if (m->list.size() == 1) [[likely]] {
+        return ResolveExprSymbol(file, scope, m->list.front());
+      }
+      return InstantiatedType::None();
+    }
     default: {
       return {.sym = TryResolveExprSymbolViaHierarchy(file, scope, expr)};
     }

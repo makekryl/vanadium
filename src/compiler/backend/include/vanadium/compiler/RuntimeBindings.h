@@ -4,11 +4,12 @@
 #include <string_view>
 #include <variant>
 
-#include <llvm-19/llvm/IR/Value.h>
 #include <llvm/IR/DerivedTypes.h>
 #include <llvm/IR/Function.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
+#include <llvm/IR/Type.h>
+#include <llvm/IR/Value.h>
 
 namespace vanadium::compiler {
 class RuntimeBindings {
@@ -24,11 +25,15 @@ class RuntimeBindings {
 
   llvm::StructType* typeinfo_ty;
   //
-  llvm::FunctionType* type_ctor_fn_ty;
-  llvm::FunctionType* type_dtor_fn_ty;
+  llvm::FunctionType* obj_ctor_fn_ty;
+  llvm::FunctionType* obj_dtor_fn_ty;
 
-  llvm::Function* type_alloc_f;
-  llvm::Function* type_free_f;
+  llvm::Function* type_new_f;
+  llvm::Function* type_del_f;
+  //
+  llvm::Function* stackalloc_mark_f;
+  llvm::Function* stackalloc_sweep_f;
+  llvm::Function* obj_stackalloc_new_f;
 
   llvm::StructType* generic_val_ty;
 
@@ -57,10 +62,25 @@ class RuntimeBindings {
   llvm::Function* int_mul_f;
   llvm::Function* int_div_f;
 
+  llvm::StructType* bool_ty;
+  //
+  llvm::Value* bool_undef;
+  [[nodiscard]] llvm::Value* GetBool(bool) const;
+  //
+  llvm::Function* bool_get_f;
+
   llvm::StructType* charstring_ty;
   //
+  llvm::Function* charstring_dtor_f;
+  llvm::Function* charstring_init_f;
+  llvm::Function* charstring_copy_f;
+  llvm::Function* charstring_concat_f;
+  llvm::Function* charstring_singular_f;
+  llvm::Function* charstring_eq_f;
+  //
   llvm::Value* charstring_undef;
-  [[nodiscard]] llvm::Value* GetCharstring(std::string_view) const;
+
+  [[nodiscard]] llvm::Type* MakeUnion(std::span<llvm::Type*> members) const;
 
  private:
   llvm::LLVMContext& ctx_;

@@ -44,7 +44,7 @@ llvm::Function* CodegenStructGetter(CodegenUnit& ctx, llvm::StructType* sty, std
   //=== INIT ===//
   ctx.builder.SetInsertPoint(bb_init);
   llvm::Value* new_m = ctx.builder.CreateCall(
-      ctx.rt.type_alloc_f, {ctx.getOrDeclareExternalConst(names::TInfo(member_sym), ctx.rt.typeinfo_ty)}, "new_m");
+      ctx.rt.type_new_f, {ctx.getOrDeclareExternalConst(names::TInfo(member_sym), ctx.rt.typeinfo_ty)}, "new_m");
   ctx.builder.CreateStore(new_m, m_ptr);
   ctx.builder.CreateBr(bb_merge);
 
@@ -73,11 +73,11 @@ void CodegenStruct(CodegenUnit& u, const core::semantic::Symbol* sym, const ast:
   const auto& ty_bytes = u.mod.getDataLayout().getTypeAllocSize(ty);
 
   llvm::IRBuilder<> fn_ctor_builder(u.ctx);
-  auto* fn_ctor = u.getOrDeclareExternalFunc(names::Ctor(sym), u.rt.type_ctor_fn_ty);
+  auto* fn_ctor = u.getOrDeclareExternalFunc(names::Ctor(sym), u.rt.obj_ctor_fn_ty);
   fn_ctor_builder.SetInsertPoint(llvm::BasicBlock::Create(u.ctx, "", fn_ctor));
   //
   llvm::IRBuilder<> fn_dtor_builder(u.ctx);
-  auto* fn_dtor = u.getOrDeclareExternalFunc(names::Dtor(sym), u.rt.type_dtor_fn_ty);
+  auto* fn_dtor = u.getOrDeclareExternalFunc(names::Dtor(sym), u.rt.obj_dtor_fn_ty);
   fn_dtor_builder.SetInsertPoint(llvm::BasicBlock::Create(u.ctx, "", fn_dtor));
   auto* fn_dtor_arg = fn_dtor->arg_begin();
   for (const auto& [idx, f] : m->fields | std::views::enumerate) {
@@ -90,7 +90,7 @@ void CodegenStruct(CodegenUnit& u, const core::semantic::Symbol* sym, const ast:
                                                            fn_dtor_builder.CreateStructGEP(ty, fn_dtor_arg, idx),
                                                        });
     } else if (!(fsym->Flags() & core::semantic::SymbolFlags::kBuiltin)) {
-      fn_dtor_builder.CreateCall(u.mod.getOrInsertFunction(names::Dtor(fsym), u.rt.type_dtor_fn_ty),
+      fn_dtor_builder.CreateCall(u.mod.getOrInsertFunction(names::Dtor(fsym), u.rt.obj_dtor_fn_ty),
                                  {
                                      fn_dtor_builder.CreateStructGEP(ty, fn_dtor_arg, idx),
                                  });

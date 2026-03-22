@@ -51,9 +51,6 @@ extern "C" {
 
 void vrt_register_module(const vrt_module_t*);
 
-void* vrt_allocate(const vrt_typeinfo_t*);
-void vrt_free(const vrt_typeinfo_t*, void*);
-
 //
 }
 

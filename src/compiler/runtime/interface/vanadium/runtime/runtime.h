@@ -1,5 +1,7 @@
 #pragma once
 
+#include "vanadium/runtime/rt_alloc.h"       // IWYU pragma: export
+#include "vanadium/runtime/rt_boolean.h"     // IWYU pragma: export
 #include "vanadium/runtime/rt_charstring.h"  // IWYU pragma: export
 #include "vanadium/runtime/rt_integer.h"     // IWYU pragma: export
 #include "vanadium/runtime/rt_optional.h"    // IWYU pragma: export

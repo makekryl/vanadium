@@ -74,11 +74,11 @@ void GenerateModuleRegistrationCode(CodegenUnit& u) {
               u.builder.CreateGlobalStringPtr(u.sf.module->name),
               llvm::ConstantExpr::getBitCast(
                   new llvm::GlobalVariable(u.mod, testcase_array->getType(), true, llvm::GlobalValue::PrivateLinkage,
-                                           testcase_array, "testcases"),
+                                           testcase_array, "__testcases"),
                   u.builder.getPtrTy()),
               llvm::ConstantInt::get(u.builder.getInt1Ty(), 1),
           }),
-      "vrt_module");
+      "__vrt_module");
 
   auto* init_ty = llvm::FunctionType::get(u.builder.getVoidTy(), false);
   auto* init_fn = llvm::Function::Create(init_ty, llvm::GlobalValue::InternalLinkage, "__vrt_module_init", u.mod);

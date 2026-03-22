@@ -13,10 +13,8 @@ std::string SymName(const core::semantic::Symbol* sym) {
   if (sym->Flags() & core::semantic::SymbolFlags::kBuiltin) {
     return std::string(sym->GetName());
   }
-  // TODO: this can be more efficient (?)
-  const auto* modnode = ast::utils::GetPredecessor<ast::nodes::Module>(sym->Declaration());
-  const auto* sf = ast::utils::SourceFileOf(modnode);
-  return std::format("{}_{}", sf->Text(*modnode->name), sym->GetName());
+  const auto* sf = ast::utils::SourceFileOf(sym->Declaration());
+  return std::format("{}_{}", sf->module->name, sym->GetName());
 }
 }  // namespace
 

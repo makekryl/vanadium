@@ -27,7 +27,7 @@ void vrt_optional_ctor(void*) {
 void vrt_optional_dtor(void* p) {
   auto* o = reinterpret_cast<vrt_optional_t*>(p);
   if (o->value) {
-    vrt_free(&vrt_optional_typeinfo, o->value);
+    vrt_del(&vrt_optional_typeinfo, o->value);
   }
 }
 
@@ -36,7 +36,7 @@ void* vrt_optional_get(const vrt_optional_t* o) {
 }
 void vrt_optional_set(vrt_optional_t* o, void* v) {
   if (o->value) {
-    vrt_free(o->member_type, o->value);
+    vrt_del(o->member_type, o->value);
   }
   o->value = v;
 }
