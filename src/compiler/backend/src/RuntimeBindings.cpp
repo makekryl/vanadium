@@ -282,9 +282,9 @@ RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ct
                              llvm::GlobalValue::ExternalLinkage, "vrt_charstring_singular", mod);
   //
   charstring_undef = llvm::ConstantStruct::get(charstring_ty, {
-                                                                  llvm::UndefValue::get(builder.getPtrTy()),
-                                                                  llvm::UndefValue::get(builder.getInt32Ty()),
-                                                                  llvm::UndefValue::get(builder.getInt32Ty()),
+                                                                  llvm::UndefValue::get(builder.getPtrTy()),    //
+                                                                  llvm::UndefValue::get(builder.getInt32Ty()),  //
+                                                                  llvm::UndefValue::get(builder.getInt32Ty()),  //
                                                                   builder.getTrue(),   // is_bound = true
                                                                   builder.getFalse(),  // is_ext = true
                                                               });
