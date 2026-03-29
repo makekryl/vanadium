@@ -1,8 +1,11 @@
 #pragma once
 
+#include <optional>
 #include <string_view>
 #include <variant>
 
+#include <llvm/IR/DIBuilder.h>
+#include <llvm/IR/DebugInfoMetadata.h>
 #include <llvm/IR/DerivedTypes.h>
 #include <llvm/IR/Function.h>
 #include <llvm/IR/IRBuilder.h>
@@ -16,19 +19,45 @@
 
 #include "vanadium/compiler/RuntimeBindings.h"
 #include "vanadium/core/Semantic.h"
+#include "vanadium/lib/Metaprogramming.h"
 
 namespace vanadium::compiler {
 
+struct CodegenUnit;
+
+struct DebugInfo {
+  llvm::DIBuilder builder;
+  llvm::DIFile* file;
+  llvm::DICompileUnit* unit;
+
+  DebugInfo(CodegenUnit&);
+};
+
 struct CodegenUnit {
-  CodegenUnit(const core::SourceFile& sf_) : sf(sf_) {}
+  CodegenUnit(const core::SourceFile& sf_, bool debug);
 
   const core::SourceFile& sf;
 
   llvm::LLVMContext ctx;
-  llvm::IRBuilder<> builder{ctx};
-  llvm::Module mod{sf.module->name, ctx};
+  llvm::IRBuilder<> builder;
+  llvm::Module mod;
 
-  const RuntimeBindings rt{ctx, mod};
+ private:
+  std::optional<DebugInfo> debug_info_;
+
+ public:
+  const RuntimeBindings rt;
+
+  //
+
+  bool DebugInfoEnabled() const noexcept {
+    return debug_info_.has_value();
+  }
+  void EmitDebugInfo(mp::Consumer<DebugInfo&> auto f) {
+    if (debug_info_) {
+      f(*debug_info_);
+    }
+  }
 
   //
 

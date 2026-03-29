@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <span>
 
 #include "vanadium/ast/AST.h"
@@ -102,6 +103,19 @@ inline const std::vector<nodes::Field*>* GetStructFields(const Node* n) {
       return &n->As<ast::nodes::StructSpec>()->fields;
     default:
       return nullptr;
+  }
+}
+
+inline bool DoesFunctionLikeReturn(const Node* n) {
+  switch (n->nkind) {
+    case NodeKind::FuncDecl:
+      return n->As<nodes::FuncDecl>()->ret != nullptr;
+    case NodeKind::TemplateDecl:
+    case NodeKind::ConstructorDecl:
+      return true;
+    default:
+      assert(false);
+      return false;
   }
 }
 

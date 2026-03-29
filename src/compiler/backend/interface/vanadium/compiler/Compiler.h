@@ -4,6 +4,10 @@
 
 namespace vanadium::compiler {
 
-void CompileIR(const core::SourceFile&);
+struct CompileOptions {
+  bool debug;
+};
 
-}
+void CompileIR(const core::SourceFile&, const CompileOptions&);
+
+}  // namespace vanadium::compiler

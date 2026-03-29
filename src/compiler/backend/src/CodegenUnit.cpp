@@ -1,3 +1,6 @@
+#include <filesystem>
+
+#include <llvm/IR/DIBuilder.h>
 #include <llvm/IR/Type.h>
 #include <llvm/IR/Value.h>
 
@@ -9,6 +12,22 @@
 #include "vanadium/compiler/Codegen.h"
 
 namespace vanadium::compiler {
+
+DebugInfo::DebugInfo(CodegenUnit& u)
+    : builder{u.mod},
+      file{[&] {
+        const std::filesystem::path p(u.sf.path);  // TODO: virtual modules
+        return builder.createFile(p.filename().string(), p.parent_path().string());
+      }()},
+      // TODO: provide vanadiumc ver
+      unit{builder.createCompileUnit(llvm::dwarf::DW_LANG_C, file, "vanadiumc", false, "", 0)} {}
+
+CodegenUnit::CodegenUnit(const core::SourceFile& sf_, bool debug)
+    : sf(sf_),
+      builder{ctx},
+      mod{sf.module->name, ctx},
+      debug_info_(debug ? decltype(debug_info_){*this} : std::nullopt),
+      rt{ctx, mod} {}
 
 llvm::Type* CodegenUnit::GetSymbolType(const core::semantic::Symbol* sym) {
   assert(sym->Flags() & core::semantic::SymbolFlags::kType);
@@ -50,6 +69,7 @@ llvm::Function* CodegenUnit::GetFunction(const core::semantic::Symbol* sym) {
   }
 
   const auto* m = sym->Declaration()->As<ast::nodes::FuncDecl>();
+  const bool does_return = m->ret != nullptr;
 
   const bool is_variadic = [&] -> bool {
     if (!(sym->Flags() & core::semantic::SymbolFlags::kBuiltin)) {
@@ -67,22 +87,24 @@ llvm::Function* CodegenUnit::GetFunction(const core::semantic::Symbol* sym) {
   auto* ty = [&] {
     std::vector<llvm::Type*> params;
     if (is_variadic) {
+      // TODO: variadic fns that return heavy types
       params = {
           builder.getPtrTy(),    // const vrt_val_t* args
           builder.getInt64Ty(),  // std::size_t n
       };
     } else {
-      params.reserve(m->params->list.size());
+      params.reserve(m->params->list.size() + (does_return ? 1 : 0));
+      if (does_return) {
+        params.push_back(builder.getPtrTy());
+      }
       for (const auto* param : m->params->list) {
-        const auto& isym = core::checker::ResolveExprSymbol(&sf, sf.module->scope, param->type);
-        params.emplace_back(GetSymbolType(isym.sym));
+        // const auto& isym = core::checker::ResolveExprSymbol(&sf, sf.module->scope, param->type);
+        // params.emplace_back(GetSymbolType(isym.sym));
+        params.push_back(builder.getPtrTy());
       }
     }
 
-    const auto& ret_sym = core::checker::ResolveCallableReturnType(&sf, m);
-    auto* ret_ty = GetSymbolType(ret_sym.sym);
-
-    return llvm::FunctionType::get(ret_ty, params, false);
+    return llvm::FunctionType::get(builder.getVoidTy(), params, false);
   }();
 
   auto* fn = declareExternalFunc(name, ty);

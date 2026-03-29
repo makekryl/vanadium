@@ -14,6 +14,9 @@ int main(int argc, char* argv[]) {
   //
   std::string filepath;
   ap.add_argument("path").store_into(filepath).help("file path");
+  //
+  bool use_debug;
+  ap.add_argument("-g").store_into(use_debug).flag().help("emit debug symbols");
 
   //
   PARSE_CLI_ARGS_OR_EXIT(ap, argc, argv, 1);
@@ -40,7 +43,7 @@ int main(int argc, char* argv[]) {
   assert(sf->type_errors.empty());
   assert(sf->module.has_value());
 
-  vanadium::compiler::CompileIR(*sf);
+  vanadium::compiler::CompileIR(*sf, {.debug = use_debug});
 
   return 0;
 }

@@ -9,7 +9,11 @@
 
 #include <magic_enum/magic_enum.hpp>
 
+#include <llvm/IR/Argument.h>
 #include <llvm/IR/BasicBlock.h>
+#include <llvm/IR/DIBuilder.h>
+#include <llvm/IR/DebugInfoMetadata.h>
+#include <llvm/IR/DebugLoc.h>
 #include <llvm/IR/Function.h>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/Instructions.h>
@@ -17,9 +21,11 @@
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Type.h>
 #include <llvm/IR/Value.h>
+#include <llvm/Support/Casting.h>
 
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/utils/ASTUtils.h>
+#include <vanadium/core/Builtins.h>
 #include <vanadium/core/Program.h>
 #include <vanadium/core/Semantic.h>
 #include <vanadium/core/TypeChecker.h>
@@ -28,16 +34,36 @@
 #include <vanadium/lib/ScopedValue.h>
 
 #include "vanadium/compiler/Codegen.h"
-#include "vanadium/core/Builtins.h"
 
 namespace vanadium::compiler {
 
 namespace {
 
 struct AllocatedVar {
-  llvm::AllocaInst* alloca;
+  llvm::Value* value;
+  llvm::Type* ty;
   const core::semantic::Symbol* sym;
+  bool immutable{false};
 };
+
+void EmitDestructor(CodegenUnit& u, const core::semantic::Symbol* sym, llvm::Value* val) {
+  if (sym) {
+    if (sym->Flags() & core::semantic::SymbolFlags::kBuiltin) {
+      if (sym == &core::builtins::kCharstring) {
+        // TODO: partial inline (is_bound && is_ext) in RuntimeBindings
+        u.builder.CreateCall(u.rt.charstring_dtor_f, {val});
+      }
+    } else {
+      auto* alloca = llvm::dyn_cast<llvm::AllocaInst>(val);
+      assert(alloca);
+      u.builder.CreateCall(u.rt.type_del_f, {
+                                                u.mod.getGlobalVariable(names::TInfo(sym)),
+                                                u.builder.CreateLoad(alloca->getAllocatedType(), alloca),
+                                            });
+    }
+  }
+  u.builder.CreateLifetimeEnd(val);
+}
 
 class ScopeManager {
  public:
@@ -90,21 +116,23 @@ class ScopeManager {
   }
 
   llvm::AllocaInst* Alloc(std::string_view name, const core::semantic::Symbol* sym) {
-    auto* alloca = createEntryBlockAlloca(u_.GetSymbolType(sym), name);
+    auto* ty = u_.GetSymbolType(sym);
+    auto* alloca = createEntryBlockAlloca(ty, name);
     u_.builder.CreateLifetimeStart(alloca);
 
     auto& frame = frame_stack_.back();
-    const auto& [it, _] = frame.vars.emplace(name, AllocatedVar{.alloca = alloca, .sym = sym});
+    const auto& [it, _] = frame.vars.emplace(name, AllocatedVar{.value = alloca, .ty = ty, .sym = sym});
     frame.ordered_vars.emplace_back(&it->second);
 
     return alloca;
   }
   llvm::AllocaInst* AllocTemp(const core::semantic::Symbol* sym) {
-    auto* alloca = createEntryBlockAlloca(u_.GetSymbolType(sym), "");
+    auto* ty = u_.GetSymbolType(sym);
+    auto* alloca = createEntryBlockAlloca(ty, "tmp");
     u_.builder.CreateLifetimeStart(alloca);
 
     auto& frame = frame_stack_.back();
-    auto& var = frame.temporaries.emplace_front(AllocatedVar{.alloca = alloca, .sym = sym});
+    auto& var = frame.temporaries.emplace_front(AllocatedVar{.value = alloca, .ty = ty, .sym = sym});
     frame.ordered_vars.emplace_back(&var);
 
     return alloca;
@@ -114,15 +142,13 @@ class ScopeManager {
     u_.builder.CreateLifetimeStart(alloca);
 
     auto& frame = frame_stack_.back();
-    auto& var = frame.temporaries.emplace_front(AllocatedVar{.alloca = alloca, .sym = nullptr});
+    auto& var = frame.temporaries.emplace_front(AllocatedVar{.value = alloca, .ty = ty, .sym = nullptr});
     frame.ordered_vars.emplace_back(&var);
 
     return alloca;
   }
-  llvm::AllocaInst* AllocArg(std::string_view name, const core::semantic::Symbol* sym) {
-    auto* alloca = createEntryBlockAlloca(u_.GetSymbolType(sym), name);
-    args_[name] = {.alloca = alloca, .sym = sym};
-    return alloca;
+  void BindArgument(std::string_view name, const core::semantic::Symbol* sym, llvm::Argument* arg, bool immutable) {
+    args_[name] = {.value = arg, .ty = u_.GetSymbolType(sym), .sym = sym, .immutable = immutable};
   }
   const AllocatedVar* Lookup(std::string_view name) {
     for (const auto& frame : frame_stack_ | std::views::reverse) {
@@ -139,9 +165,9 @@ class ScopeManager {
   //
 
   // Ideally should not be public, but it is used to allocate service things
-  llvm::AllocaInst* createEntryBlockAlloca(llvm::Type* type, std::string_view name) {
+  llvm::AllocaInst* createEntryBlockAlloca(llvm::Type* ty, std::string_view name) {
     llvm::IRBuilder<> tmp(&fn_->getEntryBlock(), fn_->getEntryBlock().begin());
-    auto* alloca = tmp.CreateAlloca(type, nullptr, name);
+    auto* alloca = tmp.CreateAlloca(ty, nullptr, name);
 
     if (!frame_stack_.empty()) {
       auto& frame = frame_stack_.back();
@@ -166,21 +192,7 @@ class ScopeManager {
     }
 
     for (const auto& var : frame.ordered_vars | std::views::reverse) {
-      if (var->sym) {
-        if (var->sym->Flags() & core::semantic::SymbolFlags::kBuiltin) {
-          if (var->sym == &core::builtins::kCharstring) {
-            // TODO: partial inline (is_bound && is_ext) in RuntimeBindings
-            u_.builder.CreateCall(u_.rt.charstring_dtor_f, {var->alloca});
-          }
-        } else {
-          u_.builder.CreateCall(u_.rt.type_del_f,
-                                {
-                                    u_.mod.getGlobalVariable(names::TInfo(var->sym)),
-                                    u_.builder.CreateLoad(var->alloca->getAllocatedType(), var->alloca),
-                                });
-        }
-      }
-      u_.builder.CreateLifetimeEnd(var->alloca);
+      EmitDestructor(u_, var->sym, var->value);
     }
 
     u_.builder.CreateCall(u_.rt.stackalloc_sweep_f);
@@ -209,32 +221,49 @@ class FunctionCodegen {
   FunctionCodegen(CodegenUnit& u) : u_(u) {}
 
   void Generate(const core::semantic::Symbol* sym, const ast::nodes::FuncDecl* m) {
+    const bool does_return = m->ret != nullptr;
+
     fn_ = u_.GetFunction(sym);
     if (m->external) {
       return;
+    }
+
+    if (!u_.DebugInfoEnabled()) {
+      dbgisp_ = nullptr;
+    } else {
+      u_.EmitDebugInfo([&](DebugInfo& di) {
+        // TODO: set real line numbers
+        dbgisp_ = di.builder.createFunction(di.file, fn_->getName(), llvm::StringRef{}, di.file, 5,
+                                            di.builder.createSubroutineType(di.builder.getOrCreateTypeArray({})), 5,
+                                            llvm::DINode::FlagZero, llvm::DISubprogram::SPFlagDefinition);
+        fn_->setSubprogram(dbgisp_);
+      });
     }
 
     scope_.emplace(u_, fn_);
 
     retbb_ = llvm::BasicBlock::Create(u_.ctx, "exit");
 
-    auto* entry = llvm::BasicBlock::Create(u_.ctx, "entry", fn_);
+    auto* entry = llvm::BasicBlock::Create(u_.ctx, "", fn_);
     u_.builder.SetInsertPoint(entry);
 
-    if (fn_->getReturnType() != u_.builder.getVoidTy()) {
-      retval_ = u_.builder.CreateAlloca(fn_->getReturnType());
+    if (does_return) {
+      assert(fn_->arg_size() >= 1);
+      auto* retarg = fn_->getArg(0);
+      retarg->setName("retval");
+      retval_ = retarg;
     } else {
       retval_ = nullptr;
     }
 
-    for (auto [arg, param] : std::views::zip(fn_->args(), m->params->list)) {
+    for (auto [arg, param] : std::views::zip(fn_->args() | std::views::drop(does_return ? 1 : 0), m->params->list)) {
       const auto& isym = core::checker::ResolveExprSymbol(&u_.sf, u_.sf.module->scope, param->type);
 
       const auto& name = Lit(param->name);
       arg.setName(name);
 
-      auto* alloca = scope_->AllocArg(name, isym.sym);
-      u_.builder.CreateStore(&arg, alloca);
+      scope_->BindArgument(name, isym.sym, &arg,
+                           param->direction == nullptr || param->direction->kind == ast::TokenKind::IN);
     }
 
     CodegenStmt(m->body);
@@ -246,11 +275,7 @@ class FunctionCodegen {
 
     fn_->insert(fn_->end(), retbb_);
     u_.builder.SetInsertPoint(retbb_);
-    if (retval_) {
-      u_.builder.CreateRet(u_.builder.CreateLoad(fn_->getReturnType(), retval_, "retval"));
-    } else {
-      u_.builder.CreateRetVoid();
-    }
+    u_.builder.CreateRetVoid();
   }
 
   void Generate(const core::semantic::Symbol* sym, const ast::nodes::ControlPart* m) {}
@@ -296,8 +321,9 @@ class FunctionCodegen {
     u_.builder.CreateStore(u_.getOrDeclareExternalConst(names::TInfo(sym), u_.rt.typeinfo_ty), ty_gep);
   }
 
-  llvm::AllocaInst* retval_;
+  llvm::Value* retval_;
   llvm::BasicBlock* retbb_;
+  llvm::DISubprogram* dbgisp_;
   struct {
     llvm::BasicBlock* post;
     llvm::BasicBlock* end;
@@ -309,6 +335,10 @@ class FunctionCodegen {
 };
 
 void FunctionCodegen::CodegenStmt(const ast::nodes::Stmt* n) {
+  if (u_.DebugInfoEnabled()) {
+    const auto ast_loc = u_.sf.ast.lines.Translate(n->nrange.begin);
+    u_.builder.SetCurrentDebugLocation(llvm::DILocation::get(u_.ctx, ast_loc.line + 1, ast_loc.column + 1, dbgisp_));
+  }
   switch (n->nkind) {
     case ast::NodeKind::BlockStmt: {
       const auto* m = n->As<ast::nodes::BlockStmt>();
@@ -446,7 +476,7 @@ void FunctionCodegen::CodegenStmt(const ast::nodes::Stmt* n) {
     case ast::NodeKind::ReturnStmt: {
       const auto* m = n->As<ast::nodes::ReturnStmt>();
       if (m->result) {
-        u_.builder.CreateStore(CodegenExpr(m->result), retval_);
+        CodegenExpr(m->result, retval_);
       }
       scope_->EmitDestructors();
       u_.builder.CreateBr(retbb_);
@@ -529,9 +559,15 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
     case ast::NodeKind::Ident: {
       const auto* m = expr->As<ast::nodes::Ident>();
 
-      const auto& name = Lit(m);
-      auto* alloca = scope_->Lookup(name)->alloca;
-      return alloca;
+      const auto* var = scope_->Lookup(Lit(m));
+
+      // todo: deep copy
+      if (dest) {
+        u_.builder.CreateStore(u_.builder.CreateLoad(var->ty, var->value), dest);
+        return dest;
+      }
+
+      return var->value;
     }
 
     case ast::NodeKind::SelectorExpr: {
@@ -547,8 +583,14 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
     case ast::NodeKind::ValueLiteral: {
       const auto* m = expr->As<ast::nodes::ValueLiteral>();
       switch (m->tok.kind) {
-        case ast::TokenKind::INT:
-          return u_.rt.GetInt(u_.ParseInt(m));
+        case ast::TokenKind::INT: {
+          auto* iv = u_.rt.GetInt(u_.ParseInt(m));
+          if (dest) {
+            u_.builder.CreateStore(iv, dest);
+            return dest;
+          }
+          return iv;
+        }
 
         case ast::TokenKind::STRING: {
           auto* out = dest ? dest : scope_->AllocTemp(&core::builtins::kCharstring);
@@ -589,6 +631,13 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
         if (vy->getType() == u_.builder.getPtrTy()) {
           vy = u_.builder.CreateLoad(u_.rt.int_ty, vy);
         }
+        const auto ret_intval = [&](llvm::Value* rv) {
+          if (dest) {
+            u_.builder.CreateStore(rv, dest);
+            return dest;
+          }
+          return rv;
+        };
         switch (m->op.kind) {
           case ast::TokenKind::EQ:
             return u_.builder.CreateCall(u_.rt.int_eq_f, {vx, vy});
@@ -605,13 +654,13 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
             return u_.builder.CreateCall(u_.rt.int_ge_f, {vx, vy});
           //
           case ast::TokenKind::ADD:
-            return u_.builder.CreateCall(u_.rt.int_add_f, {vx, vy});
+            return ret_intval(u_.builder.CreateCall(u_.rt.int_add_f, {vx, vy}));
           case ast::TokenKind::SUB:
-            return u_.builder.CreateCall(u_.rt.int_sub_f, {vx, vy});
+            return ret_intval(u_.builder.CreateCall(u_.rt.int_sub_f, {vx, vy}));
           case ast::TokenKind::MUL:
-            return u_.builder.CreateCall(u_.rt.int_mul_f, {vx, vy});
+            return ret_intval(u_.builder.CreateCall(u_.rt.int_mul_f, {vx, vy}));
           case ast::TokenKind::DIV:
-            return u_.builder.CreateCall(u_.rt.int_div_f, {vx, vy});
+            return ret_intval(u_.builder.CreateCall(u_.rt.int_div_f, {vx, vy}));
           default:
             VANADIUM_DEBUG_ERROR("Unhandled BinaryExpr int op = {}", magic_enum::enum_name(m->op.kind));
             break;
@@ -636,14 +685,41 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
     case ast::NodeKind::AssignmentExpr: {
       const auto* m = expr->As<ast::nodes::AssignmentExpr>();
 
-      auto* vv = CodegenExpr(m->value);
-
       switch (m->property->nkind) {
         case ast::NodeKind::Ident: {
-          u_.builder.CreateStore(vv, scope_->Lookup(Lit(m->property))->alloca);
+          const auto* var = scope_->Lookup(Lit(m->property));
+          if (var->immutable) {
+            auto* owned_var_copy = scope_->Alloc(var->value->getName(), var->sym);
+            CodegenExpr(m->value, owned_var_copy);
+          } else {
+            if (IsTrivial(var->ty)) {
+              // no dtor call needed
+              CodegenExpr(m->value, var->value);
+            } else {
+              if (var->ty == u_.builder.getPtrTy()) {
+                auto* old_val = u_.builder.CreateLoad(var->ty, var->value);
+                CodegenExpr(m->value, var->value);
+                EmitDestructor(u_, var->sym, old_val);
+              } else {
+                // charstring, ...
+                auto* tmp_alloca = scope_->createEntryBlockAlloca(var->ty, "tmpref");
+                u_.builder.CreateLifetimeStart(tmp_alloca);
+                const auto& align = tmp_alloca->getAlign();
+                u_.builder.CreateMemCpy(tmp_alloca, align, var->value, align,
+                                        u_.mod.getDataLayout().getTypeAllocSize(var->ty));
+                //
+                CodegenExpr(m->value, var->value);
+                EmitDestructor(u_, var->sym, tmp_alloca);
+                //
+                u_.builder.CreateLifetimeEnd(tmp_alloca);
+              }
+            }
+          }
+
           break;
         }
         case ast::NodeKind::SelectorExpr: {
+          auto* vv = CodegenExpr(m->value);
           const auto* propsym = core::checker::ResolveExprType(
                                     &u_.sf, core::semantic::utils::FindScope(u_.sf.module->scope, m), m->property)
                                     .sym;
@@ -679,6 +755,8 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
       const auto* func_sym = core::checker::ResolveExprSymbol(&u_.sf, u_.sf.module->scope, m->fun).sym;
       assert(func_sym->Flags() & core::semantic::SymbolFlags::kFunction);
 
+      const bool does_return = ast::utils::DoesFunctionLikeReturn(func_sym->Declaration());
+
       auto* callee = u_.GetFunction(func_sym);
 
       if (callee->hasFnAttribute(kVarargsAttr)) {
@@ -710,11 +788,15 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
       }
 
       std::vector<llvm::Value*> args;
-      args.reserve(m->args->list.size());
+      args.reserve(m->args->list.size() + (does_return ? 1 : 0));
+      if (does_return) {
+        assert(dest);
+        args.push_back(dest);
+      }
       for (const auto* argnode : m->args->list) {
         auto* av = CodegenExpr(argnode);
-        args.push_back(av);
         VANADIUM_DEBUG_ASSERT(av != nullptr, "Unknown argument expr type: {}", magic_enum::enum_name(argnode->nkind))
+        args.push_back(av);
       }
 
       auto* res = u_.builder.CreateCall(callee, args);

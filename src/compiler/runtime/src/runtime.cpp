@@ -30,6 +30,11 @@ void vrt_charstring_init(vrt_charstring_t* dst, const char* src, std::uint32_t l
 void vrt_log(const vrt_val_t* args, std::uint32_t n) {
   std::string buf;
   for (const auto* arg = args; arg < args + n; ++arg) {
+    // if (arg->ty == &charstring_typeinfo) {
+    //   auto* s = static_cast<vrt_charstring_t*>(arg->p);
+    //   std::println("CS({:p}): len={}, ext.ptr={:p} ext={}, bound={}", (void*)s, s->length, (void*)s->value.ext.data,
+    //                s->is_ext, s->is_bound);
+    // }
     if (!vrt_is_bound(arg)) {
       buf += "<unbound>";
     } else if (arg->ty == &integer_typeinfo) {

@@ -1,6 +1,5 @@
 #include "vanadium/compiler/RuntimeBindings.h"
 
-#include <algorithm>
 #include <string_view>
 #include <utility>
 #include <variant>
@@ -40,7 +39,7 @@ void GenerateAssertIsBound(RuntimeBindings& rt, llvm::LLVMContext& ctx, llvm::Fu
                            std::uint32_t flag_idx) {
   llvm::IRBuilder<> builder(ctx);
 
-  auto* bb_entry = llvm::BasicBlock::Create(ctx, "entry", fn);
+  auto* bb_entry = llvm::BasicBlock::Create(ctx, "", fn);
   auto* bb_unbound = llvm::BasicBlock::Create(ctx, "trap", fn);
   auto* bb_proceed = llvm::BasicBlock::Create(ctx, "ok", fn);
 
@@ -67,7 +66,7 @@ void GenerateGenericBinaryIntegerOperation(llvm::LLVMContext& ctx, llvm::Functio
                                            llvm::Function* assert_is_bound_fn) {
   llvm::IRBuilder<> builder(ctx);
 
-  auto* bb_entry = llvm::BasicBlock::Create(ctx, "entry", fn);
+  auto* bb_entry = llvm::BasicBlock::Create(ctx, "", fn);
 
   //
   auto* arg_it = fn->arg_begin();
@@ -103,6 +102,20 @@ void GenerateBoolGet(llvm::LLVMContext& ctx, llvm::Function* fn, llvm::Function*
 RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ctx_(ctx), mod_(mod) {
   llvm::IRBuilder<> builder(ctx);
 
+  const auto declare_external_fn = [&mod](std::string_view name, llvm::Type* result,
+                                          llvm::ArrayRef<llvm::Type*> params) {
+    return llvm::Function::Create(llvm::FunctionType::get(result, params, false),  //
+                                  llvm::GlobalValue::ExternalLinkage, name, mod);
+  };
+  const auto declare_embedded_fn = [&mod](std::string_view name, llvm::Type* result,
+                                          llvm::ArrayRef<llvm::Type*> params) {
+    auto* f = llvm::Function::Create(llvm::FunctionType::get(result, params, false),  //
+                                     llvm::GlobalValue::InternalLinkage, name, mod);
+    f->addFnAttr(llvm::Attribute::AlwaysInline);
+    f->addFnAttr(llvm::Attribute::Hot);
+    return f;
+  };
+
   using ArithmeticOpIntl = std::tuple<llvm::Function*&, llvm::Type*, std::string_view, SpecificOperationGenerator>;
   auto* const nbool_ty = builder.getInt1Ty();
 
@@ -124,26 +137,24 @@ RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ct
   obj_ctor_fn_ty = llvm::FunctionType::get(builder.getVoidTy(), {builder.getPtrTy()}, false);
   obj_dtor_fn_ty = llvm::FunctionType::get(builder.getVoidTy(), {builder.getPtrTy()}, false);
 
-  type_new_f = llvm::Function::Create(llvm::FunctionType::get(builder.getPtrTy(),    // return void*
-                                                              {builder.getPtrTy()},  // const vrt_typeinfo_t*
-                                                              false),
-                                      llvm::GlobalValue::ExternalLinkage, "vrt_new", mod);
-  type_del_f = llvm::Function::Create(llvm::FunctionType::get(builder.getVoidTy(),
-                                                              {
-                                                                  builder.getPtrTy(),  // const vrt_typeinfo_t*
-                                                                  builder.getPtrTy(),  // void* p
-                                                              },
-                                                              false),
-                                      llvm::GlobalValue::ExternalLinkage, "vrt_del", mod);
+  type_new_f = declare_external_fn("vrt_new",
+                                   builder.getPtrTy(),     // return void*
+                                   {builder.getPtrTy()});  // const vrt_typeinfo_t*;
+  type_del_f = declare_external_fn("vrt_del", builder.getVoidTy(),
+                                   {
+                                       builder.getPtrTy(),  // const vrt_typeinfo_t*
+                                       builder.getPtrTy(),  // void* p
+                                   });
 
-  stackalloc_mark_f = llvm::Function::Create(llvm::FunctionType::get(builder.getVoidTy(), {}, false),
-                                             llvm::GlobalValue::ExternalLinkage, "vrt_stackalloc_mark", mod);
-  stackalloc_sweep_f = llvm::Function::Create(llvm::FunctionType::get(builder.getVoidTy(), {}, false),
-                                              llvm::GlobalValue::ExternalLinkage, "vrt_stackalloc_sweep", mod);
-  obj_stackalloc_new_f = llvm::Function::Create(llvm::FunctionType::get(builder.getPtrTy(),    // return void*
-                                                                        {builder.getPtrTy()},  // const vrt_typeinfo_t*
-                                                                        false),
-                                                llvm::GlobalValue::ExternalLinkage, "vrt_stackalloc_new", mod);
+  stackalloc_mark_f = declare_external_fn("vrt_stackalloc_mark", builder.getVoidTy(), {});
+  stackalloc_sweep_f = declare_external_fn("vrt_stackalloc_sweep", builder.getVoidTy(), {});
+  for (auto* f : {stackalloc_mark_f, stackalloc_sweep_f}) {
+    f->addFnAttr(llvm::Attribute::NoUnwind);
+    f->addFnAttr(llvm::Attribute::WillReturn);
+  }
+  obj_stackalloc_new_f = declare_external_fn("vrt_stackalloc_new",
+                                             builder.getPtrTy(),     // return void*
+                                             {builder.getPtrTy()});  // const vrt_typeinfo_t*
 
   generic_val_ty = llvm::StructType::create(ctx_, "vrt_val_t");
   generic_val_ty->setBody({
@@ -159,20 +170,14 @@ RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ct
   });
   //
   // TODO: embed inlined code for functions below
-  optional_get_f = llvm::Function::Create(llvm::FunctionType::get(builder.getPtrTy(), {builder.getPtrTy()}, false),
-                                          llvm::GlobalValue::ExternalLinkage, "vrt_optional_get", mod);
-  optional_set_f = llvm::Function::Create(llvm::FunctionType::get(builder.getVoidTy(),
-                                                                  {
-                                                                      builder.getPtrTy(),  // vrt_optional_t*
-                                                                      builder.getPtrTy(),  // void*
-                                                                  },
-                                                                  false),
-                                          llvm::GlobalValue::ExternalLinkage, "vrt_optional_set", mod);
-  optional_ispresent_f =
-      llvm::Function::Create(llvm::FunctionType::get(builder.getInt1Ty(), {builder.getPtrTy()}, false),
-                             llvm::GlobalValue::ExternalLinkage, "vrt_optional_is_present", mod);
-  optional_dtor_f = llvm::Function::Create(llvm::FunctionType::get(builder.getVoidTy(), {builder.getPtrTy()}, false),
-                                           llvm::GlobalValue::ExternalLinkage, "vrt_optional_dtor", mod);
+  optional_get_f = declare_external_fn("vrt_optional_get", builder.getPtrTy(), {builder.getPtrTy()});
+  optional_set_f = declare_external_fn("vrt_optional_set", builder.getVoidTy(),
+                                       {
+                                           builder.getPtrTy(),  // vrt_optional_t*
+                                           builder.getPtrTy(),  // void*
+                                       });
+  optional_ispresent_f = declare_external_fn("vrt_optional_is_present", builder.getInt1Ty(), {builder.getPtrTy()});
+  optional_dtor_f = declare_external_fn("vrt_optional_dtor", builder.getVoidTy(), {builder.getPtrTy()});
 
   int_ty = llvm::StructType::create(ctx, "vrt_int_t");
   int_ty->setBody({
@@ -187,12 +192,8 @@ RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ct
                                                                          // builder.getFalse(),  // is_big = false
                                                 });
   //
-  auto* int_assert_is_bound_fn =
-      llvm::Function::Create(llvm::FunctionType::get(builder.getVoidTy(), {int_ty}, false),
-                             llvm::GlobalValue::InternalLinkage, "__vrt_int_assert_is_bound", mod);
+  auto* int_assert_is_bound_fn = declare_embedded_fn("__vrt_int_assert_is_bound", builder.getVoidTy(), {int_ty});
   GenerateAssertIsBound(*this, ctx, int_assert_is_bound_fn, "integer", 1);
-  int_assert_is_bound_fn->addFnAttr(llvm::Attribute::AlwaysInline);
-  int_assert_is_bound_fn->addFnAttr(llvm::Attribute::Hot);
   //
   for (const auto& [fptr, result_ty, fname, fnativeb] : {
            ArithmeticOpIntl(int_eq_f, nbool_ty, "__vrt_int_eq", BUILDER_BIN_OP_TO_BOOL(CreateICmpEQ)),
@@ -208,10 +209,7 @@ RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ct
            ArithmeticOpIntl(int_mul_f, int_ty, "__vrt_int_mul", BUILDER_BIN_OP_TO_VALUE(CreateBoundInt, CreateMul)),
            ArithmeticOpIntl(int_div_f, int_ty, "__vrt_int_div", BUILDER_BIN_OP_TO_VALUE(CreateBoundInt, CreateSDiv)),
        }) {
-    fptr = llvm::Function::Create(llvm::FunctionType::get(result_ty, {int_ty, int_ty}, false),
-                                  llvm::GlobalValue::InternalLinkage, fname, mod);
-    fptr->addFnAttr(llvm::Attribute::AlwaysInline);
-    fptr->addFnAttr(llvm::Attribute::Hot);
+    fptr = declare_embedded_fn(fname, result_ty, {int_ty, int_ty});
     GenerateGenericBinaryIntegerOperation(ctx, fptr, fnativeb, int_assert_is_bound_fn);
   }
 
@@ -226,12 +224,8 @@ RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ct
                                                      builder.getFalse(),  // is_bound = false
                                                  });
   //
-  auto* bool_assert_is_bound_fn =
-      llvm::Function::Create(llvm::FunctionType::get(builder.getVoidTy(), {bool_ty}, false),
-                             llvm::GlobalValue::InternalLinkage, "__vrt_bool_assert_is_bound", mod);
+  auto* bool_assert_is_bound_fn = declare_embedded_fn("__vrt_bool_assert_is_bound", builder.getVoidTy(), {bool_ty});
   GenerateAssertIsBound(*this, ctx, bool_assert_is_bound_fn, "boolean", 1);
-  bool_assert_is_bound_fn->addFnAttr(llvm::Attribute::AlwaysInline);
-  bool_assert_is_bound_fn->addFnAttr(llvm::Attribute::Hot);
   //
   bool_get_f = llvm::Function::Create(llvm::FunctionType::get(builder.getInt1Ty(), {bool_ty}, false),
                                       llvm::GlobalValue::InternalLinkage, "_vrt_bool_get", mod);
@@ -246,40 +240,30 @@ RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ct
       builder.getInt1Ty(),   // bool is_ext
   });
   //
-  charstring_dtor_f = llvm::Function::Create(llvm::FunctionType::get(builder.getVoidTy(), {builder.getPtrTy()}, false),
-                                             llvm::GlobalValue::ExternalLinkage, "vrt_charstring_dtor", mod);
-  charstring_init_f = llvm::Function::Create(llvm::FunctionType::get(builder.getVoidTy(),
-                                                                     {
-                                                                         builder.getPtrTy(),    // vrt_charstring_t*
-                                                                         builder.getPtrTy(),    // const char*
-                                                                         builder.getInt32Ty(),  // u32
-                                                                     },
-                                                                     false),
-                                             llvm::GlobalValue::ExternalLinkage, "vrt_charstring_init", mod);
-  charstring_copy_f = llvm::Function::Create(llvm::FunctionType::get(builder.getVoidTy(),
-                                                                     {
-                                                                         builder.getPtrTy(),  // vrt_charstring_t* dst
-                                                                         builder.getPtrTy(),  // vrt_charstring_t  src
-                                                                     },
-                                                                     false),
-                                             llvm::GlobalValue::ExternalLinkage, "copy_charstring", mod);
-  charstring_concat_f = llvm::Function::Create(llvm::FunctionType::get(builder.getVoidTy(),
-                                                                       {
-                                                                           builder.getPtrTy(),  // vrt_charstring_t* dst
-                                                                           builder.getPtrTy(),  // lhs
-                                                                           builder.getPtrTy(),  // rhs
-                                                                       },
-                                                                       false),
-                                               llvm::GlobalValue::ExternalLinkage, "vrt_charstring_concat", mod);
-  charstring_singular_f =
-      llvm::Function::Create(llvm::FunctionType::get(builder.getVoidTy(),
-                                                     {
-                                                         builder.getPtrTy(),  // vrt_charstring_t* dst
-                                                         builder.getPtrTy(),
-                                                         builder.getInt32Ty(),
-                                                     },
-                                                     false),
-                             llvm::GlobalValue::ExternalLinkage, "vrt_charstring_singular", mod);
+  charstring_dtor_f = declare_external_fn("vrt_charstring_dtor", builder.getVoidTy(), {builder.getPtrTy()});
+  charstring_init_f = declare_external_fn("vrt_charstring_init", builder.getVoidTy(),
+                                          {
+                                              builder.getPtrTy(),    // vrt_charstring_t*
+                                              builder.getPtrTy(),    // const char*
+                                              builder.getInt32Ty(),  // u32
+                                          });
+  charstring_copy_f = declare_external_fn("copy_charstring", builder.getVoidTy(),
+                                          {
+                                              builder.getPtrTy(),  // vrt_charstring_t* dst
+                                              builder.getPtrTy(),  // vrt_charstring_t  src
+                                          });
+  charstring_concat_f = declare_external_fn("vrt_charstring_concat", builder.getVoidTy(),
+                                            {
+                                                builder.getPtrTy(),  // vrt_charstring_t* dst
+                                                builder.getPtrTy(),  // lhs
+                                                builder.getPtrTy(),  // rhs
+                                            });                      // TODO: add nocapture flags, ...
+  charstring_singular_f = declare_external_fn("vrt_charstring_singular", builder.getVoidTy(),
+                                              {
+                                                  builder.getPtrTy(),  // vrt_charstring_t* dst
+                                                  builder.getPtrTy(),
+                                                  builder.getInt32Ty(),
+                                              });
   //
   charstring_undef = llvm::ConstantStruct::get(charstring_ty, {
                                                                   llvm::UndefValue::get(builder.getPtrTy()),    //

@@ -116,18 +116,22 @@ void vrt_charstring_concat(vrt_charstring_t* dst, const vrt_charstring_t* a, con
   AssertIsBound(a);
   AssertIsBound(b);
 
-  // TODO: we may amortize this
+  // TODO: optimize "a := a & ..." and "a := ... & a" (append/prepend)
 
   const auto total_len = a->length + b->length;
 
-  dst->is_bound = true;
-  dst->is_ext = false;
+  vrt_charstring_t tmp;
+  tmp.is_bound = true;
+  tmp.is_ext = false;
 
-  charstring_update_length<{.realloc = false}>(dst, total_len);
+  charstring_update_length<{.realloc = false}>(&tmp, total_len);
 
-  char* dst_buf = vrt_charstring_get_buf(dst);
+  char* dst_buf = vrt_charstring_get_buf(&tmp);
   dst_buf = std::copy_n(vrt_charstring_get_cbuf(a), a->length, dst_buf);
   dst_buf = std::copy_n(vrt_charstring_get_cbuf(b), b->length, dst_buf);
+
+  //
+  *dst = tmp;
 }
 
 char vrt_charstring_at(const vrt_charstring_t* s, std::uint32_t i) {
