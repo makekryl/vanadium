@@ -672,6 +672,24 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
             u_.builder.CreateCall(u_.rt.charstring_concat_f, {out, vx, vy});
             return out;
           }
+          case ast::TokenKind::SHL: {
+            auto* out = dest ? dest : scope_->AllocTemp(&core::builtins::kCharstring);
+            u_.builder.CreateCall(u_.rt.charstring_rotate_left_f, {
+                                                                      out,
+                                                                      vx,
+                                                                      u_.builder.CreateCall(u_.rt.int_get_f, {vy}),
+                                                                  });
+            return out;
+          }
+          case ast::TokenKind::SHR: {
+            auto* out = dest ? dest : scope_->AllocTemp(&core::builtins::kCharstring);
+            u_.builder.CreateCall(u_.rt.charstring_rotate_right_f, {
+                                                                       out,
+                                                                       vx,
+                                                                       u_.builder.CreateCall(u_.rt.int_get_f, {vy}),
+                                                                   });
+            return out;
+          }
           default:
             break;
         }

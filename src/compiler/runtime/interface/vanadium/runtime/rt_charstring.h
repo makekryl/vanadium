@@ -36,6 +36,9 @@ void vrt_charstring_assign(vrt_charstring_t* dst, const char* src, std::uint32_t
 void vrt_charstring_concat(vrt_charstring_t* dst, const vrt_charstring_t*, const vrt_charstring_t*);
 void vrt_charstring_singular(vrt_charstring_t* dst, const vrt_charstring_t*, std::uint32_t i);
 
+void vrt_charstring_rotate_left(vrt_charstring_t* dst, const vrt_charstring_t*, std::int64_t n);
+void vrt_charstring_rotate_right(vrt_charstring_t* dst, const vrt_charstring_t*, std::int64_t n);
+
 char vrt_charstring_at(const vrt_charstring_t*, std::uint32_t i);
 void vrt_charstring_set(vrt_charstring_t*, std::uint32_t i, char v);
 

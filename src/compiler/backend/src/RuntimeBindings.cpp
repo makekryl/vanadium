@@ -86,15 +86,16 @@ void GenerateGenericBinaryIntegerOperation(llvm::LLVMContext& ctx, llvm::Functio
   builder.CreateRet(gen(builder, a->getType(), a_val, b_val));
 }
 
-void GenerateBoolGet(llvm::LLVMContext& ctx, llvm::Function* fn, llvm::Function* assert_is_bound_fn) {
+void GenerateBoxedUnwrapFn(llvm::LLVMContext& ctx, llvm::Function* fn, llvm::Function* assert_is_bound_fn,
+                           std::uint32_t idx) {
   llvm::IRBuilder<> builder(ctx);
 
-  auto* bb_entry = llvm::BasicBlock::Create(ctx, "entry", fn);
+  auto* bb_entry = llvm::BasicBlock::Create(ctx, "", fn);
   llvm::Value* arg = fn->arg_begin();
 
   builder.SetInsertPoint(bb_entry);
   builder.CreateCall(assert_is_bound_fn, {arg});
-  builder.CreateRet(builder.CreateExtractValue(arg, 0));
+  builder.CreateRet(builder.CreateExtractValue(arg, idx));
 }
 
 }  // namespace
@@ -195,6 +196,10 @@ RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ct
   auto* int_assert_is_bound_fn = declare_embedded_fn("__vrt_int_assert_is_bound", builder.getVoidTy(), {int_ty});
   GenerateAssertIsBound(*this, ctx, int_assert_is_bound_fn, "integer", 1);
   //
+  int_get_f = llvm::Function::Create(llvm::FunctionType::get(builder.getInt64Ty(), {int_ty}, false),
+                                     llvm::GlobalValue::InternalLinkage, "__vrt_int_get", mod);
+  GenerateBoxedUnwrapFn(ctx, int_get_f, int_assert_is_bound_fn, 0);
+  //
   for (const auto& [fptr, result_ty, fname, fnativeb] : {
            ArithmeticOpIntl(int_eq_f, nbool_ty, "__vrt_int_eq", BUILDER_BIN_OP_TO_BOOL(CreateICmpEQ)),
            ArithmeticOpIntl(int_ne_f, nbool_ty, "__vrt_int_ne", BUILDER_BIN_OP_TO_BOOL(CreateICmpNE)),
@@ -228,8 +233,8 @@ RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ct
   GenerateAssertIsBound(*this, ctx, bool_assert_is_bound_fn, "boolean", 1);
   //
   bool_get_f = llvm::Function::Create(llvm::FunctionType::get(builder.getInt1Ty(), {bool_ty}, false),
-                                      llvm::GlobalValue::InternalLinkage, "_vrt_bool_get", mod);
-  GenerateBoolGet(ctx, bool_get_f, bool_assert_is_bound_fn);
+                                      llvm::GlobalValue::InternalLinkage, "__vrt_bool_get", mod);
+  GenerateBoxedUnwrapFn(ctx, bool_get_f, bool_assert_is_bound_fn, 0);
 
   charstring_ty = llvm::StructType::create(ctx, "vrt_charstring_t");
   charstring_ty->setBody({
@@ -250,7 +255,7 @@ RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ct
   charstring_copy_f = declare_external_fn("copy_charstring", builder.getVoidTy(),
                                           {
                                               builder.getPtrTy(),  // vrt_charstring_t* dst
-                                              builder.getPtrTy(),  // vrt_charstring_t  src
+                                              builder.getPtrTy(),  // vrt_charstring_t* src
                                           });
   charstring_concat_f = declare_external_fn("vrt_charstring_concat", builder.getVoidTy(),
                                             {
@@ -264,6 +269,18 @@ RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ct
                                                   builder.getPtrTy(),
                                                   builder.getInt32Ty(),
                                               });
+  charstring_rotate_left_f = declare_external_fn("vrt_charstring_rotate_left", builder.getVoidTy(),
+                                                 {
+                                                     builder.getPtrTy(),    // vrt_charstring_t* dst
+                                                     builder.getPtrTy(),    // vrt_charstring_t* src
+                                                     builder.getInt64Ty(),  // int64 n
+                                                 });
+  charstring_rotate_right_f = declare_external_fn("vrt_charstring_rotate_right", builder.getVoidTy(),
+                                                  {
+                                                      builder.getPtrTy(),    // vrt_charstring_t* dst
+                                                      builder.getPtrTy(),    // vrt_charstring_t* src
+                                                      builder.getInt64Ty(),  // int64 n
+                                                  });
   //
   charstring_undef = llvm::ConstantStruct::get(charstring_ty, {
                                                                   llvm::UndefValue::get(builder.getPtrTy()),    //

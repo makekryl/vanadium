@@ -86,8 +86,34 @@ class Charstring : public ValueWrapper<vrt_charstring_t> {
     return tmp;
   }
   Charstring& operator+=(const Charstring& other) {
+    // TODO: use optimized routines
     vrt_charstring_t tmp;
     vrt_charstring_concat(&tmp, &value_, &other.value_);
+    *this = std::move(tmp);
+    return *this;
+  }
+
+  Charstring operator<<(std::int64_t n) const {
+    vrt_charstring_t tmp;
+    vrt_charstring_rotate_left(&tmp, &value_, n);
+    return tmp;
+  }
+  Charstring& operator<<=(std::int64_t n) {
+    // TODO: use optimized routines
+    vrt_charstring_t tmp;
+    vrt_charstring_rotate_left(&tmp, &value_, n);
+    *this = std::move(tmp);
+    return *this;
+  }
+  Charstring operator>>(std::int64_t n) const {
+    vrt_charstring_t tmp;
+    vrt_charstring_rotate_right(&tmp, &value_, n);
+    return tmp;
+  }
+  Charstring& operator>>=(std::int64_t n) {
+    // TODO: use optimized routines
+    vrt_charstring_t tmp;
+    vrt_charstring_rotate_right(&tmp, &value_, n);
     *this = std::move(tmp);
     return *this;
   }

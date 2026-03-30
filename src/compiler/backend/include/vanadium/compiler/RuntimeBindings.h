@@ -49,6 +49,8 @@ class RuntimeBindings {
   llvm::Value* int_undef;
   [[nodiscard]] llvm::Value* GetInt(std::variant<NativeIntType, std::string_view>) const;
   //
+  llvm::Function* int_get_f;
+  //
   llvm::Function* int_eq_f;
   llvm::Function* int_ne_f;
   //
@@ -76,6 +78,8 @@ class RuntimeBindings {
   llvm::Function* charstring_copy_f;
   llvm::Function* charstring_concat_f;
   llvm::Function* charstring_singular_f;
+  llvm::Function* charstring_rotate_left_f;
+  llvm::Function* charstring_rotate_right_f;
   llvm::Function* charstring_eq_f;
   //
   llvm::Value* charstring_undef;

@@ -101,6 +101,7 @@ void vrt_charstring_assign(vrt_charstring_t* dst, const char* src, std::uint32_t
 
 void copy_charstring(vrt_charstring_t* dst, const vrt_charstring_t* src) {
   AssertIsBound(src);
+  dst->is_bound = true;
   vrt_charstring_assign(dst, vrt_charstring_get_cbuf(src), src->length);
 }
 
@@ -156,6 +157,56 @@ void vrt_charstring_singular(vrt_charstring_t* dst, const vrt_charstring_t* s, s
 
   dst->value.intl[0] = v;
   dst->length = 1;
+}
+
+namespace {
+void vrt_charstring_rotate_base(vrt_charstring_t* dst, const vrt_charstring_t* s, std::int64_t n, auto do_rotate,
+                                auto do_rotate_inv) {
+  AssertIsBound(s);
+  const auto len = s->length;
+
+  if (len == 0 || n == 0) {
+    vrt_charstring_t tmp;
+    copy_charstring(&tmp, s);
+    *dst = tmp;
+    return;
+  }
+
+  vrt_charstring_t tmp;
+  tmp.is_bound = true;
+  tmp.is_ext = s->is_ext;
+  charstring_update_length<{.realloc = false}>(&tmp, len);
+
+  const auto* srcbuf = vrt_charstring_get_cbuf(s);
+  auto* buf = vrt_charstring_get_buf(&tmp);
+
+  if (n < 0) {
+    do_rotate_inv(srcbuf, buf, len, -n);
+    return;
+  }
+
+  do_rotate(srcbuf, buf, len, n % len);
+
+  *dst = tmp;
+}
+void vrt_charstring_rotate_left_impl(const char* srcbuf, char* buf, std::uint32_t len, std::int64_t n) {
+  std::copy_n(srcbuf + n, len - n, buf);
+  std::copy_n(srcbuf, n, buf + len - n);
+}
+void vrt_charstring_rotate_right_impl(const char* srcbuf, char* buf, std::uint32_t len, std::int64_t n) {
+  std::copy_n(srcbuf + len - n, n, buf);
+  std::copy_n(srcbuf, len - n, buf + n);
+}
+}  // namespace
+
+void vrt_charstring_rotate_left(vrt_charstring_t* dst, const vrt_charstring_t* s, std::int64_t n) {
+  vrt_charstring_rotate_base(dst, s, n,  //
+                             vrt_charstring_rotate_left_impl, vrt_charstring_rotate_right_impl);
+}
+
+void vrt_charstring_rotate_right(vrt_charstring_t* dst, const vrt_charstring_t* s, std::int64_t n) {
+  vrt_charstring_rotate_base(dst, s, n,  //
+                             vrt_charstring_rotate_right_impl, vrt_charstring_rotate_left_impl);
 }
 
 void vrt_charstring_set(vrt_charstring_t* s, std::uint32_t i, char v) {
