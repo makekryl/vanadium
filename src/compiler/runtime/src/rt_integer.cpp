@@ -4,12 +4,11 @@
 
 #include "vanadium/runtime/RuntimeHelpers.h"
 #include "vanadium/runtime/runtime.h"
+#include "vanadium/runtime/runtime.hpp"
 
 namespace {
 inline void AssertIsBound(vrt_int_t& i) {
-  if (!i.is_bound) [[unlikely]] {
-    vrt_panic("accessing an unbound integer value");
-  }
+  rt::Assert(i.is_bound, "accessing an unbound integer value");
 }
 }  // namespace
 

@@ -54,7 +54,7 @@ void EmitDestructor(CodegenUnit& u, const core::semantic::Symbol* sym, llvm::Val
           return u.rt.charstring_dtor_f;
         }
         if (sym == &core::builtins::kOctetstring) {
-          return u.rt.octetstring_dtor_f;
+          return u.rt.octetstring.dtor_f;
         }
         return nullptr;
       }();
@@ -618,7 +618,7 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
           auto* out = dest ? dest : scope_->AllocTemp(&core::builtins::kOctetstring);
           const auto& sv = u_.ParseOctetstring(m);
           assert(sv.length() <= std::numeric_limits<std::uint32_t>::max());
-          u_.builder.CreateCall(u_.rt.octetstring_init_f,
+          u_.builder.CreateCall(u_.rt.octetstring.init_f,
                                 {
                                     out,
                                     u_.builder.CreateGlobalStringPtr(sv),
@@ -710,6 +710,49 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
                                                                        vx,
                                                                        u_.builder.CreateCall(u_.rt.int_get_f, {vy}),
                                                                    });
+            return out;
+          }
+          default:
+            break;
+        }
+      } else if (sym == &core::builtins::kOctetstring) {
+        switch (m->op.kind) {
+          case ast::TokenKind::CONCAT: {
+            auto* out = dest ? dest : scope_->AllocTemp(&core::builtins::kOctetstring);
+            u_.builder.CreateCall(u_.rt.octetstring.concat_f, {out, vx, vy});
+            return out;
+          }
+          case ast::TokenKind::SHL: {
+            auto* out = dest ? dest : scope_->AllocTemp(&core::builtins::kOctetstring);
+            u_.builder.CreateCall(u_.rt.octetstring.rotate_left_f, {
+                                                                       out,
+                                                                       vx,
+                                                                       u_.builder.CreateCall(u_.rt.int_get_f, {vy}),
+                                                                   });
+            return out;
+          }
+          case ast::TokenKind::SHR: {
+            auto* out = dest ? dest : scope_->AllocTemp(&core::builtins::kOctetstring);
+            u_.builder.CreateCall(u_.rt.octetstring.rotate_right_f, {
+                                                                        out,
+                                                                        vx,
+                                                                        u_.builder.CreateCall(u_.rt.int_get_f, {vy}),
+                                                                    });
+            return out;
+          }
+          case ast::TokenKind::AND4B: {
+            auto* out = dest ? dest : scope_->AllocTemp(&core::builtins::kOctetstring);
+            u_.builder.CreateCall(u_.rt.octetstring.and4b_f, {out, vx, vy});
+            return out;
+          }
+          case ast::TokenKind::OR4B: {
+            auto* out = dest ? dest : scope_->AllocTemp(&core::builtins::kOctetstring);
+            u_.builder.CreateCall(u_.rt.octetstring.or4b_f, {out, vx, vy});
+            return out;
+          }
+          case ast::TokenKind::XOR4B: {
+            auto* out = dest ? dest : scope_->AllocTemp(&core::builtins::kOctetstring);
+            u_.builder.CreateCall(u_.rt.octetstring.xor4b_f, {out, vx, vy});
             return out;
           }
           default:

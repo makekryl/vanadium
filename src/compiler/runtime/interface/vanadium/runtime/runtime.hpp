@@ -16,6 +16,13 @@ void Panic(std::format_string<Args...> fstr, Args&&... args) {
   return vrt_panic(std::format(fstr, std::forward<Args>(args)...).c_str());
 }
 
+template <typename... Args>
+void Assert(bool cond, std::format_string<Args...> fstr, Args&&... args) {
+  if (!cond) [[unlikely]] {
+    Panic(fstr, std::forward<Args>(args)...);
+  }
+}
+
 template <typename T>
   requires requires(T t) { requires std::same_as<decltype(t.is_bound), bool>; }
 class ValueWrapper {

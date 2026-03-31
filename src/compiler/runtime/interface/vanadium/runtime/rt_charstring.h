@@ -6,15 +6,17 @@
 
 struct vrt_typeinfo_t;
 
+using charstring_size_t = std::uint32_t;
+
 struct vrt_charstring_t {
   union {
     struct {
       char* data;
-      std::uint32_t capacity;
+      charstring_size_t capacity;
     } ext;
     char intl[sizeof(ext)];
   } value;
-  std::uint32_t length;
+  charstring_size_t length;
   bool is_bound;
   bool is_ext;
 };
@@ -32,15 +34,15 @@ void copy_charstring(vrt_charstring_t* dst, const vrt_charstring_t* src);
 char* vrt_charstring_get_buf(vrt_charstring_t*);
 const char* vrt_charstring_get_cbuf(const vrt_charstring_t*);
 
-void vrt_charstring_assign(vrt_charstring_t* dst, const char* src, std::uint32_t len);
+void vrt_charstring_assign(vrt_charstring_t* dst, const char* src, charstring_size_t len);
 void vrt_charstring_concat(vrt_charstring_t* dst, const vrt_charstring_t*, const vrt_charstring_t*);
-void vrt_charstring_singular(vrt_charstring_t* dst, const vrt_charstring_t*, std::uint32_t i);
+void vrt_charstring_singular(vrt_charstring_t* dst, const vrt_charstring_t*, charstring_size_t i);
 
 void vrt_charstring_rotate_left(vrt_charstring_t* dst, const vrt_charstring_t*, std::int64_t n);
 void vrt_charstring_rotate_right(vrt_charstring_t* dst, const vrt_charstring_t*, std::int64_t n);
 
-char vrt_charstring_at(const vrt_charstring_t*, std::uint32_t i);
-void vrt_charstring_set(vrt_charstring_t*, std::uint32_t i, char v);
+char vrt_charstring_at(const vrt_charstring_t*, charstring_size_t i);
+void vrt_charstring_set(vrt_charstring_t*, charstring_size_t i, char v);
 
 bool vrt_charstring_eq(const vrt_charstring_t*, const vrt_charstring_t*);
 

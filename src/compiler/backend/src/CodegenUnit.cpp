@@ -39,7 +39,7 @@ llvm::Type* CodegenUnit::GetSymbolType(const core::semantic::Symbol* sym) {
       return rt.charstring_ty;
     }
     if (sym == &core::builtins::kOctetstring) {
-      return rt.octetstring_ty;
+      return rt.octetstring.ty;
     }
     if (sym == &core::checker::symbols::kVoidType) {
       return builder.getVoidTy();

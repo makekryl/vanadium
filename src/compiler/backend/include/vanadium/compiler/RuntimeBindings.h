@@ -84,18 +84,25 @@ class RuntimeBindings {
   //
   llvm::Value* charstring_undef;
 
-  llvm::StructType* octetstring_ty;
-  //
-  llvm::Function* octetstring_dtor_f;
-  llvm::Function* octetstring_init_f;
-  llvm::Function* octetstring_copy_f;
-  llvm::Function* octetstring_concat_f;
-  llvm::Function* octetstring_singular_f;
-  llvm::Function* octetstring_rotate_left_f;
-  llvm::Function* octetstring_rotate_right_f;
-  llvm::Function* octetstring_eq_f;
-  //
-  llvm::Value* octetstring_undef;
+  struct {
+    llvm::StructType* ty;
+    //
+    llvm::Function* dtor_f;
+    llvm::Function* init_f;
+    llvm::Function* copy_f;
+    llvm::Function* concat_f;
+    llvm::Function* singular_f;
+    llvm::Function* rotate_left_f;
+    llvm::Function* rotate_right_f;
+    llvm::Function* eq_f;
+    //
+    llvm::Function* not4b_f;
+    llvm::Function* and4b_f;
+    llvm::Function* or4b_f;
+    llvm::Function* xor4b_f;
+    //
+    llvm::Value* undef;
+  } octetstring;
 
   [[nodiscard]] llvm::Type* MakeUnion(std::span<llvm::Type*> members) const;
 
