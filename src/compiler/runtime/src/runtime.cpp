@@ -10,7 +10,13 @@
 #include "vanadium/runtime/rt_boolean.h"
 #include "vanadium/runtime/rt_charstring.h"
 #include "vanadium/runtime/rt_integer.h"
+#include "vanadium/runtime/rt_octetstring.h"
 #include "vanadium/runtime/rt_reflect.h"
+
+namespace {
+constexpr auto kHexDigits =
+    std::to_array({'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'});
+}
 
 void vrt_panic(const char* rr) {
   throw std::runtime_error(rr);
@@ -26,7 +32,7 @@ bool vrt_is_bound(const vrt_val_t* v) {
   }
   return true;
 }
-void vrt_charstring_init(vrt_charstring_t* dst, const char* src, std::uint32_t len);
+
 void vrt_log(const vrt_val_t* args, std::uint32_t n) {
   std::string buf;
   for (const auto* arg = args; arg < args + n; ++arg) {
@@ -44,8 +50,18 @@ void vrt_log(const vrt_val_t* args, std::uint32_t n) {
     } else if (arg->ty == &charstring_typeinfo) {
       auto* s = static_cast<vrt_charstring_t*>(arg->p);
       buf += "\"";
-      buf += std::string_view{vrt_charstring_get_buf(s), s->length};
+      buf += std::string_view{vrt_charstring_get_cbuf(s), s->length};
       buf += "\"";
+    } else if (arg->ty == &octetstring_typeinfo) {
+      auto* s = static_cast<vrt_octetstring_t*>(arg->p);
+      const auto* sdata = vrt_octetstring_get_cbuf(s);
+      buf += "'";
+      for (std::uint32_t i = 0; i < s->length; ++i) {
+        const auto& octet = sdata[i];
+        buf += kHexDigits[octet >> 4];
+        buf += kHexDigits[octet & 0x0F];
+      }
+      buf += "'O";
     } else {
       buf += "<unknown_typeinfo>";
     }

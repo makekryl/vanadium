@@ -49,9 +49,18 @@ struct AllocatedVar {
 void EmitDestructor(CodegenUnit& u, const core::semantic::Symbol* sym, llvm::Value* val) {
   if (sym) {
     if (sym->Flags() & core::semantic::SymbolFlags::kBuiltin) {
-      if (sym == &core::builtins::kCharstring) {
+      auto* dtor_f = [&] -> llvm::Function* {
+        if (sym == &core::builtins::kCharstring) {
+          return u.rt.charstring_dtor_f;
+        }
+        if (sym == &core::builtins::kOctetstring) {
+          return u.rt.octetstring_dtor_f;
+        }
+        return nullptr;
+      }();
+      if (dtor_f) {
         // TODO: partial inline (is_bound && is_ext) in RuntimeBindings
-        u.builder.CreateCall(u.rt.charstring_dtor_f, {val});
+        u.builder.CreateCall(dtor_f, {val});
       }
     } else {
       auto* alloca = llvm::dyn_cast<llvm::AllocaInst>(val);
@@ -597,6 +606,19 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
           const auto& sv = u_.ParseCharstring(m);
           assert(sv.length() <= std::numeric_limits<std::uint32_t>::max());
           u_.builder.CreateCall(u_.rt.charstring_init_f,
+                                {
+                                    out,
+                                    u_.builder.CreateGlobalStringPtr(sv),
+                                    u_.builder.getInt32(static_cast<std::uint32_t>(sv.length())),
+                                });
+          return out;
+        }
+
+        case ast::TokenKind::OCTETSTRING: {
+          auto* out = dest ? dest : scope_->AllocTemp(&core::builtins::kOctetstring);
+          const auto& sv = u_.ParseOctetstring(m);
+          assert(sv.length() <= std::numeric_limits<std::uint32_t>::max());
+          u_.builder.CreateCall(u_.rt.octetstring_init_f,
                                 {
                                     out,
                                     u_.builder.CreateGlobalStringPtr(sv),

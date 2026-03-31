@@ -289,6 +289,60 @@ RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ct
                                                                   builder.getTrue(),   // is_bound = true
                                                                   builder.getFalse(),  // is_ext = true
                                                               });
+
+  octetstring_ty = llvm::StructType::create(ctx, "vrt_octetstring_t");
+  octetstring_ty->setBody({
+      builder.getPtrTy(),    // char* data
+      builder.getInt32Ty(),  // u32 capacity
+      builder.getInt32Ty(),  // u32 length
+      builder.getInt1Ty(),   // bool is_bound
+      builder.getInt1Ty(),   // bool is_ext
+  });
+  //
+  octetstring_dtor_f = declare_external_fn("vrt_octetstring_dtor", builder.getVoidTy(), {builder.getPtrTy()});
+  octetstring_init_f = declare_external_fn("vrt_octetstring_init", builder.getVoidTy(),
+                                           {
+                                               builder.getPtrTy(),    // vrt_octetstring_t*
+                                               builder.getPtrTy(),    // const char*
+                                               builder.getInt32Ty(),  // u32
+                                           });
+  octetstring_copy_f = declare_external_fn("copy_octetstring", builder.getVoidTy(),
+                                           {
+                                               builder.getPtrTy(),  // vrt_octetstring_t* dst
+                                               builder.getPtrTy(),  // vrt_octetstring_t* src
+                                           });
+  octetstring_concat_f = declare_external_fn("vrt_octetstring_concat", builder.getVoidTy(),
+                                             {
+                                                 builder.getPtrTy(),  // vrt_octetstring_t* dst
+                                                 builder.getPtrTy(),  // lhs
+                                                 builder.getPtrTy(),  // rhs
+                                             });                      // TODO: add nocapture flags, ...
+  octetstring_singular_f = declare_external_fn("vrt_octetstring_singular", builder.getVoidTy(),
+                                               {
+                                                   builder.getPtrTy(),  // vrt_octetstring_t* dst
+                                                   builder.getPtrTy(),
+                                                   builder.getInt32Ty(),
+                                               });
+  octetstring_rotate_left_f = declare_external_fn("vrt_octetstring_rotate_left", builder.getVoidTy(),
+                                                  {
+                                                      builder.getPtrTy(),    // vrt_octetstring_t* dst
+                                                      builder.getPtrTy(),    // vrt_octetstring_t* src
+                                                      builder.getInt64Ty(),  // int64 n
+                                                  });
+  octetstring_rotate_right_f = declare_external_fn("vrt_octetstring_rotate_right", builder.getVoidTy(),
+                                                   {
+                                                       builder.getPtrTy(),    // vrt_octetstring_t* dst
+                                                       builder.getPtrTy(),    // vrt_octetstring_t* src
+                                                       builder.getInt64Ty(),  // int64 n
+                                                   });
+  //
+  octetstring_undef = llvm::ConstantStruct::get(octetstring_ty, {
+                                                                    llvm::UndefValue::get(builder.getPtrTy()),    //
+                                                                    llvm::UndefValue::get(builder.getInt32Ty()),  //
+                                                                    llvm::UndefValue::get(builder.getInt32Ty()),  //
+                                                                    builder.getTrue(),   // is_bound = true
+                                                                    builder.getFalse(),  // is_ext = true
+                                                                });
 }
 
 llvm::Value* RuntimeBindings::GetInt(std::variant<NativeIntType, std::string_view> value) const {

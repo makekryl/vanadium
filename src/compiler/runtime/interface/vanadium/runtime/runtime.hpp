@@ -6,6 +6,7 @@
 #include <utility>
 
 #include "vanadium/runtime/rt_charstring.h"
+#include "vanadium/runtime/rt_octetstring.h"
 #include "vanadium/runtime/runtime.h"
 
 namespace vanadium::rt {
@@ -64,7 +65,13 @@ class Charstring : public ValueWrapper<vrt_charstring_t> {
   }
 
   [[nodiscard]] operator std::string_view() const {
-    return {vrt_charstring_get_buf(const_cast<vrt_charstring_t*>(&value_)), value_.length};
+    return {vrt_charstring_get_cbuf(&value_), value_.length};
+  }
+  [[nodiscard]] operator std::span<const char>() const {
+    return {vrt_charstring_get_cbuf(&value_), value_.length};
+  }
+  [[nodiscard]] operator std::span<char>() {
+    return {vrt_charstring_get_buf(&value_), value_.length};
   }
 
   Charstring& operator=(Charstring other) {
@@ -143,6 +150,115 @@ class Charstring : public ValueWrapper<vrt_charstring_t> {
 
   [[nodiscard]] char operator[](std::uint32_t i) const {
     return vrt_charstring_at(&value_, i);
+  }
+  [[nodiscard]] ElementProxy operator[](std::uint32_t i) {
+    return {this, i};
+  }
+};
+
+class Octetstring : public ValueWrapper<vrt_octetstring_t> {
+ public:
+  Octetstring() {
+    vrt_octetstring_ctor(&value_);
+  }
+  Octetstring(vrt_octetstring_t&& instance) : ValueWrapper(std::move(instance)) {}
+
+  Octetstring(const Octetstring& other) : ValueWrapper() {
+    copy_octetstring(&value_, &other.value_);
+  }
+
+  Octetstring(Octetstring&& other) noexcept {
+    value_ = std::move(other.value_);
+    other.value_.is_bound = false;
+  }
+
+  ~Octetstring() {
+    vrt_octetstring_dtor(&value_);
+  }
+
+  [[nodiscard]] operator std::span<const octet_t>() const {
+    return {vrt_octetstring_get_cbuf(&value_), value_.length};
+  }
+  [[nodiscard]] operator std::span<octet_t>() {
+    return {vrt_octetstring_get_buf(&value_), value_.length};
+  }
+
+  Octetstring& operator=(Octetstring other) {
+    Octetstring tmp(std::move(other));
+    std::swap(value_, tmp.value_);
+    return *this;
+  }
+
+  [[nodiscard]] bool operator==(const Octetstring& other) const {
+    return vrt_octetstring_eq(&value_, &other.value_);
+  }
+  [[nodiscard]] bool operator!=(const Octetstring& other) const {
+    return !(*this == other);
+  }
+
+  Octetstring operator+(const Octetstring& other) const {
+    vrt_octetstring_t tmp;
+    vrt_octetstring_concat(&tmp, &value_, &other.value_);
+    return tmp;
+  }
+  Octetstring& operator+=(const Octetstring& other) {
+    // TODO: use optimized routines
+    vrt_octetstring_t tmp;
+    vrt_octetstring_concat(&tmp, &value_, &other.value_);
+    *this = std::move(tmp);
+    return *this;
+  }
+
+  Octetstring operator<<(std::int64_t n) const {
+    vrt_octetstring_t tmp;
+    vrt_octetstring_rotate_left(&tmp, &value_, n);
+    return tmp;
+  }
+  Octetstring& operator<<=(std::int64_t n) {
+    // TODO: use optimized routines
+    vrt_octetstring_t tmp;
+    vrt_octetstring_rotate_left(&tmp, &value_, n);
+    *this = std::move(tmp);
+    return *this;
+  }
+  Octetstring operator>>(std::int64_t n) const {
+    vrt_octetstring_t tmp;
+    vrt_octetstring_rotate_right(&tmp, &value_, n);
+    return tmp;
+  }
+  Octetstring& operator>>=(std::int64_t n) {
+    // TODO: use optimized routines
+    vrt_octetstring_t tmp;
+    vrt_octetstring_rotate_right(&tmp, &value_, n);
+    *this = std::move(tmp);
+    return *this;
+  }
+
+  [[nodiscard]] std::uint32_t length() const {
+    return value_.length;
+  }
+
+  class ElementProxy {
+   public:
+    operator char() {
+      return std::as_const(*s_)[i_];
+    }
+    ElementProxy& operator=(char c) {
+      vrt_octetstring_set(&s_->unwrap(), i_, c);
+      return *this;
+    }
+
+   private:
+    ElementProxy(Octetstring* s, std::uint32_t i) : s_(s), i_(i) {}
+
+    Octetstring* s_;
+    std::uint32_t i_;
+
+    friend class Octetstring;
+  };
+
+  [[nodiscard]] char operator[](std::uint32_t i) const {
+    return vrt_octetstring_at(&value_, i);
   }
   [[nodiscard]] ElementProxy operator[](std::uint32_t i) {
     return {this, i};

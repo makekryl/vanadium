@@ -38,6 +38,9 @@ llvm::Type* CodegenUnit::GetSymbolType(const core::semantic::Symbol* sym) {
     if (sym == &core::builtins::kCharstring) {
       return rt.charstring_ty;
     }
+    if (sym == &core::builtins::kOctetstring) {
+      return rt.octetstring_ty;
+    }
     if (sym == &core::checker::symbols::kVoidType) {
       return builder.getVoidTy();
     }
@@ -134,9 +137,37 @@ std::variant<RuntimeBindings::NativeIntType, std::string_view> CodegenUnit::Pars
 
 std::string_view CodegenUnit::ParseCharstring(const ast::nodes::ValueLiteral* m) {
   auto s = sf.Text(m);
-  s.remove_prefix(1);
-  s.remove_suffix(1);
+  s.remove_prefix(1);  // "
+  s.remove_suffix(1);  // "
   return s;
+}
+
+std::string CodegenUnit::ParseOctetstring(const ast::nodes::ValueLiteral* m) {
+  auto s = sf.Text(m);
+  s.remove_prefix(1);  // '
+  s.remove_suffix(2);  // 'O
+
+  // TODO: it will be needed in runtime, extract, cover with tests
+  constexpr auto kChar2Hex = [](char c) {
+    if (c >= '0' && c <= '9') return c - '0';
+    if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+    if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+    assert(false);
+  };
+
+  // TODO(lexer): verify length
+  assert(s.length() % 2 == 0);
+
+  std::string result;
+  result.reserve(s.length() / 2);
+  //
+  for (std::size_t i = 0; i < s.length(); i += 2) {
+    const std::uint8_t high = kChar2Hex(s[i]);
+    const std::uint8_t low = kChar2Hex(s[i + 1]);
+    result.push_back((high << 4) | low);
+  }
+
+  return result;
 }
 
 }  // namespace vanadium::compiler
