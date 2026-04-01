@@ -416,6 +416,34 @@ bool Binder::Inspect(const ast::Node* n) {
 
       Scoped<false>(m, [&] {
         Visit(m->defs);
+
+        // TODO: PoC, refactor into WithParser
+        if (m->with) {
+          for (const auto* ws : m->with->list) {
+            if (ws->kind.kind != ast::TokenKind::EXTENSION || ws->value->nkind != ast::NodeKind::ValueLiteral ||
+                ws->value->As<ast::nodes::ValueLiteral>()->tok.kind != ast::TokenKind::STRING) {
+              continue;
+            }
+            std::string_view wq = Lit(ws->value);
+            wq.remove_prefix(1);  // "
+            wq.remove_suffix(1);  // "
+            constexpr std::string_view kExtAnytype{"anytype"};
+            if (!wq.starts_with(kExtAnytype)) {
+              continue;
+            }
+            wq.remove_prefix(kExtAnytype.length());
+            //
+            for (const auto& tp : lib::DelimitedStringView<','>{wq}.range()) {
+              const auto offset = tp.data() - sf_.src.data();
+              auto* ident = sf_.arena.Alloc<ast::nodes::Ident>();
+              ident->parent = ws->value;
+              ident->nrange = {.begin = static_cast<ast::pos_t>(offset),
+                               .end = static_cast<ast::pos_t>(offset + tp.length())};
+              BindReference(ident, externals_.Primary());
+            }
+          }
+        }
+
         if (m->name) {
           const auto name = Lit(std::addressof(*m->name));
 
