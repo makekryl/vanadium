@@ -85,7 +85,7 @@ int main(int argc, char* argv[]) {
         continue;
       }
 
-      fmt::print(fmt::emphasis::underline | fmt::emphasis::bold, "{}\n", project.Directory().Join(sf.path));
+      fmt::print(fmt::emphasis::underline | fmt::emphasis::bold, "{}\n", solution.Directory().Join(sf.path));
       if (!sf.ast.errors.empty()) {
         fmt::println("\tFile has syntax errors");
         continue;
