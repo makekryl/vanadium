@@ -21,7 +21,7 @@ void SetupTools(LsContext& ctx) {
   ctx.linter->RegisterRule<lint::rules::NoEmpty>();
   ctx.linter->RegisterRule<lint::rules::NoUnusedVars>();
   ctx.linter->RegisterRule<lint::rules::NoUnusedImports>();
-  ctx.linter->RegisterRule<lint::rules::NoUnnecessaryValueof>();
+  // ctx.linter->RegisterRule<lint::rules::NoUnnecessaryValueof>();  // TODO: fix and re-enable
 
   if (!ctx.solution) {
     return;
