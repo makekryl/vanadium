@@ -655,7 +655,7 @@ bool Binder::Inspect(const ast::Node* n) {
               return false;
           }
         };
-        if (!all_paths_return(m->body)) {
+        if (m->body && !all_paths_return(m->body)) {
           EmitError(SemanticError{
               .range = m->ret->nrange,
               .type = SemanticError::Type::kNotAllControlPathsReturnAValue,

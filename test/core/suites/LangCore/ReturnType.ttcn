@@ -86,4 +86,7 @@ function missingReturnStatement_selectStmt() return integer {  // EXPECT_ERROR
   }
 }
 
+external function externalFunc() return integer;
+external function externalFuncThatReturns() return integer;
+
 }
