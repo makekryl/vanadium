@@ -1,0 +1,7 @@
+./ComponentMembersBinding.ttcn:
+  4:7: unresolved symbol 'UnknownType'
+      var UnknownType field;  // EXPECT_ERROR
+          ~~~~~~~~~~~                        
+  5:19: unresolved symbol 'unknownSymbolName'
+      var integer arr[unknownSymbolName];  // EXPECT_ERROR
+                      ~~~~~~~~~~~~~~~~~                   

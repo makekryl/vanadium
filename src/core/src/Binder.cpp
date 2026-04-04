@@ -517,16 +517,17 @@ bool Binder::Inspect(const ast::Node* n) {
             const auto* vd = d->decl->As<ast::nodes::ValueDecl>();
             externals_.With(externals_.Primary(), [&] {
               Visit(vd->type);
-            });
-            for (const auto* declarator : vd->decls) {
-              if (declarator->name) {
-                AddSymbol({
-                    Lit(std::addressof(*declarator->name)),
-                    declarator,
-                    SymbolFlags::kField,
-                });
+              for (const auto* declarator : vd->decls) {
+                MaybeVisit(declarator->arraydef);
+                if (declarator->name) {
+                  AddSymbol({
+                      Lit(std::addressof(*declarator->name)),
+                      declarator,
+                      SymbolFlags::kField,
+                  });
+                }
               }
-            }
+            });
           }
         };
 

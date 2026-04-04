@@ -1,0 +1,8 @@
+module ComponentMembersBinding {
+
+type component MyComp {
+  var UnknownType field;  // EXPECT_ERROR
+  var integer arr[unknownSymbolName];  // EXPECT_ERROR
+}
+
+}
