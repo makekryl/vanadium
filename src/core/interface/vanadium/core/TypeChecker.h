@@ -28,15 +28,16 @@ enum class TemplateRestrictionKind : std::uint8_t {
   kPresent = 1 << 2,
 
   kRegular = kOmit | kValue | kPresent,
-
-  kOptionalField = 1 << 3,
 };
 ENUM_FLAGS_TRAITS(TemplateRestrictionKind)
 [[nodiscard]] TemplateRestrictionKind ParseTemplateRestriction(const ast::nodes::RestrictionSpec*);
 
 struct InstantiatedType {
   const semantic::Symbol* sym{nullptr};
+  //
   TemplateRestrictionKind restriction{TemplateRestrictionKind::kNone};
+  bool is_optional_field{false};
+  //
   bool is_instance{false};
   std::uint32_t depth{0};
 
@@ -56,6 +57,7 @@ struct InstantiatedType {
     return InstantiatedType{
         .sym = nsym,
         .restriction = restriction,
+        .is_optional_field = false,
         .is_instance = is_instance,
         .depth = depth,
     };

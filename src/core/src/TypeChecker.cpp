@@ -1053,7 +1053,8 @@ InstantiatedType ResolveDeclarationType(const SourceFile* file, const ast::Node*
       const auto* m = decl->As<ast::nodes::Field>();
       return {
           .sym = ResolveTypeSpecSymbol(file, m->type),
-          .restriction = m->optional ? TemplateRestrictionKind::kOptionalField : TemplateRestrictionKind::kNone,
+          .restriction = TemplateRestrictionKind::kNone,
+          .is_optional_field = m->optional,
           .is_instance = true,
           .depth = static_cast<std::uint32_t>(ast::utils::GetArrayDefCap(m->arraydef)),
       };
@@ -1295,9 +1296,7 @@ void BasicTypeChecker::MatchTypes(const ast::Range& range, InstantiatedType actu
     actual_template_restriction = actual.restriction;
   }
   if ((expected.restriction & actual_template_restriction) != actual_template_restriction) {
-    const bool is_legit{(actual.restriction == TemplateRestrictionKind::kOptionalField) ||
-                        ((expected.restriction & TemplateRestrictionKind::kOptionalField) &&
-                         (actual_template_restriction == TemplateRestrictionKind::kOmit))};
+    const bool is_legit = expected.is_optional_field && (actual_template_restriction == TemplateRestrictionKind::kOmit);
     if (!is_legit) {
       EmitError(TypeError{
           .range = range,

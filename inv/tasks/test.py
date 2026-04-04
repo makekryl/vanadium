@@ -35,6 +35,8 @@ def test(c: Context, label: str = "all"):
     args.append(f"-E '{test_opts(c).exclude}'")
   if test_opts(c).jobs:
     args.append(f"-j {test_opts(c).jobs}")
+  if test_opts(c).verbose:
+    args.append("-V")
   if test_opts(c).ctest_args:
     args.append(test_opts(c).ctest_args)
 

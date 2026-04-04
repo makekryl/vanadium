@@ -1,0 +1,33 @@
+module OptionalTemplateRestriction {
+
+type record Inner { }
+
+type record Outer {
+  Inner inner,
+  Inner innerOpt optional
+}
+
+function take_templateOptMember(template Inner t) { }
+function take_valueOptMember(Inner t) { }
+
+function f() {
+  var template Outer t_o;
+  //
+  take_templateOptMember(t_o.inner);
+  take_templateOptMember(t_o.innerOpt);
+  //
+  take_valueOptMember(t_o.inner);     // EXPECT_ERROR
+  take_valueOptMember(t_o.innerOpt);  // EXPECT_ERROR
+
+  //
+
+  var Outer v_o;
+  //
+  take_templateOptMember(v_o.inner);
+  take_templateOptMember(v_o.innerOpt);
+  //
+  take_valueOptMember(v_o.inner);
+  take_valueOptMember(v_o.innerOpt);
+}
+
+}

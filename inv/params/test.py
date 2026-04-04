@@ -12,6 +12,7 @@ class TestOptions:
 
   filter: str | None = None
   exclude: str | None = None
+  verbose: bool = False
 
   skip_build: bool = False
   no_run: bool = False

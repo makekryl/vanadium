@@ -61,7 +61,7 @@ Snapshot TakeSnapshot(const vanadium::core::Program& program) {
                                                          const vanadium::ast::Range& range, std::string_view text) {
     const auto& loc_begin = psf->ast.lines.Translate(range.begin);
     w.WriteLine(std::format("{}:{}: {}", loc_begin.line + 1, loc_begin.column + 1, text));
-    errlines[psf].emplace_back(loc_begin.line);
+    errlines.at(psf).emplace_back(loc_begin.line);
 
     const auto& loc_end = psf->ast.lines.Translate(range.end);
     w.Indented([&] {
@@ -107,6 +107,7 @@ Snapshot TakeSnapshot(const vanadium::core::Program& program) {
   std::map<std::string, const vanadium::core::SourceFile*> files;  // ordered
   for (const auto& [name, sf] : program.Files()) {
     files[name] = &sf;
+    errlines.try_emplace(&sf);
   }
 
   for (const auto& [name, psf] : files) {

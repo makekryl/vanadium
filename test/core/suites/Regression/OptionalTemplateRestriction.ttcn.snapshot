@@ -1,0 +1,7 @@
+./OptionalTemplateRestriction.ttcn:
+  19:23: expected value, got template
+      take_valueOptMember(t_o.inner);     // EXPECT_ERROR
+                          ~~~~~~~~~                      
+  20:23: expected value, got template
+      take_valueOptMember(t_o.innerOpt);  // EXPECT_ERROR
+                          ~~~~~~~~~~~~                   
