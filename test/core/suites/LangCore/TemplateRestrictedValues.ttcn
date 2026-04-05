@@ -1,0 +1,87 @@
+module TemplateRestrictedValues {
+
+type record InnerRecord {
+  integer y
+}
+
+type record TheRecord {
+  integer x,
+  InnerRecord inner
+}
+
+function retVal() return integer {
+  return 5;
+}
+
+function BADretVal() return integer {
+  return *;  // EXPECT_ERROR
+}
+
+function retTemplate() return template integer {
+  return *;
+}
+
+function test() {
+  var TheRecord rec := {
+    x := 1,
+    inner := {
+      y := 2
+    }
+  }
+
+  var TheRecord recBAD := {
+    x := *,  // EXPECT_ERROR
+    inner := {
+      y := *  // EXPECT_ERROR
+    }
+  }
+
+  var template TheRecord trec := {
+    x := *, // NO ERR
+    inner := {
+      y := * // NO ERR
+    }
+  }
+
+  //////////////////////////////////////////
+
+  var template integer ti := *;
+  var TheRecord ti_recBAD := {
+    x := ti,  // EXPECT_ERROR
+    inner := {
+      y := ti  // EXPECT_ERROR
+    }
+  }
+  var template TheRecord ti_trec := {
+    x := ti, // NO ERR
+    inner := {
+      y := ti // NO ERR
+    }
+  }
+
+  ///////////////////////////////////////////
+
+
+  var TheRecord FNrec := {
+    x := retVal(),
+    inner := {
+      y := retVal()
+    }
+  }
+
+  var TheRecord FNrecBAD := {
+    x := retTemplate(),  // EXPECT_ERROR
+    inner := {
+      y := retTemplate()  // EXPECT_ERROR
+    }
+  }
+
+  var template TheRecord FNtrec := {
+    x := retTemplate(), // NO ERR
+    inner := {
+      y := retTemplate() // NO ERR
+    }
+  }
+}
+
+}

@@ -1,0 +1,22 @@
+./TemplateRestrictedValues.ttcn:
+  17:10: expected value, got template
+      return *;  // EXPECT_ERROR
+             ~                  
+  33:10: expected value, got template
+        x := *,  // EXPECT_ERROR
+             ~                  
+  35:12: expected value, got template
+          y := *  // EXPECT_ERROR
+               ~                 
+  50:10: expected value, got template
+        x := ti,  // EXPECT_ERROR
+             ~~                  
+  52:12: expected value, got template
+          y := ti  // EXPECT_ERROR
+               ~~                 
+  73:10: expected value, got template
+        x := retTemplate(),  // EXPECT_ERROR
+             ~~~~~~~~~~~~~                  
+  75:12: expected value, got template
+          y := retTemplate()  // EXPECT_ERROR
+               ~~~~~~~~~~~~~                 
