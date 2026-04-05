@@ -56,7 +56,7 @@ struct DependencyEntry {
 struct ImportDescriptor {
   bool transit;  // TODO: (?) tagged pointer
   bool is_public;
-  mutable bool used_directly{false};
+  bool used_directly{false};
   const ast::nodes::ImportDecl* declaration;
   semantic::Symbol sym;
 };

@@ -855,11 +855,6 @@ const semantic::Symbol* TryResolveExprSymbolViaHierarchy(const SourceFile* file,
         //       and return it instead - it will also save up on storing a symbol for each import statement
         if (auto it = file->module->imports.find(file->Text(expr)); it != file->module->imports.end()) {
           // Adding to the comment above: now we even have duplicate symbols, while we need only one...
-          // Dirty hack: we'd like to track which modules are actually used (useful for tools like NoUnusedImports rule)
-          // TODO: writing to this variable from multiple threads is UB, depsite us not reading it and only promoting to
-          //       a single new value (only and only false->true); it's also marked as a mutable field of
-          //       ImportDescriptor which is VERY dirty IMO
-          it->second.used_directly = true;
           return &it->second.sym;
         }
       }

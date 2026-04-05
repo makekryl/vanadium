@@ -198,6 +198,16 @@ class Binder {
       return;
     }
 
+    if (ident->parent->nkind == ast::NodeKind::SelectorExpr) {
+      const auto* pse = ident->parent->As<ast::nodes::SelectorExpr>();
+      if (ident == pse->x) {
+        if (auto it = imports_.find(Lit(ident)); it != imports_.end()) {
+          it->second.used_directly = true;
+          return;
+        }
+      }
+    }
+
     externals_group->idents.emplace_back(ident);
   }
   void BindReference(const ast::nodes::Ident* ident) {
