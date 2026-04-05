@@ -20,6 +20,9 @@ bool ResolveClassValue(const asn1p_value_t* value, const asn1p_expr_t* cls_expr,
                        const ClassSetElementConsumer& consumer) {
   switch (value->type) {
     case asn1p_value_s::ATV_UNPARSED: {
+      if (!cls_expr->with_syntax) {
+        break;
+      }
       const bool should_continue = consumer.accept_class([&](const ClassObjectConsumer& co_consumer) {
         ParseClassObject(std::string_view{(char*)value->value.string.buf, (size_t)value->value.string.size},
                          cls_expr->with_syntax, co_consumer);

@@ -15,9 +15,9 @@ namespace vanadium::asn1::ast {
 namespace {
 
 // Based on asn1c/libasn1fix/asn1fix_cws.c:asn1f_next_literal_chunk
-const asn1p_wsyntx_chunk_t *NextLiteralChunk(const asn1p_wsyntx_t *syntax, const asn1p_wsyntx_chunk_t *chunk,
-                                             const char *buf) {
-  const asn1p_wsyntx_chunk_t *next_chunk = TQ_NEXT(chunk, next);
+const asn1p_wsyntx_chunk_t* NextLiteralChunk(const asn1p_wsyntx_t* syntax, const asn1p_wsyntx_chunk_t* chunk,
+                                             const char* buf) {
+  const asn1p_wsyntx_chunk_t* next_chunk = TQ_NEXT(chunk, next);
   do {
     if (!next_chunk) {
       if (!syntax->parent) {
@@ -55,8 +55,8 @@ const asn1p_wsyntx_chunk_t *NextLiteralChunk(const asn1p_wsyntx_t *syntax, const
 }
 
 // Based on asn1c/libasn1fix/asn1fix_cws.c:_asn1f_parse_class_object_data
-bool ParseClassObject(const ClassObjectConsumer &consumer, const char *buf, const char *bend,
-                      const asn1p_wsyntx_t *syntax, const char **newpos, bool is_optional) {
+bool ParseClassObject(const ClassObjectConsumer& consumer, const char* buf, const char* bend,
+                      const asn1p_wsyntx_t* syntax, const char** newpos, bool is_optional) {
   const auto skip_spaces = [&] {
     while (buf < bend && std::isspace(*buf)) {
       ++buf;
@@ -65,7 +65,7 @@ bool ParseClassObject(const ClassObjectConsumer &consumer, const char *buf, cons
 
   // TODO: provide error ranges
 
-  struct asn1p_wsyntx_chunk_s *chunk;
+  struct asn1p_wsyntx_chunk_s* chunk;
   TQ_FOR(chunk, &(syntax->chunks), next) {
     switch (chunk->type) {
       case asn1p_wsyntx_chunk_s::WC_WHITESPACE:
@@ -87,12 +87,12 @@ bool ParseClassObject(const ClassObjectConsumer &consumer, const char *buf, cons
       }
 
       case asn1p_wsyntx_chunk_s::WC_FIELD: {
-        const char *buf_old = buf;
-        const char *value_end = nullptr;
+        const char* buf_old = buf;
+        const char* value_end = nullptr;
 
         skip_spaces();
 
-        const asn1p_wsyntx_chunk_t *next_literal = NextLiteralChunk(syntax, chunk, buf);
+        const asn1p_wsyntx_chunk_t* next_literal = NextLiteralChunk(syntax, chunk, buf);
         if (!next_literal) {
           value_end = bend;
         } else {
@@ -123,7 +123,10 @@ bool ParseClassObject(const ClassObjectConsumer &consumer, const char *buf, cons
       }
 
       case asn1p_wsyntx_chunk_s::WC_OPTIONALGROUP: {
-        const char *np = nullptr;  // todo: pass newpos itself
+        if (!chunk->content.syntax) {
+          return false;
+        }
+        const char* np = nullptr;  // todo: pass newpos itself
         skip_spaces();
         const bool ret = ParseClassObject(consumer, buf, bend, chunk->content.syntax, &np, true);
         *newpos = np;
@@ -142,8 +145,8 @@ bool ParseClassObject(const ClassObjectConsumer &consumer, const char *buf, cons
 
 }  // namespace
 
-void ParseClassObject(std::string_view buf, const asn1p_wsyntx_t *syntax, const ClassObjectConsumer &consumer) {
-  const char *newpos{nullptr};  // ignored
+void ParseClassObject(std::string_view buf, const asn1p_wsyntx_t* syntax, const ClassObjectConsumer& consumer) {
+  const char* newpos{nullptr};  // ignored
   ParseClassObject(consumer,
                    buf.begin() + 1,  // +1 to skip {
                    buf.end() - 1,    // -1 to drop {

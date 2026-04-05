@@ -46,13 +46,32 @@ bool eag_grouping = false;
 namespace {
 constexpr auto kBuiltinTypeMapping = lib::MakeStaticMap<asn1p_expr_type_e, std::string_view>({
     {ASN_BASIC_NULL, "___asn1_NULL_t"},
-    {ASN_BASIC_OBJECT_IDENTIFIER, "objid"},
     {ASN_BASIC_INTEGER, "integer"},
     {ASN_BASIC_REAL, "float"},
     {ASN_BASIC_BOOLEAN, "boolean"},
     {ASN_BASIC_BIT_STRING, "bitstring"},
     {ASN_BASIC_OCTET_STRING, "octetstring"},
     {ASN_BASIC_CHARACTER_STRING, "charstring"},
+    //
+    {ASN_BASIC_OBJECT_IDENTIFIER, "objid"},
+    {ASN_BASIC_RELATIVE_OID, "objid"},
+    {ASN_BASIC_EXTERNAL, "todo_external"},     // TODO
+    {ASN_BASIC_EMBEDDED_PDV, "embedded_pdv"},  // TODO
+    //
+    {ASN_STRING_IA5String, "charstring"},
+    {ASN_STRING_PrintableString, "charstring"},
+    {ASN_STRING_VisibleString, "charstring"},
+    {ASN_STRING_ISO646String, "charstring"},
+    {ASN_STRING_NumericString, "charstring"},
+    {ASN_STRING_UniversalString, "charstring"},   // TODO: universal charstring
+    {ASN_STRING_BMPString, "charstring"},         // TODO: universal charstring
+    {ASN_STRING_UTF8String, "charstring"},        // TODO: universal charstring
+    {ASN_STRING_GeneralString, "charstring"},     // TODO: universal charstring
+    {ASN_STRING_GraphicString, "charstring"},     // TODO: universal charstring
+    {ASN_STRING_TeletexString, "charstring"},     // TODO: universal charstring
+    {ASN_STRING_T61String, "charstring"},         // TODO: universal charstring
+    {ASN_STRING_VideotexString, "charstring"},    // TODO: universal charstring
+    {ASN_STRING_ObjectDescriptor, "charstring"},  // TODO: universal charstring
 });
 
 template <bool UseAppend = false>  // well that's dirty
@@ -80,7 +99,6 @@ inline T* EmbedNodeXIntoNodeY(T* x, ttcn_ast::Node* y) {
 
 // asn1c helper stuff
 namespace {
-
 const asn1p_expr_t* ResolveModuleMember(const asn1p_module_t* mod, const char* member_name) {
   const auto* expr = (asn1p_expr_t*)genhash_get(mod->members_hash, member_name);
 
