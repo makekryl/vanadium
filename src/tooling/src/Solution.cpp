@@ -69,13 +69,9 @@ void InitSubproject(const Solution& solution, SolutionProject& subproject) {
 }
 }  // namespace
 
-std::expected<Solution, Error> Solution::Load(const fs::Path& path, lib::Consumer<Solution&> precommit) {
-  auto root_load_result = tooling::Project::Load(path);
-  if (!root_load_result.has_value()) {
-    return std::unexpected{Error{"Failed to load root project", std::move(root_load_result.error())}};
-  }
-
-  Solution solution(std::move(*root_load_result));
+std::expected<Solution, Error> Solution::Load(Project&& root_project, lib::Consumer<Solution&> precommit) {
+  Solution solution(std::move(root_project));
+  const auto& path = solution.Directory();
 
   const auto& root_desc = solution.root_project_.Manifest();
 
@@ -181,6 +177,14 @@ std::expected<Solution, Error> Solution::Load(const fs::Path& path, lib::Consume
   core::do_reanalyse_program_deps = true;
 
   return solution;
+}
+
+std::expected<Solution, Error> Solution::Load(const fs::Path& path, lib::Consumer<Solution&> precommit) {
+  auto root_load_result = tooling::Project::Load(path);
+  if (!root_load_result.has_value()) {
+    return std::unexpected{Error{"Failed to load root project", std::move(root_load_result.error())}};
+  }
+  return Load(std::move(*root_load_result), precommit);
 }
 
 const SolutionProject* Solution::ProjectOf(std::string_view path) const {

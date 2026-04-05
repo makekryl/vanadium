@@ -48,6 +48,7 @@ class Solution {
     return projects_ | std::views::values;
   }
 
+  static std::expected<Solution, Error> Load(Project&& root_project, lib::Consumer<Solution&> precommit = [](auto&) {});
   static std::expected<Solution, Error> Load(const fs::Path&, lib::Consumer<Solution&> precommit = [](auto&) {});
 
  private:

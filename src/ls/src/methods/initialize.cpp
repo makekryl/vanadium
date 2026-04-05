@@ -5,6 +5,7 @@
 #include <vanadium/core/Program.h>
 #include <vanadium/lib/concurrency/TaskArena.h>
 #include <vanadium/tooling/Filesystem.h>
+#include <vanadium/tooling/Project.h>
 #include <vanadium/tooling/Solution.h>
 #include <vanadium/tooling/impl/SystemFS.h>
 
@@ -32,32 +33,42 @@ rpc::ExpectedResult<lsp::InitializeResult> methods::initialize::invoke(LsContext
     const std::filesystem::path root_directory{folders[0].uri.substr(prefix_size, folders[0].uri.size() - prefix_size)};
 
     const auto manifest_path = root_directory / tooling::Project::kManifestFilename;
-    if (std::filesystem::exists(manifest_path)) {
-      const auto precommit = [&](tooling::Solution& solution) {
-        if (testflags::do_not_skip_full_analysis) {
-          return;
-        }
-        for (auto& proj : solution.Projects()) {
-          for (const auto& file : proj.program.Files() | std::views::values) {
-            const_cast<core::SourceFile&>(file).skip_analysis = true;
-          }
-        }
-      };
-      auto result =
-          tooling::Solution::Load(tooling::fs::Root<tooling::fs::SystemFS>(root_directory.string()), precommit);
-      if (result.has_value()) {
-        ctx.solution = std::make_unique<tooling::Solution>(std::move(*result));
-      } else {
-        const auto& err_message = result.error().String();
-        VLS_ERROR("Failed to load solution: {}", err_message);
-        clientMessaging::ShowMessage(
-            ctx, lsp::ShowMessageRequestParams{
-                     .type = lsp::MessageType::kError,
-                     .message = ctx.Temp<std::string>(std::format("Solution initialization failed:\n{}", err_message)),
-                 });
+    const auto precommit = [&](tooling::Solution& solution) {
+      if (testflags::do_not_skip_full_analysis) {
+        return;
       }
+      for (auto& proj : solution.Projects()) {
+        for (const auto& file : proj.program.Files() | std::views::values) {
+          const_cast<core::SourceFile&>(file).skip_analysis = true;
+        }
+      }
+    };
+    auto result = [&] {
+      const auto root_dir_path = tooling::fs::Root<tooling::fs::SystemFS>(root_directory.string());
+      if (std::filesystem::exists(manifest_path)) {
+        return tooling::Solution::Load(std::move(root_dir_path), precommit);
+      }
+      VLS_WARN("Manifest file does not exist, treating the entire workspace as a single project");
+      return tooling::Solution::Load(tooling::Project(std::move(root_dir_path), "",
+                                                      tooling::ProjectManifest{
+                                                          .root = true,
+                                                          .project =
+                                                              {
+                                                                  .name = "<root>",
+                                                              },
+                                                      }),
+                                     precommit);
+    }();
+    if (result.has_value()) {
+      ctx.solution = std::make_unique<tooling::Solution>(std::move(*result));
     } else {
-      VLS_WARN("Manifest file does not exist");
+      const auto& err_message = result.error().String();
+      VLS_ERROR("Failed to load solution: {}", err_message);
+      clientMessaging::ShowMessage(
+          ctx, lsp::ShowMessageRequestParams{
+                   .type = lsp::MessageType::kError,
+                   .message = ctx.Temp<std::string>(std::format("Solution initialization failed:\n{}", err_message)),
+               });
     }
   }
 
