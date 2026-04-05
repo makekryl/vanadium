@@ -994,6 +994,9 @@ bool Binder::Inspect(const ast::Node* n) {
           continue;
         }
         const auto* ae = e->As<ast::nodes::AssignmentExpr>();
+        if (ae->property->nkind == ast::NodeKind::IndexExpr) {
+          Visit(ae->property);
+        }
         Visit(ae->value);
       }
       return false;
