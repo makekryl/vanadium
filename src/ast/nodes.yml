@@ -124,7 +124,7 @@ CaseClause:
 CommClause:
   is_else: bool
   x: Expr*?
-  comm: ExprStmt*
+  comm: ExprStmt*?  # nullptr when is_else
   body: BlockStmt*?
 LanguageSpec:
   list: Token[]
@@ -284,7 +284,7 @@ CallExpr:
   fun: Expr*
   args: ParenExpr*
 RedirectExpr:
-  x: Expr*
+  x: Expr*?
   value: Expr*[]?
   param: Expr*[]?
   sender: Expr*?

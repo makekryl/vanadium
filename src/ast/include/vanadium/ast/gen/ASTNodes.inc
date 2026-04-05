@@ -758,14 +758,16 @@ struct CommClause : Stmt {
 
   bool is_else{false};
   Expr* x{nullptr};
-  ExprStmt* comm;
+  ExprStmt* comm{nullptr};
   BlockStmt* body{nullptr};
 
   void Accept(const NodeInspector& inspector) const {
     if (x != nullptr) {
       Inspect(x, inspector);
     }
-    Inspect(comm, inspector);
+    if (comm != nullptr) {
+      Inspect(comm, inspector);
+    }
     if (body != nullptr) [[likely]] {
       Inspect(body, inspector);
     }
@@ -817,7 +819,7 @@ struct RedirectExpr : Expr {
 
   RedirectExpr() : Expr(NodeKind::RedirectExpr) {}
 
-  Expr* x;
+  Expr* x{nullptr};
   std::vector<Expr*> value;
   std::vector<Expr*> param;
   Expr* sender{nullptr};
@@ -825,7 +827,9 @@ struct RedirectExpr : Expr {
   Expr* timestamp{nullptr};
 
   void Accept(const NodeInspector& inspector) const {
-    Inspect(x, inspector);
+    if (x != nullptr) {
+      Inspect(x, inspector);
+    }
     for (const auto* n : value) {
       if (n != nullptr) {
         Inspect(n, inspector);

@@ -2202,31 +2202,32 @@ nodes::CallExpr* Parser::ParseCallExpr(nodes::Expr* x) {
     ce.fun = x;
     ce.args = NewNode<nodes::ParenExpr>([&](auto& pe) {
       Expect(TokenKind::LPAREN);
-      switch (tok_) {
-        case TokenKind::RPAREN:
-          break;
-        case TokenKind::TO:
-        case TokenKind::FROM:
-          // TODO(ntt): Shouldn't this be a FromExpr?
-          pe.list.push_back(NewNode<nodes::BinaryExpr>([&](auto& be) {
-            be.x = nullptr;
-            be.op = Consume();
-            be.y = ParseExpr();
-          }));
-          break;
-        case TokenKind::REDIR:
-          pe.list.push_back(ParseRedirect(nullptr));
-          break;
-        default:
-          pe.list = ParseExprList();
-          break;
+      if (tok_ != TokenKind::RPAREN) {
+        switch (tok_) {
+          case TokenKind::TO:
+          case TokenKind::FROM:
+          case TokenKind::REDIR: {
+            nodes::Expr* x{nullptr};
+            if (tok_ == TokenKind::TO || tok_ == TokenKind::FROM) {
+              // TODO(ntt): Shouldn't this be a FromExpr?
+              x = NewNode<nodes::BinaryExpr>([&](auto& be) {
+                be.x = NewNode<nodes::Ident>([](auto&) {});  // kinda EmptyNode, TODO
+                be.op = Consume();
+                be.y = ParseExpr();
+              });
+            }
+            if (tok_ == TokenKind::REDIR) {
+              x = ParseRedirect(x);
+            }
+            pe.list.push_back(x);
+            break;
+          }
+          default:
+            pe.list = ParseExprList();
+            break;
+        }
       }
-      if (tok_ == TokenKind::RPAREN) [[likely]] {
-        ConsumeInvariant(TokenKind::RPAREN);
-      } else {
-        Expect(TokenKind::RPAREN);
-        Advance(kTokStmtStart);
-      }
+      Expect(TokenKind::RPAREN);
     });
   });
   if (x) [[likely]] {
