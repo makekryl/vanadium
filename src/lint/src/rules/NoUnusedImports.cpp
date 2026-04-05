@@ -40,7 +40,7 @@ void NoUnusedImports::Exit(Context& ctx) {
   std::unordered_set<std::string_view> unused_imports;
   std::unordered_set<std::string_view> unused_transit_imports;
   for (const auto& [import, desc] : ctx.GetFile().module->imports) {
-    if (desc.is_public) {
+    if (desc.is_public || desc.used_directly) {
       continue;
     }
     if (desc.transit) {
@@ -56,7 +56,6 @@ void NoUnusedImports::Exit(Context& ctx) {
   for (const auto& import : unused_imports) {
     const auto* module = ctx.GetProgram().GetModule(import);
     if (module == nullptr || !module->sf->ast.errors.empty()) {
-      // TODO: reimplement (&& ctx.GetFile().module->required_imports.contains(module->name))
       continue;
     }
     const auto* decl = FindImport(*ctx.GetFile().module, import, false).declaration;
