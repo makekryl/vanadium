@@ -57,6 +57,7 @@ struct ImportDescriptor {
   bool transit;  // TODO: (?) tagged pointer
   bool is_public;
   const ast::nodes::ImportDecl* declaration;
+  semantic::Symbol sym;
 };
 
 struct ModuleDescriptor {
@@ -70,7 +71,6 @@ struct ModuleDescriptor {
   std::unordered_map<ModuleDescriptor*, std::vector<DependencyEntry>> dependencies;
   std::unordered_set<ModuleDescriptor*> transitive_dependency_providers;
   std::unordered_set<ModuleDescriptor*> dependents;
-  std::unordered_set<std::string_view> required_imports;
 
   ModuleExternals externals;
   std::vector<const ast::nodes::Ident*> unresolved;

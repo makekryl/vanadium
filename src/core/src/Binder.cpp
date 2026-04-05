@@ -195,9 +195,6 @@ class Binder {
     }
 
     if (const auto* sym = scope_->Resolve(name); sym) {
-      if (sym->Flags() & SymbolFlags::kImportedModule) [[unlikely]] {
-        required_imports_.insert(sym->GetName());
-      }
       return;
     }
 
@@ -234,7 +231,6 @@ class Binder {
   SymbolTable& BindEnumMembers(const std::vector<ast::nodes::Expr*>&);
 
   std::unordered_multimap<std::string_view, ImportDescriptor> imports_;
-  std::unordered_set<std::string_view> required_imports_;
 
   ExternalsTracker externals_;
   ExternallyResolvedGroup* vd_types_external_group_;
@@ -452,12 +448,10 @@ bool Binder::Inspect(const ast::Node* n) {
           sf_.module->sf = &sf_;
           sf_.module->scope = scope_;
           sf_.module->imports = std::move(imports_);
-          sf_.module->required_imports = std::move(required_imports_);
           sf_.module->externals = externals_.Build();
 
           imports_ = {};
           externals_ = {};
-          required_imports_ = {};
         }
       });
 
@@ -485,16 +479,8 @@ bool Binder::Inspect(const ast::Node* n) {
                              .transit = transit,
                              .is_public = (visibility != nullptr) && visibility->kind == ast::TokenKind::PUBLIC,
                              .declaration = m,
+                             .sym = {Lit(std::addressof(*m->module)), m, SymbolFlags::kImportedModule},
                          });
-
-        // TODO
-        if (!transit) {
-          AddSymbol({
-              Lit(std::addressof(*m->module)),
-              m,
-              SymbolFlags::kImportedModule,
-          });
-        }
       }
 
       return false;

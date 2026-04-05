@@ -846,6 +846,20 @@ namespace {
 const semantic::Symbol* TryResolveExprSymbolViaHierarchy(const SourceFile* file, const semantic::Scope*,
                                                          const ast::nodes::Expr* expr) {
   switch (expr->parent->nkind) {
+    case ast::NodeKind::SelectorExpr: {
+      const auto* parent_se = expr->parent->As<ast::nodes::SelectorExpr>();
+      // SomeImportedModule.x.y.z.w := ...;
+      // ^^^^^^^^^^^^^^^^^^
+      if (expr->nkind == ast::NodeKind::Ident && expr == parent_se->x) {
+        // TODO: instead of having a kImportedModule, enrich modules with an unique per-module symbol with flag kModule,
+        //       and return it instead - it will also save up on storing a symbol for each import statement
+        if (auto it = file->module->imports.find(file->Text(expr)); it != file->module->imports.end()) {
+          // Adding to the comment above: now we even have duplicate symbols, while we need only one...
+          return &it->second.sym;
+        }
+      }
+      return nullptr;
+    }
     case ast::NodeKind::CaseClause: {
       const auto* m = expr->parent->As<ast::nodes::CaseClause>();
       const auto* ss = m->parent->As<ast::nodes::SelectStmt>();

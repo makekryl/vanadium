@@ -55,8 +55,8 @@ void NoUnusedImports::Exit(Context& ctx) {
   }
   for (const auto& import : unused_imports) {
     const auto* module = ctx.GetProgram().GetModule(import);
-    if (module == nullptr || !module->sf->ast.errors.empty() ||
-        ctx.GetFile().module->required_imports.contains(module->name)) {
+    if (module == nullptr || !module->sf->ast.errors.empty()) {
+      // TODO: reimplement (&& ctx.GetFile().module->required_imports.contains(module->name))
       continue;
     }
     const auto* decl = FindImport(*ctx.GetFile().module, import, false).declaration;
