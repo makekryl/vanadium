@@ -480,6 +480,7 @@ TokenKind Scanner::ScanSpecialString() {
       case '\v':
       case '\f':
         lines_.push_back(pos_ + 1);
+        ++pos_;
         break;
       case '\'':
         ++pos_;
