@@ -6,6 +6,7 @@
 
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/utils/ASTUtils.h>
+#include <vanadium/core/Builtins.h>
 #include <vanadium/core/Semantic.h>
 #include <vanadium/core/TypeChecker.h>
 
@@ -33,7 +34,10 @@ llvm::Type* CodegenUnit::GetSymbolType(const core::semantic::Symbol* sym) {
   assert(sym->Flags() & core::semantic::SymbolFlags::kType);
   if (sym->Flags() & core::semantic::SymbolFlags::kBuiltin) {
     if (sym == &core::builtins::kInteger) {
-      return rt.int_ty;
+      return rt.integer.ty;
+    }
+    if (sym == &core::builtins::kFloat) {
+      return rt.floatt.ty;
     }
     if (sym == &core::builtins::kCharstring) {
       return rt.charstring_ty;
@@ -56,7 +60,10 @@ llvm::Value* CodegenUnit::GetUndef(const core::semantic::Symbol* sym) {
   }
 
   if (sym == &core::builtins::kInteger) {
-    return rt.int_undef;
+    return rt.integer.undef;
+  }
+  if (sym == &core::builtins::kFloat) {
+    return rt.floatt.undef;
   }
   if (sym == &core::builtins::kCharstring) {
     return rt.charstring_undef;
@@ -126,6 +133,8 @@ llvm::Function* CodegenUnit::GetFunction(const core::semantic::Symbol* sym) {
 
 std::variant<RuntimeBindings::NativeIntType, std::string_view> CodegenUnit::ParseInt(
     const ast::nodes::ValueLiteral* m) {
+  assert(m->tok.kind == ast::TokenKind::INT);
+
   const auto& s = sf.Text(m);
 
   std::int64_t result;
@@ -135,7 +144,19 @@ std::variant<RuntimeBindings::NativeIntType, std::string_view> CodegenUnit::Pars
   return result;
 }
 
+double CodegenUnit::ParseFloat(const ast::nodes::ValueLiteral* m) {
+  assert(m->tok.kind == ast::TokenKind::FLOAT);
+
+  const auto& s = sf.Text(m);
+
+  double result;
+  std::from_chars(s.data(), s.data() + s.size(), result);
+  return result;
+}
+
 std::string_view CodegenUnit::ParseCharstring(const ast::nodes::ValueLiteral* m) {
+  assert(m->tok.kind == ast::TokenKind::STRING);
+
   auto s = sf.Text(m);
   s.remove_prefix(1);  // "
   s.remove_suffix(1);  // "
@@ -143,6 +164,8 @@ std::string_view CodegenUnit::ParseCharstring(const ast::nodes::ValueLiteral* m)
 }
 
 std::string CodegenUnit::ParseOctetstring(const ast::nodes::ValueLiteral* m) {
+  assert(m->tok.kind == ast::TokenKind::OCTETSTRING);
+
   auto s = sf.Text(m);
   s.remove_prefix(1);  // '
   s.remove_suffix(2);  // 'O

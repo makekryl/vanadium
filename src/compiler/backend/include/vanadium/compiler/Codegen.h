@@ -93,6 +93,7 @@ struct CodegenUnit {
   //
 
   std::variant<RuntimeBindings::NativeIntType, std::string_view> ParseInt(const ast::nodes::ValueLiteral*);
+  double ParseFloat(const ast::nodes::ValueLiteral*);
   std::string_view ParseCharstring(const ast::nodes::ValueLiteral*);
   std::string ParseOctetstring(const ast::nodes::ValueLiteral*);
 };

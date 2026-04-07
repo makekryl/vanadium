@@ -317,7 +317,7 @@ class FunctionCodegen {
 
   bool IsTrivial(llvm::Type* ty) const {
     // int won't be trivial after bignum support
-    return ty == u_.rt.bool_ty || ty == u_.rt.int_ty;
+    return ty == u_.rt.bool_ty || ty == u_.rt.integer.ty || ty == u_.rt.floatt.ty;
   }
 
   void EmitGenericVal(llvm::Value* slot, const core::semantic::Symbol* sym, llvm::Value* v) {
@@ -601,6 +601,15 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
           return iv;
         }
 
+        case ast::TokenKind::FLOAT: {
+          auto* iv = u_.rt.GetFloat(u_.ParseFloat(m));
+          if (dest) {
+            u_.builder.CreateStore(iv, dest);
+            return dest;
+          }
+          return iv;
+        }
+
         case ast::TokenKind::STRING: {
           auto* out = dest ? dest : scope_->AllocTemp(&core::builtins::kCharstring);
           const auto& sv = u_.ParseCharstring(m);
@@ -644,16 +653,57 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
       auto* vx = CodegenExpr(m->x);
       auto* vy = CodegenExpr(m->y);
 
+      const auto promote_trivial = [this](llvm::Type* ty, llvm::Value* v) -> llvm::Value* {
+        if (v->getType() == u_.builder.getPtrTy()) {
+          return u_.builder.CreateLoad(ty, v);
+        }
+        return v;
+      };
+      const auto ret_trivialvar = [&](llvm::Value* rv) {
+        if (dest) {
+          u_.builder.CreateStore(rv, dest);
+          return dest;
+        }
+        return rv;
+      };
+
       const auto* sym =
           core::checker::ResolveExprType(&u_.sf, core::semantic::utils::FindScope(u_.sf.module->scope, m->x), m->x).sym;
+
       if (sym == &core::builtins::kInteger) {
-        if (vx->getType() == u_.builder.getPtrTy()) {
-          vx = u_.builder.CreateLoad(u_.rt.int_ty, vx);
+        vx = promote_trivial(u_.rt.integer.ty, vx);
+        vy = promote_trivial(u_.rt.integer.ty, vy);
+        switch (m->op.kind) {
+          case ast::TokenKind::EQ:
+            return u_.builder.CreateCall(u_.rt.integer.eq_f, {vx, vy});
+          case ast::TokenKind::NE:
+            return u_.builder.CreateCall(u_.rt.integer.ne_f, {vx, vy});
+          //
+          case ast::TokenKind::LT:
+            return u_.builder.CreateCall(u_.rt.integer.lt_f, {vx, vy});
+          case ast::TokenKind::LE:
+            return u_.builder.CreateCall(u_.rt.integer.le_f, {vx, vy});
+          case ast::TokenKind::GT:
+            return u_.builder.CreateCall(u_.rt.integer.gt_f, {vx, vy});
+          case ast::TokenKind::GE:
+            return u_.builder.CreateCall(u_.rt.integer.ge_f, {vx, vy});
+          //
+          case ast::TokenKind::ADD:
+            return ret_trivialvar(u_.builder.CreateCall(u_.rt.integer.add_f, {vx, vy}));
+          case ast::TokenKind::SUB:
+            return ret_trivialvar(u_.builder.CreateCall(u_.rt.integer.sub_f, {vx, vy}));
+          case ast::TokenKind::MUL:
+            return ret_trivialvar(u_.builder.CreateCall(u_.rt.integer.mul_f, {vx, vy}));
+          case ast::TokenKind::DIV:
+            return ret_trivialvar(u_.builder.CreateCall(u_.rt.integer.div_f, {vx, vy}));
+          default:
+            VANADIUM_DEBUG_ERROR("Unhandled BinaryExpr int op = {}", magic_enum::enum_name(m->op.kind));
+            break;
         }
-        if (vy->getType() == u_.builder.getPtrTy()) {
-          vy = u_.builder.CreateLoad(u_.rt.int_ty, vy);
-        }
-        const auto ret_intval = [&](llvm::Value* rv) {
+      } else if (sym == &core::builtins::kFloat) {
+        vx = promote_trivial(u_.rt.floatt.ty, vx);
+        vy = promote_trivial(u_.rt.floatt.ty, vy);
+        const auto ret_trivialvar = [&](llvm::Value* rv) {
           if (dest) {
             u_.builder.CreateStore(rv, dest);
             return dest;
@@ -662,27 +712,27 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
         };
         switch (m->op.kind) {
           case ast::TokenKind::EQ:
-            return u_.builder.CreateCall(u_.rt.int_eq_f, {vx, vy});
+            return u_.builder.CreateCall(u_.rt.floatt.eq_f, {vx, vy});
           case ast::TokenKind::NE:
-            return u_.builder.CreateCall(u_.rt.int_ne_f, {vx, vy});
+            return u_.builder.CreateCall(u_.rt.floatt.ne_f, {vx, vy});
           //
           case ast::TokenKind::LT:
-            return u_.builder.CreateCall(u_.rt.int_lt_f, {vx, vy});
+            return u_.builder.CreateCall(u_.rt.floatt.lt_f, {vx, vy});
           case ast::TokenKind::LE:
-            return u_.builder.CreateCall(u_.rt.int_le_f, {vx, vy});
+            return u_.builder.CreateCall(u_.rt.floatt.le_f, {vx, vy});
           case ast::TokenKind::GT:
-            return u_.builder.CreateCall(u_.rt.int_gt_f, {vx, vy});
+            return u_.builder.CreateCall(u_.rt.floatt.gt_f, {vx, vy});
           case ast::TokenKind::GE:
-            return u_.builder.CreateCall(u_.rt.int_ge_f, {vx, vy});
+            return u_.builder.CreateCall(u_.rt.floatt.ge_f, {vx, vy});
           //
           case ast::TokenKind::ADD:
-            return ret_intval(u_.builder.CreateCall(u_.rt.int_add_f, {vx, vy}));
+            return ret_trivialvar(u_.builder.CreateCall(u_.rt.floatt.add_f, {vx, vy}));
           case ast::TokenKind::SUB:
-            return ret_intval(u_.builder.CreateCall(u_.rt.int_sub_f, {vx, vy}));
+            return ret_trivialvar(u_.builder.CreateCall(u_.rt.floatt.sub_f, {vx, vy}));
           case ast::TokenKind::MUL:
-            return ret_intval(u_.builder.CreateCall(u_.rt.int_mul_f, {vx, vy}));
+            return ret_trivialvar(u_.builder.CreateCall(u_.rt.floatt.mul_f, {vx, vy}));
           case ast::TokenKind::DIV:
-            return ret_intval(u_.builder.CreateCall(u_.rt.int_div_f, {vx, vy}));
+            return ret_trivialvar(u_.builder.CreateCall(u_.rt.floatt.div_f, {vx, vy}));
           default:
             VANADIUM_DEBUG_ERROR("Unhandled BinaryExpr int op = {}", magic_enum::enum_name(m->op.kind));
             break;
@@ -699,7 +749,7 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
             u_.builder.CreateCall(u_.rt.charstring_rotate_left_f, {
                                                                       out,
                                                                       vx,
-                                                                      u_.builder.CreateCall(u_.rt.int_get_f, {vy}),
+                                                                      u_.builder.CreateCall(u_.rt.integer.get_f, {vy}),
                                                                   });
             return out;
           }
@@ -708,7 +758,7 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
             u_.builder.CreateCall(u_.rt.charstring_rotate_right_f, {
                                                                        out,
                                                                        vx,
-                                                                       u_.builder.CreateCall(u_.rt.int_get_f, {vy}),
+                                                                       u_.builder.CreateCall(u_.rt.integer.get_f, {vy}),
                                                                    });
             return out;
           }
@@ -727,17 +777,18 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
             u_.builder.CreateCall(u_.rt.octetstring.rotate_left_f, {
                                                                        out,
                                                                        vx,
-                                                                       u_.builder.CreateCall(u_.rt.int_get_f, {vy}),
+                                                                       u_.builder.CreateCall(u_.rt.integer.get_f, {vy}),
                                                                    });
             return out;
           }
           case ast::TokenKind::SHR: {
             auto* out = dest ? dest : scope_->AllocTemp(&core::builtins::kOctetstring);
-            u_.builder.CreateCall(u_.rt.octetstring.rotate_right_f, {
-                                                                        out,
-                                                                        vx,
-                                                                        u_.builder.CreateCall(u_.rt.int_get_f, {vy}),
-                                                                    });
+            u_.builder.CreateCall(u_.rt.octetstring.rotate_right_f,
+                                  {
+                                      out,
+                                      vx,
+                                      u_.builder.CreateCall(u_.rt.integer.get_f, {vy}),
+                                  });
             return out;
           }
           case ast::TokenKind::AND4B: {

@@ -44,25 +44,49 @@ class RuntimeBindings {
   llvm::Function* optional_ispresent_f;
   llvm::Function* optional_dtor_f;
 
-  llvm::StructType* int_ty;
-  //
-  llvm::Value* int_undef;
+  struct {
+    llvm::StructType* ty;
+    //
+    llvm::Value* undef;
+    //
+    llvm::Function* get_f;
+    //
+    llvm::Function* eq_f;
+    llvm::Function* ne_f;
+    //
+    llvm::Function* lt_f;
+    llvm::Function* le_f;
+    llvm::Function* gt_f;
+    llvm::Function* ge_f;
+    //
+    llvm::Function* add_f;
+    llvm::Function* sub_f;
+    llvm::Function* mul_f;
+    llvm::Function* div_f;
+  } integer;
   [[nodiscard]] llvm::Value* GetInt(std::variant<NativeIntType, std::string_view>) const;
-  //
-  llvm::Function* int_get_f;
-  //
-  llvm::Function* int_eq_f;
-  llvm::Function* int_ne_f;
-  //
-  llvm::Function* int_lt_f;
-  llvm::Function* int_le_f;
-  llvm::Function* int_gt_f;
-  llvm::Function* int_ge_f;
-  //
-  llvm::Function* int_add_f;
-  llvm::Function* int_sub_f;
-  llvm::Function* int_mul_f;
-  llvm::Function* int_div_f;
+
+  struct {
+    llvm::StructType* ty;
+    //
+    llvm::Value* undef;
+    //
+    llvm::Function* get_f;
+    //
+    llvm::Function* eq_f;
+    llvm::Function* ne_f;
+    //
+    llvm::Function* lt_f;
+    llvm::Function* le_f;
+    llvm::Function* gt_f;
+    llvm::Function* ge_f;
+    //
+    llvm::Function* add_f;
+    llvm::Function* sub_f;
+    llvm::Function* mul_f;
+    llvm::Function* div_f;
+  } floatt;
+  [[nodiscard]] llvm::Value* GetFloat(double) const;
 
   llvm::StructType* bool_ty;
   //

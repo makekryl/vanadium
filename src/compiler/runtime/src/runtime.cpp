@@ -1,14 +1,17 @@
 #include "vanadium/runtime/runtime.h"
 
+#include <cmath>
 #include <cstdint>
 #include <cstdio>
 #include <format>
+#include <limits>
 #include <print>
 #include <stdexcept>
 #include <string>
 
 #include "vanadium/runtime/rt_boolean.h"
 #include "vanadium/runtime/rt_charstring.h"
+#include "vanadium/runtime/rt_float.h"
 #include "vanadium/runtime/rt_integer.h"
 #include "vanadium/runtime/rt_octetstring.h"
 #include "vanadium/runtime/rt_reflect.h"
@@ -45,6 +48,32 @@ void vrt_log(const vrt_val_t* args, std::uint32_t n) {
       buf += "<unbound>";
     } else if (arg->ty == &integer_typeinfo) {
       buf += std::to_string(static_cast<vrt_int_t*>(arg->p)->value);
+    } else if (arg->ty == &float_typeinfo) {
+      const auto val = static_cast<vrt_float_t*>(arg->p)->value;
+      constexpr auto kInfty = std::numeric_limits<decltype(val)>::infinity();
+      if (val == kInfty) {
+        buf += "infinity";
+      } else if (val == -kInfty) {
+        buf += "-infinity";
+      } else if (std::isnan(val)) {
+        buf += "not_a_number";
+      } else if (val == 0.0) {
+        buf += "0.0";
+      } else {
+        const double abs_val = std::abs(val);
+        const double exponent = std::floor(std::log10(abs_val));
+        const double mantissa = abs_val / std::pow(10.0, exponent);
+        if (val < 0.0) {
+          buf += "-";
+        }
+        std::format_to(std::back_inserter(buf), "{:.15g}", mantissa);
+        if (std::floor(mantissa) == mantissa) {
+          buf += ".0";
+        }
+        if (exponent != 0.0) {
+          std::format_to(std::back_inserter(buf), "e{}", static_cast<int>(exponent));
+        }
+      }
     } else if (arg->ty == &boolean_typeinfo) {
       buf += static_cast<vrt_bool_t*>(arg->p)->value ? "true" : "false";
     } else if (arg->ty == &charstring_typeinfo) {

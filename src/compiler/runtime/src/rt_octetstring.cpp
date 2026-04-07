@@ -283,19 +283,13 @@ void vrt_octetstring_binop(vrt_octetstring_t* dst, const vrt_octetstring_t* lhs,
 }  // namespace
 
 void vrt_octetstring_and4b(vrt_octetstring_t* dst, const vrt_octetstring_t* lhs, const vrt_octetstring_t* rhs) {
-  vrt_octetstring_binop(dst, lhs, rhs, "and4b", [](octet_t l, octet_t r) -> octet_t {
-    return l & r;
-  });
+  vrt_octetstring_binop(dst, lhs, rhs, "and4b", std::bit_and<octet_t>{});
 }
 void vrt_octetstring_or4b(vrt_octetstring_t* dst, const vrt_octetstring_t* lhs, const vrt_octetstring_t* rhs) {
-  vrt_octetstring_binop(dst, lhs, rhs, "or4b", [](octet_t l, octet_t r) -> octet_t {
-    return l | r;
-  });
+  vrt_octetstring_binop(dst, lhs, rhs, "or4b", std::bit_or<octet_t>{});
 }
 void vrt_octetstring_xor4b(vrt_octetstring_t* dst, const vrt_octetstring_t* lhs, const vrt_octetstring_t* rhs) {
-  vrt_octetstring_binop(dst, lhs, rhs, "xor4b", [](octet_t l, octet_t r) -> octet_t {
-    return l ^ r;
-  });
+  vrt_octetstring_binop(dst, lhs, rhs, "xor4b", std::bit_xor<octet_t>{});
 }
 
 // NOLINTEND(readability-identifier-naming)

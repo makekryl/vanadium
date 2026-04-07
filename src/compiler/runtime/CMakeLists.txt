@@ -3,6 +3,7 @@ add_library(vanadium_rt STATIC
   src/rt_alloc.cpp
   src/rt_reflect.cpp
   src/rt_integer.cpp
+  src/rt_float.cpp
   src/rt_boolean.cpp
   src/rt_charstring.cpp
   src/rt_octetstring.cpp
