@@ -116,6 +116,8 @@ class RuntimeBindings {
     llvm::Function* copy_f;
     llvm::Function* concat_f;
     llvm::Function* singular_f;
+    llvm::Function* shift_left_f;
+    llvm::Function* shift_right_f;
     llvm::Function* rotate_left_f;
     llvm::Function* rotate_right_f;
     llvm::Function* eq_f;

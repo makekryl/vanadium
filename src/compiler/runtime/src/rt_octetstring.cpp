@@ -168,6 +168,53 @@ void vrt_octetstring_singular(vrt_octetstring_t* dst, const vrt_octetstring_t* s
 }
 
 namespace {
+void vrt_octetstring_shift_base(vrt_octetstring_t* dst, const vrt_octetstring_t* s, std::int64_t n, auto do_shift,
+                                auto do_shift_inv) {
+  AssertIsBound(s);
+  const auto len = s->length;
+
+  if (len == 0 || n == 0) {
+    vrt_octetstring_t tmp;
+    copy_octetstring(&tmp, s);
+    *dst = tmp;
+    return;
+  }
+
+  auto tmp = make_dummy_octetstring(len);
+
+  const auto* srcbuf = vrt_octetstring_get_cbuf(s);
+  auto* buf = vrt_octetstring_get_buf(&tmp);
+
+  n = std::min<std::int64_t>(n, len);
+  if (n < 0) {
+    do_shift_inv(srcbuf, buf, len, -n);
+  } else {
+    do_shift(srcbuf, buf, len, n % len);
+  }
+
+  *dst = tmp;
+}
+void vrt_octetstring_shift_left_impl(const octet_t* srcbuf, octet_t* buf, octetstring_size_t len, std::int64_t n) {
+  std::copy_n(srcbuf + n, len - n, buf);
+  std::fill_n(buf + len - n, n, 0);
+}
+void vrt_octetstring_shift_right_impl(const octet_t* srcbuf, octet_t* buf, octetstring_size_t len, std::int64_t n) {
+  std::fill_n(buf, n, 0);
+  std::copy_n(srcbuf, len - n, buf + n);
+}
+}  // namespace
+
+void vrt_octetstring_shift_left(vrt_octetstring_t* dst, const vrt_octetstring_t* s, std::int64_t n) {
+  vrt_octetstring_shift_base(dst, s, n,  //
+                             vrt_octetstring_shift_left_impl, vrt_octetstring_shift_right_impl);
+}
+
+void vrt_octetstring_shift_right(vrt_octetstring_t* dst, const vrt_octetstring_t* s, std::int64_t n) {
+  vrt_octetstring_shift_base(dst, s, n,  //
+                             vrt_octetstring_shift_right_impl, vrt_octetstring_shift_left_impl);
+}
+
+namespace {
 void vrt_octetstring_rotate_base(vrt_octetstring_t* dst, const vrt_octetstring_t* s, std::int64_t n, auto do_rotate,
                                  auto do_rotate_inv) {
   AssertIsBound(s);
@@ -185,12 +232,12 @@ void vrt_octetstring_rotate_base(vrt_octetstring_t* dst, const vrt_octetstring_t
   const auto* srcbuf = vrt_octetstring_get_cbuf(s);
   auto* buf = vrt_octetstring_get_buf(&tmp);
 
+  n %= len;
   if (n < 0) {
     do_rotate_inv(srcbuf, buf, len, -n);
-    return;
+  } else {
+    do_rotate(srcbuf, buf, len, n % len);
   }
-
-  do_rotate(srcbuf, buf, len, n % len);
 
   *dst = tmp;
 }

@@ -183,12 +183,12 @@ void vrt_charstring_rotate_base(vrt_charstring_t* dst, const vrt_charstring_t* s
   const auto* srcbuf = vrt_charstring_get_cbuf(s);
   auto* buf = vrt_charstring_get_buf(&tmp);
 
+  n %= len;
   if (n < 0) {
     do_rotate_inv(srcbuf, buf, len, -n);
-    return;
+  } else {
+    do_rotate(srcbuf, buf, len, n % len);
   }
-
-  do_rotate(srcbuf, buf, len, n % len);
 
   *dst = tmp;
 }

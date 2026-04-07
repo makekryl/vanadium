@@ -744,7 +744,7 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
             u_.builder.CreateCall(u_.rt.charstring_concat_f, {out, vx, vy});
             return out;
           }
-          case ast::TokenKind::SHL: {
+          case ast::TokenKind::ROL: {
             auto* out = dest ? dest : scope_->AllocTemp(&core::builtins::kCharstring);
             u_.builder.CreateCall(u_.rt.charstring_rotate_left_f, {
                                                                       out,
@@ -753,7 +753,7 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
                                                                   });
             return out;
           }
-          case ast::TokenKind::SHR: {
+          case ast::TokenKind::ROR: {
             auto* out = dest ? dest : scope_->AllocTemp(&core::builtins::kCharstring);
             u_.builder.CreateCall(u_.rt.charstring_rotate_right_f, {
                                                                        out,
@@ -772,7 +772,7 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
             u_.builder.CreateCall(u_.rt.octetstring.concat_f, {out, vx, vy});
             return out;
           }
-          case ast::TokenKind::SHL: {
+          case ast::TokenKind::ROL: {
             auto* out = dest ? dest : scope_->AllocTemp(&core::builtins::kOctetstring);
             u_.builder.CreateCall(u_.rt.octetstring.rotate_left_f, {
                                                                        out,
@@ -781,7 +781,7 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
                                                                    });
             return out;
           }
-          case ast::TokenKind::SHR: {
+          case ast::TokenKind::ROR: {
             auto* out = dest ? dest : scope_->AllocTemp(&core::builtins::kOctetstring);
             u_.builder.CreateCall(u_.rt.octetstring.rotate_right_f,
                                   {
@@ -789,6 +789,24 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
                                       vx,
                                       u_.builder.CreateCall(u_.rt.integer.get_f, {vy}),
                                   });
+            return out;
+          }
+          case ast::TokenKind::SHL: {
+            auto* out = dest ? dest : scope_->AllocTemp(&core::builtins::kOctetstring);
+            u_.builder.CreateCall(u_.rt.octetstring.shift_left_f, {
+                                                                      out,
+                                                                      vx,
+                                                                      u_.builder.CreateCall(u_.rt.integer.get_f, {vy}),
+                                                                  });
+            return out;
+          }
+          case ast::TokenKind::SHR: {
+            auto* out = dest ? dest : scope_->AllocTemp(&core::builtins::kOctetstring);
+            u_.builder.CreateCall(u_.rt.octetstring.shift_right_f, {
+                                                                       out,
+                                                                       vx,
+                                                                       u_.builder.CreateCall(u_.rt.integer.get_f, {vy}),
+                                                                   });
             return out;
           }
           case ast::TokenKind::AND4B: {

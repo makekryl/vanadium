@@ -360,6 +360,18 @@ RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ct
                                                    builder.getPtrTy(),
                                                    builder.getInt32Ty(),
                                                });
+  octetstring.shift_left_f = declare_external_fn("vrt_octetstring_shift_left", builder.getVoidTy(),
+                                                 {
+                                                     builder.getPtrTy(),    // vrt_octetstring_t* dst
+                                                     builder.getPtrTy(),    // const vrt_octetstring_t* src
+                                                     builder.getInt64Ty(),  // int64 n
+                                                 });
+  octetstring.shift_right_f = declare_external_fn("vrt_octetstring_shift_right", builder.getVoidTy(),
+                                                  {
+                                                      builder.getPtrTy(),    // vrt_octetstring_t* dst
+                                                      builder.getPtrTy(),    // const vrt_octetstring_t* src
+                                                      builder.getInt64Ty(),  // int64 n
+                                                  });
   octetstring.rotate_left_f = declare_external_fn("vrt_octetstring_rotate_left", builder.getVoidTy(),
                                                   {
                                                       builder.getPtrTy(),    // vrt_octetstring_t* dst

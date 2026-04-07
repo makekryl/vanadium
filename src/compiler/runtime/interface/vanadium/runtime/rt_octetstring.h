@@ -39,6 +39,9 @@ void vrt_octetstring_assign(vrt_octetstring_t* dst, const octet_t* src, octetstr
 void vrt_octetstring_concat(vrt_octetstring_t* dst, const vrt_octetstring_t*, const vrt_octetstring_t*);
 void vrt_octetstring_singular(vrt_octetstring_t* dst, const vrt_octetstring_t*, octetstring_size_t i);
 
+void vrt_octetstring_shift_left(vrt_octetstring_t* dst, const vrt_octetstring_t*, std::int64_t n);
+void vrt_octetstring_shift_right(vrt_octetstring_t* dst, const vrt_octetstring_t*, std::int64_t n);
+//
 void vrt_octetstring_rotate_left(vrt_octetstring_t* dst, const vrt_octetstring_t*, std::int64_t n);
 void vrt_octetstring_rotate_right(vrt_octetstring_t* dst, const vrt_octetstring_t*, std::int64_t n);
 
