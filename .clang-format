@@ -2,8 +2,14 @@ Language: Cpp
 BasedOnStyle: Google
 ColumnLimit: 120
 
+#
+
 AllowShortFunctionsOnASingleLine: Empty
 AllowShortLambdasOnASingleLine: Empty
+
+InsertBraces: true
+
+#
 
 IncludeBlocks: Regroup
 IncludeCategories:

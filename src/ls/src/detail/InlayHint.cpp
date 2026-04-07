@@ -50,8 +50,12 @@ struct InlayHintPayload {
 template <>
 struct glz::meta<InlayHintPayload> {
   static constexpr std::string_view rename_key(std::string_view key) {
-    if (key == "anchor_pos") return "apos";
-    if (key == "node_kind") return "nk";
+    if (key == "anchor_pos") {
+      return "apos";
+    }
+    if (key == "node_kind") {
+      return "nk";
+    }
     return key;
   }
 };

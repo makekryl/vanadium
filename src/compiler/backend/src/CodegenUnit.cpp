@@ -172,9 +172,15 @@ std::string CodegenUnit::ParseOctetstring(const ast::nodes::ValueLiteral* m) {
 
   // TODO: it will be needed in runtime, extract, cover with tests
   constexpr auto kChar2Hex = [](char c) {
-    if (c >= '0' && c <= '9') return c - '0';
-    if (c >= 'A' && c <= 'F') return c - 'A' + 10;
-    if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+    if (c >= '0' && c <= '9') {
+      return c - '0';
+    }
+    if (c >= 'A' && c <= 'F') {
+      return c - 'A' + 10;
+    }
+    if (c >= 'a' && c <= 'f') {
+      return c - 'a' + 10;
+    }
     assert(false);
   };
 
