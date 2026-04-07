@@ -1,0 +1,33 @@
+module TypeSpecifierOperator {
+
+type record MyRecord {
+  integer i
+}
+
+function fv(MyRecord r) {}
+function ft(template MyRecord r) {}
+
+function t() {
+  fv(MyRecord:{
+    j := 1  // EXPECT_ERROR
+  });
+  ft(MyRecord:{
+    j := 1  // EXPECT_ERROR
+  });
+
+  fv(MyRecord:{
+    i := 5
+  });
+  fv(MyRecord:{
+    i := *  // EXPECT_ERROR
+  });
+
+  ft(MyRecord:{
+    i := 5
+  });
+  ft(MyRecord:{
+    i := *
+  });
+}
+
+}

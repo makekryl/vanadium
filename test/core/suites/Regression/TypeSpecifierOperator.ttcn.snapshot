@@ -1,0 +1,10 @@
+./TypeSpecifierOperator.ttcn:
+  12:5: property 'j' does not exist on type 'record MyRecord'
+        j := 1  // EXPECT_ERROR
+        ~                      
+  15:5: property 'j' does not exist on type 'record MyRecord'
+        j := 1  // EXPECT_ERROR
+        ~                      
+  22:10: expected value, got template
+        i := *  // EXPECT_ERROR
+             ~                 

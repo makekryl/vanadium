@@ -1591,6 +1591,17 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, InstantiatedTyp
       const auto* m = n->As<ast::nodes::BinaryExpr>();
 
       auto x_type = CheckType(m->x);
+
+      if (m->op.kind == ast::TokenKind::COLON) {  // Type:Value
+        EnsureIsAType(x_type.sym, m->x);
+        resulting_type.sym = x_type.sym;
+        resulting_type.is_instance = true;
+        resulting_type.restriction = desired_type.restriction;
+        const auto y_type = CheckType(m->y, resulting_type);
+        MatchTypes(m->y->nrange, y_type, resulting_type);
+        break;
+      }
+
       const auto y_type = CheckType(m->y, x_type);
 
       const auto match_both = [&](const semantic::Symbol* expected_sym) {
@@ -1616,11 +1627,6 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, InstantiatedTyp
       }
 
       switch (m->op.kind) {
-        case ast::TokenKind::COLON: {  // Type:Value
-          match_both(x_type.sym);
-          resulting_type.restriction = desired_type.restriction;
-          break;
-        }
         case ast::TokenKind::EQ:
         case ast::TokenKind::NE: {
           match_both(x_type.sym);
