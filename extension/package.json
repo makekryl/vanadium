@@ -7,7 +7,7 @@
   "publisher": "makekryl",
   "version": "0.2.0",
   "private": true,
-  "repository": "https://github.com/makekryl/vanadiumd",
+  "repository": "https://github.com/makekryl/vanadium",
   "engines": {
     "vscode": "^1.100.0"
   },
