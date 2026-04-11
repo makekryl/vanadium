@@ -49,6 +49,7 @@ octet_t vrt_octetstring_at(const vrt_octetstring_t*, octetstring_size_t i);
 void vrt_octetstring_set(vrt_octetstring_t*, octetstring_size_t i, octet_t v);
 
 bool vrt_octetstring_eq(const vrt_octetstring_t*, const vrt_octetstring_t*);
+bool vrt_octetstring_ne(const vrt_octetstring_t*, const vrt_octetstring_t*);
 
 //
 

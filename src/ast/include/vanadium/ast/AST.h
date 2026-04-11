@@ -41,8 +41,8 @@ struct AST {
     return n.On(src);
   }
 
-  [[nodiscard]] std::string_view Text(const Token* t) const noexcept {
-    return t->On(src);
+  [[nodiscard]] std::string_view Text(const Token& t) const noexcept {
+    return t.On(src);
   }
 
   [[nodiscard]] std::string_view Text(const Range& r) const noexcept {

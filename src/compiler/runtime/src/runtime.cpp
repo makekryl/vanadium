@@ -9,6 +9,7 @@
 #include <stdexcept>
 #include <string>
 
+#include "vanadium/runtime/rt_bitstring.h"
 #include "vanadium/runtime/rt_boolean.h"
 #include "vanadium/runtime/rt_charstring.h"
 #include "vanadium/runtime/rt_float.h"
@@ -91,6 +92,28 @@ void vrt_log(const vrt_val_t* args, std::uint32_t n) {
         buf += kHexDigits[octet & 0x0F];
       }
       buf += "'O";
+    } else if (arg->ty == &bitstring_typeinfo) {
+      auto* s = static_cast<vrt_bitstring_t*>(arg->p);
+      const auto* sdata = vrt_bitstring_get_buf(s);
+      buf += "'";
+      //
+      const auto full_bytes = s->length / 8;
+      const auto remaining = s->length % 8;
+      //
+      for (size_t i = 0; i < full_bytes; ++i) {
+        const std::uint8_t byte = sdata[i];
+        for (int b = 7; b >= 0; --b) {
+          buf += ((byte >> b) & 1) ? '1' : '0';
+        }
+      }
+      if (remaining) {
+        const std::uint8_t byte = sdata[full_bytes];
+        for (int b = 0; b < remaining; ++b) {
+          buf += ((byte >> (7 - b)) & 1) ? '1' : '0';
+        }
+      }
+      //
+      buf += "'B";
     } else {
       buf += "<unknown_typeinfo>";
     }

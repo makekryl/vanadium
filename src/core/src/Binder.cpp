@@ -183,7 +183,7 @@ class Binder {
   [[nodiscard]] std::string_view Lit(const ast::Node& n) const {
     return Lit(&n);
   }
-  [[nodiscard]] std::string_view Lit(const ast::Token* n) const {
+  [[nodiscard]] std::string_view Lit(const ast::Token& n) const {
     return sf_.Text(n);
   }
 
@@ -613,11 +613,11 @@ bool Binder::Inspect(const ast::Node* n) {
       MaybeVisit(m->system);
       MaybeVisit(m->ret);
 
-      if (m->modif && Lit(m->modif) == "@abstract") {
+      if (m->modif && Lit(*m->modif) == "@abstract") {
         const auto* outer = m->parent->parent;
         if (outer->nkind == ast::NodeKind::ClassTypeDecl) {
           const auto* cdecl = outer->As<ast::nodes::ClassTypeDecl>();
-          if (!cdecl->modif || Lit(cdecl->modif) != "@abstract") {
+          if (!cdecl->modif || Lit(*cdecl->modif) != "@abstract") {
             // TODO: try to also bring up this error from xbind
             EmitError(SemanticError{
                 .range = m->modif->range,

@@ -34,6 +34,8 @@
 #include <vanadium/lib/ScopedValue.h>
 
 #include "vanadium/compiler/Codegen.h"
+#include "vanadium/compiler/LiteralsParser.h"
+#include "vanadium/compiler/RuntimeBindings.h"
 
 namespace vanadium::compiler {
 
@@ -51,10 +53,13 @@ void EmitDestructor(CodegenUnit& u, const core::semantic::Symbol* sym, llvm::Val
     if (sym->Flags() & core::semantic::SymbolFlags::kBuiltin) {
       auto* dtor_f = [&] -> llvm::Function* {
         if (sym == &core::builtins::kCharstring) {
-          return u.rt.charstring_dtor_f;
+          return u.rt.charstring.dtor_f;
         }
         if (sym == &core::builtins::kOctetstring) {
           return u.rt.octetstring.dtor_f;
+        }
+        if (sym == &core::builtins::kBitstring) {
+          return u.rt.bitstring.dtor_f;
         }
         return nullptr;
       }();
@@ -306,18 +311,26 @@ class FunctionCodegen {
   void CodegenDecl(const ast::nodes::Decl*);
   llvm::Value* CodegenExpr(const ast::nodes::Expr*, llvm::Value* dest = nullptr);
 
-  llvm::Value* CodegenExprAsBool(const ast::nodes::Expr* expr) {
+  llvm::Value* CodegenWrappedExpr(const ast::nodes::Expr* expr, llvm::Value* dest = nullptr) {
+    auto* v = CodegenExpr(expr, dest);
+    if (v->getType() == u_.builder.getInt1Ty()) {
+      return u_.builder.CreateCall(u_.rt.boolt.wrap_f, {v});
+    }
+    return v;
+  }
+
+  llvm::Value* CodegenExprAsUnwrappedBool(const ast::nodes::Expr* expr) {
     auto* v = CodegenExpr(expr);
     if (v->getType() == u_.builder.getInt1Ty()) {
       return v;
     }
-    assert(v->getType() == u_.rt.bool_ty);
-    return u_.builder.CreateCall(u_.rt.bool_get_f, {v});
+    assert(v->getType() == u_.rt.boolt.ty);
+    return u_.builder.CreateCall(u_.rt.boolt.get_f, {v});
   }
 
   bool IsTrivial(llvm::Type* ty) const {
     // int won't be trivial after bignum support
-    return ty == u_.rt.bool_ty || ty == u_.rt.integer.ty || ty == u_.rt.floatt.ty;
+    return ty == u_.rt.boolt.ty || ty == u_.rt.integer.ty || ty == u_.rt.floatt.ty;
   }
 
   void EmitGenericVal(llvm::Value* slot, const core::semantic::Symbol* sym, llvm::Value* v) {
@@ -365,7 +378,7 @@ void FunctionCodegen::CodegenStmt(const ast::nodes::Stmt* n) {
       auto* end_bb = llvm::BasicBlock::Create(u_.ctx, "if.end");
       auto* else_bb = m->alternate ? llvm::BasicBlock::Create(u_.ctx, "if.else") : end_bb;
 
-      u_.builder.CreateCondBr(CodegenExprAsBool(m->cond), then_bb, else_bb);
+      u_.builder.CreateCondBr(CodegenExprAsUnwrappedBool(m->cond), then_bb, else_bb);
 
       fn_->insert(fn_->end(), then_bb);
       u_.builder.SetInsertPoint(then_bb);
@@ -403,7 +416,7 @@ void FunctionCodegen::CodegenStmt(const ast::nodes::Stmt* n) {
 
       u_.builder.CreateBr(cond_bb);
       u_.builder.SetInsertPoint(cond_bb);
-      u_.builder.CreateCondBr(CodegenExprAsBool(m->cond), body_bb, end_bb);
+      u_.builder.CreateCondBr(CodegenExprAsUnwrappedBool(m->cond), body_bb, end_bb);
 
       u_.builder.SetInsertPoint(post_bb);
       CodegenStmt(m->post);
@@ -435,7 +448,7 @@ void FunctionCodegen::CodegenStmt(const ast::nodes::Stmt* n) {
 
       u_.builder.CreateBr(cond_bb);
       u_.builder.SetInsertPoint(cond_bb);
-      u_.builder.CreateCondBr(CodegenExprAsBool(m->cond), body_bb, end_bb);
+      u_.builder.CreateCondBr(CodegenExprAsUnwrappedBool(m->cond), body_bb, end_bb);
 
       u_.builder.SetInsertPoint(body_bb);
       {
@@ -475,7 +488,7 @@ void FunctionCodegen::CodegenStmt(const ast::nodes::Stmt* n) {
 
       u_.builder.CreateBr(cond_bb);
       u_.builder.SetInsertPoint(cond_bb);
-      u_.builder.CreateCondBr(CodegenExprAsBool(m->cond), body_bb, end_bb);
+      u_.builder.CreateCondBr(CodegenExprAsUnwrappedBool(m->cond), body_bb, end_bb);
 
       u_.builder.SetInsertPoint(end_bb);
 
@@ -564,6 +577,20 @@ void FunctionCodegen::CodegenDecl(const ast::nodes::Decl* n) {
 }
 
 llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Value* dest) {
+  const auto promote_trivial = [this](llvm::Type* ty, llvm::Value* v) -> llvm::Value* {
+    if (v->getType() == u_.builder.getPtrTy()) {
+      return u_.builder.CreateLoad(ty, v);
+    }
+    return v;
+  };
+  const auto ret_trivialvar = [&](llvm::Value* rv) {
+    if (dest) {
+      u_.builder.CreateStore(rv, dest);
+      return dest;
+    }
+    return rv;
+  };
+
   switch (expr->nkind) {
     case ast::NodeKind::Ident: {
       const auto* m = expr->As<ast::nodes::Ident>();
@@ -593,7 +620,7 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
       const auto* m = expr->As<ast::nodes::ValueLiteral>();
       switch (m->tok.kind) {
         case ast::TokenKind::INT: {
-          auto* iv = u_.rt.GetInt(u_.ParseInt(m));
+          auto* iv = u_.rt.GetInt(literals::ParseInt(u_.sf.Text(m->tok)));
           if (dest) {
             u_.builder.CreateStore(iv, dest);
             return dest;
@@ -602,7 +629,7 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
         }
 
         case ast::TokenKind::FLOAT: {
-          auto* iv = u_.rt.GetFloat(u_.ParseFloat(m));
+          auto* iv = u_.rt.GetFloat(literals::ParseFloat(u_.sf.Text(m->tok)));
           if (dest) {
             u_.builder.CreateStore(iv, dest);
             return dest;
@@ -612,9 +639,9 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
 
         case ast::TokenKind::STRING: {
           auto* out = dest ? dest : scope_->AllocTemp(&core::builtins::kCharstring);
-          const auto& sv = u_.ParseCharstring(m);
+          const auto& sv = literals::ParseCharstring(u_.sf.Text(m->tok));
           assert(sv.length() <= std::numeric_limits<std::uint32_t>::max());
-          u_.builder.CreateCall(u_.rt.charstring_init_f,
+          u_.builder.CreateCall(u_.rt.charstring.init_f,
                                 {
                                     out,
                                     u_.builder.CreateGlobalStringPtr(sv),
@@ -625,7 +652,7 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
 
         case ast::TokenKind::OCTETSTRING: {
           auto* out = dest ? dest : scope_->AllocTemp(&core::builtins::kOctetstring);
-          const auto& sv = u_.ParseOctetstring(m);
+          const auto& sv = literals::ParseOctetstring(u_.sf.Text(m->tok));
           assert(sv.length() <= std::numeric_limits<std::uint32_t>::max());
           u_.builder.CreateCall(u_.rt.octetstring.init_f,
                                 {
@@ -633,6 +660,17 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
                                     u_.builder.CreateGlobalStringPtr(sv),
                                     u_.builder.getInt32(static_cast<std::uint32_t>(sv.length())),
                                 });
+          return out;
+        }
+
+        case ast::TokenKind::BITSTRING: {
+          auto* out = dest ? dest : scope_->AllocTemp(&core::builtins::kBitstring);
+          const auto& [sv, bits] = literals::ParseBitstring(u_.sf.Text(m->tok));
+          u_.builder.CreateCall(u_.rt.bitstring.init_f, {
+                                                            out,
+                                                            u_.builder.CreateGlobalStringPtr(sv),
+                                                            u_.builder.getInt32(bits),
+                                                        });
           return out;
         }
 
@@ -652,20 +690,6 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
 
       auto* vx = CodegenExpr(m->x);
       auto* vy = CodegenExpr(m->y);
-
-      const auto promote_trivial = [this](llvm::Type* ty, llvm::Value* v) -> llvm::Value* {
-        if (v->getType() == u_.builder.getPtrTy()) {
-          return u_.builder.CreateLoad(ty, v);
-        }
-        return v;
-      };
-      const auto ret_trivialvar = [&](llvm::Value* rv) {
-        if (dest) {
-          u_.builder.CreateStore(rv, dest);
-          return dest;
-        }
-        return rv;
-      };
 
       const auto* sym =
           core::checker::ResolveExprType(&u_.sf, core::semantic::utils::FindScope(u_.sf.module->scope, m->x), m->x).sym;
@@ -703,13 +727,6 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
       } else if (sym == &core::builtins::kFloat) {
         vx = promote_trivial(u_.rt.floatt.ty, vx);
         vy = promote_trivial(u_.rt.floatt.ty, vy);
-        const auto ret_trivialvar = [&](llvm::Value* rv) {
-          if (dest) {
-            u_.builder.CreateStore(rv, dest);
-            return dest;
-          }
-          return rv;
-        };
         switch (m->op.kind) {
           case ast::TokenKind::EQ:
             return u_.builder.CreateCall(u_.rt.floatt.eq_f, {vx, vy});
@@ -737,98 +754,142 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
             VANADIUM_DEBUG_ERROR("Unhandled BinaryExpr int op = {}", magic_enum::enum_name(m->op.kind));
             break;
         }
-      } else if (sym == &core::builtins::kCharstring) {
+      } else {
+        const StringTypeBindings* strb = nullptr;
+        if (sym == &core::builtins::kCharstring) {
+          strb = &u_.rt.charstring;
+        } else if (sym == &core::builtins::kOctetstring) {
+          strb = &u_.rt.octetstring;
+        } else if (sym == &core::builtins::kBitstring) {
+          strb = &u_.rt.bitstring;
+        } else {
+          VANADIUM_DEBUG_ERROR("Unhandled BinaryExpr xsym = {}", sym->GetName());
+          break;
+        }
+
         switch (m->op.kind) {
-          case ast::TokenKind::CONCAT: {
-            auto* out = dest ? dest : scope_->AllocTemp(&core::builtins::kCharstring);
-            u_.builder.CreateCall(u_.rt.charstring_concat_f, {out, vx, vy});
-            return out;
-          }
-          case ast::TokenKind::ROL: {
-            auto* out = dest ? dest : scope_->AllocTemp(&core::builtins::kCharstring);
-            u_.builder.CreateCall(u_.rt.charstring_rotate_left_f, {
-                                                                      out,
-                                                                      vx,
-                                                                      u_.builder.CreateCall(u_.rt.integer.get_f, {vy}),
-                                                                  });
-            return out;
-          }
-          case ast::TokenKind::ROR: {
-            auto* out = dest ? dest : scope_->AllocTemp(&core::builtins::kCharstring);
-            u_.builder.CreateCall(u_.rt.charstring_rotate_right_f, {
-                                                                       out,
-                                                                       vx,
-                                                                       u_.builder.CreateCall(u_.rt.integer.get_f, {vy}),
-                                                                   });
-            return out;
-          }
+          case ast::TokenKind::EQ:
+            return u_.builder.CreateCall(strb->eq_f, {vx, vy});
+          case ast::TokenKind::NE:
+            return u_.builder.CreateCall(strb->ne_f, {vx, vy});
           default:
             break;
         }
-      } else if (sym == &core::builtins::kOctetstring) {
+
+        auto* out = dest ? dest : scope_->AllocTemp(sym);
         switch (m->op.kind) {
           case ast::TokenKind::CONCAT: {
-            auto* out = dest ? dest : scope_->AllocTemp(&core::builtins::kOctetstring);
-            u_.builder.CreateCall(u_.rt.octetstring.concat_f, {out, vx, vy});
-            return out;
+            u_.builder.CreateCall(strb->concat_f, {out, vx, vy});
+            break;
           }
           case ast::TokenKind::ROL: {
-            auto* out = dest ? dest : scope_->AllocTemp(&core::builtins::kOctetstring);
-            u_.builder.CreateCall(u_.rt.octetstring.rotate_left_f, {
-                                                                       out,
-                                                                       vx,
-                                                                       u_.builder.CreateCall(u_.rt.integer.get_f, {vy}),
-                                                                   });
-            return out;
+            u_.builder.CreateCall(strb->rotate_left_f, {
+                                                           out,
+                                                           vx,
+                                                           u_.builder.CreateCall(u_.rt.integer.get_f, {vy}),
+                                                       });
+            break;
           }
           case ast::TokenKind::ROR: {
-            auto* out = dest ? dest : scope_->AllocTemp(&core::builtins::kOctetstring);
-            u_.builder.CreateCall(u_.rt.octetstring.rotate_right_f,
-                                  {
-                                      out,
-                                      vx,
-                                      u_.builder.CreateCall(u_.rt.integer.get_f, {vy}),
-                                  });
-            return out;
+            u_.builder.CreateCall(strb->rotate_right_f, {
+                                                            out,
+                                                            vx,
+                                                            u_.builder.CreateCall(u_.rt.integer.get_f, {vy}),
+                                                        });
+            break;
           }
           case ast::TokenKind::SHL: {
-            auto* out = dest ? dest : scope_->AllocTemp(&core::builtins::kOctetstring);
-            u_.builder.CreateCall(u_.rt.octetstring.shift_left_f, {
-                                                                      out,
-                                                                      vx,
-                                                                      u_.builder.CreateCall(u_.rt.integer.get_f, {vy}),
-                                                                  });
-            return out;
+            u_.builder.CreateCall(strb->shift_left_f, {
+                                                          out,
+                                                          vx,
+                                                          u_.builder.CreateCall(u_.rt.integer.get_f, {vy}),
+                                                      });
+            break;
           }
           case ast::TokenKind::SHR: {
-            auto* out = dest ? dest : scope_->AllocTemp(&core::builtins::kOctetstring);
-            u_.builder.CreateCall(u_.rt.octetstring.shift_right_f, {
-                                                                       out,
-                                                                       vx,
-                                                                       u_.builder.CreateCall(u_.rt.integer.get_f, {vy}),
-                                                                   });
-            return out;
+            u_.builder.CreateCall(strb->shift_right_f, {
+                                                           out,
+                                                           vx,
+                                                           u_.builder.CreateCall(u_.rt.integer.get_f, {vy}),
+                                                       });
+            break;
           }
           case ast::TokenKind::AND4B: {
-            auto* out = dest ? dest : scope_->AllocTemp(&core::builtins::kOctetstring);
-            u_.builder.CreateCall(u_.rt.octetstring.and4b_f, {out, vx, vy});
-            return out;
+            u_.builder.CreateCall(strb->and4b_f, {out, vx, vy});
+            break;
           }
           case ast::TokenKind::OR4B: {
-            auto* out = dest ? dest : scope_->AllocTemp(&core::builtins::kOctetstring);
-            u_.builder.CreateCall(u_.rt.octetstring.or4b_f, {out, vx, vy});
-            return out;
+            u_.builder.CreateCall(strb->or4b_f, {out, vx, vy});
+            break;
           }
           case ast::TokenKind::XOR4B: {
-            auto* out = dest ? dest : scope_->AllocTemp(&core::builtins::kOctetstring);
-            u_.builder.CreateCall(u_.rt.octetstring.xor4b_f, {out, vx, vy});
-            return out;
+            u_.builder.CreateCall(strb->xor4b_f, {out, vx, vy});
+            break;
           }
+          default: {
+            VANADIUM_DEBUG_ERROR("Unhandled BinaryExpr str operation = {}", magic_enum::enum_name(m->op.kind));
+            break;
+          }
+        }
+        return out;
+      }
+
+      break;
+    }
+
+    case ast::NodeKind::UnaryExpr: {
+      const auto* m = expr->As<ast::nodes::UnaryExpr>();
+
+      auto* vx = CodegenExpr(m->x);
+
+      const auto* sym =
+          core::checker::ResolveExprType(&u_.sf, core::semantic::utils::FindScope(u_.sf.module->scope, m->x), m->x).sym;
+
+      if (sym == &core::builtins::kBoolean) {
+        //  TODO: TokenKind::NOT
+      } else if (sym == &core::builtins::kInteger) {
+        vx = promote_trivial(u_.rt.integer.ty, vx);
+        switch (m->op.kind) {
+          case ast::TokenKind::SUB:
+            return u_.builder.CreateCall(u_.rt.integer.ne_f, {vx});
           default:
+            VANADIUM_DEBUG_ERROR("Unhandled UnaryExpr int op = {}", magic_enum::enum_name(m->op.kind));
+            break;
+        }
+      } else if (sym == &core::builtins::kFloat) {
+        vx = promote_trivial(u_.rt.floatt.ty, vx);
+        switch (m->op.kind) {
+          case ast::TokenKind::SUB:
+            return u_.builder.CreateCall(u_.rt.floatt.ne_f, {vx});
+          default:
+            VANADIUM_DEBUG_ERROR("Unhandled UnaryExpr int op = {}", magic_enum::enum_name(m->op.kind));
             break;
         }
       } else {
-        VANADIUM_DEBUG_ERROR("Unhandled BinaryExpr xsym = {}", sym->GetName());
+        const StringTypeBindings* strb = nullptr;
+        if (sym == &core::builtins::kCharstring) {
+          strb = &u_.rt.charstring;
+        } else if (sym == &core::builtins::kOctetstring) {
+          strb = &u_.rt.octetstring;
+        } else if (sym == &core::builtins::kBitstring) {
+          strb = &u_.rt.bitstring;
+        } else {
+          VANADIUM_DEBUG_ERROR("Unhandled BinaryExpr xsym = {}", sym->GetName());
+          break;
+        }
+
+        auto* out = dest ? dest : scope_->AllocTemp(sym);
+        switch (m->op.kind) {
+          case ast::TokenKind::NOT4B: {
+            u_.builder.CreateCall(strb->not4b_f, {out, vx});
+            break;
+          }
+          default: {
+            VANADIUM_DEBUG_ERROR("Unhandled UnaryExpr str operation = {}", magic_enum::enum_name(m->op.kind));
+            break;
+          }
+        }
+        return out;
       }
 
       break;
@@ -922,7 +983,7 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
         for (const auto& [idx, argnode] : m->args->list | std::views::enumerate) {
           auto* slot = u_.builder.CreateGEP(array_ty, arr, {u_.builder.getInt32(0), u_.builder.getInt32(idx)});
 
-          auto* val = CodegenExpr(argnode);
+          auto* val = CodegenWrappedExpr(argnode);
           if (IsTrivial(val->getType())) {
             auto* val_slot = scope_->AllocTrivialTemp(val->getType());
             u_.builder.CreateStore(val, val_slot);
@@ -946,7 +1007,7 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
         args.push_back(dest);
       }
       for (const auto* argnode : m->args->list) {
-        auto* av = CodegenExpr(argnode);
+        auto* av = CodegenWrappedExpr(argnode);
         VANADIUM_DEBUG_ASSERT(av != nullptr, "Unknown argument expr type: {}", magic_enum::enum_name(argnode->nkind))
         args.push_back(av);
       }

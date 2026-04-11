@@ -6,6 +6,7 @@
 
 enum class vrt_typekind_e : std::int8_t {
   kScalar,
+  kString,
   kStruct,
   kList,
   kOptionalMember,

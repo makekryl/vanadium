@@ -87,7 +87,7 @@ void WriteMarkdownParameterList(std::back_insert_iterator<std::string> w, const 
 
     if constexpr (std::is_same_v<TParamDescriptorNode, ast::nodes::FormalPar>) {
       if (param->direction) {
-        std::format_to(w, "{} ", ast.Text(param->direction));
+        std::format_to(w, "{} ", ast.Text(*param->direction));
       }
       if (param->restriction) {
         std::format_to(w, "{} ", ast.Text(param->restriction));

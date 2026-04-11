@@ -1,10 +1,11 @@
 #include "vanadium/compiler/RuntimeBindings.h"
 
+#include <format>
 #include <string_view>
 #include <utility>
 #include <variant>
 
-#include <llvm-19/llvm/IR/Attributes.h>
+#include <llvm/IR/Attributes.h>
 #include <llvm/IR/BasicBlock.h>
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/Function.h>
@@ -96,6 +97,21 @@ void GenerateBoxedUnwrapFn(llvm::LLVMContext& ctx, llvm::Function* fn, llvm::Fun
   builder.SetInsertPoint(bb_entry);
   builder.CreateCall(assert_is_bound_fn, {arg});
   builder.CreateRet(builder.CreateExtractValue(arg, idx));
+}
+
+void GenerateBoolWrapFn(llvm::LLVMContext& ctx, llvm::Function* fn, llvm::Value* undef) {
+  llvm::IRBuilder<> builder(ctx);
+
+  auto* bb_entry = llvm::BasicBlock::Create(ctx, "", fn);
+  llvm::Value* arg = fn->arg_begin();
+
+  builder.SetInsertPoint(bb_entry);
+
+  llvm::Value* s = undef;
+  s = builder.CreateInsertValue(s, arg, 0);
+  s = builder.CreateInsertValue(s, builder.getTrue(), 1);
+
+  builder.CreateRet(s);
 }
 
 }  // namespace
@@ -255,167 +271,141 @@ RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ct
     GenerateGenericBinaryIntegerOperation(ctx, fptr, fnativeb, int_assert_is_bound_fn);
   }
 
-  bool_ty = llvm::StructType::create(ctx, "vrt_bool_t");
-  bool_ty->setBody({
+  boolt.ty = llvm::StructType::create(ctx, "vrt_bool_t");
+  boolt.ty->setBody({
       builder.getInt1Ty(),  // bool value
       builder.getInt1Ty(),  // bool is_bound
   });
   //
-  bool_undef = llvm::ConstantStruct::get(bool_ty, {
-                                                      llvm::UndefValue::get(builder.getInt1Ty()),
-                                                      builder.getFalse(),  // is_bound = false
-                                                  });
+  boolt.undef = llvm::ConstantStruct::get(boolt.ty, {
+                                                        llvm::UndefValue::get(builder.getInt1Ty()),
+                                                        builder.getFalse(),  // is_bound = false
+                                                    });
   //
-  auto* bool_assert_is_bound_fn = declare_embedded_fn("__vrt_bool_assert_is_bound", builder.getVoidTy(), {bool_ty});
+  auto* bool_assert_is_bound_fn = declare_embedded_fn("__vrt_bool_assert_is_bound", builder.getVoidTy(), {boolt.ty});
   GenerateAssertIsBound(*this, ctx, bool_assert_is_bound_fn, "boolean", 1);
   //
-  bool_get_f = llvm::Function::Create(llvm::FunctionType::get(builder.getInt1Ty(), {bool_ty}, false),
-                                      llvm::GlobalValue::InternalLinkage, "__vrt_bool_get", mod);
-  GenerateBoxedUnwrapFn(ctx, bool_get_f, bool_assert_is_bound_fn, 0);
-
-  charstring_ty = llvm::StructType::create(ctx, "vrt_charstring_t");
-  charstring_ty->setBody({
-      builder.getPtrTy(),    // char* data
-      builder.getInt32Ty(),  // u32 capacity
-      builder.getInt32Ty(),  // u32 length
-      builder.getInt1Ty(),   // bool is_bound
-      builder.getInt1Ty(),   // bool is_ext
-  });
+  boolt.get_f = llvm::Function::Create(llvm::FunctionType::get(builder.getInt1Ty(), {boolt.ty}, false),
+                                       llvm::GlobalValue::InternalLinkage, "__vrt_bool_get", mod);
+  GenerateBoxedUnwrapFn(ctx, boolt.get_f, bool_assert_is_bound_fn, 0);
   //
-  charstring_dtor_f = declare_external_fn("vrt_charstring_dtor", builder.getVoidTy(), {builder.getPtrTy()});
-  charstring_init_f = declare_external_fn("vrt_charstring_init", builder.getVoidTy(),
+  boolt.wrap_f = llvm::Function::Create(llvm::FunctionType::get(boolt.ty, {builder.getInt1Ty()}, false),
+                                        llvm::GlobalValue::InternalLinkage, "__vrt_bool_wrap", mod);
+  GenerateBoolWrapFn(ctx, boolt.wrap_f, boolt.undef);
+
+  const auto fill_string_bindings = [&](StringTypeBindings& b, std::string_view ty_name) {
+    const auto sty_name = [&](std::format_string<std::string_view&> sname) {
+      return std::format(sname, ty_name);
+    };
+
+    b.ty = llvm::StructType::create(ctx, sty_name("vrt_{}_t"));
+    b.ty->setBody({
+        builder.getPtrTy(),    // u32* data
+        builder.getInt32Ty(),  // u32 capacity
+        builder.getInt32Ty(),  // u32 length
+        builder.getInt1Ty(),   // bool is_bound
+        builder.getInt1Ty(),   // bool is_ext
+    });
+    //
+    b.dtor_f = declare_external_fn(sty_name("vrt_{}_dtor"), builder.getVoidTy(), {builder.getPtrTy()});
+    b.init_f = declare_external_fn(sty_name("vrt_{}_init"), builder.getVoidTy(),
+                                   {
+                                       builder.getPtrTy(),    // StringType*
+                                       builder.getPtrTy(),    // const char*
+                                       builder.getInt32Ty(),  // u32
+                                   });
+    b.copy_f = declare_external_fn(sty_name("copy_{}"), builder.getVoidTy(),
+                                   {
+                                       builder.getPtrTy(),  // StringType* dst
+                                       builder.getPtrTy(),  // StringType* src
+                                   });
+    b.concat_f = declare_external_fn(sty_name("vrt_{}_concat"), builder.getVoidTy(),
+                                     {
+                                         builder.getPtrTy(),  // StringType* dst
+                                         builder.getPtrTy(),  // lhs
+                                         builder.getPtrTy(),  // rhs
+                                     });                      // TODO: add nocapture flags, ...
+    b.eq_f = declare_external_fn(sty_name("vrt_{}_eq"), builder.getInt1Ty(),
+                                 {
+                                     builder.getPtrTy(),  // lhs
+                                     builder.getPtrTy(),  // rhs
+                                 });
+    b.ne_f = declare_external_fn(sty_name("vrt_{}_ne"), builder.getInt1Ty(),
+                                 {
+                                     builder.getPtrTy(),  // lhs
+                                     builder.getPtrTy(),  // rhs
+                                 });
+    b.singular_f = declare_external_fn(sty_name("vrt_{}_singular"), builder.getVoidTy(),
+                                       {
+                                           builder.getPtrTy(),  // StringType* dst
+                                           builder.getPtrTy(),
+                                           builder.getInt32Ty(),
+                                       });
+
+    b.rotate_left_f = declare_external_fn(sty_name("vrt_{}_rotate_left"), builder.getVoidTy(),
                                           {
-                                              builder.getPtrTy(),    // vrt_charstring_t*
-                                              builder.getPtrTy(),    // const char*
-                                              builder.getInt32Ty(),  // u32
+                                              builder.getPtrTy(),    // StringType* dst
+                                              builder.getPtrTy(),    // const StringType* src
+                                              builder.getInt64Ty(),  // int64 n
                                           });
-  charstring_copy_f = declare_external_fn("copy_charstring", builder.getVoidTy(),
-                                          {
-                                              builder.getPtrTy(),  // vrt_charstring_t* dst
-                                              builder.getPtrTy(),  // vrt_charstring_t* src
-                                          });
-  charstring_concat_f = declare_external_fn("vrt_charstring_concat", builder.getVoidTy(),
+    b.rotate_right_f = declare_external_fn(sty_name("vrt_{}_rotate_right"), builder.getVoidTy(),
+                                           {
+                                               builder.getPtrTy(),    // StringType* dst
+                                               builder.getPtrTy(),    // const StringType* src
+                                               builder.getInt64Ty(),  // int64 n
+                                           });
+
+    if (ty_name != "charstring") {
+      b.shift_left_f = declare_external_fn(sty_name("vrt_{}_shift_left"), builder.getVoidTy(),
+                                           {
+                                               builder.getPtrTy(),    // StringType* dst
+                                               builder.getPtrTy(),    // const StringType* src
+                                               builder.getInt64Ty(),  // int64 n
+                                           });
+      b.shift_right_f = declare_external_fn(sty_name("vrt_{}_shift_right"), builder.getVoidTy(),
                                             {
-                                                builder.getPtrTy(),  // vrt_charstring_t* dst
-                                                builder.getPtrTy(),  // lhs
-                                                builder.getPtrTy(),  // rhs
-                                            });                      // TODO: add nocapture flags, ...
-  charstring_singular_f = declare_external_fn("vrt_charstring_singular", builder.getVoidTy(),
-                                              {
-                                                  builder.getPtrTy(),  // vrt_charstring_t* dst
-                                                  builder.getPtrTy(),
-                                                  builder.getInt32Ty(),
+                                                builder.getPtrTy(),    // StringType* dst
+                                                builder.getPtrTy(),    // const StringType* src
+                                                builder.getInt64Ty(),  // int64 n
+                                            });
+      //
+      b.not4b_f = declare_external_fn(sty_name("vrt_{}_not4b"), builder.getVoidTy(),
+                                      {
+                                          builder.getPtrTy(),  // StringType* dst
+                                          builder.getPtrTy(),  // const StringType* s
+                                      });
+      b.and4b_f = declare_external_fn(sty_name("vrt_{}_and4b"), builder.getVoidTy(),
+                                      {
+                                          builder.getPtrTy(),  // StringType* dst
+                                          builder.getPtrTy(),  // lhs
+                                          builder.getPtrTy(),  // rhs
+                                      });
+      b.or4b_f = declare_external_fn(sty_name("vrt_{}_or4b"), builder.getVoidTy(),
+                                     {
+                                         builder.getPtrTy(),  // StringType* dst
+                                         builder.getPtrTy(),  // lhs
+                                         builder.getPtrTy(),  // rhs
+                                     });
+      b.xor4b_f = declare_external_fn(sty_name("vrt_{}_xor4b"), builder.getVoidTy(),
+                                      {
+                                          builder.getPtrTy(),  // StringType* dst
+                                          builder.getPtrTy(),  // lhs
+                                          builder.getPtrTy(),  // rhs
+                                      });
+    }
+    //
+    b.undef = llvm::ConstantStruct::get(b.ty, {
+                                                  llvm::UndefValue::get(builder.getPtrTy()),    //
+                                                  llvm::UndefValue::get(builder.getInt32Ty()),  //
+                                                  llvm::UndefValue::get(builder.getInt32Ty()),  //
+                                                  builder.getTrue(),                            // is_bound = true
+                                                  builder.getFalse(),                           // is_ext = true
                                               });
-  charstring_rotate_left_f = declare_external_fn("vrt_charstring_rotate_left", builder.getVoidTy(),
-                                                 {
-                                                     builder.getPtrTy(),    // vrt_charstring_t* dst
-                                                     builder.getPtrTy(),    // const vrt_charstring_t* src
-                                                     builder.getInt64Ty(),  // int64 n
-                                                 });
-  charstring_rotate_right_f = declare_external_fn("vrt_charstring_rotate_right", builder.getVoidTy(),
-                                                  {
-                                                      builder.getPtrTy(),    // vrt_charstring_t* dst
-                                                      builder.getPtrTy(),    // const vrt_charstring_t* src
-                                                      builder.getInt64Ty(),  // int64 n
-                                                  });
-  //
-  charstring_undef = llvm::ConstantStruct::get(charstring_ty, {
-                                                                  llvm::UndefValue::get(builder.getPtrTy()),    //
-                                                                  llvm::UndefValue::get(builder.getInt32Ty()),  //
-                                                                  llvm::UndefValue::get(builder.getInt32Ty()),  //
-                                                                  builder.getTrue(),   // is_bound = true
-                                                                  builder.getFalse(),  // is_ext = true
-                                                              });
+  };
 
-  octetstring.ty = llvm::StructType::create(ctx, "vrt_octetstring_t");
-  octetstring.ty->setBody({
-      builder.getPtrTy(),    // char* data
-      builder.getInt32Ty(),  // u32 capacity
-      builder.getInt32Ty(),  // u32 length
-      builder.getInt1Ty(),   // bool is_bound
-      builder.getInt1Ty(),   // bool is_ext
-  });
-  //
-  octetstring.dtor_f = declare_external_fn("vrt_octetstring_dtor", builder.getVoidTy(), {builder.getPtrTy()});
-  octetstring.init_f = declare_external_fn("vrt_octetstring_init", builder.getVoidTy(),
-                                           {
-                                               builder.getPtrTy(),    // vrt_octetstring_t*
-                                               builder.getPtrTy(),    // const char*
-                                               builder.getInt32Ty(),  // u32
-                                           });
-  octetstring.copy_f = declare_external_fn("copy_octetstring", builder.getVoidTy(),
-                                           {
-                                               builder.getPtrTy(),  // vrt_octetstring_t* dst
-                                               builder.getPtrTy(),  // vrt_octetstring_t* src
-                                           });
-  octetstring.concat_f = declare_external_fn("vrt_octetstring_concat", builder.getVoidTy(),
-                                             {
-                                                 builder.getPtrTy(),  // vrt_octetstring_t* dst
-                                                 builder.getPtrTy(),  // lhs
-                                                 builder.getPtrTy(),  // rhs
-                                             });                      // TODO: add nocapture flags, ...
-  octetstring.singular_f = declare_external_fn("vrt_octetstring_singular", builder.getVoidTy(),
-                                               {
-                                                   builder.getPtrTy(),  // vrt_octetstring_t* dst
-                                                   builder.getPtrTy(),
-                                                   builder.getInt32Ty(),
-                                               });
-  octetstring.shift_left_f = declare_external_fn("vrt_octetstring_shift_left", builder.getVoidTy(),
-                                                 {
-                                                     builder.getPtrTy(),    // vrt_octetstring_t* dst
-                                                     builder.getPtrTy(),    // const vrt_octetstring_t* src
-                                                     builder.getInt64Ty(),  // int64 n
-                                                 });
-  octetstring.shift_right_f = declare_external_fn("vrt_octetstring_shift_right", builder.getVoidTy(),
-                                                  {
-                                                      builder.getPtrTy(),    // vrt_octetstring_t* dst
-                                                      builder.getPtrTy(),    // const vrt_octetstring_t* src
-                                                      builder.getInt64Ty(),  // int64 n
-                                                  });
-  octetstring.rotate_left_f = declare_external_fn("vrt_octetstring_rotate_left", builder.getVoidTy(),
-                                                  {
-                                                      builder.getPtrTy(),    // vrt_octetstring_t* dst
-                                                      builder.getPtrTy(),    // const vrt_octetstring_t* src
-                                                      builder.getInt64Ty(),  // int64 n
-                                                  });
-  octetstring.rotate_right_f = declare_external_fn("vrt_octetstring_rotate_right", builder.getVoidTy(),
-                                                   {
-                                                       builder.getPtrTy(),    // vrt_octetstring_t* dst
-                                                       builder.getPtrTy(),    // const vrt_octetstring_t* src
-                                                       builder.getInt64Ty(),  // int64 n
-                                                   });
-  //
-  octetstring.not4b_f = declare_external_fn("vrt_octetstring_not4b", builder.getVoidTy(),
-                                            {
-                                                builder.getPtrTy(),  // vrt_octetstring_t* dst
-                                                builder.getPtrTy(),  // const vrt_octetstring_t* s
-                                            });
-  octetstring.and4b_f = declare_external_fn("vrt_octetstring_and4b", builder.getVoidTy(),
-                                            {
-                                                builder.getPtrTy(),  // vrt_octetstring_t* dst
-                                                builder.getPtrTy(),  // lhs
-                                                builder.getPtrTy(),  // rhs
-                                            });
-  octetstring.or4b_f = declare_external_fn("vrt_octetstring_or4b", builder.getVoidTy(),
-                                           {
-                                               builder.getPtrTy(),  // vrt_octetstring_t* dst
-                                               builder.getPtrTy(),  // lhs
-                                               builder.getPtrTy(),  // rhs
-                                           });
-  octetstring.xor4b_f = declare_external_fn("vrt_octetstring_xor4b", builder.getVoidTy(),
-                                            {
-                                                builder.getPtrTy(),  // vrt_octetstring_t* dst
-                                                builder.getPtrTy(),  // lhs
-                                                builder.getPtrTy(),  // rhs
-                                            });
-  //
-  octetstring.undef = llvm::ConstantStruct::get(octetstring.ty, {
-                                                                    llvm::UndefValue::get(builder.getPtrTy()),    //
-                                                                    llvm::UndefValue::get(builder.getInt32Ty()),  //
-                                                                    llvm::UndefValue::get(builder.getInt32Ty()),  //
-                                                                    builder.getTrue(),   // is_bound = true
-                                                                    builder.getFalse(),  // is_ext = true
-                                                                });
+  fill_string_bindings(charstring, "charstring");
+  fill_string_bindings(octetstring, "octetstring");
+  fill_string_bindings(bitstring, "bitstring");
 }
 
 llvm::Value* RuntimeBindings::GetInt(std::variant<NativeIntType, std::string_view> value) const {
@@ -438,10 +428,10 @@ llvm::Value* RuntimeBindings::GetFloat(double value) const {
 }
 
 llvm::Value* RuntimeBindings::GetBool(bool v) const {
-  return llvm::ConstantStruct::get(bool_ty, {
-                                                llvm::ConstantInt::getBool(llvm::Type::getInt1Ty(ctx_), v),
-                                                llvm::ConstantInt::getTrue(ctx_),  // is_bound = true
-                                            });
+  return llvm::ConstantStruct::get(boolt.ty, {
+                                                 llvm::ConstantInt::getBool(llvm::Type::getInt1Ty(ctx_), v),
+                                                 llvm::ConstantInt::getTrue(ctx_),  // is_bound = true
+                                             });
 }
 
 llvm::Type* RuntimeBindings::MakeUnion(std::span<llvm::Type*> members) const {

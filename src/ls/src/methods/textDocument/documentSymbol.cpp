@@ -169,7 +169,7 @@ lsp::DocumentSybmolResult GatherResult(const lsp::DocumentSymbolParams&, const c
               if (m->modif) {
                 push(lsp::DocumentSymbol{
                     .name = "modifier",
-                    .detail = file.Text(m->modif),
+                    .detail = file.Text(*m->modif),
                     .kind = lsp::SymbolKind::kProperty,
                     .range = conv::ToLSPRange(m->modif->range, file.ast),
                 });

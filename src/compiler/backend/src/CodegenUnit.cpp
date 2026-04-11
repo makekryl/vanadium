@@ -1,3 +1,4 @@
+#include <cctype>
 #include <filesystem>
 
 #include <llvm/IR/DIBuilder.h>
@@ -40,10 +41,13 @@ llvm::Type* CodegenUnit::GetSymbolType(const core::semantic::Symbol* sym) {
       return rt.floatt.ty;
     }
     if (sym == &core::builtins::kCharstring) {
-      return rt.charstring_ty;
+      return rt.charstring.ty;
     }
     if (sym == &core::builtins::kOctetstring) {
       return rt.octetstring.ty;
+    }
+    if (sym == &core::builtins::kBitstring) {
+      return rt.bitstring.ty;
     }
     if (sym == &core::checker::symbols::kVoidType) {
       return builder.getVoidTy();
@@ -66,7 +70,7 @@ llvm::Value* CodegenUnit::GetUndef(const core::semantic::Symbol* sym) {
     return rt.floatt.undef;
   }
   if (sym == &core::builtins::kCharstring) {
-    return rt.charstring_undef;
+    return rt.charstring.undef;
   }
 
   return nullptr;
@@ -129,74 +133,6 @@ llvm::Function* CodegenUnit::GetFunction(const core::semantic::Symbol* sym) {
   // }
 
   return fn;
-}
-
-std::variant<RuntimeBindings::NativeIntType, std::string_view> CodegenUnit::ParseInt(
-    const ast::nodes::ValueLiteral* m) {
-  assert(m->tok.kind == ast::TokenKind::INT);
-
-  const auto& s = sf.Text(m);
-
-  std::int64_t result;
-  std::from_chars(s.data(), s.data() + s.size(), result);
-
-  // TODO: return s on out of range
-  return result;
-}
-
-double CodegenUnit::ParseFloat(const ast::nodes::ValueLiteral* m) {
-  assert(m->tok.kind == ast::TokenKind::FLOAT);
-
-  const auto& s = sf.Text(m);
-
-  double result;
-  std::from_chars(s.data(), s.data() + s.size(), result);
-  return result;
-}
-
-std::string_view CodegenUnit::ParseCharstring(const ast::nodes::ValueLiteral* m) {
-  assert(m->tok.kind == ast::TokenKind::STRING);
-
-  auto s = sf.Text(m);
-  s.remove_prefix(1);  // "
-  s.remove_suffix(1);  // "
-  return s;
-}
-
-std::string CodegenUnit::ParseOctetstring(const ast::nodes::ValueLiteral* m) {
-  assert(m->tok.kind == ast::TokenKind::OCTETSTRING);
-
-  auto s = sf.Text(m);
-  s.remove_prefix(1);  // '
-  s.remove_suffix(2);  // 'O
-
-  // TODO: it will be needed in runtime, extract, cover with tests
-  constexpr auto kChar2Hex = [](char c) {
-    if (c >= '0' && c <= '9') {
-      return c - '0';
-    }
-    if (c >= 'A' && c <= 'F') {
-      return c - 'A' + 10;
-    }
-    if (c >= 'a' && c <= 'f') {
-      return c - 'a' + 10;
-    }
-    assert(false);
-  };
-
-  // TODO(lexer): verify length
-  assert(s.length() % 2 == 0);
-
-  std::string result;
-  result.reserve(s.length() / 2);
-  //
-  for (std::size_t i = 0; i < s.length(); i += 2) {
-    const std::uint8_t high = kChar2Hex(s[i]);
-    const std::uint8_t low = kChar2Hex(s[i + 1]);
-    result.push_back((high << 4) | low);
-  }
-
-  return result;
 }
 
 }  // namespace vanadium::compiler

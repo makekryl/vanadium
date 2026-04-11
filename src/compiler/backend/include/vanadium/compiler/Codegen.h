@@ -89,13 +89,6 @@ struct CodegenUnit {
   //
 
   llvm::Function* GetFunction(const core::semantic::Symbol*);
-
-  //
-
-  std::variant<RuntimeBindings::NativeIntType, std::string_view> ParseInt(const ast::nodes::ValueLiteral*);
-  double ParseFloat(const ast::nodes::ValueLiteral*);
-  std::string_view ParseCharstring(const ast::nodes::ValueLiteral*);
-  std::string ParseOctetstring(const ast::nodes::ValueLiteral*);
 };
 
 inline constexpr std::string_view kVarargsAttr = "vrt-varargs";

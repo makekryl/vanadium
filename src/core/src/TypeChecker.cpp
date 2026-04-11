@@ -1017,8 +1017,14 @@ InstantiatedType ResolveExprSymbol(const SourceFile* file, const semantic::Scope
     }
     case ast::NodeKind::BinaryExpr: {
       const auto* m = expr->As<ast::nodes::BinaryExpr>();
-      // TODO: they are some special cases IIRC (colon operator at least), recheck
-      return ResolveExprSymbol(file, scope, m->x);
+      switch (m->op.kind) {
+        case ast::TokenKind::EQ:
+        case ast::TokenKind::NE:
+          return {.sym = &builtins::kBoolean, .is_instance = true};
+        default:
+          // TODO: they are some special cases IIRC (colon operator at least), recheck
+          return ResolveExprSymbol(file, scope, m->x);
+      }
     }
     case ast::NodeKind::UnaryExpr: {
       const auto* m = expr->As<ast::nodes::UnaryExpr>();
@@ -1662,6 +1668,13 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, InstantiatedTyp
           break;
         case ast::TokenKind::SHL:
         case ast::TokenKind::SHR:
+          if (x_type.sym == &builtins::kCharstring) {
+            EmitError({
+                .range = m->x->nrange,
+                .message = "shift operation operands should be binary string values",
+            });
+          }
+          [[fallthrough]];
         case ast::TokenKind::ROL:
         case ast::TokenKind::ROR:
           //

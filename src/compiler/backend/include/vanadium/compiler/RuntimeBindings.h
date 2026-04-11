@@ -12,6 +12,51 @@
 #include <llvm/IR/Value.h>
 
 namespace vanadium::compiler {
+
+struct NumericTypeBindings {
+  llvm::StructType* ty;
+  //
+  llvm::Value* undef;
+  //
+  llvm::Function* get_f;
+  //
+  llvm::Function* eq_f;
+  llvm::Function* ne_f;
+  //
+  llvm::Function* lt_f;
+  llvm::Function* le_f;
+  llvm::Function* gt_f;
+  llvm::Function* ge_f;
+  //
+  llvm::Function* add_f;
+  llvm::Function* sub_f;
+  llvm::Function* mul_f;
+  llvm::Function* div_f;
+};
+
+struct StringTypeBindings {
+  llvm::StructType* ty;
+  //
+  llvm::Function* dtor_f;
+  llvm::Function* init_f;
+  llvm::Function* copy_f;
+  llvm::Function* concat_f;
+  llvm::Function* singular_f;
+  llvm::Function* shift_left_f;
+  llvm::Function* shift_right_f;
+  llvm::Function* rotate_left_f;
+  llvm::Function* rotate_right_f;
+  llvm::Function* eq_f;
+  llvm::Function* ne_f;
+  //
+  llvm::Function* not4b_f;
+  llvm::Function* and4b_f;
+  llvm::Function* or4b_f;
+  llvm::Function* xor4b_f;
+  //
+  llvm::Value* undef;
+};
+
 class RuntimeBindings {
  public:
   using NativeIntType = std::int64_t;
@@ -44,91 +89,25 @@ class RuntimeBindings {
   llvm::Function* optional_ispresent_f;
   llvm::Function* optional_dtor_f;
 
-  struct {
-    llvm::StructType* ty;
-    //
-    llvm::Value* undef;
-    //
-    llvm::Function* get_f;
-    //
-    llvm::Function* eq_f;
-    llvm::Function* ne_f;
-    //
-    llvm::Function* lt_f;
-    llvm::Function* le_f;
-    llvm::Function* gt_f;
-    llvm::Function* ge_f;
-    //
-    llvm::Function* add_f;
-    llvm::Function* sub_f;
-    llvm::Function* mul_f;
-    llvm::Function* div_f;
-  } integer;
+  NumericTypeBindings integer;
   [[nodiscard]] llvm::Value* GetInt(std::variant<NativeIntType, std::string_view>) const;
 
+  NumericTypeBindings floatt;
+  [[nodiscard]] llvm::Value* GetFloat(double) const;
+
   struct {
     llvm::StructType* ty;
     //
     llvm::Value* undef;
     //
     llvm::Function* get_f;
-    //
-    llvm::Function* eq_f;
-    llvm::Function* ne_f;
-    //
-    llvm::Function* lt_f;
-    llvm::Function* le_f;
-    llvm::Function* gt_f;
-    llvm::Function* ge_f;
-    //
-    llvm::Function* add_f;
-    llvm::Function* sub_f;
-    llvm::Function* mul_f;
-    llvm::Function* div_f;
-  } floatt;
-  [[nodiscard]] llvm::Value* GetFloat(double) const;
-
-  llvm::StructType* bool_ty;
-  //
-  llvm::Value* bool_undef;
+    llvm::Function* wrap_f;
+  } boolt;
   [[nodiscard]] llvm::Value* GetBool(bool) const;
-  //
-  llvm::Function* bool_get_f;
 
-  llvm::StructType* charstring_ty;
-  //
-  llvm::Function* charstring_dtor_f;
-  llvm::Function* charstring_init_f;
-  llvm::Function* charstring_copy_f;
-  llvm::Function* charstring_concat_f;
-  llvm::Function* charstring_singular_f;
-  llvm::Function* charstring_rotate_left_f;
-  llvm::Function* charstring_rotate_right_f;
-  llvm::Function* charstring_eq_f;
-  //
-  llvm::Value* charstring_undef;
-
-  struct {
-    llvm::StructType* ty;
-    //
-    llvm::Function* dtor_f;
-    llvm::Function* init_f;
-    llvm::Function* copy_f;
-    llvm::Function* concat_f;
-    llvm::Function* singular_f;
-    llvm::Function* shift_left_f;
-    llvm::Function* shift_right_f;
-    llvm::Function* rotate_left_f;
-    llvm::Function* rotate_right_f;
-    llvm::Function* eq_f;
-    //
-    llvm::Function* not4b_f;
-    llvm::Function* and4b_f;
-    llvm::Function* or4b_f;
-    llvm::Function* xor4b_f;
-    //
-    llvm::Value* undef;
-  } octetstring;
+  StringTypeBindings charstring;
+  StringTypeBindings octetstring;
+  StringTypeBindings bitstring;
 
   [[nodiscard]] llvm::Type* MakeUnion(std::span<llvm::Type*> members) const;
 

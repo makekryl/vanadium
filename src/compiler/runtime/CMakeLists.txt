@@ -6,6 +6,7 @@ add_library(vanadium_rt STATIC
   src/rt_float.cpp
   src/rt_boolean.cpp
   src/rt_charstring.cpp
+  src/rt_bitstring.cpp
   src/rt_octetstring.cpp
   src/rt_optional.cpp
   src/Entrypoint.cpp
