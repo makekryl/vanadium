@@ -561,9 +561,9 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
     }
     return u_.WrapValue(v);
   };
-  const auto ret_trivialvar = [&](llvm::Value* rv) {
+  const auto ret_trivial = [&](llvm::Value* rv) {
     if (dest) {
-      u_.builder.CreateStore(rv, dest);
+      u_.builder.CreateStore(u_.WrapValue(rv), dest);
       return dest;
     }
     return rv;
@@ -600,21 +600,16 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
         case ast::TokenKind::INT: {
           const auto& intv = literals::ParseInt(u_.sf.Text(m->tok));
           assert(std::holds_alternative<RuntimeBindings::NativeIntType>(intv));
-          auto* iv = u_.rt.GetRawInt(std::get<RuntimeBindings::NativeIntType>(intv));
-          if (dest) {
-            u_.builder.CreateStore(u_.WrapValue(iv), dest);
-            return dest;
-          }
-          return iv;
+          return ret_trivial(u_.rt.GetRawInt(std::get<RuntimeBindings::NativeIntType>(intv)));
         }
 
         case ast::TokenKind::FLOAT: {
-          auto* iv = u_.rt.GetRawFloat(literals::ParseFloat(u_.sf.Text(m->tok)));
-          if (dest) {
-            u_.builder.CreateStore(u_.WrapValue(iv), dest);
-            return dest;
-          }
-          return iv;
+          return ret_trivial(u_.rt.GetRawFloat(literals::ParseFloat(u_.sf.Text(m->tok))));
+        }
+
+        case ast::TokenKind::TRUE:
+        case ast::TokenKind::FALSE: {
+          return ret_trivial(u_.builder.getInt1(m->tok.kind == ast::TokenKind::TRUE));
         }
 
         case ast::TokenKind::STRING: {
@@ -665,11 +660,6 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
           return out;
         }
 
-        case ast::TokenKind::TRUE:
-          return u_.builder.getTrue();
-        case ast::TokenKind::FALSE:
-          return u_.builder.getFalse();
-
         default:
           VANADIUM_DEBUG_ERROR("ValueLiteral unhandled token kind: {}", magic_enum::enum_name(m->tok.kind));
           break;
@@ -704,13 +694,13 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
             return u_.builder.CreateCall(u_.rt.integer.ge_f, {vx, vy});
           //
           case ast::TokenKind::ADD:
-            return ret_trivialvar(u_.builder.CreateCall(u_.rt.integer.add_f, {vx, vy}));
+            return ret_trivial(u_.builder.CreateCall(u_.rt.integer.add_f, {vx, vy}));
           case ast::TokenKind::SUB:
-            return ret_trivialvar(u_.builder.CreateCall(u_.rt.integer.sub_f, {vx, vy}));
+            return ret_trivial(u_.builder.CreateCall(u_.rt.integer.sub_f, {vx, vy}));
           case ast::TokenKind::MUL:
-            return ret_trivialvar(u_.builder.CreateCall(u_.rt.integer.mul_f, {vx, vy}));
+            return ret_trivial(u_.builder.CreateCall(u_.rt.integer.mul_f, {vx, vy}));
           case ast::TokenKind::DIV:
-            return ret_trivialvar(u_.builder.CreateCall(u_.rt.integer.div_f, {vx, vy}));
+            return ret_trivial(u_.builder.CreateCall(u_.rt.integer.div_f, {vx, vy}));
           default:
             VANADIUM_DEBUG_ERROR("Unhandled BinaryExpr int op = {}", magic_enum::enum_name(m->op.kind));
             break;
@@ -734,13 +724,13 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
             return u_.builder.CreateCall(u_.rt.floatt.ge_f, {vx, vy});
           //
           case ast::TokenKind::ADD:
-            return ret_trivialvar(u_.builder.CreateCall(u_.rt.floatt.add_f, {vx, vy}));
+            return ret_trivial(u_.builder.CreateCall(u_.rt.floatt.add_f, {vx, vy}));
           case ast::TokenKind::SUB:
-            return ret_trivialvar(u_.builder.CreateCall(u_.rt.floatt.sub_f, {vx, vy}));
+            return ret_trivial(u_.builder.CreateCall(u_.rt.floatt.sub_f, {vx, vy}));
           case ast::TokenKind::MUL:
-            return ret_trivialvar(u_.builder.CreateCall(u_.rt.floatt.mul_f, {vx, vy}));
+            return ret_trivial(u_.builder.CreateCall(u_.rt.floatt.mul_f, {vx, vy}));
           case ast::TokenKind::DIV:
-            return ret_trivialvar(u_.builder.CreateCall(u_.rt.floatt.div_f, {vx, vy}));
+            return ret_trivial(u_.builder.CreateCall(u_.rt.floatt.div_f, {vx, vy}));
           default:
             VANADIUM_DEBUG_ERROR("Unhandled BinaryExpr int op = {}", magic_enum::enum_name(m->op.kind));
             break;
