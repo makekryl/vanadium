@@ -108,6 +108,7 @@ class RuntimeBindings {
   StringTypeBindings charstring;
   StringTypeBindings octetstring;
   StringTypeBindings bitstring;
+  StringTypeBindings hexstring;
 
   [[nodiscard]] llvm::Type* MakeUnion(std::span<llvm::Type*> members) const;
 

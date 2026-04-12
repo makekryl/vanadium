@@ -126,13 +126,11 @@ void vrt_charstring_rotate_right_impl(const char* srcbuf, char* buf, charstring_
 }  // namespace
 
 void vrt_charstring_rotate_left(vrt_charstring_t* dst, const vrt_charstring_t* s, std::int64_t n) {
-  AssertIsBound(dst);
   rt::detail::str::PerformRotate(dst, s, n,  //
                                  vrt_charstring_rotate_left_impl, vrt_charstring_rotate_right_impl);
 }
 
 void vrt_charstring_rotate_right(vrt_charstring_t* dst, const vrt_charstring_t* s, std::int64_t n) {
-  AssertIsBound(dst);
   rt::detail::str::PerformRotate(dst, s, n,  //
                                  vrt_charstring_rotate_right_impl, vrt_charstring_rotate_left_impl);
 }

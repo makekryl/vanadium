@@ -9,6 +9,21 @@
 
 namespace vanadium::compiler::literals {
 
+namespace {
+constexpr char CharToHex(char c) {
+  if (c >= '0' && c <= '9') {
+    return c - '0';
+  }
+  if (c >= 'A' && c <= 'F') {
+    return c - 'A' + 10;
+  }
+  if (c >= 'a' && c <= 'f') {
+    return c - 'a' + 10;
+  }
+  assert(false);
+};
+}  // namespace
+
 std::variant<RuntimeBindings::NativeIntType, std::string_view> ParseInt(std::string_view s) {
   RuntimeBindings::NativeIntType result;
   std::from_chars(s.data(), s.data() + s.size(), result);
@@ -33,20 +48,6 @@ std::string ParseOctetstring(std::string_view s) {
   s.remove_prefix(1);  // '
   s.remove_suffix(2);  // 'O
 
-  // TODO: it will be needed in runtime, extract, cover with tests
-  constexpr auto kChar2Hex = [](char c) {
-    if (c >= '0' && c <= '9') {
-      return c - '0';
-    }
-    if (c >= 'A' && c <= 'F') {
-      return c - 'A' + 10;
-    }
-    if (c >= 'a' && c <= 'f') {
-      return c - 'a' + 10;
-    }
-    assert(false);
-  };
-
   // TODO(lexer): verify length
   assert(s.length() % 2 == 0);
 
@@ -54,8 +55,8 @@ std::string ParseOctetstring(std::string_view s) {
   result.reserve(s.length() / 2);
   //
   for (std::size_t i = 0; i < s.length(); i += 2) {  // TODO: ignore whitespace
-    const std::uint8_t high = kChar2Hex(s[i]);
-    const std::uint8_t low = kChar2Hex(s[i + 1]);
+    const std::uint8_t high = CharToHex(s[i]);
+    const std::uint8_t low = CharToHex(s[i + 1]);
     result.push_back((high << 4) | low);
   }
 
@@ -94,6 +95,30 @@ std::pair<std::string, std::uint32_t> ParseBitstring(std::string_view s) {
   result.resize(used_bytes);
 
   return {std::move(result), bit_count};
+}
+
+std::pair<std::string, std::uint32_t> ParseHexstring(std::string_view s) {
+  s.remove_prefix(1);  // '
+  s.remove_suffix(2);  // 'H
+
+  std::uint32_t nibble_count = 0;
+
+  std::string result;
+  result.reserve((s.length() + 1) / 2);
+
+  for (char c : s) {  // TODO: ignore whitespace
+    const auto nib = CharToHex(c);
+
+    if ((nibble_count & 1) == 0) {
+      result.push_back(std::uint8_t(nib << 4));
+    } else {
+      result.back() |= std::uint8_t(nib);
+    }
+
+    ++nibble_count;
+  }
+
+  return {std::move(result), nibble_count};
 }
 
 }  // namespace vanadium::compiler::literals

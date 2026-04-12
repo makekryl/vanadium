@@ -207,14 +207,12 @@ void vrt_bitstring_shift_right_impl(const std::uint8_t* srcbuf, std::uint8_t* bu
 }  // namespace
 
 void vrt_bitstring_shift_left(vrt_bitstring_t* dst, const vrt_bitstring_t* s, std::int64_t n) {
-  AssertIsBound(dst);
   rt::detail::str::PerformShift(dst, s, n,  //
                                 vrt_bitstring_shift_left_impl, vrt_bitstring_shift_right_impl);
   ClearUnusedBits(dst);
 }
 
 void vrt_bitstring_shift_right(vrt_bitstring_t* dst, const vrt_bitstring_t* s, std::int64_t n) {
-  AssertIsBound(dst);
   rt::detail::str::PerformShift(dst, s, n,  //
                                 vrt_bitstring_shift_right_impl, vrt_bitstring_shift_left_impl);
   ClearUnusedBits(dst);
@@ -249,16 +247,13 @@ void vrt_bitstring_rotate_right_impl(const std::uint8_t* srcbuf, std::uint8_t* b
 }
 }  // namespace
 
-// todo: fix & cover with UT
 void vrt_bitstring_rotate_left(vrt_bitstring_t* dst, const vrt_bitstring_t* s, std::int64_t n) {
-  AssertIsBound(dst);
   rt::detail::str::PerformRotate(dst, s, n,  //
                                  vrt_bitstring_rotate_left_impl, vrt_bitstring_rotate_right_impl);
   ClearUnusedBits(dst);
 }
 
 void vrt_bitstring_rotate_right(vrt_bitstring_t* dst, const vrt_bitstring_t* s, std::int64_t n) {
-  AssertIsBound(dst);
   rt::detail::str::PerformRotate(dst, s, n,  //
                                  vrt_bitstring_rotate_right_impl, vrt_bitstring_rotate_left_impl);
   ClearUnusedBits(dst);

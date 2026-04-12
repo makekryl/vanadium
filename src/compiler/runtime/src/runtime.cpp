@@ -13,13 +13,13 @@
 #include "vanadium/runtime/rt_boolean.h"
 #include "vanadium/runtime/rt_charstring.h"
 #include "vanadium/runtime/rt_float.h"
+#include "vanadium/runtime/rt_hexstring.h"
 #include "vanadium/runtime/rt_integer.h"
 #include "vanadium/runtime/rt_octetstring.h"
 #include "vanadium/runtime/rt_reflect.h"
 
 namespace {
-constexpr auto kHexDigits =
-    std::to_array({'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'});
+constexpr auto kHexDigits = "0123456789ABCDEF";
 }
 
 void vrt_panic(const char* rr) {
@@ -92,6 +92,16 @@ void vrt_log(const vrt_val_t* args, std::uint32_t n) {
         buf += kHexDigits[octet & 0x0F];
       }
       buf += "'O";
+    } else if (arg->ty == &hexstring_typeinfo) {
+      auto* s = static_cast<vrt_hexstring_t*>(arg->p);
+      const auto* sdata = vrt_hexstring_get_cbuf(s);
+      buf += "'";
+      for (std::uint32_t i = 0; i < s->length; ++i) {
+        const auto& octet = sdata[i / 2];
+        const std::uint8_t nib = (i & 1) ? (octet & 0xF) : ((octet >> 4) & 0xF);
+        buf += kHexDigits[nib];
+      }
+      buf += "'H";
     } else if (arg->ty == &bitstring_typeinfo) {
       auto* s = static_cast<vrt_bitstring_t*>(arg->p);
       const auto* sdata = vrt_bitstring_get_buf(s);

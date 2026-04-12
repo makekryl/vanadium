@@ -124,13 +124,11 @@ void vrt_octetstring_shift_right_impl(const octet_t* srcbuf, octet_t* buf, octet
 }  // namespace
 
 void vrt_octetstring_shift_left(vrt_octetstring_t* dst, const vrt_octetstring_t* s, std::int64_t n) {
-  AssertIsBound(dst);
   rt::detail::str::PerformShift(dst, s, n,  //
                                 vrt_octetstring_shift_left_impl, vrt_octetstring_shift_right_impl);
 }
 
 void vrt_octetstring_shift_right(vrt_octetstring_t* dst, const vrt_octetstring_t* s, std::int64_t n) {
-  AssertIsBound(dst);
   rt::detail::str::PerformShift(dst, s, n,  //
                                 vrt_octetstring_shift_right_impl, vrt_octetstring_shift_left_impl);
 }
@@ -147,13 +145,11 @@ void vrt_octetstring_rotate_right_impl(const octet_t* srcbuf, octet_t* buf, octe
 }  // namespace
 
 void vrt_octetstring_rotate_left(vrt_octetstring_t* dst, const vrt_octetstring_t* s, std::int64_t n) {
-  AssertIsBound(dst);
   rt::detail::str::PerformRotate(dst, s, n,  //
                                  vrt_octetstring_rotate_left_impl, vrt_octetstring_rotate_right_impl);
 }
 
 void vrt_octetstring_rotate_right(vrt_octetstring_t* dst, const vrt_octetstring_t* s, std::int64_t n) {
-  AssertIsBound(dst);
   rt::detail::str::PerformRotate(dst, s, n,  //
                                  vrt_octetstring_rotate_right_impl, vrt_octetstring_rotate_left_impl);
 }

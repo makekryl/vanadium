@@ -40,17 +40,11 @@ llvm::Type* CodegenUnit::GetSymbolType(const core::semantic::Symbol* sym) {
     if (sym == &core::builtins::kFloat) {
       return rt.floatt.ty;
     }
-    if (sym == &core::builtins::kCharstring) {
-      return rt.charstring.ty;
-    }
-    if (sym == &core::builtins::kOctetstring) {
-      return rt.octetstring.ty;
-    }
-    if (sym == &core::builtins::kBitstring) {
-      return rt.bitstring.ty;
-    }
     if (sym == &core::checker::symbols::kVoidType) {
       return builder.getVoidTy();
+    }
+    if (const auto* strb = GetStringTypeBindings(sym)) {
+      return strb->ty;
     }
     assert(false);
   }
@@ -73,6 +67,22 @@ llvm::Value* CodegenUnit::GetUndef(const core::semantic::Symbol* sym) {
     return rt.charstring.undef;
   }
 
+  return nullptr;
+}
+
+const StringTypeBindings* CodegenUnit::GetStringTypeBindings(const core::semantic::Symbol* sym) {
+  if (sym == &core::builtins::kCharstring) {
+    return &rt.charstring;
+  }
+  if (sym == &core::builtins::kOctetstring) {
+    return &rt.octetstring;
+  }
+  if (sym == &core::builtins::kBitstring) {
+    return &rt.bitstring;
+  }
+  if (sym == &core::builtins::kHexstring) {
+    return &rt.hexstring;
+  }
   return nullptr;
 }
 

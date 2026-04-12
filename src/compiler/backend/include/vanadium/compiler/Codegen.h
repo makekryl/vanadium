@@ -86,6 +86,8 @@ struct CodegenUnit {
   llvm::Type* GetSymbolType(const core::semantic::Symbol*);
   llvm::Value* GetUndef(const core::semantic::Symbol*);
 
+  const StringTypeBindings* GetStringTypeBindings(const core::semantic::Symbol*);
+
   //
 
   llvm::Function* GetFunction(const core::semantic::Symbol*);

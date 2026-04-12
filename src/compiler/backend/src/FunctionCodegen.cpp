@@ -52,14 +52,8 @@ void EmitDestructor(CodegenUnit& u, const core::semantic::Symbol* sym, llvm::Val
   if (sym) {
     if (sym->Flags() & core::semantic::SymbolFlags::kBuiltin) {
       auto* dtor_f = [&] -> llvm::Function* {
-        if (sym == &core::builtins::kCharstring) {
-          return u.rt.charstring.dtor_f;
-        }
-        if (sym == &core::builtins::kOctetstring) {
-          return u.rt.octetstring.dtor_f;
-        }
-        if (sym == &core::builtins::kBitstring) {
-          return u.rt.bitstring.dtor_f;
+        if (const auto* strb = u.GetStringTypeBindings(sym)) {
+          return strb->dtor_f;
         }
         return nullptr;
       }();
@@ -674,6 +668,17 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
           return out;
         }
 
+        case ast::TokenKind::HEXSTRING: {
+          auto* out = dest ? dest : scope_->AllocTemp(&core::builtins::kHexstring);
+          const auto& [sv, nibbles] = literals::ParseHexstring(u_.sf.Text(m->tok));
+          u_.builder.CreateCall(u_.rt.hexstring.init_f, {
+                                                            out,
+                                                            u_.builder.CreateGlobalStringPtr(sv),
+                                                            u_.builder.getInt32(nibbles),
+                                                        });
+          return out;
+        }
+
         case ast::TokenKind::TRUE:
           return u_.rt.GetBool(true);
         case ast::TokenKind::FALSE:
@@ -755,17 +760,8 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
             break;
         }
       } else {
-        const StringTypeBindings* strb = nullptr;
-        if (sym == &core::builtins::kCharstring) {
-          strb = &u_.rt.charstring;
-        } else if (sym == &core::builtins::kOctetstring) {
-          strb = &u_.rt.octetstring;
-        } else if (sym == &core::builtins::kBitstring) {
-          strb = &u_.rt.bitstring;
-        } else {
-          VANADIUM_DEBUG_ERROR("Unhandled BinaryExpr xsym = {}", sym->GetName());
-          break;
-        }
+        const StringTypeBindings* strb = u_.GetStringTypeBindings(sym);
+        VANADIUM_DEBUG_ASSERT(strb, "Unhandled BinaryExpr xsym = {}", sym->GetName());
 
         switch (m->op.kind) {
           case ast::TokenKind::EQ:
@@ -866,17 +862,8 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
             break;
         }
       } else {
-        const StringTypeBindings* strb = nullptr;
-        if (sym == &core::builtins::kCharstring) {
-          strb = &u_.rt.charstring;
-        } else if (sym == &core::builtins::kOctetstring) {
-          strb = &u_.rt.octetstring;
-        } else if (sym == &core::builtins::kBitstring) {
-          strb = &u_.rt.bitstring;
-        } else {
-          VANADIUM_DEBUG_ERROR("Unhandled BinaryExpr xsym = {}", sym->GetName());
-          break;
-        }
+        const StringTypeBindings* strb = u_.GetStringTypeBindings(sym);
+        VANADIUM_DEBUG_ASSERT(strb, "Unhandled BinaryExpr xsym = {}", sym->GetName());
 
         auto* out = dest ? dest : scope_->AllocTemp(sym);
         switch (m->op.kind) {

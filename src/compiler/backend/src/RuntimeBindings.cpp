@@ -406,6 +406,7 @@ RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ct
   fill_string_bindings(charstring, "charstring");
   fill_string_bindings(octetstring, "octetstring");
   fill_string_bindings(bitstring, "bitstring");
+  fill_string_bindings(hexstring, "hexstring");
 }
 
 llvm::Value* RuntimeBindings::GetInt(std::variant<NativeIntType, std::string_view> value) const {
