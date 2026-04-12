@@ -91,6 +91,11 @@ struct CodegenUnit {
   //
 
   llvm::Function* GetFunction(const core::semantic::Symbol*);
+
+  //
+
+  llvm::Value* WrapValue(llvm::Value*);    // primitive -> primitive wrapper (integer, float, bool)
+  llvm::Value* UnwrapValue(llvm::Value*);  // primitive wrapper -> primitive
 };
 
 inline constexpr std::string_view kVarargsAttr = "vrt-varargs";

@@ -4,6 +4,7 @@
 #include <string_view>
 #include <variant>
 
+#include <llvm/IR/Constants.h>
 #include <llvm/IR/DerivedTypes.h>
 #include <llvm/IR/Function.h>
 #include <llvm/IR/LLVMContext.h>
@@ -19,6 +20,7 @@ struct NumericTypeBindings {
   llvm::Value* undef;
   //
   llvm::Function* get_f;
+  llvm::Function* wrap_f;
   //
   llvm::Function* eq_f;
   llvm::Function* ne_f;
@@ -90,9 +92,11 @@ class RuntimeBindings {
   llvm::Function* optional_dtor_f;
 
   NumericTypeBindings integer;
+  [[nodiscard]] llvm::ConstantInt* GetRawInt(NativeIntType) const;
   [[nodiscard]] llvm::Value* GetInt(std::variant<NativeIntType, std::string_view>) const;
 
   NumericTypeBindings floatt;
+  [[nodiscard]] llvm::Constant* GetRawFloat(double) const;
   [[nodiscard]] llvm::Value* GetFloat(double) const;
 
   struct {

@@ -97,9 +97,12 @@ void GenerateBoxedUnwrapFn(llvm::LLVMContext& ctx, llvm::Function* fn, llvm::Fun
   builder.SetInsertPoint(bb_entry);
   builder.CreateCall(assert_is_bound_fn, {arg});
   builder.CreateRet(builder.CreateExtractValue(arg, idx));
+
+  fn->addFnAttr(llvm::Attribute::AlwaysInline);
+  fn->addFnAttr(llvm::Attribute::Hot);
 }
 
-void GenerateBoolWrapFn(llvm::LLVMContext& ctx, llvm::Function* fn, llvm::Value* undef) {
+void GenerateWrapFn(llvm::LLVMContext& ctx, llvm::Function* fn, llvm::Value* undef) {
   llvm::IRBuilder<> builder(ctx);
 
   auto* bb_entry = llvm::BasicBlock::Create(ctx, "", fn);
@@ -112,6 +115,9 @@ void GenerateBoolWrapFn(llvm::LLVMContext& ctx, llvm::Function* fn, llvm::Value*
   s = builder.CreateInsertValue(s, builder.getTrue(), 1);
 
   builder.CreateRet(s);
+
+  fn->addFnAttr(llvm::Attribute::AlwaysInline);
+  fn->addFnAttr(llvm::Attribute::Hot);
 }
 
 }  // namespace
@@ -217,6 +223,10 @@ RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ct
                                          llvm::GlobalValue::InternalLinkage, "__vrt_int_get", mod);
   GenerateBoxedUnwrapFn(ctx, integer.get_f, int_assert_is_bound_fn, 0);
   //
+  integer.wrap_f = llvm::Function::Create(llvm::FunctionType::get(integer.ty, {builder.getInt64Ty()}, false),
+                                          llvm::GlobalValue::InternalLinkage, "__vrt_int_wrap", mod);
+  GenerateWrapFn(ctx, integer.wrap_f, integer.undef);
+  //
   for (const auto& [fptr, result_ty, fname, fnativeb] : {
            ArithmeticOpIntl(integer.eq_f, nbool_ty, "__vrt_int_eq", BLD_BINOP_TO_BOOL(CreateICmpEQ)),
            ArithmeticOpIntl(integer.ne_f, nbool_ty, "__vrt_int_ne", BLD_BINOP_TO_BOOL(CreateICmpNE)),
@@ -241,10 +251,10 @@ RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ct
       builder.getInt1Ty(),    // bool is_bound
   });
   //
-  floatt.undef = llvm::ConstantStruct::get(integer.ty, {
-                                                           llvm::UndefValue::get(builder.getDoubleTy()),
-                                                           builder.getFalse(),  // is_bound = false
-                                                       });
+  floatt.undef = llvm::ConstantStruct::get(floatt.ty, {
+                                                          llvm::UndefValue::get(builder.getDoubleTy()),
+                                                          builder.getFalse(),  // is_bound = false
+                                                      });
   //
   auto* float_assert_is_bound_fn = declare_embedded_fn("__vrt_float_assert_is_bound", builder.getVoidTy(), {floatt.ty});
   GenerateAssertIsBound(*this, ctx, float_assert_is_bound_fn, "float", 1);
@@ -252,6 +262,10 @@ RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ct
   floatt.get_f = llvm::Function::Create(llvm::FunctionType::get(builder.getDoubleTy(), {floatt.ty}, false),
                                         llvm::GlobalValue::InternalLinkage, "__vrt_float_get", mod);
   GenerateBoxedUnwrapFn(ctx, floatt.get_f, float_assert_is_bound_fn, 0);
+  //
+  floatt.wrap_f = llvm::Function::Create(llvm::FunctionType::get(floatt.ty, {builder.getDoubleTy()}, false),
+                                         llvm::GlobalValue::InternalLinkage, "__vrt_float_wrap", mod);
+  GenerateWrapFn(ctx, floatt.wrap_f, floatt.undef);
   //
   for (const auto& [fptr, result_ty, fname, fnativeb] : {
            ArithmeticOpIntl(floatt.eq_f, nbool_ty, "__vrt_float_eq", BLD_BINOP_TO_BOOL(CreateFCmpOEQ)),
@@ -291,7 +305,7 @@ RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ct
   //
   boolt.wrap_f = llvm::Function::Create(llvm::FunctionType::get(boolt.ty, {builder.getInt1Ty()}, false),
                                         llvm::GlobalValue::InternalLinkage, "__vrt_bool_wrap", mod);
-  GenerateBoolWrapFn(ctx, boolt.wrap_f, boolt.undef);
+  GenerateWrapFn(ctx, boolt.wrap_f, boolt.undef);
 
   const auto fill_string_bindings = [&](StringTypeBindings& b, std::string_view ty_name) {
     const auto sty_name = [&](std::format_string<std::string_view&> sname) {
@@ -409,10 +423,13 @@ RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ct
   fill_string_bindings(hexstring, "hexstring");
 }
 
+llvm::ConstantInt* RuntimeBindings::GetRawInt(NativeIntType value) const {
+  return llvm::ConstantInt::get(llvm::Type::getInt64Ty(ctx_), value, true);
+}
 llvm::Value* RuntimeBindings::GetInt(std::variant<NativeIntType, std::string_view> value) const {
   if (const auto* v = std::get_if<NativeIntType>(&value)) {
     return llvm::ConstantStruct::get(integer.ty, {
-                                                     llvm::ConstantInt::get(llvm::Type::getInt64Ty(ctx_), *v, true),
+                                                     GetRawInt(*v),
                                                      llvm::ConstantInt::getTrue(ctx_),  // is_bound = true
                                                      //  llvm::ConstantInt::getFalse(ctx_),  // is_big = false
                                                  });
@@ -421,9 +438,12 @@ llvm::Value* RuntimeBindings::GetInt(std::variant<NativeIntType, std::string_vie
   std::unreachable();
 }
 
+llvm::Constant* RuntimeBindings::GetRawFloat(double value) const {
+  return llvm::ConstantFP::get(llvm::Type::getDoubleTy(ctx_), value);
+}
 llvm::Value* RuntimeBindings::GetFloat(double value) const {
   return llvm::ConstantStruct::get(floatt.ty, {
-                                                  llvm::ConstantFP::get(llvm::Type::getDoubleTy(ctx_), value),
+                                                  GetRawFloat(value),
                                                   llvm::ConstantInt::getTrue(ctx_),  // is_bound = true
                                               });
 }

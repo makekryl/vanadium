@@ -5,6 +5,7 @@
 #include <print>
 #include <ranges>
 #include <unordered_map>
+#include <variant>
 #include <vector>
 
 #include <magic_enum/magic_enum.hpp>
@@ -90,6 +91,8 @@ class ScopeManager {
 
     llvm::BasicBlock::iterator begin;
     Kind kind;
+
+    bool uses_stackalloc{false};
   };
 
   void Enter(Frame::Kind kind) {
@@ -193,8 +196,7 @@ class ScopeManager {
       return;
     }
 
-    // todo: check if stackalloc was actually used by the frame
-    {
+    if (frame.uses_stackalloc) {
       llvm::IRBuilder<> tmp_builder(frame.begin->getNextNode());
       tmp_builder.CreateCall(u_.rt.stackalloc_mark_f);
     }
@@ -203,7 +205,9 @@ class ScopeManager {
       EmitDestructor(u_, var->sym, var->value);
     }
 
-    u_.builder.CreateCall(u_.rt.stackalloc_sweep_f);
+    if (frame.uses_stackalloc) {
+      u_.builder.CreateCall(u_.rt.stackalloc_sweep_f);
+    }
   }
 
   std::vector<Frame> frame_stack_;
@@ -305,23 +309,6 @@ class FunctionCodegen {
   void CodegenDecl(const ast::nodes::Decl*);
   llvm::Value* CodegenExpr(const ast::nodes::Expr*, llvm::Value* dest = nullptr);
 
-  llvm::Value* CodegenWrappedExpr(const ast::nodes::Expr* expr, llvm::Value* dest = nullptr) {
-    auto* v = CodegenExpr(expr, dest);
-    if (v->getType() == u_.builder.getInt1Ty()) {
-      return u_.builder.CreateCall(u_.rt.boolt.wrap_f, {v});
-    }
-    return v;
-  }
-
-  llvm::Value* CodegenExprAsUnwrappedBool(const ast::nodes::Expr* expr) {
-    auto* v = CodegenExpr(expr);
-    if (v->getType() == u_.builder.getInt1Ty()) {
-      return v;
-    }
-    assert(v->getType() == u_.rt.boolt.ty);
-    return u_.builder.CreateCall(u_.rt.boolt.get_f, {v});
-  }
-
   bool IsTrivial(llvm::Type* ty) const {
     // int won't be trivial after bignum support
     return ty == u_.rt.boolt.ty || ty == u_.rt.integer.ty || ty == u_.rt.floatt.ty;
@@ -372,7 +359,7 @@ void FunctionCodegen::CodegenStmt(const ast::nodes::Stmt* n) {
       auto* end_bb = llvm::BasicBlock::Create(u_.ctx, "if.end");
       auto* else_bb = m->alternate ? llvm::BasicBlock::Create(u_.ctx, "if.else") : end_bb;
 
-      u_.builder.CreateCondBr(CodegenExprAsUnwrappedBool(m->cond), then_bb, else_bb);
+      u_.builder.CreateCondBr(u_.UnwrapValue(CodegenExpr(m->cond)), then_bb, else_bb);
 
       fn_->insert(fn_->end(), then_bb);
       u_.builder.SetInsertPoint(then_bb);
@@ -410,7 +397,7 @@ void FunctionCodegen::CodegenStmt(const ast::nodes::Stmt* n) {
 
       u_.builder.CreateBr(cond_bb);
       u_.builder.SetInsertPoint(cond_bb);
-      u_.builder.CreateCondBr(CodegenExprAsUnwrappedBool(m->cond), body_bb, end_bb);
+      u_.builder.CreateCondBr(u_.UnwrapValue(CodegenExpr(m->cond)), body_bb, end_bb);
 
       u_.builder.SetInsertPoint(post_bb);
       CodegenStmt(m->post);
@@ -442,7 +429,7 @@ void FunctionCodegen::CodegenStmt(const ast::nodes::Stmt* n) {
 
       u_.builder.CreateBr(cond_bb);
       u_.builder.SetInsertPoint(cond_bb);
-      u_.builder.CreateCondBr(CodegenExprAsUnwrappedBool(m->cond), body_bb, end_bb);
+      u_.builder.CreateCondBr(u_.UnwrapValue(CodegenExpr(m->cond)), body_bb, end_bb);
 
       u_.builder.SetInsertPoint(body_bb);
       {
@@ -482,7 +469,7 @@ void FunctionCodegen::CodegenStmt(const ast::nodes::Stmt* n) {
 
       u_.builder.CreateBr(cond_bb);
       u_.builder.SetInsertPoint(cond_bb);
-      u_.builder.CreateCondBr(CodegenExprAsUnwrappedBool(m->cond), body_bb, end_bb);
+      u_.builder.CreateCondBr(u_.UnwrapValue(CodegenExpr(m->cond)), body_bb, end_bb);
 
       u_.builder.SetInsertPoint(end_bb);
 
@@ -552,9 +539,6 @@ void FunctionCodegen::CodegenDecl(const ast::nodes::Decl* n) {
             auto tmp_frame{EnterStackFrame(ScopeManager::Frame::Kind::kTemporaries)};
             v = CodegenExpr(decl->value, alloca);
           }
-          if (IsTrivial(v->getType())) {
-            u_.builder.CreateStore(v, alloca);
-          }
         } else {
           u_.builder.CreateStore(u_.GetUndef(itype.sym), alloca);
         }
@@ -575,7 +559,7 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
     if (v->getType() == u_.builder.getPtrTy()) {
       return u_.builder.CreateLoad(ty, v);
     }
-    return v;
+    return u_.WrapValue(v);
   };
   const auto ret_trivialvar = [&](llvm::Value* rv) {
     if (dest) {
@@ -614,18 +598,20 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
       const auto* m = expr->As<ast::nodes::ValueLiteral>();
       switch (m->tok.kind) {
         case ast::TokenKind::INT: {
-          auto* iv = u_.rt.GetInt(literals::ParseInt(u_.sf.Text(m->tok)));
+          const auto& intv = literals::ParseInt(u_.sf.Text(m->tok));
+          assert(std::holds_alternative<RuntimeBindings::NativeIntType>(intv));
+          auto* iv = u_.rt.GetRawInt(std::get<RuntimeBindings::NativeIntType>(intv));
           if (dest) {
-            u_.builder.CreateStore(iv, dest);
+            u_.builder.CreateStore(u_.WrapValue(iv), dest);
             return dest;
           }
           return iv;
         }
 
         case ast::TokenKind::FLOAT: {
-          auto* iv = u_.rt.GetFloat(literals::ParseFloat(u_.sf.Text(m->tok)));
+          auto* iv = u_.rt.GetRawFloat(literals::ParseFloat(u_.sf.Text(m->tok)));
           if (dest) {
-            u_.builder.CreateStore(iv, dest);
+            u_.builder.CreateStore(u_.WrapValue(iv), dest);
             return dest;
           }
           return iv;
@@ -680,9 +666,9 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
         }
 
         case ast::TokenKind::TRUE:
-          return u_.rt.GetBool(true);
+          return u_.builder.getTrue();
         case ast::TokenKind::FALSE:
-          return u_.rt.GetBool(false);
+          return u_.builder.getFalse();
 
         default:
           VANADIUM_DEBUG_ERROR("ValueLiteral unhandled token kind: {}", magic_enum::enum_name(m->tok.kind));
@@ -782,7 +768,7 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
             u_.builder.CreateCall(strb->rotate_left_f, {
                                                            out,
                                                            vx,
-                                                           u_.builder.CreateCall(u_.rt.integer.get_f, {vy}),
+                                                           u_.UnwrapValue(vy),
                                                        });
             break;
           }
@@ -790,7 +776,7 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
             u_.builder.CreateCall(strb->rotate_right_f, {
                                                             out,
                                                             vx,
-                                                            u_.builder.CreateCall(u_.rt.integer.get_f, {vy}),
+                                                            u_.UnwrapValue(vy),
                                                         });
             break;
           }
@@ -798,7 +784,7 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
             u_.builder.CreateCall(strb->shift_left_f, {
                                                           out,
                                                           vx,
-                                                          u_.builder.CreateCall(u_.rt.integer.get_f, {vy}),
+                                                          u_.UnwrapValue(vy),
                                                       });
             break;
           }
@@ -806,7 +792,7 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
             u_.builder.CreateCall(strb->shift_right_f, {
                                                            out,
                                                            vx,
-                                                           u_.builder.CreateCall(u_.rt.integer.get_f, {vy}),
+                                                           u_.UnwrapValue(vy),
                                                        });
             break;
           }
@@ -951,6 +937,14 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
       const auto* m = expr->As<ast::nodes::CallExpr>();
 
       auto tmp_frame{EnterStackFrame(ScopeManager::Frame::Kind::kTemporaries)};
+      const auto prepare_argument = [&](llvm::Value* av) -> llvm::Value* {
+        if (!av->getType()->isPointerTy()) {
+          auto* val_slot = scope_->AllocTrivialTemp(av->getType());
+          u_.builder.CreateStore(av, val_slot);
+          return val_slot;
+        }
+        return av;
+      };
 
       const auto* func_sym = core::checker::ResolveExprSymbol(&u_.sf, u_.sf.module->scope, m->fun).sym;
       assert(func_sym->Flags() & core::semantic::SymbolFlags::kFunction);
@@ -968,14 +962,10 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
         u_.builder.CreateLifetimeStart(arr);
 
         for (const auto& [idx, argnode] : m->args->list | std::views::enumerate) {
-          auto* slot = u_.builder.CreateGEP(array_ty, arr, {u_.builder.getInt32(0), u_.builder.getInt32(idx)});
+          auto* slot =
+              u_.builder.CreateGEP(array_ty, arr, {u_.builder.getInt32(0), u_.builder.getInt32(idx)}, "generic_arg");
 
-          auto* val = CodegenWrappedExpr(argnode);
-          if (IsTrivial(val->getType())) {
-            auto* val_slot = scope_->AllocTrivialTemp(val->getType());
-            u_.builder.CreateStore(val, val_slot);
-            val = val_slot;
-          }
+          auto* val = prepare_argument(u_.WrapValue(CodegenExpr(argnode)));
 
           const auto& isym = core::checker::ResolveExprType(
               &u_.sf, core::semantic::utils::FindScope(u_.sf.module->scope, argnode), argnode);
@@ -994,9 +984,9 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
         args.push_back(dest);
       }
       for (const auto* argnode : m->args->list) {
-        auto* av = CodegenWrappedExpr(argnode);
-        VANADIUM_DEBUG_ASSERT(av != nullptr, "Unknown argument expr type: {}", magic_enum::enum_name(argnode->nkind))
-        args.push_back(av);
+        auto* av = u_.WrapValue(CodegenExpr(argnode));
+        VANADIUM_DEBUG_ASSERT(av != nullptr, "Unknown argument expr type: {}", magic_enum::enum_name(argnode->nkind));
+        args.push_back(prepare_argument(av));
       }
 
       auto* res = u_.builder.CreateCall(callee, args);

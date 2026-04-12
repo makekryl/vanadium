@@ -2,6 +2,7 @@
 #include <filesystem>
 
 #include <llvm/IR/DIBuilder.h>
+#include <llvm/IR/Function.h>
 #include <llvm/IR/Type.h>
 #include <llvm/IR/Value.h>
 
@@ -63,8 +64,8 @@ llvm::Value* CodegenUnit::GetUndef(const core::semantic::Symbol* sym) {
   if (sym == &core::builtins::kFloat) {
     return rt.floatt.undef;
   }
-  if (sym == &core::builtins::kCharstring) {
-    return rt.charstring.undef;
+  if (const auto* strb = GetStringTypeBindings(sym)) {
+    return strb->undef;
   }
 
   return nullptr;
@@ -143,6 +144,39 @@ llvm::Function* CodegenUnit::GetFunction(const core::semantic::Symbol* sym) {
   // }
 
   return fn;
+}
+
+llvm::Value* CodegenUnit::WrapValue(llvm::Value* v) {
+  llvm::Function* wrap_f = nullptr;
+  if (v->getType() == builder.getInt1Ty()) {
+    if (auto* ci = llvm::dyn_cast<llvm::ConstantInt>(v)) {
+      return rt.GetBool(ci->isOne());
+    }
+    wrap_f = rt.boolt.wrap_f;
+  } else if (v->getType() == builder.getInt64Ty()) {
+    if (auto* ci = llvm::dyn_cast<llvm::ConstantInt>(v)) {
+      return rt.GetInt(ci->getSExtValue());
+    }
+    wrap_f = rt.integer.wrap_f;
+  } else if (v->getType() == builder.getDoubleTy()) {
+    if (auto* cfp = llvm::dyn_cast<llvm::ConstantFP>(v)) {
+      return rt.GetFloat(cfp->getValueAPF().convertToDouble());
+    }
+    wrap_f = rt.floatt.wrap_f;
+  }
+  return wrap_f ? builder.CreateCall(wrap_f, {v}) : v;
+}
+
+llvm::Value* CodegenUnit::UnwrapValue(llvm::Value* v) {
+  llvm::Function* get_f = nullptr;
+  if (v->getType() == rt.boolt.ty) {
+    get_f = rt.boolt.get_f;
+  } else if (v->getType() == rt.integer.ty) {
+    get_f = rt.integer.get_f;
+  } else if (v->getType() == rt.floatt.ty) {
+    get_f = rt.floatt.get_f;
+  }
+  return get_f ? builder.CreateCall(get_f, {v}) : v;
 }
 
 }  // namespace vanadium::compiler
