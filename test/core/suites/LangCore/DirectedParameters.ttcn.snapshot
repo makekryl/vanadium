@@ -1,0 +1,25 @@
+./DirectedParameters.ttcn:
+  13:5: variable or not used symbol ('-') was expected for an 'out' parameter
+        5,  // EXPECT_ERROR
+        ~                  
+  19:5: variable was expected for an 'inout' parameter
+        5   // EXPECT_ERROR
+        ~                  
+  23:5: variable or not used symbol ('-') was expected for an 'out' parameter
+        5,  // EXPECT_ERROR
+        ~                  
+  24:5: variable was expected for an 'inout' parameter
+        5   // EXPECT_ERROR
+        ~                  
+  30:5: variable was expected for an 'inout' parameter
+        5   // EXPECT_ERROR
+        ~                  
+  35:5: variable was expected for an 'inout' parameter
+        -   // EXPECT_ERROR
+        ~                  
+  39:5: not used symbol (`-') cannot be used for parameter that does not have default value
+        -,  // EXPECT_ERROR
+        ~                  
+  41:5: variable was expected for an 'inout' parameter
+        -   // EXPECT_ERROR
+        ~                  

@@ -1,0 +1,45 @@
+module DirectedParameters {
+
+function f(in integer i, out integer o, inout integer io) { }
+
+function test() {
+  var integer v;
+
+  f(5, v, v);
+  f(v, v, v);
+
+  f(
+    5,
+    5,  // EXPECT_ERROR
+    v
+  );
+  f(
+    5,
+    v,
+    5   // EXPECT_ERROR
+  );
+  f(
+    5,
+    5,  // EXPECT_ERROR
+    5   // EXPECT_ERROR
+  );
+
+  f(
+    5,
+    -,
+    5   // EXPECT_ERROR
+  );
+  f(
+    5,
+    -,
+    -   // EXPECT_ERROR
+  );
+
+  f(
+    -,  // EXPECT_ERROR
+    -,
+    -   // EXPECT_ERROR
+  );
+}
+
+}

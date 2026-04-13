@@ -1,0 +1,19 @@
+module StructInitialization {
+
+type record MyRecord {
+  integer a,
+  integer b optional,
+  integer c
+}
+
+function f() {
+  var MyRecord r1 := { 1, 2, 3 };
+
+  var MyRecord r2 := { -, 2, 3 };
+  var MyRecord r3 := { 1, 2, - };
+  var MyRecord r4 := { 1, -, 3 };
+  var MyRecord r5 := { -, 2, - };
+  var MyRecord r6 := { -, -, - };
+}
+
+}

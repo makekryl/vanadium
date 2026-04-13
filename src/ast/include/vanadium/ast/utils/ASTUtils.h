@@ -142,6 +142,10 @@ inline bool IsInHierarchyOf(const ast::Node* node, const ast::Node* root) {
   return false;
 }
 
+inline TokenKind GetParamDirection(const nodes::FormalPar* param) {
+  return param->direction ? param->direction->kind : TokenKind::IN;
+}
+
 const Node* GetNodeAt(const AST& ast, pos_t pos);
 
 std::optional<Range> ExtractAttachedComment(const AST&, const Node*);

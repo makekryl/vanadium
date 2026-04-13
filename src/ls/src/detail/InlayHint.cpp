@@ -147,13 +147,20 @@ void ComputeInlayHint(const core::SourceFile& file, const core::semantic::Scope*
         }
 
         const auto* param = params->list[idx];
-        if (param->direction &&
-            (param->direction->kind == ast::TokenKind::OUT || param->direction->kind == ast::TokenKind::INOUT)) {
-          out.emplace_back(lsp::InlayHint{
-              .position = conv::ToLSPPosition(file.ast.lines.Translate(arg->nrange.begin)),
-              .label = "&",
-              .kind = lsp::InlayHintKind::kParameter,
-          });
+        switch (ast::utils::GetParamDirection(param)) {
+          case ast::TokenKind::IN:
+            break;
+          case ast::TokenKind::OUT:
+          case ast::TokenKind::INOUT:
+            out.emplace_back(lsp::InlayHint{
+                .position = conv::ToLSPPosition(file.ast.lines.Translate(arg->nrange.begin)),
+                .label = "&",
+                .kind = lsp::InlayHintKind::kParameter,
+            });
+            break;
+          default:
+            std::unreachable();
+            break;
         }
 
         if (arg->nkind != ast::NodeKind::AssignmentExpr) {

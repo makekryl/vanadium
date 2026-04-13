@@ -27,6 +27,8 @@ const semantic::Symbol kTypeError{"<error-type>", nullptr, semantic::SymbolFlags
 
 const semantic::Symbol kVoidType{"<void>", nullptr, semantic::SymbolFlags::kBuiltinType};
 
+const semantic::Symbol kNotUsed{"<->", nullptr, semantic::SymbolFlags::Value(semantic::SymbolFlags::kBuiltinType)};
+
 const semantic::Symbol kInferType{
     "<infer>", nullptr,
     semantic::SymbolFlags::Value(semantic::SymbolFlags::kBuiltinType | semantic::SymbolFlags::kAnonymous)};
@@ -45,9 +47,6 @@ const semantic::Symbol kTemplateOptionalType{
     semantic::SymbolFlags::Value(semantic::SymbolFlags::kBuiltinType | semantic::SymbolFlags::kTemplateSpec)};
 const semantic::Symbol kTemplateOmitType{
     "<omit>", nullptr,
-    semantic::SymbolFlags::Value(semantic::SymbolFlags::kBuiltinType | semantic::SymbolFlags::kTemplateSpec)};
-const semantic::Symbol kTemplateNotUsedType{
-    "<->", nullptr,
     semantic::SymbolFlags::Value(semantic::SymbolFlags::kBuiltinType | semantic::SymbolFlags::kTemplateSpec)};
 }  // namespace symbols
 
@@ -922,7 +921,7 @@ const semantic::Symbol* DeduceValueLiteralType(const ast::nodes::ValueLiteral* n
     case ast::TokenKind::OMIT:
       return &symbols::kTemplateOmitType;
     case ast::TokenKind::SUB:
-      return &symbols::kTemplateNotUsedType;
+      return &symbols::kNotUsed;
     default:
       return nullptr;
   }
@@ -1302,7 +1301,7 @@ void BasicTypeChecker::MatchTypes(const ast::Range& range, InstantiatedType actu
   TemplateRestrictionKind actual_template_restriction;
   const auto is_template_spec_providen = bool(actual->Flags() & semantic::SymbolFlags::kTemplateSpec);
   if (is_template_spec_providen) {
-    if (actual.sym == &symbols::kTemplateOmitType || actual.sym == &symbols::kTemplateNotUsedType) {
+    if (actual.sym == &symbols::kTemplateOmitType) {
       actual_template_restriction = TemplateRestrictionKind::kOmit;
     } else if (actual.sym == &symbols::kTemplateWildcardType) {
       actual_template_restriction = TemplateRestrictionKind::kPresent;
@@ -1405,9 +1404,53 @@ void BasicTypeChecker::CheckArguments(std::span<const ast::nodes::Expr* const> a
         }
         return restype;
       } else {
-        std::unreachable();
+        static_assert(false);
       }
     }();
+
+    if constexpr (std::is_same_v<TParamDescriptorNode, ast::nodes::FormalPar>) {
+      const auto param_direction = ast::utils::GetParamDirection(param);
+      // TODO: check constness of passed variable
+      switch (param_direction) {
+        case ast::TokenKind::IN:
+          break;
+        case ast::TokenKind::OUT:
+          if (n->nkind == ast::NodeKind::ValueLiteral) {
+            if (n->As<ast::nodes::ValueLiteral>()->tok.kind == ast::TokenKind::SUB) {
+              return;
+            }
+            EmitError({
+                .range = n->nrange,
+                .message = "variable or not used symbol ('-') was expected for an 'out' parameter",
+            });
+            return;
+          }
+          break;
+        case ast::TokenKind::INOUT:
+          if (n->nkind == ast::NodeKind::ValueLiteral) {
+            EmitError({
+                .range = n->nrange,
+                .message = "variable was expected for an 'inout' parameter",
+            });
+            return;
+          }
+          break;
+        default:
+          std::unreachable();
+          break;
+      }
+    }
+    if (n->nkind == ast::NodeKind::ValueLiteral && n->As<ast::nodes::ValueLiteral>()->tok.kind == ast::TokenKind::SUB) {
+      if constexpr (std::is_same_v<TParamDescriptorNode, ast::nodes::FormalPar>) {
+        if (!param->value) {
+          EmitError({
+              .range = n->nrange,
+              .message = "not used symbol (`-') cannot be used for parameter that does not have default value",
+          });
+        }
+      }
+      return;
+    }
 
     const auto actual_instance = CheckType(n, expected_type);
     MatchTypes(n->nrange, actual_instance, expected_type);

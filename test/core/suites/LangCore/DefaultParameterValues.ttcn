@@ -1,0 +1,19 @@
+module DefaultParameterValues {
+
+function f(in integer a := 1, in integer b, in integer c := 3) { }
+
+function test() {
+  f(1, 2, 3);
+
+  f(-, 2, 3);
+  f(1, 2, -);
+  f(-, 2, -);
+
+  f(
+    -,
+    -,  // EXPECT_ERROR
+    -
+  );
+}
+
+}

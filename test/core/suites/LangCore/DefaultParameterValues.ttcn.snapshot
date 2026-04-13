@@ -1,0 +1,4 @@
+./DefaultParameterValues.ttcn:
+  14:5: not used symbol (`-') cannot be used for parameter that does not have default value
+        -,  // EXPECT_ERROR
+        ~                  
