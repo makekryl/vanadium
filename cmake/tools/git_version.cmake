@@ -11,8 +11,19 @@ if(GIT_EXECUTABLE)
 endif()
 
 if(VANADIUM_GIT_VERSION STREQUAL "")
-  set(VANADIUM_GIT_VERSION unknown)
-  message(WARNING "Failed to determine version from Git tags. Using default version '${VANADIUM_GIT_VERSION}'")
+  if(GIT_EXECUTABLE)
+    execute_process(
+      COMMAND ${GIT_EXECUTABLE} rev-parse --short HEAD
+      WORKING_DIRECTORY ${WDIR}
+      OUTPUT_VARIABLE VANADIUM_GIT_VERSION
+      RESULT_VARIABLE ERROR_CODE
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+  endif()
+  if(VANADIUM_GIT_VERSION STREQUAL "")
+    set(VANADIUM_GIT_VERSION unknown)
+    message(WARNING "Failed to determine version from Git tag or commit hash. Using default version '${VANADIUM_GIT_VERSION}'")
+  endif()
 endif()
 
 configure_file(${SRC} ${DST} @ONLY)
