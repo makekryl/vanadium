@@ -15,6 +15,22 @@
 using namespace vanadium;
 using namespace vanadium::core;
 
+//
+struct NamedStringParam {
+  std::string_view name;
+  std::string_view value;
+
+  operator std::string_view() const {
+    return value;
+  }
+
+  constexpr auto operator<=>(const NamedStringParam& other) const noexcept(noexcept(value <=> other.value)) {
+    return value <=> other.value;
+  }
+};
+DEFINE_NAMED_TEST_PARAM_PRINTER(NamedStringParam, name);
+//
+
 struct ProgramTest : public ::testing::Test {
   template <bool HasSemanticErrors = false>
   bool prepareWorkingSet(core::Program& program, const std::unordered_map<std::string, std::string_view>& files) {
