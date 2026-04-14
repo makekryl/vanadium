@@ -665,6 +665,7 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
           VANADIUM_DEBUG_ERROR("ValueLiteral unhandled token kind: {}", magic_enum::enum_name(m->tok.kind));
           break;
       }
+      break;
     }
 
     case ast::NodeKind::BinaryExpr: {
