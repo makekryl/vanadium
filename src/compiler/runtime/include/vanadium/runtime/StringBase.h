@@ -160,8 +160,6 @@ void PerformGenericShiftOperation(S* dst, const S* s, std::int64_t n, auto f) {
   }
 
   auto tmp = MakeDummy<S>(len);
-
-  const auto* srcbuf = GetCBuf(s);
   auto* buf = GetBuf(&tmp);
 
   f(buf, len);

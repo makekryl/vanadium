@@ -1,13 +1,14 @@
 #include "vanadium/compiler/LiteralsParser.h"
 
 #include <cstdint>
-#include <string>
 #include <string_view>
 #include <variant>
 
 #include "vanadium/compiler/RuntimeBindings.h"
 
 namespace vanadium::compiler::literals {
+
+// TODO: seems like binary strings should be represented in LSB, not in MSB, check it later, closer to ASN codec impl
 
 namespace {
 constexpr char CharToHex(char c) {
@@ -44,14 +45,14 @@ std::string_view ParseCharstring(std::string_view s) {
   return s;
 }
 
-std::string ParseOctetstring(std::string_view s) {
+std::vector<std::uint8_t> ParseOctetstring(std::string_view s) {
   s.remove_prefix(1);  // '
   s.remove_suffix(2);  // 'O
 
   // TODO(lexer): verify length
   assert(s.length() % 2 == 0);
 
-  std::string result;
+  std::vector<std::uint8_t> result;
   result.reserve(s.length() / 2);
   //
   for (std::size_t i = 0; i < s.length(); i += 2) {  // TODO: ignore whitespace
@@ -63,14 +64,14 @@ std::string ParseOctetstring(std::string_view s) {
   return result;
 }
 
-std::pair<std::string, std::uint32_t> ParseBitstring(std::string_view s) {
+std::pair<std::vector<std::uint8_t>, std::uint32_t> ParseBitstring(std::string_view s) {
   s.remove_prefix(1);  // '
   s.remove_suffix(2);  // 'B
 
   const auto max_bits = s.size();
   const auto max_bytes = (max_bits + 7) / 8;
 
-  std::string result(max_bytes, 0);
+  std::vector<std::uint8_t> result(max_bytes, 0);
 
   std::uint32_t bit_count = 0;
   std::size_t byte_index = 0;
@@ -97,13 +98,13 @@ std::pair<std::string, std::uint32_t> ParseBitstring(std::string_view s) {
   return {std::move(result), bit_count};
 }
 
-std::pair<std::string, std::uint32_t> ParseHexstring(std::string_view s) {
+std::pair<std::vector<std::uint8_t>, std::uint32_t> ParseHexstring(std::string_view s) {
   s.remove_prefix(1);  // '
   s.remove_suffix(2);  // 'H
 
   std::uint32_t nibble_count = 0;
 
-  std::string result;
+  std::vector<std::uint8_t> result;
   result.reserve((s.length() + 1) / 2);
 
   for (char c : s) {  // TODO: ignore whitespace

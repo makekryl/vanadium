@@ -35,6 +35,7 @@
 #include <vanadium/lib/ScopedValue.h>
 
 #include "vanadium/compiler/Codegen.h"
+#include "vanadium/compiler/IRHelpers.h"
 #include "vanadium/compiler/LiteralsParser.h"
 #include "vanadium/compiler/RuntimeBindings.h"
 
@@ -628,12 +629,12 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
         case ast::TokenKind::OCTETSTRING: {
           auto* out = dest ? dest : scope_->AllocTemp(&core::builtins::kOctetstring);
           const auto& sv = literals::ParseOctetstring(u_.sf.Text(m->tok));
-          assert(sv.length() <= std::numeric_limits<std::uint32_t>::max());
+          assert(sv.size() <= std::numeric_limits<std::uint32_t>::max());
           u_.builder.CreateCall(u_.rt.octetstring.init_f,
                                 {
                                     out,
-                                    u_.builder.CreateGlobalStringPtr(sv),
-                                    u_.builder.getInt32(static_cast<std::uint32_t>(sv.length())),
+                                    helpers::CreateGlobalBytePtr(u_.mod, sv),
+                                    u_.builder.getInt32(static_cast<std::uint32_t>(sv.size())),
                                 });
           return out;
         }
@@ -643,7 +644,7 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
           const auto& [sv, bits] = literals::ParseBitstring(u_.sf.Text(m->tok));
           u_.builder.CreateCall(u_.rt.bitstring.init_f, {
                                                             out,
-                                                            u_.builder.CreateGlobalStringPtr(sv),
+                                                            helpers::CreateGlobalBytePtr(u_.mod, sv),
                                                             u_.builder.getInt32(bits),
                                                         });
           return out;
@@ -654,7 +655,7 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
           const auto& [sv, nibbles] = literals::ParseHexstring(u_.sf.Text(m->tok));
           u_.builder.CreateCall(u_.rt.hexstring.init_f, {
                                                             out,
-                                                            u_.builder.CreateGlobalStringPtr(sv),
+                                                            helpers::CreateGlobalBytePtr(u_.mod, sv),
                                                             u_.builder.getInt32(nibbles),
                                                         });
           return out;
