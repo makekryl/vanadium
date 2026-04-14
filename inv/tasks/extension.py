@@ -1,12 +1,14 @@
 from invoke import Context, task
 
 from inv.config import OUTPUT_DIR
+from inv.params import override_params_defaults
 from inv.params.build import with_build_params
 
 from . import build
 
 
 @task
+@override_params_defaults(release=True)
 @with_build_params
 def package(c: Context):
   build_dir = build.build(c, target="vanadiumd")
