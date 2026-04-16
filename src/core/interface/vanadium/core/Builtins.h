@@ -18,7 +18,6 @@ extern const semantic::Symbol kCharstring;
 extern const semantic::Symbol kOctetstring;
 extern const semantic::Symbol kHexstring;
 extern const semantic::Symbol kUniversalCharstring;
-extern const semantic::Symbol kVerdictType;
 
 const semantic::Symbol* ResolveBuiltin(std::string_view name);
 }  // namespace builtins

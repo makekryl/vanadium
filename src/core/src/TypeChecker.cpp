@@ -910,10 +910,6 @@ const semantic::Symbol* DeduceValueLiteralType(const ast::nodes::ValueLiteral* n
       return &builtins::kOctetstring;
     case ast::TokenKind::STRING:
       return &builtins::kCharstring;
-    case ast::TokenKind::PASS:
-    case ast::TokenKind::FAIL:
-    case ast::TokenKind::INCONC:
-      return &builtins::kVerdictType;
     case ast::TokenKind::MUL:
       return &symbols::kTemplateWildcardType;
     case ast::TokenKind::ANY:

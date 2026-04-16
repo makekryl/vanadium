@@ -25,7 +25,6 @@ const semantic::Symbol kCharstring{"charstring", nullptr, semantic::SymbolFlags:
 const semantic::Symbol kOctetstring{"octetstring", nullptr, semantic::SymbolFlags::kBuiltinStringType};
 const semantic::Symbol kHexstring{"hexstring", nullptr, semantic::SymbolFlags::kBuiltinStringType};
 const semantic::Symbol kUniversalCharstring{"universal charstring", nullptr, semantic::SymbolFlags::kBuiltinStringType};
-const semantic::Symbol kVerdictType{"verdicttype", nullptr, semantic::SymbolFlags::kBuiltinType};
 
 Superbases superbases{};
 
@@ -41,7 +40,6 @@ const semantic::Symbol* ResolveBuiltinType(std::string_view name) {
       {"octetstring", &kOctetstring},
       {"hexstring", &kHexstring},
       {"universal charstring", &kCharstring},  // TODO: investigate &kUniversalCharstring
-      {"verdicttype", &kVerdictType},
 
       {"object", &kAnytype},  // TODO
 
@@ -50,7 +48,7 @@ const semantic::Symbol* ResolveBuiltinType(std::string_view name) {
       {"__vargs_t", &checker::symbols::kVarargsType},
       {"__altstep_t", &checker::symbols::kAltstepType},
   });
-  if (const auto sym_opt = kBuiltinsTable.get(name); sym_opt) {
+  if (const auto* sym_opt = kBuiltinsTable.get(name); sym_opt) {
     return *sym_opt;
   }
   return nullptr;
