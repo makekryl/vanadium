@@ -1,0 +1,87 @@
+module EnumValues {
+
+const integer c_i;
+const octetstring c_os;
+const bitstring c_bs;
+const hexstring c_hs;
+
+const float c_f;
+
+const integer ca_i[5];
+
+type enumerated MyEnum {
+  FIRST,
+
+  I(1),
+  I_V(c_i),
+
+  OS('11'O),
+  OS_V(c_os),
+
+  BS('11'B),
+  BS_V(c_bs),
+
+  HS('11'H),
+  HS_V(c_hs),
+
+  F(1.0),    // EXPECT_ERROR
+  F_V(c_f),  // EXPECT_ERROR
+
+  IA_V(ca_i),  // EXPECT_ERROR
+
+  LAST
+}
+
+type enumerated WithDuplicates {
+  A,
+  B,
+  C(1),
+  D,
+  E(100),
+  F,
+  G(1),  // WIP:EXPECT_ERROR
+
+  E_octetstring('64'O),    // WIP:EXPECT_ERROR
+  E_bitstring('1100100'B), // WIP:EXPECT_ERROR
+  E_hexstring('64'H)       // WIP:EXPECT_ERROR
+}
+
+type record Holder {
+  enumerated {
+    FIRST,
+
+    I(1),
+    I_V(c_i),
+
+    OS('11'O),
+    OS_V(c_os),
+
+    BS('11'B),
+    BS_V(c_bs),
+
+    HS('11'H),
+    HS_V(c_hs),
+
+    F(1.0),    // EXPECT_ERROR
+    F_V(c_f),  // EXPECT_ERROR
+
+    IA_V(ca_i),  // EXPECT_ERROR
+
+    LAST
+  } myEnum,
+  enumerated {
+    A,
+    B,
+    C(1),
+    D,
+    E(100),
+    F,
+    G(1),  // WIP:EXPECT_ERROR
+
+    E_octetstring('64'O),    // WIP:EXPECT_ERROR
+    E_bitstring('1100100'B), // WIP:EXPECT_ERROR
+    E_hexstring('64'H)       // WIP:EXPECT_ERROR
+  } withDuplicates
+}
+
+}

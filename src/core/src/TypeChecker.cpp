@@ -2285,7 +2285,52 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
       return false;
     }
 
-    case ast::NodeKind::EnumTypeDecl: {
+    case ast::NodeKind::EnumTypeDecl:
+    case ast::NodeKind::EnumSpec: {
+      const auto inspect_enum_values = [&](const std::vector<ast::nodes::Expr*>& values) {
+        for (const auto* value : values) {
+          // TODO: check value duplication
+          if (value->nkind != ast::NodeKind::CallExpr) {
+            continue;
+          }
+          const auto* ce = value->As<ast::nodes::CallExpr>();
+
+          const auto& vt = CheckType(ce->args);
+          if (vt.restriction != TemplateRestrictionKind::kNone) {
+            EmitError({
+                .range = ce->args->nrange,
+                .message = "expected value, got template",
+            });
+          }
+
+          if (vt.depth != 0) {
+            EmitError({
+                .range = ce->args->nrange,
+                .message = "expected value, got array",
+            });
+          }
+          if (vt.sym != &builtins::kInteger && vt.sym != &builtins::kBitstring && vt.sym != &builtins::kOctetstring &&
+              vt.sym != &builtins::kHexstring) {
+            EmitError({
+                .range = ce->args->nrange,
+                .message = std::format("integer, bitstring, octetstring or hexstring expected, got '{}'",
+                                       semantic::utils::GetReadableTypeName(vt.sym)),
+            });
+          }
+        }
+      };
+
+      switch (n->nkind) {
+        case ast::NodeKind::EnumTypeDecl:
+          inspect_enum_values(n->As<ast::nodes::EnumTypeDecl>()->values);
+          break;
+        case ast::NodeKind::EnumSpec:
+          inspect_enum_values(n->As<ast::nodes::EnumSpec>()->values);
+          break;
+        default:
+          std::unreachable();
+      }
+
       return false;
     }
 
