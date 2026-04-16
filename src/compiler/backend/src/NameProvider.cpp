@@ -19,9 +19,8 @@ std::string SymName(const core::semantic::Symbol* sym) {
 }  // namespace
 
 std::string Func(const core::semantic::Symbol* sym) {
-  if (sym->Flags() & core::semantic::SymbolFlags::kBuiltin && sym->GetName() == "log") {
-    // TODO: generify
-    return "vrt_log";
+  if (sym->Flags() & core::semantic::SymbolFlags::kBuiltin) {
+    return std::format("vrt_{}", sym->GetName());
   }
   return SymName(sym);
 }

@@ -118,9 +118,9 @@ external function log(in __vargs_t s)
 type enumerated verdicttype {
   none,
   pass,
+  inconc,
   fail,
-  error,
-  inconc
+  error
 }
 
 /*
@@ -908,8 +908,10 @@ apply
 */
 external function setverdict(
 	in verdicttype verdict,
-	in charstring reason := none
+	in charstring reason := ""
 )
+
+external function getverdict() return verdicttype
 
 external function log2str(in anytype v) return charstring
 

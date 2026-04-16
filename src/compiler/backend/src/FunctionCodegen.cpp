@@ -574,15 +574,33 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
     case ast::NodeKind::Ident: {
       const auto* m = expr->As<ast::nodes::Ident>();
 
-      const auto* var = scope_->Lookup(Lit(m));
+      if (const auto* var = scope_->Lookup(Lit(m))) {
+        // todo: deep copy
+        if (dest) {
+          u_.builder.CreateStore(u_.builder.CreateLoad(var->ty, var->value), dest);
+          return dest;
+        }
 
-      // todo: deep copy
-      if (dest) {
-        u_.builder.CreateStore(u_.builder.CreateLoad(var->ty, var->value), dest);
-        return dest;
+        return var->value;
       }
 
-      return var->value;
+      const auto& isym =
+          core::checker::ResolveExprType(&u_.sf, core::semantic::utils::FindScope(u_.sf.module->scope, m), m);
+      if (isym->Flags() & core::semantic::SymbolFlags::kEnumMember) {
+        // TODO(tc): calculate actual value taking explicitly set members into account
+        // TODO: support EnumSpec, move in another function
+        const auto* etd = isym->Declaration()->parent->As<ast::nodes::EnumTypeDecl>();
+        std::int32_t val{0};
+        for (const auto* v : etd->values) {
+          if (v == isym->Declaration()) {
+            break;
+          }
+          ++val;
+        }
+        return u_.rt.GetInt(val);
+      }
+
+      return nullptr;
     }
 
     case ast::NodeKind::SelectorExpr: {

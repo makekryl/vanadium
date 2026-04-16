@@ -2112,6 +2112,7 @@ nodes::Expr* Parser::ParseOperand() {
     case TokenKind::VALUE:
     case TokenKind::NONE:
     case TokenKind::PASS:
+    case TokenKind::FAIL:
     case TokenKind::ERROR:
     case TokenKind::INCONC:
       return ParseAnyIdent();
@@ -2126,7 +2127,6 @@ nodes::Expr* Parser::ParseOperand() {
     case TokenKind::OCTETSTRING:
     case TokenKind::kNULL:
     case TokenKind::OMIT:
-    case TokenKind::FAIL:
     case TokenKind::FALSE:
     case TokenKind::FLOAT:
     case TokenKind::MUL:

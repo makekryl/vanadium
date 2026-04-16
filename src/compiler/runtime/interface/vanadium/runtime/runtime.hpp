@@ -11,6 +11,12 @@
 
 namespace vanadium::rt {
 
+// TODO: real, configurable & low-latency logger
+template <typename... Args>
+void Log(std::format_string<Args...> fstr, Args&&... args) {
+  vrt_log_write(std::format(fstr, std::forward<Args>(args)...).c_str());
+}
+
 template <typename... Args>
 void Panic(std::format_string<Args...> fstr, Args&&... args) {
   return vrt_panic(std::format(fstr, std::forward<Args>(args)...).c_str());

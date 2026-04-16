@@ -26,7 +26,6 @@ void vrt_panic(const char* rr) {
   throw std::runtime_error(rr);
 }
 
-extern "C" {
 bool vrt_is_bound(const vrt_val_t* v) {
   if (v->ty == &integer_typeinfo) {
     return static_cast<vrt_int_t*>(v->p)->is_bound;
@@ -129,7 +128,10 @@ void vrt_log(const vrt_val_t* args, std::uint32_t n) {
     }
     buf += " ";
   }
-  std::println("LOG :: {}", buf);
-  std::fflush(stdout);
+  vrt_log_write(buf.c_str());
 }
+
+void vrt_log_write(const char* s) {
+  std::println("LOG :: {}", s);
+  std::fflush(stdout);
 }

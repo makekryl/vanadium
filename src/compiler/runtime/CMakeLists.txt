@@ -10,6 +10,7 @@ add_library(vanadium_rt STATIC
   src/rt_octetstring.cpp
   src/rt_hexstring.cpp
   src/rt_optional.cpp
+  src/rt_verdict.cpp
   src/Entrypoint.cpp
 )
 
@@ -20,7 +21,8 @@ target_include_directories(vanadium_rt PRIVATE
   include
 )
 
-# target_link_libraries(vanadium_rt PUBLIC
-# )
+target_link_libraries(vanadium_rt PRIVATE
+  magic_enum
+)
 
 add_gtest_executable(vanadium_rt)
