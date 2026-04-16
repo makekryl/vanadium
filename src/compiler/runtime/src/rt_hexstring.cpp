@@ -52,7 +52,7 @@ RtStringSize_t GetByteLength<vrt_hexstring_t>(RtStringSize_t len) {
 const vrt_typeinfo_t hexstring_typeinfo{
     .name = "hexstring",
     .kind = vrt_typekind_e::kString,
-    .bytes = sizeof(vrt_hexstring_t),
+    .size = sizeof(vrt_hexstring_t),
 
     .members = nullptr,
 

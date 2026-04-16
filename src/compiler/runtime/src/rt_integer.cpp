@@ -15,7 +15,7 @@ inline void AssertIsBound(vrt_int_t& i) {
 const vrt_typeinfo_t integer_typeinfo{
     .name = "integer",
     .kind = vrt_typekind_e::kScalar,
-    .bytes = sizeof(vrt_int_t),
+    .size = sizeof(vrt_int_t),
 
     .members = nullptr,
 

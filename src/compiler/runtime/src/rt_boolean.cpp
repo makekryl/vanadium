@@ -13,7 +13,7 @@ inline void CheckIsBound(vrt_int_t i) {
 const vrt_typeinfo_t boolean_typeinfo{
     .name = "boolean",
     .kind = vrt_typekind_e::kScalar,
-    .bytes = sizeof(vrt_bool_t),
+    .size = sizeof(vrt_bool_t),
 
     .members = nullptr,
 

@@ -15,7 +15,7 @@ inline void AssertIsBound(vrt_float_t& i) {
 const vrt_typeinfo_t float_typeinfo{
     .name = "float",
     .kind = vrt_typekind_e::kScalar,
-    .bytes = sizeof(vrt_float_t),
+    .size = sizeof(vrt_float_t),
 
     .members = nullptr,
 

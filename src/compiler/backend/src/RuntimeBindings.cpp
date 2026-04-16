@@ -151,7 +151,7 @@ RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ct
   typeinfo_ty->setBody({
       builder.getPtrTy(),    // const char* name
       builder.getInt8Ty(),   // vrt_typekind_e
-      builder.getInt64Ty(),  // size_t bytes
+      builder.getInt64Ty(),  // size_t size
       builder.getPtrTy(),    // members**
       builder.getPtrTy(),    // construct(*)(void*)
       builder.getPtrTy()     // destruct(*)(void*)

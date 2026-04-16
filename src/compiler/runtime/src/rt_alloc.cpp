@@ -24,7 +24,7 @@ void vrt_unifree(void* p) {
 
 void* vrt_new(const vrt_typeinfo_t* td) {
   // TODO: write alignment to typeinfo, use it below
-  auto* p = vrt_alloc(td->bytes, 8);
+  auto* p = vrt_alloc(td->size, 8);
   td->construct(p);
   return p;
 }
@@ -35,7 +35,7 @@ void vrt_del(const vrt_typeinfo_t* td, void* p) {
 }
 
 void* vrt_stackalloc_new(const vrt_typeinfo_t* td) {
-  auto* p = arena.Alloc(td->bytes, 8);
+  auto* p = arena.Alloc(td->size, 8);
   td->construct(p);
   return p;
 }

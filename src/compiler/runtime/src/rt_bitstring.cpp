@@ -55,7 +55,7 @@ RtStringSize_t GetByteLength<vrt_bitstring_t>(RtStringSize_t len) {
 const vrt_typeinfo_t bitstring_typeinfo{
     .name = "bitstring",
     .kind = vrt_typekind_e::kString,
-    .bytes = sizeof(vrt_bitstring_t),
+    .size = sizeof(vrt_bitstring_t),
 
     .members = nullptr,
 

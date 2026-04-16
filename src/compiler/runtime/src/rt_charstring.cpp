@@ -22,7 +22,7 @@ inline void AssertIsBound(const vrt_charstring_t* s) {
 const vrt_typeinfo_t charstring_typeinfo{
     .name = "charstring",
     .kind = vrt_typekind_e::kString,
-    .bytes = sizeof(vrt_charstring_t),
+    .size = sizeof(vrt_charstring_t),
 
     .members = nullptr,
 

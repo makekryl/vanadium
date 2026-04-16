@@ -13,7 +13,7 @@ void vrt_optional_dtor(void*);
 const vrt_typeinfo_t vrt_optional_typeinfo{
     .name = "vrt_optional",
     .kind = vrt_typekind_e::kScalar,
-    .bytes = sizeof(vrt_optional_t),
+    .size = sizeof(vrt_optional_t),
 
     .members = nullptr,
 

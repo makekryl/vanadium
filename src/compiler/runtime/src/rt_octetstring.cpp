@@ -21,7 +21,7 @@ inline void AssertIsBound(const vrt_octetstring_t* s) {
 const vrt_typeinfo_t octetstring_typeinfo{
     .name = "octetstring",
     .kind = vrt_typekind_e::kString,
-    .bytes = sizeof(vrt_octetstring_t),
+    .size = sizeof(vrt_octetstring_t),
 
     .members = nullptr,
 

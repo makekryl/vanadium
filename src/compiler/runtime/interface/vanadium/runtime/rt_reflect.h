@@ -4,11 +4,26 @@
 
 // NOLINTBEGIN(readability-identifier-naming)
 
-enum class vrt_typekind_e : std::int8_t {
+enum class vrt_typekind_e : std::uint8_t {
   kScalar,
+  kInteger,
+  kFloat,
+  kBoolean,
+
   kString,
+  kCharstring,
+  kOctetstring,
+  kBitstring,
+  kHexstring,
+
   kStruct,
+  kRecord,
+  kSet,
+
   kList,
+  kRecordOf,
+  kSetOf,
+
   kOptionalMember,
 };
 
@@ -17,12 +32,13 @@ struct vrt_struct_member_t;
 struct vrt_typeinfo_t {
   const char* name;
   vrt_typekind_e kind;
-  std::size_t bytes;
+  std::size_t size;
 
   const vrt_struct_member_t** members;
 
   void (*construct)(void*);
   void (*destruct)(void*);
+  void (*copy)(void*, const void*);
 };
 
 struct vrt_val_t {
