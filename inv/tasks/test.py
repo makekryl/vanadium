@@ -43,9 +43,9 @@ def test(c: Context, label: str = "all"):
   label_opt = f"-L '{label}'" if label != "all" else ""
   c.run(
     f"ctest"
+    f" --test-dir '{str(build_dir)}'"
     f" {label_opt}"
     f" --output-on-failure"
-    f" --test-dir '{str(build_dir)}'"
     f" {' '.join(args)}"
   )
 

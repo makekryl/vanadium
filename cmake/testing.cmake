@@ -1,10 +1,12 @@
 set(VANADIUM_UNIT_TEST_TARGETS "" CACHE INTERNAL "All unit test targets")
 set(VANADIUM_E2E_TEST_TARGETS "" CACHE INTERNAL "All e2e test targets")
 
-function(register_e2e_test_target test_target_name)
+function(register_e2e_test_target test_target_name tag)
   gtest_discover_tests(${test_target_name}
     DISCOVERY_MODE PRE_TEST
-    PROPERTIES LABELS "e2e"
+    PROPERTIES LABELS "e2e-${tag}"
+    EXTRA_ARGS "--vanadium_project_root=${CMAKE_SOURCE_DIR}"
+    DISCOVERY_EXTRA_ARGS "--vanadium_project_root=${CMAKE_SOURCE_DIR}"
   )
 
   list(APPEND VANADIUM_E2E_TEST_TARGETS ${test_target_name})

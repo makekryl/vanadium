@@ -12,12 +12,12 @@
 #include <vanadium/testing/gtest_helpers.h>
 #include <vanadium/testing/utils.h>
 
-#include "CoreTests.h"
-#include "RunnerOpts.h"
-
-namespace vanadium::e2e::core {
+#include "Runner.h"
 
 namespace {
+
+using namespace vanadium;
+
 class IndentedWriter {
  public:
   void WriteLine(std::string_view s) {
@@ -48,17 +48,17 @@ class IndentedWriter {
 
 struct Snapshot {
   std::string text;
-  std::map<const vanadium::core::SourceFile*, std::vector<vanadium::ast::pos_t>> errlines;
+  std::map<const core::SourceFile*, std::vector<ast::pos_t>> errlines;
 };
 
-Snapshot TakeSnapshot(const vanadium::core::Program& program) {
+Snapshot TakeSnapshot(const core::Program& program) {
   IndentedWriter w;
-  std::map<const vanadium::core::SourceFile*, std::vector<vanadium::ast::pos_t>> errlines;
+  std::map<const core::SourceFile*, std::vector<ast::pos_t>> errlines;
 
   std::string highlight_buf;
 
-  const auto write_err = [&w, &errlines, &highlight_buf](const vanadium::core::SourceFile* psf,
-                                                         const vanadium::ast::Range& range, std::string_view text) {
+  const auto write_err = [&w, &errlines, &highlight_buf](const core::SourceFile* psf, const ast::Range& range,
+                                                         std::string_view text) {
     const auto& loc_begin = psf->ast.lines.Translate(range.begin);
     w.WriteLine(std::format("{}:{}: {}", loc_begin.line + 1, loc_begin.column + 1, text));
     errlines.at(psf).emplace_back(loc_begin.line);
@@ -104,7 +104,7 @@ Snapshot TakeSnapshot(const vanadium::core::Program& program) {
     });
   };
 
-  std::map<std::string, const vanadium::core::SourceFile*> files;  // ordered
+  std::map<std::string, const core::SourceFile*> files;  // ordered
   for (const auto& [name, sf] : program.Files()) {
     files[name] = &sf;
     errlines.try_emplace(&sf);
@@ -151,26 +151,35 @@ Snapshot TakeSnapshot(const vanadium::core::Program& program) {
       .errlines = std::move(errlines),
   };
 }
-}  // namespace
+
+//
+class SnapshotTest : public ::testing::Test {
+ public:
+  SnapshotTest(std::filesystem::path file) : file_(std::move(file)) {};
+  void TestBody() override;
+
+ private:
+  const std::filesystem::path file_;
+};
 
 void SnapshotTest::TestBody() {
-  const auto& snapshot_file = (file_.parent_path() / std::format("{}.snapshot", file_.filename().string()));
+  const std::filesystem::path snapshot_file{file_.string() + ".snapshot"};
 
-  vanadium::core::Program program;
+  core::Program program;
   const auto& src = vanadium::testing::utils::ReadFile(file_);
   const auto read_src_into_sf = [&](const std::string&, std::string& srcbuf) -> void {
     srcbuf = src;
   };
   program.Commit([&](auto& modify) {
-    modify.update(std::filesystem::relative(file_, suite_).string(), read_src_into_sf);
+    modify.update(std::filesystem::relative(file_, file_.parent_path()).string(), read_src_into_sf);
   });
 
-  const auto actual_snapshot = TakeSnapshot(program);
+  const auto& actual_snapshot = TakeSnapshot(program);
 
   const bool snapshot_exists{std::filesystem::exists(snapshot_file)};
   if (snapshot_exists) {
-    const auto expected_snapshot_text = vanadium::testing::utils::ReadFile(snapshot_file);
-    EXPECT_STREQ_COLORED_DIFF(expected_snapshot_text.c_str(), actual_snapshot.text.c_str());
+    const auto& expected_snapshot_text = vanadium::testing::utils::ReadFile(snapshot_file);
+    EXPECT_STREQ_COLORED_DIFF(actual_snapshot.text.c_str(), expected_snapshot_text.c_str());
   } else {
     ADD_FAILURE() << "Snapshot file does not exist and will be created";
   }
@@ -196,10 +205,15 @@ void SnapshotTest::TestBody() {
         << "Not all error expectations were met";
   }
 
-  if (!snapshot_exists || opts::overwrite_snapshots) {
-    std::ofstream snapshot_of(snapshot_file);
-    snapshot_of << actual_snapshot.text;
+  if (!snapshot_exists || e2e::runner::opts::overwrite_snapshots) {
+    vanadium::testing::utils::WriteFile(snapshot_file, actual_snapshot.text);
   }
 }
 
-}  // namespace vanadium::e2e::core
+}  // namespace
+
+int main(int argc, char* argv[]) {
+  return e2e::runner::Run(argc, argv, "test/core/suites", e2e::runner::SingleTestRegistrar("Core", [](auto file) {
+                            return new SnapshotTest(std::move(file));
+                          }));
+}

@@ -1,0 +1,17 @@
+{
+  f()
+
+  f(aaaaaaaaaaaaaaaaaaaaaa)
+
+  f(aaaaaaaaaaaaaaaaaaaaaa, bbbbbbbbbbbbbbbbbbbb)
+
+  f(aaaaaaaaaaaaaaaaaaaaaa, bbbbbbbbbbbbbbbbbbbb, ccccccccccccccc)
+
+  f(aaaaaaaaaaaaaaaaaaaaaa, bbbbbbbbbbbbbbbbbbbb, ccccccccccccccc, dddddddddddddddddd)
+
+  f(aaaaaaaaaaaaaaaaaaaaaa, bbbbbbbbbbbbbbbbbbbb, ccccccccccccccc, dddddddddddddddddd, eeeeeeeeeeeeeee)
+
+  f(aaaaaaaaaaaaaaaaaaaaaa, bbbbbbbbbbbbbbbbbbbb, ccccccccccccccc, dddddddddddddddddd, eeeeeeeeeeeeeee, ffffffffffffffff)
+
+  f(aaaaaaaaaaaaaaaaaaaaaa, bbbbbbbbbbbbbbbbbbbb, ccccccccccccccc, dddddddddddddddddd, eeeeeeeeeeeeeee, ffffffffffffffff, gggggggggggggggg)
+}

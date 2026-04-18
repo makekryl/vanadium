@@ -12,4 +12,9 @@ inline std::string ReadFile(const std::filesystem::path& path) {
   return buf.str();
 }
 
+inline void WriteFile(const std::filesystem::path& path, std::string_view buf) {
+  std::ofstream f(path);
+  f << buf;
+}
+
 }  // namespace vanadium::testing::utils

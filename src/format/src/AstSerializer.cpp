@@ -286,9 +286,6 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
         A(seq, "{");
         A(seq, PrintDirective::kHardLine);
         if (!m->defs.empty()) {
-          if (m->defs.front()->def->nkind != ast::NodeKind::ImportDecl) {
-            A(seq, PrintDirective::kHardLine);
-          }
           Join(seq, m->defs, PrintDirective::kHardLine);
           A(seq, PrintDirective::kHardLine);
           A(seq, PrintDirective::kHardLine);
