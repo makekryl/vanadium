@@ -1,17 +1,18 @@
+#include "vanadium/hostc/RuntimeInternals.h"
+
 #include <vector>
 
-#include "vanadium/runtime/RuntimeInternals.h"
-#include "vanadium/runtime/runtime.h"
+#include <vanadium/runtime/runtime.h>
 
 namespace {
 std::vector<const vrt_module_t*> registered_mods;
 }
 
-namespace vanadium::rt {
+namespace vanadium::hostc {
 std::span<const vrt_module_t* const> GetModules() {
   return registered_mods;
 }
-}  // namespace vanadium::rt
+}  // namespace vanadium::hostc
 
 void vrt_register_module(const vrt_module_t* m) {
   registered_mods.push_back(m);

@@ -26,7 +26,7 @@ void* AllocArray(const vrt_typeinfo_t* ty, list_size_t len) {
 inline void* ElementAt(vrt_list_t* l, list_size_t i) {
   return static_cast<std::byte*>(l->data) + (i * l->etype->size);
 }
-inline void* ElementAt(const vrt_list_t* l, list_size_t i) {
+inline const void* ElementAt(const vrt_list_t* l, list_size_t i) {
   return ElementAt(const_cast<vrt_list_t*>(l), i);
 }
 
