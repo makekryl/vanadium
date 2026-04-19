@@ -1,9 +1,12 @@
+find_package(LLVM REQUIRED CONFIG)
+
 add_executable(vanadiumc
   src/Vanadiumc.cpp
 )
 
 target_include_directories(vanadiumc PRIVATE
   include
+  ${LLVM_INCLUDE_DIRS}
 )
 
 target_link_libraries(vanadiumc PRIVATE

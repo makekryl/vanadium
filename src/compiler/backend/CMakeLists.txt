@@ -36,6 +36,7 @@ llvm_map_components_to_libnames(llvm_libs
 )
 target_link_libraries(vanadium_compiler PRIVATE
   vanadium_lib_common
+  vanadium_lib_concurrency
   vanadium_core
 
   ${llvm_libs}

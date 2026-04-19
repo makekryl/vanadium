@@ -1,6 +1,10 @@
 #include <fstream>
+#include <print>
 
 #include <argparse/argparse.hpp>
+
+#include <llvm/IR/Module.h>
+#include <llvm/Support/raw_ostream.h>
 
 #include <vanadium/bin/Bootstrap.h>
 #include <vanadium/compiler/Compiler.h>
@@ -43,7 +47,13 @@ int main(int argc, char* argv[]) {
   assert(sf->type_errors.empty());
   assert(sf->module.has_value());
 
-  vanadium::compiler::CompileIR(*sf, {.debug = use_debug});
+  vanadium::compiler::Compile(program, {.debug = use_debug},
+                              [&](const vanadium::core::SourceFile& sf, llvm::Module& mod) {
+                                std::println("Compiled '{}'", sf.path);
+                                std::error_code ec;
+                                llvm::raw_fd_ostream dest(std::format("{}.ll", sf.path), ec);
+                                mod.print(dest, nullptr);
+                              });
 
   return 0;
 }

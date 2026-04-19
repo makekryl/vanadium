@@ -25,8 +25,9 @@ DebugInfo::DebugInfo(CodegenUnit& u)
       // TODO: provide vanadiumc ver
       unit{builder.createCompileUnit(llvm::dwarf::DW_LANG_C, file, "vanadiumc", false, "", 0)} {}
 
-CodegenUnit::CodegenUnit(const core::SourceFile& sf_, bool debug)
+CodegenUnit::CodegenUnit(llvm::LLVMContext& ctx_, const core::SourceFile& sf_, bool debug)
     : sf(sf_),
+      ctx(ctx_),
       builder{ctx},
       mod{sf.module->name, ctx},
       debug_info_(debug ? decltype(debug_info_){*this} : std::nullopt),

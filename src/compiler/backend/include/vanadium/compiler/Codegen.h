@@ -2,7 +2,6 @@
 
 #include <optional>
 #include <string_view>
-#include <variant>
 
 #include <llvm/IR/DIBuilder.h>
 #include <llvm/IR/DebugInfoMetadata.h>
@@ -34,11 +33,11 @@ struct DebugInfo {
 };
 
 struct CodegenUnit {
-  CodegenUnit(const core::SourceFile& sf_, bool debug);
+  CodegenUnit(llvm::LLVMContext&, const core::SourceFile&, bool debug);
 
   const core::SourceFile& sf;
 
-  llvm::LLVMContext ctx;
+  llvm::LLVMContext& ctx;
   llvm::IRBuilder<> builder;
   llvm::Module mod;
 
