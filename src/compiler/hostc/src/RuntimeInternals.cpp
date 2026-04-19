@@ -1,5 +1,6 @@
 #include "vanadium/hostc/RuntimeInternals.h"
 
+#include <print>
 #include <vector>
 
 #include <vanadium/runtime/runtime.h>
@@ -16,4 +17,9 @@ std::span<const vrt_module_t* const> GetModules() {
 
 void vrt_register_module(const vrt_module_t* m) {
   registered_mods.push_back(m);
+}
+
+void vrt_log_write(const char* s) {
+  std::println("LOG :: {}", s);
+  std::fflush(stdout);
 }

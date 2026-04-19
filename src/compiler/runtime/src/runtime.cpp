@@ -130,8 +130,3 @@ void vrt_log(const vrt_val_t* args, std::uint32_t n) {
   }
   vrt_log_write(buf.c_str());
 }
-
-void vrt_log_write(const char* s) {
-  std::println("LOG :: {}", s);
-  std::fflush(stdout);
-}
