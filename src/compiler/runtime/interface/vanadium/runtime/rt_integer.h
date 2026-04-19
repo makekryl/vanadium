@@ -13,6 +13,10 @@ struct vrt_int_t {
   bool is_bound;
 };
 
+inline vrt_int_t vrt_int_wrap(vrt_native_int_t v) {
+  return {.value = v, .is_bound = true};
+}
+
 extern "C" {
 //
 

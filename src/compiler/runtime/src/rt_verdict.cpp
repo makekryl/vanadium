@@ -5,7 +5,7 @@
 #include "vanadium/runtime/runtime.hpp"
 
 namespace {
-vrt_verdicttype g_verdict;
+vrt_verdicttype g_verdict{vrt_verdicttype::none};
 }  // namespace
 
 // ES 201 873-1 [TTCN-3: Core Language], par. 24.1

@@ -33,13 +33,13 @@ struct DebugInfo {
 };
 
 struct CodegenUnit {
-  CodegenUnit(llvm::LLVMContext&, const core::SourceFile&, bool debug);
+  CodegenUnit(llvm::Module&, const core::SourceFile&, bool debug);
 
   const core::SourceFile& sf;
 
   llvm::LLVMContext& ctx;
   llvm::IRBuilder<> builder;
-  llvm::Module mod;
+  llvm::Module& mod;
 
  private:
   std::optional<DebugInfo> debug_info_;

@@ -6,6 +6,7 @@ target_link_libraries(vanadium_e2e_format PRIVATE
   GTest::gtest
   vanadium_e2e_runner
   vanadium_lib_testing
+
   vanadium_format
 )
 

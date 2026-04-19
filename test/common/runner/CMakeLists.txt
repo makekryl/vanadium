@@ -9,6 +9,8 @@ target_include_directories(vanadium_e2e_runner PUBLIC
 target_link_libraries(vanadium_e2e_runner PRIVATE
   GTest::gtest
   vanadium_lib_testing
+
   vanadium_core
+
   magic_enum
 )

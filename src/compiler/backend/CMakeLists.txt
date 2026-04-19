@@ -1,7 +1,4 @@
-find_package(LLVM REQUIRED CONFIG)
-
-message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
-message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
+find_package(LLVM REQUIRED CONFIG QUIET)
 
 add_library(vanadium_compiler STATIC
   src/Compiler.cpp

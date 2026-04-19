@@ -1,7 +1,7 @@
 #include "vanadium/compiler/Compiler.h"
 
 #include <cassert>
-#include <format>
+#include <filesystem>
 #include <ranges>
 
 #include <llvm/IR/LLVMContext.h>
@@ -20,6 +20,8 @@ namespace vanadium::compiler {
 
 namespace {
 void CompileUnit(CodegenUnit& u) {
+  u.mod.setSourceFileName(std::filesystem::path(u.sf.path).filename().string());
+
   const auto symbols = [&](core::semantic::SymbolFlags::Value mask) {
     return u.sf.module->scope->symbols.Enumerate() | std::views::values | std::views::filter([mask](const auto& sym) {
              return bool(sym.Flags() & mask);
@@ -45,13 +47,18 @@ void CompileUnit(CodegenUnit& u) {
 }
 }  // namespace
 
+void Compile(const core::SourceFile& sf, const CompileOptions& opts, llvm::Module& mod) {
+  CodegenUnit u(mod, sf, opts.debug);
+  CompileUnit(u);
+}
+
 void Compile(const core::Program& program, const CompileOptions& opts,
              lib::Consumer<const core::SourceFile&, llvm::Module&> accept) {
   lib::concurrency::ThreadSpecific<llvm::LLVMContext> llvm_ctx;
   lib::concurrency::ParallelFor(program.Files() | std::views::values, [&](const core::SourceFile& sf) {
-    CodegenUnit u(llvm_ctx.Local(), sf, opts.debug);
-    CompileUnit(u);
-    accept(u.sf, u.mod);
+    llvm::Module mod(sf.module->name, llvm_ctx.Local());
+    Compile(sf, opts, mod);
+    accept(sf, mod);
   });
 }
 
