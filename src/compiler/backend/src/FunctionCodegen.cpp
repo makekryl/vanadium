@@ -603,6 +603,33 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
       return nullptr;
     }
 
+    case ast::NodeKind::IndexExpr: {
+      const auto* m = expr->As<ast::nodes::IndexExpr>();
+
+      auto* vx = CodegenExpr(m->x);
+      auto* vidx = CodegenExpr(m->index);
+
+      // TODO: remove all FindScope in FunctionCodegen
+      const auto* xsym =
+          core::checker::ResolveExprType(&u_.sf, core::semantic::utils::FindScope(u_.sf.module->scope, m), m->x).sym;
+
+      if (xsym->Flags() & core::semantic::SymbolFlags::kBuiltinString) {
+        const StringTypeBindings* strb = u_.GetStringTypeBindings(xsym);
+        VANADIUM_DEBUG_ASSERT(strb, "Unhandled string type");
+
+        auto* out = dest ? dest : scope_->AllocTemp(xsym);
+        u_.builder.CreateCall(strb->singular_f, {
+                                                    out,
+                                                    vx,
+                                                    u_.UnwrapValue(vidx),
+                                                });
+        return out;
+      }
+
+      VANADIUM_DEBUG_ERROR("Unhandled IndexExpr type");
+      return nullptr;
+    }
+
     case ast::NodeKind::SelectorExpr: {
       const auto* m = expr->As<ast::nodes::SelectorExpr>();
 
