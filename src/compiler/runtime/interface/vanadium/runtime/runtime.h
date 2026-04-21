@@ -12,14 +12,6 @@
 
 // NOLINTBEGIN(readability-identifier-naming)
 
-enum class vrt_verdicttype_t : std::uint8_t {
-  kNone,
-  kPass,
-  kInconc,
-  kFail,
-  kError,
-};
-
 extern "C" {
 //
 
