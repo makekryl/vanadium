@@ -1,0 +1,165 @@
+module Octetstring {
+
+testcase eq() {
+  if ('44B0BA'O == '00B0BA'O) {
+    setverdict(fail);
+  }
+
+  var octetstring os1 := '44B0BA'O;
+  var octetstring os2 := '00B0BA'O;
+  if (os1 == os2) {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+
+testcase neq() {
+  if ('44B0BA'O != '44B0BA'O) {
+    setverdict(fail);
+  }
+
+  var octetstring os1 := '44B0BA'O;
+  var octetstring os2 := '44B0BA'O;
+  if (os1 != os2) {
+    setverdict(fail);
+  }
+  if (os1 != os1) {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+
+testcase concat() {
+  var octetstring os := '44B0BA'O;
+  os := os & '00B0BA'O;
+  if (os != '44B0BA00B0BA'O) {
+    setverdict(fail);
+  }
+
+  os := os & '55'O & os;
+  if (os != '44B0BA00B0BA5544B0BA00B0BA'O) {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+
+///
+
+testcase rotl_1() {
+  if (('ABCDEF'O @> 1) != 'EFABCD'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_2() {
+  if (('ABCDEF'O @> 2) != 'CDEFAB'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_3() {
+  if (('ABCDEF'O @> 3) != 'ABCDEF'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_13() {
+  if (('ABCDEF'O @> 13) != 'EFABCD'O) { setverdict(fail); }
+  setverdict(pass);
+}
+//
+testcase rotl_neg_1() {
+  if (('ABCDEF'O @> -1) != 'CDEFAB'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_neg_2() {
+  if (('ABCDEF'O @> -2) != 'EFABCD'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_neg_3() {
+  if (('ABCDEF'O @> -3) != 'ABCDEF'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_neg_13() {
+  if (('ABCDEF'O @> -13) != 'CDEFAB'O) { setverdict(fail); }
+  setverdict(pass);
+}
+//
+testcase rotl_empty() {
+  if ((''O @> 42) != ''O) { setverdict(fail); }
+  setverdict(pass);
+}
+
+///
+
+testcase rotr_1() {
+  if (('ABCDEF'O <@ 1) != 'CDEFAB'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_2() {
+  if (('ABCDEF'O <@ 2) != 'EFABCD'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_3() {
+  if (('ABCDEF'O <@ 3) != 'ABCDEF'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_13() {
+  if (('ABCDEF'O <@ 13) != 'CDEFAB'O) { setverdict(fail); }
+  setverdict(pass);
+}
+//
+testcase rotr_neg_1() {
+  if (('ABCDEF'O <@ -1) != 'EFABCD'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_neg_2() {
+  if (('ABCDEF'O <@ -2) != 'CDEFAB'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_neg_3() {
+  if (('ABCDEF'O <@ -3) != 'ABCDEF'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_neg_13() {
+  if (('ABCDEF'O <@ -13) != 'EFABCD'O) { setverdict(fail); }
+  setverdict(pass);
+}
+//
+testcase rotl_empty() {
+  if ((''O <@ 42) != ''O) { setverdict(fail); }
+  setverdict(pass);
+}
+
+///
+
+testcase concat_large() {
+  var octetstring os := ''O;
+  os := os & '55'O;
+  os := os & 'AB'O;
+  os := os & 'AB'O;
+  os := os & '12'O;
+  os := os & '34'O;
+  os := os & 'AB'O;
+  os := os & 'AB'O;
+  os := os & 'AB'O;
+  os := os & 'AB'O;
+  os := os & 'AB'O;
+  os := os & 'AB'O;
+  os := os & 'AB'O;
+  os := os & 'AB'O;
+  os := os & 'AB'O;
+  os := os & 'AB'O;
+  os := os & 'AB'O;
+  os := os & 'AB'O;
+  os := os & '12'O;
+  os := os & '34'O;
+  os := os & 'AB'O;
+  os := os & 'AB'O;
+  os := os & '55'O;
+
+  if (os != '55ABAB1234ABABABABABABABABABABABAB1234ABAB55'O) {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+
+}

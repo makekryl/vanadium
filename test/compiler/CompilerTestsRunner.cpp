@@ -96,6 +96,7 @@ void VerdictTest::TestBody() {
     logged_lines.clear();
 
     std::println(" . {}", (*tc)->name);
+    std::fflush(stdout);
     try {
       (*tc)->fn();
     } catch (const std::runtime_error& err) {

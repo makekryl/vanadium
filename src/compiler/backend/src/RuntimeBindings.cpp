@@ -26,7 +26,8 @@ llvm::Value* MakeBoundValW(llvm::IRBuilder<>& builder, llvm::Type* ty, llvm::Val
   return result;
 }
 
-using SpecificOperationGenerator = llvm::Value* (*)(llvm::IRBuilder<>&, llvm::Type*, llvm::Value*, llvm::Value*);
+using SpecificBinaryOperationGenerator = llvm::Value* (*)(llvm::IRBuilder<>&, llvm::Type*, llvm::Value*, llvm::Value*);
+using SpecificUnaryOperationGenerator = llvm::Value* (*)(llvm::IRBuilder<>&, llvm::Type*, llvm::Value*);
 #define BLD_BINOP_TO_BOOL(op)                                                                      \
   ([](llvm::IRBuilder<>& builder, llvm::Type*, llvm::Value* va, llvm::Value* vb) -> llvm::Value* { \
     return builder.op(va, vb);                                                                     \
@@ -63,8 +64,8 @@ void GenerateAssertIsBound(RuntimeBindings& rt, llvm::LLVMContext& ctx, llvm::Fu
   builder.CreateRetVoid();
 }
 
-void GenerateGenericBinaryIntegerOperation(llvm::LLVMContext& ctx, llvm::Function* fn, SpecificOperationGenerator gen,
-                                           llvm::Function* assert_is_bound_fn) {
+void GenerateGenericBinaryNumericOperation(llvm::LLVMContext& ctx, llvm::Function* fn,
+                                           llvm::Function* assert_is_bound_fn, SpecificBinaryOperationGenerator gen) {
   llvm::IRBuilder<> builder(ctx);
 
   auto* bb_entry = llvm::BasicBlock::Create(ctx, "", fn);
@@ -85,6 +86,27 @@ void GenerateGenericBinaryIntegerOperation(llvm::LLVMContext& ctx, llvm::Functio
   llvm::Value* b_val = builder.CreateExtractValue(b, 0);
   //
   builder.CreateRet(gen(builder, a->getType(), a_val, b_val));
+}
+
+void GenerateGenericUnaryNumericOperation(llvm::LLVMContext& ctx, llvm::Function* fn,
+                                          llvm::Function* assert_is_bound_fn, SpecificUnaryOperationGenerator gen) {
+  llvm::IRBuilder<> builder(ctx);
+
+  auto* bb_entry = llvm::BasicBlock::Create(ctx, "", fn);
+
+  //
+  auto* arg_it = fn->arg_begin();
+  llvm::Value* a = arg_it++;
+  //
+
+  builder.SetInsertPoint(bb_entry);
+
+  builder.CreateCall(assert_is_bound_fn, {a});
+
+  //
+  llvm::Value* a_val = builder.CreateExtractValue(a, 0);
+  //
+  builder.CreateRet(gen(builder, a->getType(), a_val));
 }
 
 void GenerateBoxedUnwrapFn(llvm::LLVMContext& ctx, llvm::Function* fn, llvm::Function* assert_is_bound_fn,
@@ -139,7 +161,8 @@ RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ct
     return f;
   };
 
-  using ArithmeticOpIntl = std::tuple<llvm::Function*&, llvm::Type*, std::string_view, SpecificOperationGenerator>;
+  using ArithmeticOpIntl =
+      std::tuple<llvm::Function*&, llvm::Type*, std::string_view, SpecificBinaryOperationGenerator>;
   auto* const nbool_ty = builder.getInt1Ty();
 
   panic = llvm::Function::Create(llvm::FunctionType::get(builder.getVoidTy(), {builder.getPtrTy()}, false),
@@ -242,8 +265,13 @@ RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ct
            ArithmeticOpIntl(integer.div_f, integer.ty, "__vrt_int_div", BLD_BINOP_TO_VAL(MakeBoundValW, CreateSDiv)),
        }) {
     fptr = declare_embedded_fn(fname, result_ty, {integer.ty, integer.ty});
-    GenerateGenericBinaryIntegerOperation(ctx, fptr, fnativeb, int_assert_is_bound_fn);
+    GenerateGenericBinaryNumericOperation(ctx, fptr, int_assert_is_bound_fn, fnativeb);
   }
+  integer.neg_f = declare_embedded_fn("__vrt_int_neg", integer.ty, {integer.ty});
+  GenerateGenericUnaryNumericOperation(ctx, integer.neg_f, int_assert_is_bound_fn,
+                                       [](llvm::IRBuilder<>& builder, llvm::Type* ty, llvm::Value* va) -> llvm::Value* {
+                                         return MakeBoundValW(builder, ty, builder.CreateNeg(va));
+                                       });
 
   floatt.ty = llvm::StructType::create(ctx, "vrt_float_t");
   floatt.ty->setBody({
@@ -282,8 +310,13 @@ RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ct
            ArithmeticOpIntl(floatt.div_f, floatt.ty, "__vrt_float_div", BLD_BINOP_TO_VAL(MakeBoundValW, CreateFDiv)),
        }) {
     fptr = declare_embedded_fn(fname, result_ty, {floatt.ty, floatt.ty});
-    GenerateGenericBinaryIntegerOperation(ctx, fptr, fnativeb, int_assert_is_bound_fn);
+    GenerateGenericBinaryNumericOperation(ctx, fptr, float_assert_is_bound_fn, fnativeb);
   }
+  floatt.neg_f = declare_embedded_fn("__vrt_float_neg", floatt.ty, {floatt.ty});
+  GenerateGenericUnaryNumericOperation(ctx, floatt.neg_f, float_assert_is_bound_fn,
+                                       [](llvm::IRBuilder<>& builder, llvm::Type* ty, llvm::Value* va) -> llvm::Value* {
+                                         return MakeBoundValW(builder, ty, builder.CreateFNeg(va));
+                                       });
 
   boolt.ty = llvm::StructType::create(ctx, "vrt_bool_t");
   boolt.ty->setBody({

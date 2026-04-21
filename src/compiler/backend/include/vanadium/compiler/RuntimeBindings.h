@@ -30,6 +30,8 @@ struct NumericTypeBindings {
   llvm::Function* gt_f;
   llvm::Function* ge_f;
   //
+  llvm::Function* neg_f;
+  //
   llvm::Function* add_f;
   llvm::Function* sub_f;
   llvm::Function* mul_f;

@@ -172,10 +172,9 @@ void PerformShift(S* dst, const S* s, std::int64_t n, auto do_shift, auto do_shi
   PerformGenericShiftOperation(dst, s, n, [&](auto* buf, auto len) {
     const auto* srcbuf = GetCBuf(s);
     if (n < 0) {
-      do_shift_inv(srcbuf, buf, len, -n);
+      do_shift_inv(srcbuf, buf, len, std::min<std::int64_t>(-n, len));
     } else {
-      n = std::min<std::int64_t>(n, len);
-      do_shift(srcbuf, buf, len, n % len);
+      do_shift(srcbuf, buf, len, std::min<std::int64_t>(n, len));
     }
   });
 }
@@ -185,9 +184,8 @@ void PerformRotate(S* dst, const S* s, std::int64_t n, auto do_rotate, auto do_r
   PerformGenericShiftOperation(dst, s, n, [&](auto* buf, auto len) {
     const auto* srcbuf = GetCBuf(s);
     if (n < 0) {
-      do_rotate_inv(srcbuf, buf, len, -n);
+      do_rotate_inv(srcbuf, buf, len, (-n) % len);
     } else {
-      n %= len;
       do_rotate(srcbuf, buf, len, n % len);
     }
   });

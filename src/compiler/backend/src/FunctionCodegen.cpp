@@ -870,7 +870,7 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
         vx = promote_trivial(u_.rt.integer.ty, vx);
         switch (m->op.kind) {
           case ast::TokenKind::SUB:
-            return u_.builder.CreateCall(u_.rt.integer.ne_f, {vx});
+            return u_.builder.CreateCall(u_.rt.integer.neg_f, {vx});
           default:
             VANADIUM_DEBUG_ERROR("Unhandled UnaryExpr int op = {}", magic_enum::enum_name(m->op.kind));
             break;
@@ -879,7 +879,7 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
         vx = promote_trivial(u_.rt.floatt.ty, vx);
         switch (m->op.kind) {
           case ast::TokenKind::SUB:
-            return u_.builder.CreateCall(u_.rt.floatt.ne_f, {vx});
+            return u_.builder.CreateCall(u_.rt.floatt.neg_f, {vx});
           default:
             VANADIUM_DEBUG_ERROR("Unhandled UnaryExpr int op = {}", magic_enum::enum_name(m->op.kind));
             break;

@@ -16,8 +16,8 @@ int main(int argc, char* argv[]) {
 
   const auto& modules = hostc::GetModules();
   for (const auto& mod : modules) {
-    std::println("Test case {} started.", mod->name);
     for (vrt_testcase_t** t = mod->testcases; *t; t++) {
+      std::println("Test case {} started.", (*t)->name);
       vrt_clearverdict();
       std::println(" | - {}", (*t)->name);
       try {

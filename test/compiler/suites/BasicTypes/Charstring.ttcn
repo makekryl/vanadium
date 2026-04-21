@@ -57,16 +57,30 @@ testcase rotl_2() {
   setverdict(pass);
 }
 testcase rotl_3() {
-  if (("ABCDEF" @> 3) != "DEFABC") {
-    setverdict(fail);
-  }
+  if (("ABCDEF" @> 3) != "DEFABC") { setverdict(fail); }
   setverdict(pass);
 }
 testcase rotl_12() {
   // lengthof("ABCDEF") == 12
-  if (("ABCDEF" @> 12) != "ABCDEF") {
-    setverdict(fail);
-  }
+  if (("ABCDEF" @> 12) != "ABCDEF") { setverdict(fail); }
+  setverdict(pass);
+}
+//
+testcase rotl_neg_1() {
+  if (("ABCDEF" @> -1) != "BCDEFA") { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_neg_2() {
+  if (("ABCDEF" @> -2) != "CDEFAB") { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_neg_3() {
+  if (("ABCDEF" @> -3) != "DEFABC") { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_neg_12() {
+  // lengthof("ABCDEF") == 12
+  if (("ABCDEF" @> -12) != "ABCDEF") { setverdict(fail); }
   setverdict(pass);
 }
 //
@@ -86,21 +100,69 @@ testcase rotr_2() {
   setverdict(pass);
 }
 testcase rotr_3() {
-  if (("ABCDEF" <@ 3) != "DEFABC") {
-    setverdict(fail);
-  }
+  if (("ABCDEF" <@ 3) != "DEFABC") { setverdict(fail); }
   setverdict(pass);
 }
 testcase rotr_12() {
   // lengthof("ABCDEF") == 12
-  if (("ABCDEF" <@ 12) != "ABCDEF") {
-    setverdict(fail);
-  }
+  if (("ABCDEF" <@ 12) != "ABCDEF") { setverdict(fail); }
+  setverdict(pass);
+}
+//
+testcase rotr_neg_1() {
+  if (("ABCDEF" <@ -1) != "FABCDE") { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_neg_2() {
+  if (("ABCDEF" <@ -2) != "EFABCD") { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_neg_3() {
+  if (("ABCDEF" <@ -3) != "DEFABC") { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_neg_12() {
+  // lengthof("ABCDEF") == 12
+  if (("ABCDEF" <@ -12) != "ABCDEF") { setverdict(fail); }
   setverdict(pass);
 }
 //
 testcase rotl_empty() {
   if (("" <@ 42) != "") { setverdict(fail); }
+  setverdict(pass);
+}
+
+///
+
+testcase concat_large() {
+  var charstring cs := "";
+  cs := cs & "_";
+  cs := cs & "AB";
+  cs := cs & "AB";
+  cs := cs & "12";
+  cs := cs & "34";
+  cs := cs & "AB";
+  cs := cs & "AB";
+  cs := cs & "AB";
+  cs := cs & "AB";
+  cs := cs & "AB";
+  cs := cs & "AB";
+  cs := cs & "AB";
+  cs := cs & "AB";
+  cs := cs & "AB";
+  cs := cs & "AB";
+  cs := cs & "AB";
+  cs := cs & "AB";
+  cs := cs & "12";
+  cs := cs & "34";
+  cs := cs & "AB";
+  cs := cs & "AB";
+  cs := cs & "_";
+
+  if (cs != "_ABAB1234ABABABABABABABABABABABAB1234ABAB_") {
+    setverdict(fail);
+  }
+
   setverdict(pass);
 }
 
