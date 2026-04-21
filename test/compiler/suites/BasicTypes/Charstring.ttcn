@@ -1,0 +1,107 @@
+module Charstring {
+
+testcase eq() {
+  if ("Hello" == "Hallo") {
+    setverdict(fail);
+  }
+
+  var charstring cs1 := "Hello";
+  var charstring cs2 := "Hallo";
+  if (cs1 == cs2) {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+
+testcase neq() {
+  if ("Hello" != "Hello") {
+    setverdict(fail);
+  }
+
+  var charstring cs1 := "Hello";
+  var charstring cs2 := "Hello";
+  if (cs1 != cs2) {
+    setverdict(fail);
+  }
+  if (cs1 != cs1) {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+
+testcase concat() {
+  var charstring cs := "Hello";
+  cs := cs & " World";
+  if (cs != "Hello World") {
+    setverdict(fail);
+  }
+
+  cs := cs & " " & cs;
+  if (cs != "Hello World Hello World") {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+
+///
+
+testcase rotl_1() {
+  if (("ABCDEF" @> 1) != "FABCDE") { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_2() {
+  if (("ABCDEF" @> 2) != "EFABCD") { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_3() {
+  if (("ABCDEF" @> 3) != "DEFABC") {
+    setverdict(fail);
+  }
+  setverdict(pass);
+}
+testcase rotl_12() {
+  // lengthof("ABCDEF") == 12
+  if (("ABCDEF" @> 12) != "ABCDEF") {
+    setverdict(fail);
+  }
+  setverdict(pass);
+}
+//
+testcase rotl_empty() {
+  if (("" @> 42) != "") { setverdict(fail); }
+  setverdict(pass);
+}
+
+///
+
+testcase rotr_1() {
+  if (("ABCDEF" <@ 1) != "BCDEFA") { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_2() {
+  if (("ABCDEF" <@ 2) != "CDEFAB") { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_3() {
+  if (("ABCDEF" <@ 3) != "DEFABC") {
+    setverdict(fail);
+  }
+  setverdict(pass);
+}
+testcase rotr_12() {
+  // lengthof("ABCDEF") == 12
+  if (("ABCDEF" <@ 12) != "ABCDEF") {
+    setverdict(fail);
+  }
+  setverdict(pass);
+}
+//
+testcase rotl_empty() {
+  if (("" <@ 42) != "") { setverdict(fail); }
+  setverdict(pass);
+}
+
+}

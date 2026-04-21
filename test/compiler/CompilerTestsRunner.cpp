@@ -95,6 +95,7 @@ void VerdictTest::TestBody() {
     vrt_clearverdict();
     logged_lines.clear();
 
+    std::println(" . {}", (*tc)->name);
     try {
       (*tc)->fn();
     } catch (const std::runtime_error& err) {
@@ -105,7 +106,6 @@ void VerdictTest::TestBody() {
 
     const auto verdict = vrt_getverdict();
     if (verdict == vrt_verdicttype::pass) {
-      std::println("OK: {}", (*tc)->name);
       continue;
     }
 

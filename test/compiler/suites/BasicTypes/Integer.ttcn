@@ -1,6 +1,12 @@
 module Integer {
 
-testcase tc1() {
+// TODO: register function like expect(boolean, msg) for compiler e2e
+
+testcase ne() {
+  if (5 != 5) {
+    setverdict(fail);
+  }
+
   setverdict(pass);
 }
 

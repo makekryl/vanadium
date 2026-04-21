@@ -1,0 +1,17 @@
+module ForLoops {
+
+testcase tc() {
+  var integer x := 0;
+
+  for (var integer i := 0; i < 5; i := i + 1) {
+    x := x + 1;
+  }
+
+  if (x != 5) {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+
+}

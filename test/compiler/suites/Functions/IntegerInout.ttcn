@@ -1,0 +1,18 @@
+module IntegerInout {
+
+function f_mul(inout integer x, in integer n) {
+  x := x * n;
+}
+
+testcase tc() {
+  var integer i := 2;
+  f_mul(i, 5);
+
+  if (i != 10) {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+
+}
