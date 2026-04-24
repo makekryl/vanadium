@@ -1,5 +1,3 @@
 add_subdirectory(asn1c_libasn1parser)
 add_subdirectory(asn1c_astwrapper)
 add_subdirectory(ast_transformer)
-
-add_subdirectory(xast)
