@@ -651,36 +651,7 @@ bool Binder::Inspect(const ast::Node* n) {
       }
 
       if (m->ret) {
-        const auto all_paths_return = [](this auto&& self, const ast::nodes::Stmt* stmt) -> bool {
-          switch (stmt->nkind) {
-            case ast::NodeKind::ReturnStmt:
-              return true;
-            case ast::NodeKind::BlockStmt: {
-              const auto* sm = stmt->As<ast::nodes::BlockStmt>();
-              return !sm->stmts.empty() && self(sm->stmts.back());
-            }
-            case ast::NodeKind::IfStmt: {
-              const auto* sm = stmt->As<ast::nodes::IfStmt>();
-              return sm->alternate && self(sm->consequent) && self(sm->alternate);
-            }
-            case ast::NodeKind::SelectStmt: {
-              const auto* sm = stmt->As<ast::nodes::SelectStmt>();
-              bool has_default{false};
-              for (const auto* clause : sm->clauses) {
-                if (!self(clause->body)) {
-                  return false;
-                }
-                if (clause->cond.empty()) {
-                  has_default = true;
-                }
-              }
-              return has_default;
-            }
-            default:
-              return false;
-          }
-        };
-        if (m->body && !all_paths_return(m->body)) {
+        if (m->body && !ast::utils::AllPathsReturn(m->body)) {
           EmitError(SemanticError{
               .range = m->ret->nrange,
               .type = SemanticError::Type::kNotAllControlPathsReturnAValue,
@@ -1038,14 +1009,31 @@ bool Binder::Inspect(const ast::Node* n) {
     case ast::NodeKind::DynamicExpr: {
       const auto* m = n->As<ast::nodes::DynamicExpr>();
 
-      Scoped(m, [&] {
-        AddSymbol({
-            "value",
-            m->parent->As<ast::nodes::TemplateDecl>()->type,
-            SymbolFlags::kVariable,
+      if (m->body->nkind == ast::NodeKind::BlockStmt) {
+        if (!ast::utils::AllPathsReturn(m->body)) {
+          EmitError(SemanticError{
+              .range = {.begin = m->body->nrange.end - 1, .end = m->body->nrange.end},
+              .type = SemanticError::Type::kNotAllControlPathsReturnAValue,
+          });
+        }
+
+        auto* type = const_cast<ast::nodes::Expr*>(m->parent->As<ast::nodes::TemplateDecl>()->type);
+        auto* pseudoarg = sf_.arena.Alloc<ast::nodes::FormalPar>();
+        pseudoarg->parent = const_cast<ast::nodes::DynamicExpr*>(m);
+        pseudoarg->nrange = type->nrange;
+        pseudoarg->type = type;
+        pseudoarg->name.emplace();
+        pseudoarg->name->nrange = {};
+        pseudoarg->name->parent = pseudoarg;
+        Scoped(m, [&] {
+          AddSymbol({
+              "value",
+              pseudoarg,
+              SymbolFlags::Value(SymbolFlags::kArgument | SymbolFlags::kAnonymous),
+          });
+          Visit(m->body);
         });
-        Visit(m->body);
-      });
+      }
 
       return false;
     }

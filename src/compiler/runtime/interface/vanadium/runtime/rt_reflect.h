@@ -32,6 +32,7 @@ struct vrt_struct_member_t;
 struct vrt_typeinfo_t {
   const char* name;
   vrt_typekind_e kind;
+  bool is_template{false};
   std::size_t size;
 
   const vrt_struct_member_t** members;
@@ -39,7 +40,11 @@ struct vrt_typeinfo_t {
   void (*construct)(void*);
   void (*destruct)(void*);
   void (*copy)(void*, const void*);
+
+  const vrt_typeinfo_t* counterpart;
 };
+
+using vrt_valuelist_size_t = std::uint8_t;
 
 struct vrt_val_t {
   void* p;
@@ -49,6 +54,7 @@ struct vrt_val_t {
 struct vrt_struct_member_t {
   const char* name;
   const vrt_typeinfo_t* type;
+  // TODO: offset
 };
 
 struct vrt_testcase_t {
@@ -63,10 +69,18 @@ struct vrt_module_t {
   bool has_control_block;
 };
 
+struct vrt_dynmatcher_t {
+  void* ctx;
+  bool (*match)(const void* ctx, const void* obj);
+};
+
 extern "C" {
 //
 
 void vrt_register_module(const vrt_module_t*);
+
+bool vrt_dynmatcher_invoke(const vrt_dynmatcher_t*, const void*);
+void vrt_dynmatcher_free(const vrt_dynmatcher_t*);
 
 //
 }

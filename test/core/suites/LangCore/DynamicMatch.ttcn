@@ -1,0 +1,66 @@
+module DynamicMatch {
+
+template integer t_int_is_five := @dynamic {
+  return value == 5;
+}
+
+template integer t_int_is_five_bad_ret_int := @dynamic {
+  return value;  // EXPECT_ERROR
+}
+
+template integer t_int_is_five_bad_ret_cs := @dynamic {
+  return "12345";  // EXPECT_ERROR
+}
+
+
+type record MyRecord {
+  integer x,
+  integer y
+}
+
+template MyRecord t_MyRecord_member_access := @dynamic {
+  log(value.x);
+  log(value.a);  // EXPECT_ERROR
+  log(value.y);
+  log(value.b);  // EXPECT_ERROR
+  return true;
+}
+
+
+function pred_MyRecord(MyRecord r) return boolean {
+  return true;
+}
+
+template MyRecord t_MyRecord_function_bound := @dynamic pred_MyRecord;
+
+template MyRecord t_MyRecord_implication := t_MyRecord_member_access implies @dynamic pred_MyRecord;
+
+template MyRecord t_MyRecord_parametrized(integer ex, integer ey) := @dynamic {
+  return match(value.x, ex) and match(value.y, ey);
+}
+
+
+function pred_bad_returns_non_bool(MyRecord r) return charstring {
+  return "";
+}
+template MyRecord t_MyRecord_bad_cs := @dynamic pred_bad_returns_non_bool;  // EXPECT_ERROR
+
+
+function pred_bad_no_args() return boolean {
+  return true;
+}
+template MyRecord t_MyRecord_no_args := @dynamic pred_bad_no_args;  // EXPECT_ERROR
+
+
+function pred_bad_too_many_args(MyRecord r, MyRecord r2) return boolean {
+  return true;
+}
+template MyRecord t_MyRecord_too_many_args := @dynamic pred_bad_too_many_args;  // EXPECT_ERROR
+
+
+function pred_bad_wrong_arg(integer i) return boolean {
+  return true;
+}
+template MyRecord t_MyRecord_wrong_arg := @dynamic pred_bad_wrong_arg;  // EXPECT_ERROR
+
+}

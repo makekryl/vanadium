@@ -22,6 +22,16 @@ inline const ConcreteNode* GetPredecessor(const Node* n) {
   return nullptr;
 }
 
+template <typename... ConcreteNodes>
+inline const Node* GetAnyPredecessor(const Node* n) {
+  for (const Node* c = n->parent; c != nullptr; c = c->parent) {
+    if (((c->nkind == ConcreteNodes::kKind) || ...)) {
+      return c;
+    }
+  }
+  return nullptr;
+}
+
 inline const nodes::Ident* GetEnumValueNamePart(const nodes::Expr* n) {
   switch (n->nkind) {
     case NodeKind::Ident:
@@ -149,6 +159,8 @@ inline TokenKind GetParamDirection(const nodes::FormalPar* param) {
 const Node* GetNodeAt(const AST& ast, pos_t pos);
 
 std::optional<Range> ExtractAttachedComment(const AST&, const Node*);
+
+bool AllPathsReturn(const nodes::Stmt*);
 
 }  // namespace utils
 }  // namespace vanadium::ast

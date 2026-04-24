@@ -1,0 +1,25 @@
+./DynamicMatch.ttcn:
+  8:10: expected value of type 'boolean', got 'integer'
+      return value;  // EXPECT_ERROR
+             ~~~~~                  
+  12:10: expected value of type 'boolean', got 'charstring'
+      return "12345";  // EXPECT_ERROR
+             ~~~~~~~                  
+  23:13: property 'a' does not exist on type 'record MyRecord'
+      log(value.a);  // EXPECT_ERROR
+                ~                   
+  25:13: property 'b' does not exist on type 'record MyRecord'
+      log(value.b);  // EXPECT_ERROR
+                ~                   
+  46:49: expected a predicate function that takes a value of type 'record MyRecord' as its only argument
+    template MyRecord t_MyRecord_bad_cs := @dynamic pred_bad_returns_non_bool;  // EXPECT_ERROR
+                                                    ~~~~~~~~~~~~~~~~~~~~~~~~~                  
+  52:50: expected a predicate function that takes a value of type 'record MyRecord' as its only argument
+    template MyRecord t_MyRecord_no_args := @dynamic pred_bad_no_args;  // EXPECT_ERROR
+                                                     ~~~~~~~~~~~~~~~~                  
+  58:56: expected a predicate function that takes a value of type 'record MyRecord' as its only argument
+    template MyRecord t_MyRecord_too_many_args := @dynamic pred_bad_too_many_args;  // EXPECT_ERROR
+                                                           ~~~~~~~~~~~~~~~~~~~~~~                  
+  64:52: expected a predicate function that takes a value of type 'record MyRecord' as its only argument
+    template MyRecord t_MyRecord_wrong_arg := @dynamic pred_bad_wrong_arg;  // EXPECT_ERROR
+                                                       ~~~~~~~~~~~~~~~~~~                  

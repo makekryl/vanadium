@@ -1,11 +1,11 @@
 #include "vanadium/runtime/runtime.h"
 
+#include <cassert>
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
 #include <format>
 #include <limits>
-#include <print>
 #include <stdexcept>
 #include <string>
 
@@ -129,4 +129,13 @@ void vrt_log(const vrt_val_t* args, std::uint32_t n) {
     buf += " ";
   }
   vrt_log_write(buf.c_str());
+}
+
+bool vrt_match(const vrt_typeinfo_t* ty, const void* obj, const void* tobj) {
+  // TODO: enum switch(ty->kind) should be faster?
+  if (ty == &integer_typeinfo) {
+    return vrt_int_template_match((const vrt_int_t*)obj, (const vrt_int_template_t*)tobj);
+  }
+  assert(false);
+  return false;
 }

@@ -1647,17 +1647,6 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, InstantiatedTyp
         break;
       }
 
-      const auto y_type = CheckType(m->y, x_type);
-
-      const auto match_both = [&](const semantic::Symbol* expected_sym) {
-        //
-        resulting_type.sym = expected_sym;
-        resulting_type.is_instance = true;
-        //
-        MatchTypes(m->x->nrange, x_type, {.sym = expected_sym});
-        MatchTypes(m->y->nrange, y_type, {.sym = expected_sym});
-      };
-
       if (x_type) [[likely]] {
         if (x_type->Flags() & semantic::SymbolFlags::kTemplate) {
           const auto* tdecl = x_type->Declaration()->As<ast::nodes::TemplateDecl>();
@@ -1670,6 +1659,17 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, InstantiatedTyp
           x_type.sym = ResolveTerminalType(x_type.sym);
         }
       }
+
+      const auto y_type = CheckType(m->y, x_type);
+
+      const auto match_both = [&](const semantic::Symbol* expected_sym) {
+        //
+        resulting_type.sym = expected_sym;
+        resulting_type.is_instance = true;
+        //
+        MatchTypes(m->x->nrange, x_type, {.sym = expected_sym});
+        MatchTypes(m->y->nrange, y_type, {.sym = expected_sym});
+      };
 
       switch (m->op.kind) {
         case ast::TokenKind::EQ:
@@ -1755,6 +1755,9 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, InstantiatedTyp
           //
           resulting_type = y_type;
           //
+          break;
+        case ast::TokenKind::IMPLIES:
+          resulting_type.restriction = TemplateRestrictionKind::kRegular;  // TODO: ?
           break;
         default:
           break;
@@ -2039,6 +2042,65 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, InstantiatedTyp
       break;
     }
 
+    case ast::NodeKind::DynamicExpr: {
+      const auto* m = n->As<ast::nodes::DynamicExpr>();
+
+      //
+      resulting_type = desired_type;
+      resulting_type.restriction = TemplateRestrictionKind::kRegular;
+      //
+
+      if (m->body->nkind != ast::NodeKind::ExprStmt) {
+        assert(m->body->nkind == ast::NodeKind::BlockStmt);
+        ScopedVisit(m->body->As<ast::nodes::BlockStmt>());
+        break;
+      }
+
+      if (!desired_type) {
+        break;
+      }
+
+      const auto* es = m->body->As<ast::nodes::ExprStmt>();
+      if (es->expr->nkind == ast::NodeKind::Ident || es->expr->nkind == ast::NodeKind::SelectorExpr) {
+        const auto* callee_sym = CheckType(es->expr).sym;
+        if (!callee_sym || callee_sym == &symbols::kTypeError) {
+          break;
+        }
+        if (!(callee_sym->Flags() & semantic::SymbolFlags::kFunction)) {
+          EmitError({
+              .range = es->expr->nrange,
+              .message = "function reference expected",
+          });
+          break;
+        }
+        const auto* fdecl = callee_sym->Declaration()->As<ast::nodes::FuncDecl>();
+        if (fdecl->params->list.size() == 1) {
+          const auto* fdecl_file = ast::utils::SourceFileOf(fdecl);
+
+          const auto takes_value_as_only_arg = [&] {
+            const auto* param = fdecl->params->list[0];
+            const auto& param_sym = ResolveDeclarationType(fdecl_file, param);
+            return (param_sym.restriction == TemplateRestrictionKind::kNone) &&
+                   (param_sym.depth == desired_type.depth) && (param_sym.sym == desired_type.sym);
+          };
+          const auto returns_bool = [&] {
+            const auto& retsym = ResolveCallableReturnType(fdecl_file, fdecl);
+            return (retsym.restriction == TemplateRestrictionKind::kNone) && (retsym.sym == &builtins::kBoolean);
+          };
+
+          if (takes_value_as_only_arg() && returns_bool()) {
+            break;
+          }
+        }
+        EmitError({
+            .range = es->expr->nrange,
+            .message = std::format("expected a predicate function that takes a value of type '{}' as its only argument",
+                                   semantic::utils::GetReadableTypeName(desired_type.sym)),
+        });
+      }
+      break;
+    }
+
     default:
       break;
   }
@@ -2052,7 +2114,8 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
     case ast::NodeKind::IndexExpr:
     case ast::NodeKind::BinaryExpr:
     case ast::NodeKind::AssignmentExpr:
-    case ast::NodeKind::CallExpr: {
+    case ast::NodeKind::CallExpr:
+    case ast::NodeKind::DynamicExpr: {
       CheckType(n);
       return false;
     }
@@ -2147,13 +2210,28 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
     case ast::NodeKind::ReturnStmt: {
       const auto* m = n->As<ast::nodes::ReturnStmt>();
 
-      const auto* fdecl = ast::utils::GetPredecessor<ast::nodes::FuncDecl>(m);
-
-      if (!fdecl) {
-        // TODO: maybe do something with it - we somehow have return outside of a function! (really?)
-        //       ^ this should be a syntax error if it not already is
+      const auto* owner = ast::utils::GetAnyPredecessor<ast::nodes::FuncDecl, ast::nodes::DynamicExpr>(m);
+      if (!owner) {
+        // Should be a syntax error
         break;
       }
+
+      if (owner->nkind == ast::NodeKind::DynamicExpr) {
+        if (!m->result) {
+          EmitError(TypeError{
+              .range = m->nrange,
+              .message = "@dynamic is expected to return a boolean value",
+          });
+        } else {
+          const InstantiatedType expected_type{.sym = &builtins::kBoolean};
+          const auto actual_type = CheckType(m->result, expected_type);
+          MatchTypes(m->result->nrange, actual_type, expected_type);
+        }
+        break;
+      }
+
+      assert(owner->nkind == ast::NodeKind::FuncDecl);
+      const auto* fdecl = owner->As<ast::nodes::FuncDecl>();
 
       if (!fdecl->ret) {
         if (m->result) {

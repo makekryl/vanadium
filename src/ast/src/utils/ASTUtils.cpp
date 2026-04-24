@@ -153,5 +153,35 @@ std::optional<Range> ExtractAttachedComment(const AST& ast, const Node* n) {
   return Range{.begin = preceding.range.begin, .end = n->nrange.begin};
 }
 
+bool AllPathsReturn(const nodes::Stmt* stmt) {
+  switch (stmt->nkind) {
+    case ast::NodeKind::ReturnStmt:
+      return true;
+    case ast::NodeKind::BlockStmt: {
+      const auto* sm = stmt->As<ast::nodes::BlockStmt>();
+      return !sm->stmts.empty() && AllPathsReturn(sm->stmts.back());
+    }
+    case ast::NodeKind::IfStmt: {
+      const auto* sm = stmt->As<ast::nodes::IfStmt>();
+      return (sm->alternate != nullptr) && AllPathsReturn(sm->consequent) && AllPathsReturn(sm->alternate);
+    }
+    case ast::NodeKind::SelectStmt: {
+      const auto* sm = stmt->As<ast::nodes::SelectStmt>();
+      bool has_default{false};
+      for (const auto* clause : sm->clauses) {
+        if (!AllPathsReturn(clause->body)) {
+          return false;
+        }
+        if (clause->cond.empty()) {
+          has_default = true;
+        }
+      }
+      return has_default;
+    }
+    default:
+      return false;
+  }
+}
+
 }  // namespace utils
 }  // namespace vanadium::ast

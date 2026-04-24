@@ -476,6 +476,18 @@ struct DecodedExpr : Expr {
   }
 };
 
+struct DynamicExpr : Expr {
+  static constexpr NodeKind kKind = NodeKind::DynamicExpr;
+
+  DynamicExpr() : Expr(NodeKind::DynamicExpr) {}
+
+  Stmt* body;
+
+  void Accept(const NodeInspector& inspector) const {
+    Inspect(body, inspector);
+  }
+};
+
 struct DecmatchExpr : Expr {
   static constexpr NodeKind kKind = NodeKind::DecmatchExpr;
 
@@ -771,18 +783,6 @@ struct CommClause : Stmt {
     if (body != nullptr) [[likely]] {
       Inspect(body, inspector);
     }
-  }
-};
-
-struct DynamicExpr : Expr {
-  static constexpr NodeKind kKind = NodeKind::DynamicExpr;
-
-  DynamicExpr() : Expr(NodeKind::DynamicExpr) {}
-
-  BlockStmt* body;
-
-  void Accept(const NodeInspector& inspector) const {
-    Inspect(body, inspector);
   }
 };
 

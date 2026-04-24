@@ -308,7 +308,7 @@ DecodedExpr:
   params: Expr*?
   x: Expr*
 DynamicExpr:
-  body: BlockStmt*
+  body: Stmt*
 DecmatchExpr:
   params: Expr*?
   x: Expr*

@@ -193,8 +193,10 @@ constexpr int kLowestPrec = 0;
       return 18;
     case TokenKind::COLONCOLON:
       return 19;
-    case TokenKind::OF:
+    case TokenKind::IMPLIES:
       return 20;
+    case TokenKind::OF:
+      return 21;
     default:
       return kLowestPrec;
   }
@@ -2397,13 +2399,30 @@ nodes::Expr* Parser::ParseModifier() {
 
   const auto& mtok = Expect(TokenKind::MODIF);
   EmitError(mtok.range, "modifier expected");
-  return nullptr;
+  return NewErrorNode<nodes::Expr>(mtok);
 }
 
 nodes::DynamicExpr* Parser::ParseDynamicModifier() {
-  return NewNode<nodes::DynamicExpr>([&](auto& de) {
+  return NewNode<nodes::DynamicExpr>([&](nodes::DynamicExpr& de) {
     ConsumeInvariant(TokenKind::MODIF);
-    de.body = ParseBlockStmt();
+    de.body = [&] -> nodes::Stmt* {
+      switch (tok_) {
+        case TokenKind::LBRACE:
+          return ParseBlockStmt();
+        default:
+          auto* bn = NewNode<nodes::ExprStmt>([&](nodes::ExprStmt& es) {
+            es.expr = ParsePrimaryExpr();
+          });
+          switch (bn->expr->nkind) {
+            case NodeKind::Ident:
+            case NodeKind::SelectorExpr:
+              return bn;
+            default:
+              EmitError(bn->nrange, "body or a predicate function reference expected");
+              return NewErrorNode<nodes::Stmt>();
+          }
+      }
+    }();
   });
 }
 

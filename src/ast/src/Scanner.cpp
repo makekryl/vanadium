@@ -62,6 +62,7 @@ constexpr auto kKeywordLookup = lib::MakeStaticMap<std::string_view, TokenKind>(
     {"group", TokenKind::GROUP},
     {"if", TokenKind::IF},
     {"ifpresent", TokenKind::IFPRESENT},
+    {"implies", TokenKind::IMPLIES},
     {"import", TokenKind::IMPORT},
     {"in", TokenKind::IN},
     {"inconc", TokenKind::INCONC},
