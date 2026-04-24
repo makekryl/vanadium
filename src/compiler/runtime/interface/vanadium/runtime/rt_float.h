@@ -8,6 +8,11 @@ struct vrt_float_t {
   double value;
   bool is_bound;
 };
+struct vrt_float_template_t;
+
+inline vrt_float_t vrt_float_wrap(double v) {
+  return {.value = v, .is_bound = true};
+}
 
 extern "C" {
 //
@@ -28,10 +33,16 @@ bool vrt_float_le(vrt_float_t, vrt_float_t);
 bool vrt_float_gt(vrt_float_t, vrt_float_t);
 bool vrt_float_ge(vrt_float_t, vrt_float_t);
 //
+vrt_float_t vrt_float_neg(vrt_float_t);
+//
 vrt_float_t vrt_float_add(vrt_float_t, vrt_float_t);
 vrt_float_t vrt_float_sub(vrt_float_t, vrt_float_t);
 vrt_float_t vrt_float_mul(vrt_float_t, vrt_float_t);
 vrt_float_t vrt_float_div(vrt_float_t, vrt_float_t);
+
+///
+
+bool vrt_float_template_match(const vrt_float_t*, const vrt_float_template_t*);
 
 //
 }

@@ -1,6 +1,5 @@
 #include "vanadium/runtime/rt_integer.h"
 
-#include <algorithm>
 #include <cassert>
 
 #include "vanadium/runtime/RuntimeHelpers.h"
@@ -84,7 +83,6 @@ vrt_int_t vrt_int_neg(vrt_int_t a) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct vrt_int_template_implication_t;
 struct vrt_int_template_t {
   vrt_template_sel_e tsel;
 
@@ -98,22 +96,14 @@ struct vrt_int_template_t {
 
   union {
     vrt_native_int_t val;
-    struct {
-      vrt_int_template_t* data;
-      vrt_valuelist_size_t length;
-    } list;
+    rt::detail::ValueList<vrt_int_template_t> list;
     struct {
       vrt_native_int_t vmin;
       vrt_native_int_t vmax;
     } range;
-    vrt_int_template_implication_t* implication;
+    rt::detail::Implication<vrt_int_template_t>* implication;
     vrt_dynmatcher_t dynmatch;
   };
-};
-
-struct vrt_int_template_implication_t {
-  vrt_int_template_t precondition;
-  vrt_int_template_t implied;
 };
 
 extern "C" {
@@ -147,13 +137,14 @@ void vrt_int_template_dtor(vrt_int_template_t* p) {
     case vrt_template_sel_e::kValueList:
     case vrt_template_sel_e::kComplementedList:
     case vrt_template_sel_e::kConjunctionMatch:
-      vrt_unifree(p->list.data);
+      p->list.Release<vrt_int_template_dtor>();
       break;
     case vrt_template_sel_e::kImplicationMatch:
+      p->implication->Release<vrt_int_template_dtor>();
       vrt_unifree(p->implication);
       break;
     case vrt_template_sel_e::kDynamicMatch:
-      vrt_dynmatcher_free(&p->dynmatch);
+      rt::detail::FreeDynamicMatcher(&p->dynmatch);
       break;
     default:
       assert(false);
@@ -185,23 +176,16 @@ bool vrt_int_template_match(const vrt_int_t* v, const vrt_int_template_t* t) {
 
     case vrt_template_sel_e::kValueList:
     case vrt_template_sel_e::kComplementedList:
-      return std::any_of(t->list.data, t->list.data + t->list.length,
-                         [&v](const auto& e) {
-                           return vrt_int_template_match(v, &e);
-                         }) &&
-             (t->tsel == vrt_template_sel_e::kValueList);
+      return t->list.MatchAny<vrt_int_template_match>(v) && (t->tsel == vrt_template_sel_e::kValueList);
 
     case vrt_template_sel_e::kConjunctionMatch:
-      return std::all_of(t->list.data, t->list.data + t->list.length, [&v](const auto& e) {
-        return vrt_int_template_match(v, &e);
-      });
+      return t->list.MatchAll<vrt_int_template_match>(v);
 
     case vrt_template_sel_e::kImplicationMatch:
-      return !vrt_int_template_match(v, &t->implication->precondition) ||
-             vrt_int_template_match(v, &t->implication->implied);
+      return t->implication->Match<vrt_int_template_match>(v);
 
     case vrt_template_sel_e::kDynamicMatch:
-      return vanadium::rt::detail::InvokeDynamicMatcher(&t->dynmatch, v);
+      return rt::detail::DynamicMatch(&t->dynmatch, v);
 
     default:
       assert(false);
