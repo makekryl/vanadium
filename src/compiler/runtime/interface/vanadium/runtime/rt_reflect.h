@@ -69,18 +69,10 @@ struct vrt_module_t {
   bool has_control_block;
 };
 
-struct vrt_dynmatcher_t {
-  void* ctx;
-  bool (*match)(const void* ctx, const void* obj);
-};
-
 extern "C" {
 //
 
 void vrt_register_module(const vrt_module_t*);
-
-bool vrt_dynmatcher_invoke(const vrt_dynmatcher_t*, const void*);
-void vrt_dynmatcher_free(const vrt_dynmatcher_t*);
 
 //
 }

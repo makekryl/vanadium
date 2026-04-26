@@ -24,8 +24,6 @@ bool vrt_is_bound(const vrt_val_t*);
 void vrt_log(const vrt_val_t*, std::uint32_t);
 void vrt_log_write(const char*);
 
-bool vrt_match(const vrt_typeinfo_t* ty, const void* obj, const void* tobj);
-
 //
 }
 

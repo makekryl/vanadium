@@ -4,6 +4,7 @@
 #include <format>
 #include <string_view>
 
+#include "vanadium/runtime/BuiltinsTemplates.h"
 #include "vanadium/runtime/RuntimeHelpers.h"
 #include "vanadium/runtime/StringBase.h"
 #include "vanadium/runtime/rt_alloc.h"
@@ -145,3 +146,48 @@ bool vrt_charstring_ne(const vrt_charstring_t* lhs, const vrt_charstring_t* rhs)
 }
 
 // NOLINTEND(readability-identifier-naming)
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+extern "C" {
+void vrt_charstring_template_ctor(vrt_charstring_template_t*);
+void vrt_charstring_template_dtor(vrt_charstring_template_t*);
+}
+
+const vrt_typeinfo_t charstring_template_typeinfo{
+    .name = charstring_typeinfo.name,
+    .kind = charstring_typeinfo.kind,
+    .is_template = true,
+    .size = sizeof(vrt_charstring_template_t),
+
+    .members = charstring_typeinfo.members,
+
+    .construct = vanadium::rt::helpers::VoidErased<vrt_charstring_template_ctor>,
+    .destruct = vanadium::rt::helpers::VoidErased<vrt_charstring_template_dtor>,
+
+    .counterpart = &charstring_typeinfo,
+};
+
+void vrt_charstring_template_ctor(vrt_charstring_template_t* p) {
+  rt::tpl::Construct(p);
+}
+void vrt_charstring_template_dtor(vrt_charstring_template_t* p) {
+  switch (p->tsel) {
+    case vrt_template_sel_e::kSpecificValue:
+      vrt_charstring_dtor(&p->val);
+      break;
+    default:
+      rt::tpl::Destruct<vrt_charstring_template_dtor>(p);
+      break;
+  }
+}
+
+bool vrt_charstring_template_match(const vrt_charstring_t* v, const vrt_charstring_template_t* t) {
+  switch (t->tsel) {
+    case vrt_template_sel_e::kSpecificValue:
+      return rt::str::Equal(v, &t->val);
+    // TODO: other tsels
+    default:
+      return rt::tpl::Match<vrt_charstring_template_match>(v, t);
+  }
+}

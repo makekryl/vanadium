@@ -5,5 +5,5 @@
 #include "vanadium/runtime/rt_reflect.h"
 
 namespace vanadium::rt {
-void StringifyValue(std::string& buf, const vrt_val_t& v);
+void StringifyObject(std::string& buf, const vrt_val_t& v);
 }

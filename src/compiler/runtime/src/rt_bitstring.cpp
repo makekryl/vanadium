@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cassert>
 
+#include "vanadium/runtime/BuiltinsTemplates.h"
 #include "vanadium/runtime/RuntimeHelpers.h"
 #include "vanadium/runtime/StringBase.h"
 #include "vanadium/runtime/TemplateMatching.h"
@@ -307,17 +308,6 @@ void vrt_bitstring_xor4b(vrt_bitstring_t* dst, const vrt_bitstring_t* lhs, const
 // NOLINTEND(readability-identifier-naming)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-struct vrt_bitstring_template_t {
-  vrt_template_sel_e tsel;
-
-  union {
-    vrt_bitstring_t val;
-    rt::tpl::ValueList<vrt_bitstring_template_t> list;
-    rt::tpl::Implication<vrt_bitstring_template_t>* implication;
-    vrt_dynmatcher_t dynmatch;
-  };
-};
 
 extern "C" {
 void vrt_bitstring_template_ctor(vrt_bitstring_template_t*);

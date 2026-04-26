@@ -3,6 +3,7 @@
 #include <cassert>
 #include <cstdio>
 
+#include "vanadium/runtime/BuiltinsTemplates.h"
 #include "vanadium/runtime/RuntimeHelpers.h"
 #include "vanadium/runtime/TemplateMatching.h"
 #include "vanadium/runtime/rt_alloc.h"
@@ -83,29 +84,6 @@ vrt_integer_t vrt_integer_neg(vrt_integer_t a) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-struct vrt_integer_template_t {
-  vrt_template_sel_e tsel;
-
-  //
-  // moved out of the inner struct to avoid extra padding, saving up 8 bytes
-  bool vmin_exclusive;
-  bool vmax_exclusive;
-  bool vmin_present;
-  bool vmax_present;
-  //
-
-  union {
-    vrt_integer_t val;
-    rt::tpl::ValueList<vrt_integer_template_t> list;
-    struct {
-      vrt_native_int_t vmin;
-      vrt_native_int_t vmax;
-    } range;
-    rt::tpl::Implication<vrt_integer_template_t>* implication;
-    vrt_dynmatcher_t dynmatch;
-  };
-};
 
 extern "C" {
 void vrt_integer_template_ctor(vrt_integer_template_t*);

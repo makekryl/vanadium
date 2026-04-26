@@ -31,21 +31,12 @@ bool vrt_is_bound(const vrt_val_t* v) {
     return static_cast<const rt::tpl::GenericTemplateTypeLayout*>(v->p)->tsel != vrt_template_sel_e::kUninitialized;
   }
 
-#define ISBOUND_CASE(name)                                       \
-  do {                                                           \
-    if (v->ty == &name##_typeinfo) {                             \
-      return static_cast<const vrt_##name##_t*>(v->p)->is_bound; \
-    }                                                            \
-  } while (0)
-
-  ISBOUND_CASE(integer);
-  ISBOUND_CASE(float);
-  ISBOUND_CASE(boolean);
-  ISBOUND_CASE(charstring);
-  ISBOUND_CASE(bitstring);
-  ISBOUND_CASE(octetstring);
-  ISBOUND_CASE(hexstring);
-#undef ISBOUND_CASE
+#define X(name)                                                \
+  if (v->ty == &name##_typeinfo) {                             \
+    return static_cast<const vrt_##name##_t*>(v->p)->is_bound; \
+  }
+#include "rt_builtin_types.inc"
+#undef X
 
   assert(false);
   return false;
@@ -54,27 +45,9 @@ bool vrt_is_bound(const vrt_val_t* v) {
 void vrt_log(const vrt_val_t* args, std::uint32_t n) {
   std::string buf;
   std::for_each_n(args, n, [&](const auto& arg) {
-    rt::StringifyValue(buf, arg);
+    printf("%p %s\n", arg.p, arg.ty->name);
+    rt::StringifyObject(buf, arg);
     buf += " ";
   });
   vrt_log_write(buf.c_str());
-}
-
-bool vrt_match(const vrt_typeinfo_t* ty, const void* obj, const void* tobj) {
-#define MATCHER_CASE(name)                                                                                  \
-  do {                                                                                                      \
-    if (ty == &name##_typeinfo) {                                                                           \
-      return vrt_##name##_template_match((const vrt_##name##_t*)obj, (const vrt_##name##_template_t*)tobj); \
-    }                                                                                                       \
-  } while (0)
-
-  // todo: finalize matchers & extract to x-macro
-  MATCHER_CASE(integer);
-  MATCHER_CASE(float);
-  MATCHER_CASE(boolean);
-  MATCHER_CASE(bitstring);
-#undef MATCHER_CASE
-
-  assert(false);
-  return false;
 }

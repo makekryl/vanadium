@@ -20,11 +20,13 @@ struct vrt_charstring_t {
   bool is_bound;
   bool is_ext;
 };
+struct vrt_charstring_template_t;
 
 extern "C" {
 //
 
 extern const vrt_typeinfo_t charstring_typeinfo;
+extern const vrt_typeinfo_t charstring_template_typeinfo;
 
 void vrt_charstring_ctor(vrt_charstring_t*);
 void vrt_charstring_dtor(vrt_charstring_t*);
@@ -46,6 +48,10 @@ void vrt_charstring_set(vrt_charstring_t*, charstring_size_t i, char v);
 
 bool vrt_charstring_eq(const vrt_charstring_t*, const vrt_charstring_t*);
 bool vrt_charstring_ne(const vrt_charstring_t*, const vrt_charstring_t*);
+
+///
+
+bool vrt_charstring_template_match(const vrt_charstring_t*, const vrt_charstring_template_t*);
 
 //
 }

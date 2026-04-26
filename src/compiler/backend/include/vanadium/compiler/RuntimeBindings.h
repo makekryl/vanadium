@@ -116,6 +116,13 @@ class RuntimeBindings {
   StringTypeBindings bitstring;
   StringTypeBindings hexstring;
 
+  struct {
+    llvm::Function* value;
+    llvm::Function* omit;
+    llvm::Function* any;
+    llvm::Function* any_or_omit;
+  } tpl;
+
   [[nodiscard]] llvm::Type* MakeUnion(std::span<llvm::Type*> members) const;
 
  private:

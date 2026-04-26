@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <format>
 
+#include "vanadium/runtime/BuiltinsTemplates.h"
 #include "vanadium/runtime/RuntimeHelpers.h"
 #include "vanadium/runtime/StringBase.h"
 #include "vanadium/runtime/rt_alloc.h"
@@ -193,3 +194,48 @@ void vrt_octetstring_xor4b(vrt_octetstring_t* dst, const vrt_octetstring_t* lhs,
 }
 
 // NOLINTEND(readability-identifier-naming)
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+extern "C" {
+void vrt_octetstring_template_ctor(vrt_octetstring_template_t*);
+void vrt_octetstring_template_dtor(vrt_octetstring_template_t*);
+}
+
+const vrt_typeinfo_t octetstring_template_typeinfo{
+    .name = octetstring_typeinfo.name,
+    .kind = octetstring_typeinfo.kind,
+    .is_template = true,
+    .size = sizeof(vrt_octetstring_template_t),
+
+    .members = octetstring_typeinfo.members,
+
+    .construct = vanadium::rt::helpers::VoidErased<vrt_octetstring_template_ctor>,
+    .destruct = vanadium::rt::helpers::VoidErased<vrt_octetstring_template_dtor>,
+
+    .counterpart = &octetstring_typeinfo,
+};
+
+void vrt_octetstring_template_ctor(vrt_octetstring_template_t* p) {
+  rt::tpl::Construct(p);
+}
+void vrt_octetstring_template_dtor(vrt_octetstring_template_t* p) {
+  switch (p->tsel) {
+    case vrt_template_sel_e::kSpecificValue:
+      vrt_octetstring_dtor(&p->val);
+      break;
+    default:
+      rt::tpl::Destruct<vrt_octetstring_template_dtor>(p);
+      break;
+  }
+}
+
+bool vrt_octetstring_template_match(const vrt_octetstring_t* v, const vrt_octetstring_template_t* t) {
+  switch (t->tsel) {
+    case vrt_template_sel_e::kSpecificValue:
+      return rt::str::Equal(v, &t->val);
+    // TODO: other tsels
+    default:
+      return rt::tpl::Match<vrt_octetstring_template_match>(v, t);
+  }
+}

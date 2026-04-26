@@ -2,6 +2,7 @@
 
 #include <cassert>
 
+#include "vanadium/runtime/BuiltinsTemplates.h"
 #include "vanadium/runtime/RuntimeHelpers.h"
 #include "vanadium/runtime/TemplateMatching.h"
 #include "vanadium/runtime/runtime.h"
@@ -29,30 +30,6 @@ void copy_boolean(vrt_boolean_t* dst, vrt_boolean_t src) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-extern "C" {
-void vrt_boolean_template_ctor(vrt_boolean_template_t*);
-void vrt_boolean_template_dtor(vrt_boolean_template_t*);
-}
-
-struct vrt_boolean_template_t {
-  vrt_template_sel_e tsel;
-
-  //
-  // moved out of the inner struct to avoid extra padding, saving up 8 bytes
-  bool vmin_exclusive;
-  bool vmax_exclusive;
-  bool vmin_present;
-  bool vmax_present;
-  //
-
-  union {
-    vrt_boolean_t val;
-    rt::tpl::ValueList<vrt_boolean_template_t> list;
-    rt::tpl::Implication<vrt_boolean_template_t>* implication;
-    vrt_dynmatcher_t dynmatch;
-  };
-};
 
 extern "C" {
 void vrt_boolean_template_ctor(vrt_boolean_template_t*);

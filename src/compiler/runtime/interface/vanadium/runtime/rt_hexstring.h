@@ -20,11 +20,13 @@ struct vrt_hexstring_t {
   bool is_bound;
   bool is_ext;
 };
+struct vrt_hexstring_template_t;
 
 extern "C" {
 //
 
 extern const vrt_typeinfo_t hexstring_typeinfo;
+extern const vrt_typeinfo_t hexstring_template_typeinfo;
 
 void vrt_hexstring_ctor(vrt_hexstring_t*);
 void vrt_hexstring_dtor(vrt_hexstring_t*);
@@ -56,6 +58,10 @@ void vrt_hexstring_not4b(vrt_hexstring_t* dst, const vrt_hexstring_t*);
 void vrt_hexstring_and4b(vrt_hexstring_t* dst, const vrt_hexstring_t*, const vrt_hexstring_t*);
 void vrt_hexstring_or4b(vrt_hexstring_t* dst, const vrt_hexstring_t*, const vrt_hexstring_t*);
 void vrt_hexstring_xor4b(vrt_hexstring_t* dst, const vrt_hexstring_t*, const vrt_hexstring_t*);
+
+///
+
+bool vrt_hexstring_template_match(const vrt_hexstring_t*, const vrt_hexstring_template_t*);
 
 //
 }

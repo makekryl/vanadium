@@ -2,6 +2,7 @@
 
 #include <cassert>
 
+#include "vanadium/runtime/BuiltinsTemplates.h"
 #include "vanadium/runtime/RuntimeHelpers.h"
 #include "vanadium/runtime/TemplateMatching.h"
 #include "vanadium/runtime/runtime.h"
@@ -68,29 +69,6 @@ vrt_float_t vrt_float_neg(vrt_float_t a) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-struct vrt_float_template_t {
-  vrt_template_sel_e tsel;
-
-  //
-  // moved out of the inner struct to avoid extra padding, saving up 8 bytes
-  bool vmin_exclusive;
-  bool vmax_exclusive;
-  bool vmin_present;
-  bool vmax_present;
-  //
-
-  union {
-    vrt_float_t val;
-    rt::tpl::ValueList<vrt_float_template_t> list;
-    struct {
-      double vmin;
-      double vmax;
-    } range;
-    rt::tpl::Implication<vrt_float_template_t>* implication;
-    vrt_dynmatcher_t dynmatch;
-  };
-};
 
 extern "C" {
 void vrt_float_template_ctor(vrt_float_template_t*);

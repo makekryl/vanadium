@@ -546,7 +546,14 @@ void FunctionCodegen::CodegenDecl(const ast::nodes::Decl* n) {
         auto* alloca = scope_->Alloc(Lit(decl->name), ts);
         if (decl->value) {
           auto tmp_frame{EnterStackFrame(ScopeManager::Frame::Kind::kTemporaries)};
-          CodegenExpr(decl->value, alloca);
+          // TODO: unify w/ AssignmentExpr
+          llvm::Value* dest = alloca;
+          if (ts.is_template) {
+            llvm::Value* tptr = u_.builder.CreateCall(u_.rt.type_new_f, {u_.GetTypeInfo(ts)});
+            u_.builder.CreateStore(tptr, alloca);
+            dest = u_.builder.CreateCall(u_.rt.tpl.value, {u_.GetTypeInfo(ts), tptr});
+          }
+          CodegenExpr(decl->value, dest);
         } else {
           auto* undef =
               u_.IsOpaque(ts) ? u_.builder.CreateCall(u_.rt.type_new_f, {u_.GetTypeInfo(ts)}) : u_.GetUndef(ts);

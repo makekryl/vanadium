@@ -1,9 +1,9 @@
 #include "vanadium/runtime/rt_hexstring.h"
 
 #include <algorithm>
-#include <bitset>
 #include <print>
 
+#include "vanadium/runtime/BuiltinsTemplates.h"
 #include "vanadium/runtime/RuntimeHelpers.h"
 #include "vanadium/runtime/StringBase.h"
 #include "vanadium/runtime/rt_alloc.h"
@@ -294,3 +294,48 @@ void vrt_hexstring_xor4b(vrt_hexstring_t* dst, const vrt_hexstring_t* lhs, const
 }
 
 // NOLINTEND(readability-identifier-naming)
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+extern "C" {
+void vrt_hexstring_template_ctor(vrt_hexstring_template_t*);
+void vrt_hexstring_template_dtor(vrt_hexstring_template_t*);
+}
+
+const vrt_typeinfo_t hexstring_template_typeinfo{
+    .name = hexstring_typeinfo.name,
+    .kind = hexstring_typeinfo.kind,
+    .is_template = true,
+    .size = sizeof(vrt_hexstring_template_t),
+
+    .members = hexstring_typeinfo.members,
+
+    .construct = vanadium::rt::helpers::VoidErased<vrt_hexstring_template_ctor>,
+    .destruct = vanadium::rt::helpers::VoidErased<vrt_hexstring_template_dtor>,
+
+    .counterpart = &hexstring_typeinfo,
+};
+
+void vrt_hexstring_template_ctor(vrt_hexstring_template_t* p) {
+  rt::tpl::Construct(p);
+}
+void vrt_hexstring_template_dtor(vrt_hexstring_template_t* p) {
+  switch (p->tsel) {
+    case vrt_template_sel_e::kSpecificValue:
+      vrt_hexstring_dtor(&p->val);
+      break;
+    default:
+      rt::tpl::Destruct<vrt_hexstring_template_dtor>(p);
+      break;
+  }
+}
+
+bool vrt_hexstring_template_match(const vrt_hexstring_t* v, const vrt_hexstring_template_t* t) {
+  switch (t->tsel) {
+    case vrt_template_sel_e::kSpecificValue:
+      return rt::str::Equal(v, &t->val);
+    // TODO: other tsels
+    default:
+      return rt::tpl::Match<vrt_hexstring_template_match>(v, t);
+  }
+}

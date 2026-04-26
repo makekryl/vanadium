@@ -1,0 +1,7 @@
+X(integer)
+X(float)
+X(boolean)
+X(charstring)
+X(octetstring)
+X(bitstring)
+X(hexstring)

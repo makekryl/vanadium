@@ -11,15 +11,28 @@
 namespace vanadium::rt::tpl {
 
 template <typename T>
+struct ValueList;
+
+template <typename T>
+struct Implication;
+
+template <typename T>
 concept RtTemplate = requires(T t) {
   { auto(t.tsel) } -> std::same_as<vrt_template_sel_e>;
+  { auto(t.list) } -> std::same_as<ValueList<T>>;
+  { auto(t.implication) } -> std::same_as<Implication<T>*>;
+  { auto(t.dynmatch) } -> std::same_as<vrt_dynmatcher_t>;
 };
 template <RtTemplate T>
 using RtTemplateType = decltype(std::declval<T>().val);
 
 struct GenericTemplateTypeLayout {
   vrt_template_sel_e tsel;
-  void* payload;
+  void* dp;  // ptr for alignment
+
+  void* GetPayload() {
+    return static_cast<void*>(&dp);
+  }
 };
 
 template <typename T>
@@ -83,13 +96,13 @@ bool Match(const RtTemplateType<T>* v, const T* t) {
     case vrt_template_sel_e::kComplementedList:
       return t->list.template MatchAny<Matcher>(v) && (t->tsel == vrt_template_sel_e::kValueList);
 
-    case vrt_template_sel_e::kConjunctionMatch:
+    case vrt_template_sel_e::kConjunction:
       return t->list.template MatchAll<Matcher>(v);
 
-    case vrt_template_sel_e::kImplicationMatch:
+    case vrt_template_sel_e::kImplication:
       return t->implication->template Match<Matcher>(v);
 
-    case vrt_template_sel_e::kDynamicMatch:
+    case vrt_template_sel_e::kDynamic:
       return t->dynmatch.match(t->dynmatch.ctx, v);
 
     default:
@@ -112,14 +125,14 @@ void Destruct(RtTemplate auto* t) {
       break;
     case vrt_template_sel_e::kValueList:
     case vrt_template_sel_e::kComplementedList:
-    case vrt_template_sel_e::kConjunctionMatch:
+    case vrt_template_sel_e::kConjunction:
       t->list.template Release<Destructor>();
       break;
-    case vrt_template_sel_e::kImplicationMatch:
+    case vrt_template_sel_e::kImplication:
       t->implication->template Release<Destructor>();
       vrt_unifree(t->implication);
       break;
-    case vrt_template_sel_e::kDynamicMatch:
+    case vrt_template_sel_e::kDynamic:
       vrt_unifree(t->dynmatch.ctx);
       break;
     default:

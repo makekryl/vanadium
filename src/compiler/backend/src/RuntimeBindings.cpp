@@ -456,6 +456,29 @@ RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ct
   fill_string_bindings(octetstring, "octetstring");
   fill_string_bindings(bitstring, "bitstring");
   fill_string_bindings(hexstring, "hexstring");
+
+  //
+
+  tpl.value = declare_external_fn("vrt_tpl_value", builder.getPtrTy(),
+                                  {
+                                      builder.getPtrTy(),  // const vrt_typeinfo_t*
+                                      builder.getPtrTy(),  // void*
+                                  });
+  tpl.omit = declare_external_fn("vrt_tpl_omit", builder.getVoidTy(),
+                                 {
+                                     builder.getPtrTy(),  // const vrt_typeinfo_t*
+                                     builder.getPtrTy(),  // void*
+                                 });
+  tpl.any = declare_external_fn("vrt_tpl_any", builder.getVoidTy(),
+                                {
+                                    builder.getPtrTy(),  // const vrt_typeinfo_t*
+                                    builder.getPtrTy(),  // void*
+                                });
+  tpl.any_or_omit = declare_external_fn("vrt_tpl_any_or_omit", builder.getVoidTy(),
+                                        {
+                                            builder.getPtrTy(),  // const vrt_typeinfo_t*
+                                            builder.getPtrTy(),  // void*
+                                        });
 }
 
 llvm::ConstantInt* RuntimeBindings::GetRawInt(NativeIntType value) const {
