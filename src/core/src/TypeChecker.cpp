@@ -1027,7 +1027,12 @@ InstantiatedType ResolveExprSymbol(const SourceFile* file, const semantic::Scope
     }
     case ast::NodeKind::ValueLiteral: {
       const auto* m = expr->As<ast::nodes::ValueLiteral>();
-      return {.sym = DeduceValueLiteralType(m)};
+      const auto* sym = DeduceValueLiteralType(m);
+      return {
+          .sym = sym,
+          .restriction = (sym->Flags() & semantic::SymbolFlags::kTemplateSpec) ? TemplateRestrictionKind::kRegular
+                                                                               : TemplateRestrictionKind::kNone,
+      };
     }
     case ast::NodeKind::ParenExpr: {
       const auto* m = expr->As<ast::nodes::ParenExpr>();
