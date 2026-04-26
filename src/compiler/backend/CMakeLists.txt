@@ -1,5 +1,3 @@
-find_package(LLVM REQUIRED CONFIG QUIET)
-
 add_library(vanadium_compiler STATIC
   src/Compiler.cpp
   src/CodegenUnit.cpp

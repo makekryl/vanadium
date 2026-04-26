@@ -1,8 +1,10 @@
 #pragma once
 
+#include <cassert>
 #include <optional>
 #include <string_view>
 
+#include <llvm-19/llvm/IR/GlobalVariable.h>
 #include <llvm/IR/DIBuilder.h>
 #include <llvm/IR/DebugInfoMetadata.h>
 #include <llvm/IR/DerivedTypes.h>
@@ -15,10 +17,11 @@
 
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/core/Program.h>
+#include <vanadium/core/Semantic.h>
+#include <vanadium/lib/Metaprogramming.h>
 
 #include "vanadium/compiler/RuntimeBindings.h"
-#include "vanadium/core/Semantic.h"
-#include "vanadium/lib/Metaprogramming.h"
+#include "vanadium/compiler/TypeSymbol.h"
 
 namespace vanadium::compiler {
 
@@ -82,14 +85,16 @@ struct CodegenUnit {
 
   //
 
-  llvm::Type* GetSymbolType(const core::semantic::Symbol*);
-  llvm::Value* GetUndef(const core::semantic::Symbol*);
+  bool IsOpaque(TypeSymbol) const;
+  llvm::Type* GetSymbolType(TypeSymbol);
+  llvm::Value* GetUndef(TypeSymbol);
 
   const StringTypeBindings* GetStringTypeBindings(const core::semantic::Symbol*);
 
   //
 
   llvm::Function* GetFunction(const core::semantic::Symbol*);
+  llvm::GlobalVariable* GetTypeInfo(TypeSymbol);
 
   //
 
@@ -101,11 +106,11 @@ inline constexpr std::string_view kVarargsAttr = "vrt-varargs";
 
 namespace names {
 std::string Func(const core::semantic::Symbol*);
-std::string Ctor(const core::semantic::Symbol*);
-std::string Dtor(const core::semantic::Symbol*);
-std::string CopyCtor(const core::semantic::Symbol*);
+std::string Ctor(TypeSymbol);
+std::string Dtor(TypeSymbol);
+std::string CopyCtor(TypeSymbol);
+std::string TInfo(TypeSymbol);
 std::string Getter(const core::semantic::Symbol* holder, std::string_view member);
-std::string TInfo(const core::semantic::Symbol*);
 }  // namespace names
 
 namespace values {}

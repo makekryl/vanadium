@@ -3,7 +3,7 @@
 #include <cstdint>
 
 enum class vrt_template_sel_e : std::uint8_t {
-  kUninitializedTemplate = 0,
+  kUninitialized = 0,
 
   kSpecificValue,
 

@@ -33,39 +33,44 @@ CodegenUnit::CodegenUnit(llvm::Module& mod_, const core::SourceFile& sf_, bool d
       debug_info_(debug ? decltype(debug_info_){*this} : std::nullopt),
       rt{ctx, mod} {}
 
-llvm::Type* CodegenUnit::GetSymbolType(const core::semantic::Symbol* sym) {
-  assert(sym->Flags() & core::semantic::SymbolFlags::kType);
-  if (sym->Flags() & core::semantic::SymbolFlags::kBuiltin) {
-    if (sym == &core::builtins::kInteger) {
-      return rt.integer.ty;
-    }
-    if (sym == &core::builtins::kFloat) {
-      return rt.floatt.ty;
-    }
-    if (sym == &core::checker::symbols::kVoidType) {
-      return builder.getVoidTy();
-    }
-    if (const auto* strb = GetStringTypeBindings(sym)) {
-      return strb->ty;
-    }
-    assert(false);
-  }
-  return builder.getPtrTy();
+bool CodegenUnit::IsOpaque(TypeSymbol ts) const {
+  return !bool(ts->Flags() & core::semantic::SymbolFlags::kBuiltin) || ts.is_template;
 }
 
-llvm::Value* CodegenUnit::GetUndef(const core::semantic::Symbol* sym) {
-  assert(sym->Flags() & core::semantic::SymbolFlags::kType);
-  if (!(sym->Flags() & core::semantic::SymbolFlags::kBuiltin)) {
+llvm::Type* CodegenUnit::GetSymbolType(TypeSymbol ts) {
+  // TODO: make builtin types templates non-opaque
+  if (IsOpaque(ts)) {
+    return builder.getPtrTy();
+  }
+
+  if (ts == &core::builtins::kInteger) {
+    return rt.integer.ty;
+  }
+  if (ts == &core::builtins::kFloat) {
+    return rt.floatt.ty;
+  }
+  if (ts == &core::checker::symbols::kVoidType) {
+    return builder.getVoidTy();
+  }
+  if (const auto* strb = GetStringTypeBindings(ts)) {
+    return strb->ty;
+  }
+
+  assert(false);
+}
+
+llvm::Value* CodegenUnit::GetUndef(TypeSymbol ts) {
+  if (IsOpaque(ts)) {
     return llvm::ConstantPointerNull::get(builder.getPtrTy());
   }
 
-  if (sym == &core::builtins::kInteger) {
+  if (ts == &core::builtins::kInteger) {
     return rt.integer.undef;
   }
-  if (sym == &core::builtins::kFloat) {
+  if (ts == &core::builtins::kFloat) {
     return rt.floatt.undef;
   }
-  if (const auto* strb = GetStringTypeBindings(sym)) {
+  if (const auto* strb = GetStringTypeBindings(ts)) {
     return strb->undef;
   }
 
@@ -145,6 +150,10 @@ llvm::Function* CodegenUnit::GetFunction(const core::semantic::Symbol* sym) {
   // }
 
   return fn;
+}
+
+llvm::GlobalVariable* CodegenUnit::GetTypeInfo(TypeSymbol ts) {
+  return getOrDeclareExternalConst(names::TInfo(ts), rt.typeinfo_ty);
 }
 
 llvm::Value* CodegenUnit::WrapValue(llvm::Value* v) {

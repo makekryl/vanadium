@@ -1,11 +1,26 @@
 #pragma once
 
 #include <algorithm>
+#include <cassert>
+#include <utility>
 
 #include "vanadium/runtime/rt_alloc.h"
 #include "vanadium/runtime/rt_reflect.h"
+#include "vanadium/runtime/rt_template.h"
 
-namespace vanadium::rt::detail {
+namespace vanadium::rt::tpl {
+
+template <typename T>
+concept RtTemplate = requires(T t) {
+  { auto(t.tsel) } -> std::same_as<vrt_template_sel_e>;
+};
+template <RtTemplate T>
+using RtTemplateType = decltype(std::declval<T>().val);
+
+struct GenericTemplateTypeLayout {
+  vrt_template_sel_e tsel;
+  void* payload;
+};
 
 template <typename T>
 struct ValueList {
@@ -52,12 +67,64 @@ struct Implication {
   }
 };
 
-inline bool DynamicMatch(const vrt_dynmatcher_t* dm, const void* obj) {
-  return dm->match(dm->ctx, obj);
+//
+
+template <auto Matcher, RtTemplate T>
+bool Match(const RtTemplateType<T>* v, const T* t) {
+  switch (t->tsel) {
+    case vrt_template_sel_e::kOmitValue:
+      return false;
+
+    case vrt_template_sel_e::kAnyValue:
+    case vrt_template_sel_e::kAnyOrOmit:
+      return true;
+
+    case vrt_template_sel_e::kValueList:
+    case vrt_template_sel_e::kComplementedList:
+      return t->list.template MatchAny<Matcher>(v) && (t->tsel == vrt_template_sel_e::kValueList);
+
+    case vrt_template_sel_e::kConjunctionMatch:
+      return t->list.template MatchAll<Matcher>(v);
+
+    case vrt_template_sel_e::kImplicationMatch:
+      return t->implication->template Match<Matcher>(v);
+
+    case vrt_template_sel_e::kDynamicMatch:
+      return t->dynmatch.match(t->dynmatch.ctx, v);
+
+    default:
+      assert(false);
+      return false;
+  }
 }
 
-inline void FreeDynamicMatcher(const vrt_dynmatcher_t* p) {
-  vrt_unifree(p->ctx);
+void Construct(RtTemplate auto* t) {
+  t->tsel = vrt_template_sel_e::kUninitialized;
 }
 
-}  // namespace vanadium::rt::detail
+template <auto Destructor>
+void Destruct(RtTemplate auto* t) {
+  switch (t->tsel) {
+    case vrt_template_sel_e::kUninitialized:
+    case vrt_template_sel_e::kOmitValue:
+    case vrt_template_sel_e::kAnyValue:
+    case vrt_template_sel_e::kAnyOrOmit:
+      break;
+    case vrt_template_sel_e::kValueList:
+    case vrt_template_sel_e::kComplementedList:
+    case vrt_template_sel_e::kConjunctionMatch:
+      t->list.template Release<Destructor>();
+      break;
+    case vrt_template_sel_e::kImplicationMatch:
+      t->implication->template Release<Destructor>();
+      vrt_unifree(t->implication);
+      break;
+    case vrt_template_sel_e::kDynamicMatch:
+      vrt_unifree(t->dynmatch.ctx);
+      break;
+    default:
+      assert(false);
+  }
+}
+
+}  // namespace vanadium::rt::tpl

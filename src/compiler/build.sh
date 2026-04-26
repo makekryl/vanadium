@@ -20,8 +20,8 @@ llc-19 -filetype=obj -relocation-model=pic "${SRC_IR}" -o "${BUILD_DIR}/${OUT}.o
 
 echo '==> Linking'
 clang -lstdc++ -fsanitize=address "${BUILD_DIR}/${OUT}.o" \
-      "out/build/src/compiler/runtime/libvanadium_rt.a" \
       "out/build/src/compiler/hostc/libvanadium_hostc.a" \
+      "out/build/src/compiler/runtime/libvanadium_rt.a" \
       -o "${BUILD_DIR}/${OUT}"
 
 echo "==> Built: ${BUILD_DIR}/${OUT}"

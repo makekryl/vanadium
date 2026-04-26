@@ -7,7 +7,7 @@
 
 #include "vanadium/runtime/rt_alloc.h"
 
-namespace vanadium::rt::detail::str {
+namespace vanadium::rt::str {
 
 using RtStringSize_t = std::uint32_t;
 
@@ -232,4 +232,4 @@ void BinaryOp(S* dst, const S* lhs, const S* rhs, F apply) {
   *dst = tmp;
 }
 
-}  // namespace vanadium::rt::detail::str
+}  // namespace vanadium::rt::str

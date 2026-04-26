@@ -8,15 +8,15 @@
 #include "vanadium/runtime/runtime.hpp"
 
 namespace {
-inline void CheckIsBound(vrt_bool_t b) {
+inline void CheckIsBound(vrt_boolean_t b) {
   rt::Assert(b.is_bound, "accessing an unbound boolean value");
 }
 }  // namespace
 
 const vrt_typeinfo_t boolean_typeinfo{
     .name = "boolean",
-    .kind = vrt_typekind_e::kScalar,
-    .size = sizeof(vrt_bool_t),
+    .kind = vrt_typekind_e::kBoolean,
+    .size = sizeof(vrt_boolean_t),
 
     .members = nullptr,
 
@@ -24,94 +24,67 @@ const vrt_typeinfo_t boolean_typeinfo{
     .destruct = nullptr,
 };
 
-void copy_boolean(vrt_bool_t* dst, vrt_bool_t src) {
+void copy_boolean(vrt_boolean_t* dst, vrt_boolean_t src) {
   *dst = src;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct vrt_bool_template_t {
+extern "C" {
+void vrt_boolean_template_ctor(vrt_boolean_template_t*);
+void vrt_boolean_template_dtor(vrt_boolean_template_t*);
+}
+
+struct vrt_boolean_template_t {
   vrt_template_sel_e tsel;
 
+  //
+  // moved out of the inner struct to avoid extra padding, saving up 8 bytes
+  bool vmin_exclusive;
+  bool vmax_exclusive;
+  bool vmin_present;
+  bool vmax_present;
+  //
+
   union {
-    bool val;
-    rt::detail::ValueList<vrt_bool_template_t> list;
-    rt::detail::Implication<vrt_bool_template_t>* implication;
+    vrt_boolean_t val;
+    rt::tpl::ValueList<vrt_boolean_template_t> list;
+    rt::tpl::Implication<vrt_boolean_template_t>* implication;
     vrt_dynmatcher_t dynmatch;
   };
 };
 
 extern "C" {
-void vrt_bool_template_ctor(vrt_bool_template_t*);
-void vrt_bool_template_dtor(vrt_bool_template_t*);
+void vrt_boolean_template_ctor(vrt_boolean_template_t*);
+void vrt_boolean_template_dtor(vrt_boolean_template_t*);
 }
 
-const vrt_typeinfo_t integer_template_typeinfo{
-    .name = "integer",
-    .kind = vrt_typekind_e::kScalar,
+const vrt_typeinfo_t boolean_template_typeinfo{
+    .name = boolean_typeinfo.name,
+    .kind = boolean_typeinfo.kind,
     .is_template = true,
-    .size = sizeof(vrt_bool_template_t),
+    .size = sizeof(vrt_boolean_template_t),
 
-    .members = integer_typeinfo.members,
+    .members = boolean_typeinfo.members,
 
-    .construct = vanadium::rt::helpers::VoidErased<vrt_bool_template_ctor>,
-    .destruct = vanadium::rt::helpers::VoidErased<vrt_bool_template_dtor>,
+    .construct = vanadium::rt::helpers::VoidErased<vrt_boolean_template_ctor>,
+    .destruct = vanadium::rt::helpers::VoidErased<vrt_boolean_template_dtor>,
 
-    .counterpart = &integer_typeinfo,
+    .counterpart = &boolean_typeinfo,
 };
 
-void vrt_bool_template_ctor(vrt_bool_template_t* p) {}
-void vrt_bool_template_dtor(vrt_bool_template_t* p) {
-  switch (p->tsel) {
-    case vrt_template_sel_e::kSpecificValue:
-    case vrt_template_sel_e::kOmitValue:
-    case vrt_template_sel_e::kAnyValue:
-    case vrt_template_sel_e::kAnyOrOmit:
-      break;
-    case vrt_template_sel_e::kValueList:
-    case vrt_template_sel_e::kComplementedList:
-    case vrt_template_sel_e::kConjunctionMatch:
-      p->list.Release<vrt_bool_template_dtor>();
-      break;
-    case vrt_template_sel_e::kImplicationMatch:
-      p->implication->Release<vrt_bool_template_dtor>();
-      vrt_unifree(p->implication);
-      break;
-    case vrt_template_sel_e::kDynamicMatch:
-      rt::detail::FreeDynamicMatcher(&p->dynmatch);
-      break;
-    default:
-      assert(false);
-  }
+void vrt_boolean_template_ctor(vrt_boolean_template_t* p) {
+  rt::tpl::Construct(p);
+}
+void vrt_boolean_template_dtor(vrt_boolean_template_t* p) {
+  rt::tpl::Destruct<vrt_boolean_template_dtor>(p);
 }
 
-bool vrt_bool_template_match(const vrt_bool_t* v, const vrt_bool_template_t* t) {
+bool vrt_boolean_template_match(const vrt_boolean_t* v, const vrt_boolean_template_t* t) {
   switch (t->tsel) {
     case vrt_template_sel_e::kSpecificValue:
-      return v->value == t->val;
-
-    case vrt_template_sel_e::kOmitValue:
-      return false;
-
-    case vrt_template_sel_e::kAnyValue:
-    case vrt_template_sel_e::kAnyOrOmit:
-      return true;
-
-    case vrt_template_sel_e::kValueList:
-    case vrt_template_sel_e::kComplementedList:
-      return t->list.MatchAny<vrt_bool_template_match>(v) && (t->tsel == vrt_template_sel_e::kValueList);
-
-    case vrt_template_sel_e::kConjunctionMatch:
-      return t->list.MatchAll<vrt_bool_template_match>(v);
-
-    case vrt_template_sel_e::kImplicationMatch:
-      return t->implication->Match<vrt_bool_template_match>(v);
-
-    case vrt_template_sel_e::kDynamicMatch:
-      return rt::detail::DynamicMatch(&t->dynmatch, v);
-
+      return v->value == t->val.value;
     default:
-      assert(false);
-      return false;
+      return rt::tpl::Match<vrt_boolean_template_match>(v, t);
   }
 }

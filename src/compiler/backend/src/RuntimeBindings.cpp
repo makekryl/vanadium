@@ -225,7 +225,7 @@ RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ct
   optional_ispresent_f = declare_external_fn("vrt_optional_is_present", builder.getInt1Ty(), {builder.getPtrTy()});
   optional_dtor_f = declare_external_fn("vrt_optional_dtor", builder.getVoidTy(), {builder.getPtrTy()});
 
-  integer.ty = llvm::StructType::create(ctx, "vrt_int_t");
+  integer.ty = llvm::StructType::create(ctx, "vrt_integer_t");
   integer.ty->setBody({
       builder.getInt64Ty(),  // int64 val
       builder.getInt1Ty(),   // bool is_bound
@@ -239,35 +239,37 @@ RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ct
                                                                      // builder.getFalse(),  // is_big = false
                                             });
   //
-  auto* int_assert_is_bound_fn = declare_embedded_fn("__vrt_int_assert_is_bound", builder.getVoidTy(), {integer.ty});
+  auto* int_assert_is_bound_fn =
+      declare_embedded_fn("__vrt_integer_assert_is_bound", builder.getVoidTy(), {integer.ty});
   GenerateAssertIsBound(*this, ctx, int_assert_is_bound_fn, "integer", 1);
   //
   integer.get_f = llvm::Function::Create(llvm::FunctionType::get(builder.getInt64Ty(), {integer.ty}, false),
-                                         llvm::GlobalValue::InternalLinkage, "__vrt_int_get", mod);
+                                         llvm::GlobalValue::InternalLinkage, "__vrt_integer_get", mod);
   GenerateBoxedUnwrapFn(ctx, integer.get_f, int_assert_is_bound_fn, 0);
   //
   integer.wrap_f = llvm::Function::Create(llvm::FunctionType::get(integer.ty, {builder.getInt64Ty()}, false),
-                                          llvm::GlobalValue::InternalLinkage, "__vrt_int_wrap", mod);
+                                          llvm::GlobalValue::InternalLinkage, "__vrt_integer_wrap", mod);
   GenerateWrapFn(ctx, integer.wrap_f, integer.undef);
   //
   for (const auto& [fptr, result_ty, fname, fnativeb] : {
-           ArithmeticOpIntl(integer.eq_f, nbool_ty, "__vrt_int_eq", BLD_BINOP_TO_BOOL(CreateICmpEQ)),
-           ArithmeticOpIntl(integer.ne_f, nbool_ty, "__vrt_int_ne", BLD_BINOP_TO_BOOL(CreateICmpNE)),
+           ArithmeticOpIntl(integer.eq_f, nbool_ty, "__vrt_integer_eq", BLD_BINOP_TO_BOOL(CreateICmpEQ)),
+           ArithmeticOpIntl(integer.ne_f, nbool_ty, "__vrt_integer_ne", BLD_BINOP_TO_BOOL(CreateICmpNE)),
            //
-           ArithmeticOpIntl(integer.lt_f, nbool_ty, "__vrt_int_lt", BLD_BINOP_TO_BOOL(CreateICmpSLT)),
-           ArithmeticOpIntl(integer.le_f, nbool_ty, "__vrt_int_le", BLD_BINOP_TO_BOOL(CreateICmpSLE)),
-           ArithmeticOpIntl(integer.gt_f, nbool_ty, "__vrt_int_gt", BLD_BINOP_TO_BOOL(CreateICmpSGT)),
-           ArithmeticOpIntl(integer.ge_f, nbool_ty, "__vrt_int_ge", BLD_BINOP_TO_BOOL(CreateICmpSGE)),
+           ArithmeticOpIntl(integer.lt_f, nbool_ty, "__vrt_integer_lt", BLD_BINOP_TO_BOOL(CreateICmpSLT)),
+           ArithmeticOpIntl(integer.le_f, nbool_ty, "__vrt_integer_le", BLD_BINOP_TO_BOOL(CreateICmpSLE)),
+           ArithmeticOpIntl(integer.gt_f, nbool_ty, "__vrt_integer_gt", BLD_BINOP_TO_BOOL(CreateICmpSGT)),
+           ArithmeticOpIntl(integer.ge_f, nbool_ty, "__vrt_integer_ge", BLD_BINOP_TO_BOOL(CreateICmpSGE)),
            //
-           ArithmeticOpIntl(integer.add_f, integer.ty, "__vrt_int_add", BLD_BINOP_TO_VAL(MakeBoundValW, CreateAdd)),
-           ArithmeticOpIntl(integer.sub_f, integer.ty, "__vrt_int_sub", BLD_BINOP_TO_VAL(MakeBoundValW, CreateSub)),
-           ArithmeticOpIntl(integer.mul_f, integer.ty, "__vrt_int_mul", BLD_BINOP_TO_VAL(MakeBoundValW, CreateMul)),
-           ArithmeticOpIntl(integer.div_f, integer.ty, "__vrt_int_div", BLD_BINOP_TO_VAL(MakeBoundValW, CreateSDiv)),
+           ArithmeticOpIntl(integer.add_f, integer.ty, "__vrt_integer_add", BLD_BINOP_TO_VAL(MakeBoundValW, CreateAdd)),
+           ArithmeticOpIntl(integer.sub_f, integer.ty, "__vrt_integer_sub", BLD_BINOP_TO_VAL(MakeBoundValW, CreateSub)),
+           ArithmeticOpIntl(integer.mul_f, integer.ty, "__vrt_integer_mul", BLD_BINOP_TO_VAL(MakeBoundValW, CreateMul)),
+           ArithmeticOpIntl(integer.div_f, integer.ty, "__vrt_integer_div",
+                            BLD_BINOP_TO_VAL(MakeBoundValW, CreateSDiv)),
        }) {
     fptr = declare_embedded_fn(fname, result_ty, {integer.ty, integer.ty});
     GenerateGenericBinaryNumericOperation(ctx, fptr, int_assert_is_bound_fn, fnativeb);
   }
-  integer.neg_f = declare_embedded_fn("__vrt_int_neg", integer.ty, {integer.ty});
+  integer.neg_f = declare_embedded_fn("__vrt_integer_neg", integer.ty, {integer.ty});
   GenerateGenericUnaryNumericOperation(ctx, integer.neg_f, int_assert_is_bound_fn,
                                        [](llvm::IRBuilder<>& builder, llvm::Type* ty, llvm::Value* va) -> llvm::Value* {
                                          return MakeBoundValW(builder, ty, builder.CreateNeg(va));
@@ -318,7 +320,7 @@ RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ct
                                          return MakeBoundValW(builder, ty, builder.CreateFNeg(va));
                                        });
 
-  boolt.ty = llvm::StructType::create(ctx, "vrt_bool_t");
+  boolt.ty = llvm::StructType::create(ctx, "vrt_boolean_t");
   boolt.ty->setBody({
       builder.getInt1Ty(),  // bool value
       builder.getInt1Ty(),  // bool is_bound
@@ -329,15 +331,15 @@ RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ct
                                                         builder.getFalse(),  // is_bound = false
                                                     });
   //
-  auto* bool_assert_is_bound_fn = declare_embedded_fn("__vrt_bool_assert_is_bound", builder.getVoidTy(), {boolt.ty});
+  auto* bool_assert_is_bound_fn = declare_embedded_fn("__vrt_boolean_assert_is_bound", builder.getVoidTy(), {boolt.ty});
   GenerateAssertIsBound(*this, ctx, bool_assert_is_bound_fn, "boolean", 1);
   //
   boolt.get_f = llvm::Function::Create(llvm::FunctionType::get(builder.getInt1Ty(), {boolt.ty}, false),
-                                       llvm::GlobalValue::InternalLinkage, "__vrt_bool_get", mod);
+                                       llvm::GlobalValue::InternalLinkage, "__vrt_boolean_get", mod);
   GenerateBoxedUnwrapFn(ctx, boolt.get_f, bool_assert_is_bound_fn, 0);
   //
   boolt.wrap_f = llvm::Function::Create(llvm::FunctionType::get(boolt.ty, {builder.getInt1Ty()}, false),
-                                        llvm::GlobalValue::InternalLinkage, "__vrt_bool_wrap", mod);
+                                        llvm::GlobalValue::InternalLinkage, "__vrt_boolean_wrap", mod);
   GenerateWrapFn(ctx, boolt.wrap_f, boolt.undef);
 
   const auto fill_string_bindings = [&](StringTypeBindings& b, std::string_view ty_name) {
@@ -467,7 +469,7 @@ llvm::Value* RuntimeBindings::GetInt(std::variant<NativeIntType, std::string_vie
                                                      //  llvm::ConstantInt::getFalse(ctx_),  // is_big = false
                                                  });
   }
-  // TODO: big ints -- call something like vrt_int_from_str()
+  // TODO: big ints -- call something like vrt_integer_from_str()
   std::unreachable();
 }
 

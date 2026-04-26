@@ -11,6 +11,7 @@ add_library(vanadium_rt STATIC
   src/rt_hexstring.cpp
   src/rt_optional.cpp
   src/rt_verdict.cpp
+  src/rt_stringifier.cpp
 )
 
 target_include_directories(vanadium_rt PUBLIC

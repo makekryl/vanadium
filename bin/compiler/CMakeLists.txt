@@ -1,5 +1,3 @@
-find_package(LLVM REQUIRED CONFIG QUIET)
-
 add_executable(vanadiumc
   src/Vanadiumc.cpp
 )

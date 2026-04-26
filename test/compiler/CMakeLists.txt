@@ -1,5 +1,3 @@
-find_package(LLVM REQUIRED CONFIG QUIET)
-
 add_executable(vanadium_e2e_compiler
   CompilerTestsRunner.cpp
 )

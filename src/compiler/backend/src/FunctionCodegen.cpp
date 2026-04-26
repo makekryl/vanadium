@@ -38,6 +38,7 @@
 #include "vanadium/compiler/IRHelpers.h"
 #include "vanadium/compiler/LiteralsParser.h"
 #include "vanadium/compiler/RuntimeBindings.h"
+#include "vanadium/compiler/TypeSymbol.h"
 
 namespace vanadium::compiler {
 
@@ -46,15 +47,15 @@ namespace {
 struct AllocatedVar {
   llvm::Value* value;
   llvm::Type* ty;
-  const core::semantic::Symbol* sym;
+  TypeSymbol ts;
   bool immutable{false};
 };
 
-void EmitDestructor(CodegenUnit& u, const core::semantic::Symbol* sym, llvm::Value* val) {
-  if (sym) {
-    if (sym->Flags() & core::semantic::SymbolFlags::kBuiltin) {
+void EmitDestructorCall(CodegenUnit& u, TypeSymbol ts, llvm::Value* val) {
+  if (ts) {
+    if (!u.IsOpaque(ts)) {
       auto* dtor_f = [&] -> llvm::Function* {
-        if (const auto* strb = u.GetStringTypeBindings(sym)) {
+        if (const auto* strb = u.GetStringTypeBindings(ts)) {
           return strb->dtor_f;
         }
         return nullptr;
@@ -67,7 +68,7 @@ void EmitDestructor(CodegenUnit& u, const core::semantic::Symbol* sym, llvm::Val
       auto* alloca = llvm::dyn_cast<llvm::AllocaInst>(val);
       assert(alloca);
       u.builder.CreateCall(u.rt.type_del_f, {
-                                                u.mod.getGlobalVariable(names::TInfo(sym)),
+                                                u.mod.getGlobalVariable(names::TInfo(ts)),
                                                 u.builder.CreateLoad(alloca->getAllocatedType(), alloca),
                                             });
     }
@@ -109,31 +110,35 @@ class ScopeManager {
     frame_stack_.pop_back();
 
     if (!u_.builder.GetInsertBlock()->getTerminator()) {
-      EmitDestructors(frame);
+      EmitDestructorCalls(frame);
     }
   }
 
-  void EmitDestructors() {
+  void EmitDestructorCalls() {
     for (const auto& frame : frame_stack_ | std::views::reverse) {
-      EmitDestructors(frame);
+      EmitDestructorCalls(frame);
     }
   }
   void EmitDestructorsInterruptingLoop() {
     for (const auto& frame : frame_stack_ | std::views::reverse) {
-      EmitDestructors(frame);
+      EmitDestructorCalls(frame);
       if (frame.kind == Frame::Kind::kLoop) {
         break;
       }
     }
   }
 
-  llvm::AllocaInst* Alloc(std::string_view name, const core::semantic::Symbol* sym) {
-    auto* ty = u_.GetSymbolType(sym);
+  llvm::AllocaInst* Alloc(std::string_view name, TypeSymbol ts) {
+    auto* ty = u_.GetSymbolType(ts);
     auto* alloca = createEntryBlockAlloca(ty, name);
     u_.builder.CreateLifetimeStart(alloca);
 
     auto& frame = frame_stack_.back();
-    const auto& [it, _] = frame.vars.emplace(name, AllocatedVar{.value = alloca, .ty = ty, .sym = sym});
+    const auto& [it, _] = frame.vars.emplace(name, AllocatedVar{
+                                                       .value = alloca,
+                                                       .ty = ty,
+                                                       .ts = ts,
+                                                   });
     frame.ordered_vars.emplace_back(&it->second);
 
     return alloca;
@@ -144,7 +149,11 @@ class ScopeManager {
     u_.builder.CreateLifetimeStart(alloca);
 
     auto& frame = frame_stack_.back();
-    auto& var = frame.temporaries.emplace_front(AllocatedVar{.value = alloca, .ty = ty, .sym = sym});
+    auto& var = frame.temporaries.emplace_front(AllocatedVar{
+        .value = alloca,
+        .ty = ty,
+        .ts = sym,
+    });
     frame.ordered_vars.emplace_back(&var);
 
     return alloca;
@@ -154,13 +163,13 @@ class ScopeManager {
     u_.builder.CreateLifetimeStart(alloca);
 
     auto& frame = frame_stack_.back();
-    auto& var = frame.temporaries.emplace_front(AllocatedVar{.value = alloca, .ty = ty, .sym = nullptr});
+    auto& var = frame.temporaries.emplace_front(AllocatedVar{.value = alloca, .ty = ty, .ts = nullptr});
     frame.ordered_vars.emplace_back(&var);
 
     return alloca;
   }
-  void BindArgument(std::string_view name, const core::semantic::Symbol* sym, llvm::Argument* arg, bool immutable) {
-    args_[name] = {.value = arg, .ty = u_.GetSymbolType(sym), .sym = sym, .immutable = immutable};
+  void BindArgument(std::string_view name, TypeSymbol ts, llvm::Argument* arg, bool immutable) {
+    args_[name] = {.value = arg, .ty = u_.GetSymbolType(ts), .ts = ts, .immutable = immutable};
   }
   const AllocatedVar* Lookup(std::string_view name) {
     for (const auto& frame : frame_stack_ | std::views::reverse) {
@@ -192,7 +201,7 @@ class ScopeManager {
   }
 
  private:
-  void EmitDestructors(const Frame& frame) {
+  void EmitDestructorCalls(const Frame& frame) {
     if (frame.ordered_vars.empty()) {
       return;
     }
@@ -203,7 +212,7 @@ class ScopeManager {
     }
 
     for (const auto& var : frame.ordered_vars | std::views::reverse) {
-      EmitDestructor(u_, var->sym, var->value);
+      EmitDestructorCall(u_, var->ts, var->value);
     }
 
     if (frame.uses_stackalloc) {
@@ -241,17 +250,14 @@ class FunctionCodegen {
       return;
     }
 
-    if (!u_.DebugInfoEnabled()) {
-      dbgisp_ = nullptr;
-    } else {
-      u_.EmitDebugInfo([&](DebugInfo& di) {
-        // TODO: set real line numbers
-        dbgisp_ = di.builder.createFunction(di.file, fn_->getName(), llvm::StringRef{}, di.file, 5,
-                                            di.builder.createSubroutineType(di.builder.getOrCreateTypeArray({})), 5,
-                                            llvm::DINode::FlagZero, llvm::DISubprogram::SPFlagDefinition);
-        fn_->setSubprogram(dbgisp_);
-      });
-    }
+    dbgisp_ = nullptr;
+    u_.EmitDebugInfo([&](DebugInfo& di) {
+      // TODO: set real line numbers
+      dbgisp_ = di.builder.createFunction(di.file, fn_->getName(), llvm::StringRef{}, di.file, 5,
+                                          di.builder.createSubroutineType(di.builder.getOrCreateTypeArray({})), 5,
+                                          llvm::DINode::FlagZero, llvm::DISubprogram::SPFlagDefinition);
+      fn_->setSubprogram(dbgisp_);
+    });
 
     scope_.emplace(u_, fn_);
 
@@ -275,14 +281,14 @@ class FunctionCodegen {
       const auto& name = Lit(param->name);
       arg.setName(name);
 
-      scope_->BindArgument(name, isym.sym, &arg,
+      scope_->BindArgument(name, isym, &arg,
                            param->direction == nullptr || param->direction->kind == ast::TokenKind::IN);
     }
 
     CodegenStmt(m->body);
 
     if (!u_.builder.GetInsertBlock()->getTerminator()) {
-      scope_->EmitDestructors();
+      scope_->EmitDestructorCalls();
       u_.builder.CreateBr(retbb_);
     }
 
@@ -315,14 +321,16 @@ class FunctionCodegen {
     return ty == u_.rt.boolt.ty || ty == u_.rt.integer.ty || ty == u_.rt.floatt.ty;
   }
 
-  void EmitGenericVal(llvm::Value* slot, const core::semantic::Symbol* sym, llvm::Value* v) {
+  void EmitGenericVal(llvm::Value* slot, TypeSymbol ts, llvm::Value* v) {
     // p field
     auto* p_gep = u_.builder.CreateStructGEP(u_.rt.generic_val_ty, slot, 0, "gvt_p");
     u_.builder.CreateStore(v, p_gep);
 
     // ty field
     auto* ty_gep = u_.builder.CreateStructGEP(u_.rt.generic_val_ty, slot, 1, "gvt_ty");
-    u_.builder.CreateStore(u_.getOrDeclareExternalConst(names::TInfo(sym), u_.rt.typeinfo_ty), ty_gep);
+    u_.builder.CreateStore(u_.getOrDeclareExternalConst(names::TInfo(ts), u_.rt.typeinfo_ty), ty_gep);
+
+    std::println("EmitGenericVal name={}, tpl={}", ts->GetName(), ts.is_template);
   }
 
   llvm::Value* retval_;
@@ -339,10 +347,10 @@ class FunctionCodegen {
 };
 
 void FunctionCodegen::CodegenStmt(const ast::nodes::Stmt* n) {
-  if (u_.DebugInfoEnabled()) {
+  u_.EmitDebugInfo([&](auto&) {
     const auto ast_loc = u_.sf.ast.lines.Translate(n->nrange.begin);
     u_.builder.SetCurrentDebugLocation(llvm::DILocation::get(u_.ctx, ast_loc.line + 1, ast_loc.column + 1, dbgisp_));
-  }
+  });
   switch (n->nkind) {
     case ast::NodeKind::BlockStmt: {
       const auto* m = n->As<ast::nodes::BlockStmt>();
@@ -482,7 +490,7 @@ void FunctionCodegen::CodegenStmt(const ast::nodes::Stmt* n) {
       if (m->result) {
         CodegenExpr(m->result, retval_);
       }
-      scope_->EmitDestructors();
+      scope_->EmitDestructorCalls();
       u_.builder.CreateBr(retbb_);
       break;
     }
@@ -531,17 +539,18 @@ void FunctionCodegen::CodegenDecl(const ast::nodes::Decl* n) {
     case ast::NodeKind::ValueDecl: {
       const auto* m = n->As<ast::nodes::ValueDecl>();
 
-      const auto itype = core::checker::ResolveExprType(&u_.sf, u_.sf.module->scope, m->type);
+      const TypeSymbol ts{core::checker::ResolveExprType(&u_.sf, u_.sf.module->scope, m->type).sym,
+                          m->restriction != nullptr};
+
       for (auto* decl : m->decls) {
-        auto* alloca = scope_->Alloc(Lit(decl->name), itype.sym);
+        auto* alloca = scope_->Alloc(Lit(decl->name), ts);
         if (decl->value) {
-          llvm::Value* v;
-          {
-            auto tmp_frame{EnterStackFrame(ScopeManager::Frame::Kind::kTemporaries)};
-            v = CodegenExpr(decl->value, alloca);
-          }
+          auto tmp_frame{EnterStackFrame(ScopeManager::Frame::Kind::kTemporaries)};
+          CodegenExpr(decl->value, alloca);
         } else {
-          u_.builder.CreateStore(u_.GetUndef(itype.sym), alloca);
+          auto* undef =
+              u_.IsOpaque(ts) ? u_.builder.CreateCall(u_.rt.type_new_f, {u_.GetTypeInfo(ts)}) : u_.GetUndef(ts);
+          u_.builder.CreateStore(undef, alloca);
         }
       }
 
@@ -557,7 +566,7 @@ void FunctionCodegen::CodegenDecl(const ast::nodes::Decl* n) {
 
 llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Value* dest) {
   const auto promote_trivial = [this](llvm::Type* ty, llvm::Value* v) -> llvm::Value* {
-    if (v->getType() == u_.builder.getPtrTy()) {
+    if (v->getType()->isPointerTy()) {
       return u_.builder.CreateLoad(ty, v);
     }
     return u_.WrapValue(v);
@@ -912,17 +921,17 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
         case ast::NodeKind::Ident: {
           const auto* var = scope_->Lookup(Lit(m->property));
           if (var->immutable) {
-            auto* owned_var_copy = scope_->Alloc(var->value->getName(), var->sym);
+            auto* owned_var_copy = scope_->Alloc(var->value->getName(), var->ts);
             CodegenExpr(m->value, owned_var_copy);
           } else {
             if (IsTrivial(var->ty)) {
               // no dtor call needed
               CodegenExpr(m->value, var->value);
             } else {
-              if (var->ty == u_.builder.getPtrTy()) {
+              if (var->ty->isPointerTy()) {
                 auto* old_val = u_.builder.CreateLoad(var->ty, var->value);
                 CodegenExpr(m->value, var->value);
-                EmitDestructor(u_, var->sym, old_val);
+                EmitDestructorCall(u_, var->ts, old_val);
               } else {
                 // charstring, ...
                 auto* tmp_alloca = scope_->createEntryBlockAlloca(var->ty, "tmpref");
@@ -932,7 +941,7 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
                                         u_.mod.getDataLayout().getTypeAllocSize(var->ty));
                 //
                 CodegenExpr(m->value, var->value);
-                EmitDestructor(u_, var->sym, tmp_alloca);
+                EmitDestructorCall(u_, var->ts, tmp_alloca);
                 //
                 u_.builder.CreateLifetimeEnd(tmp_alloca);
               }
@@ -974,11 +983,15 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
       const auto* m = expr->As<ast::nodes::CallExpr>();
 
       auto tmp_frame{EnterStackFrame(ScopeManager::Frame::Kind::kTemporaries)};
-      const auto prepare_argument = [&](llvm::Value* av) -> llvm::Value* {
+      const auto prepare_argument = [this](llvm::Value* av) -> llvm::Value* {
+        std::println("prepare_argument(tyID={})", magic_enum::enum_name(av->getType()->getTypeID()));
         if (!av->getType()->isPointerTy()) {
           auto* val_slot = scope_->AllocTrivialTemp(av->getType());
           u_.builder.CreateStore(av, val_slot);
           return val_slot;
+        }
+        if (auto* alloca = llvm::dyn_cast<llvm::AllocaInst>(av); alloca->getAllocatedType()->isPointerTy()) {
+          return u_.builder.CreateLoad(alloca->getAllocatedType(), alloca);
         }
         return av;
       };
@@ -1006,7 +1019,7 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, llvm::Va
 
           const auto& isym = core::checker::ResolveExprType(
               &u_.sf, core::semantic::utils::FindScope(u_.sf.module->scope, argnode), argnode);
-          EmitGenericVal(slot, isym.sym, val);
+          EmitGenericVal(slot, isym, val);
         }
 
         auto* res = u_.builder.CreateCall(callee, {arr, u_.builder.getInt32(n)});

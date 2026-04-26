@@ -20,7 +20,7 @@ inline void AssertIsBound(const vrt_octetstring_t* s) {
 
 const vrt_typeinfo_t octetstring_typeinfo{
     .name = "octetstring",
-    .kind = vrt_typekind_e::kString,
+    .kind = vrt_typekind_e::kOctetstring,
     .size = sizeof(vrt_octetstring_t),
 
     .members = nullptr,
@@ -30,31 +30,31 @@ const vrt_typeinfo_t octetstring_typeinfo{
 };
 
 void vrt_octetstring_ctor(vrt_octetstring_t* p) {
-  rt::detail::str::Construct(p);
+  rt::str::Construct(p);
 }
 void vrt_octetstring_dtor(vrt_octetstring_t* p) {
-  rt::detail::str::Destruct(p);
+  rt::str::Destruct(p);
 }
 
 octet_t* vrt_octetstring_get_buf(vrt_octetstring_t* s) {
-  return rt::detail::str::GetBuf(s);
+  return rt::str::GetBuf(s);
 }
 const octet_t* vrt_octetstring_get_cbuf(const vrt_octetstring_t* s) {
-  return rt::detail::str::GetCBuf(s);
+  return rt::str::GetCBuf(s);
 }
 
 void vrt_octetstring_assign(vrt_octetstring_t* dst, const octet_t* src, octetstring_size_t len) {
-  rt::detail::str::Assign(dst, src, len);
+  rt::str::Assign(dst, src, len);
 }
 
 void copy_octetstring(vrt_octetstring_t* dst, const vrt_octetstring_t* src) {
   AssertIsBound(src);
-  rt::detail::str::Copy(dst, src);
+  rt::str::Copy(dst, src);
 }
 
 extern "C" {
 void vrt_octetstring_init(vrt_octetstring_t* dst, const octet_t* src, octetstring_size_t len) {
-  rt::detail::str::InitFrom(dst, src, len);
+  rt::str::InitFrom(dst, src, len);
 }
 }
 
@@ -65,11 +65,11 @@ void vrt_octetstring_concat(vrt_octetstring_t* dst, const vrt_octetstring_t* a, 
   // TODO: optimize "a := a & ..." and "a := ... & a" (append/prepend)
 
   const auto total_len = a->length + b->length;
-  auto tmp = rt::detail::str::MakeDummy<vrt_octetstring_t>(total_len);
+  auto tmp = rt::str::MakeDummy<vrt_octetstring_t>(total_len);
 
-  octet_t* dst_buf = rt::detail::str::GetBuf(&tmp);
-  dst_buf = std::copy_n(rt::detail::str::GetCBuf(a), a->length, dst_buf);
-  dst_buf = std::copy_n(rt::detail::str::GetCBuf(b), b->length, dst_buf);
+  octet_t* dst_buf = rt::str::GetBuf(&tmp);
+  dst_buf = std::copy_n(rt::str::GetCBuf(a), a->length, dst_buf);
+  dst_buf = std::copy_n(rt::str::GetCBuf(b), b->length, dst_buf);
 
   //
   *dst = tmp;
@@ -88,7 +88,7 @@ octet_t vrt_octetstring_at(const vrt_octetstring_t* s, octetstring_size_t i) {
   AssertIsBound(s);
   AssertNoOverflow(s, i);
 
-  return rt::detail::str::GetCBuf(s)[i];
+  return rt::str::GetCBuf(s)[i];
 }
 
 void vrt_octetstring_set(vrt_octetstring_t* s, octetstring_size_t i, octet_t v) {
@@ -96,10 +96,10 @@ void vrt_octetstring_set(vrt_octetstring_t* s, octetstring_size_t i, octet_t v) 
   AssertNoOverflow(s, i);
 
   if (s->length == i) {
-    rt::detail::str::Resize<{.preserve = true}>(s, s->length + 1);
+    rt::str::Resize<{.preserve = true}>(s, s->length + 1);
   }
 
-  rt::detail::str::GetBuf(s)[i] = v;
+  rt::str::GetBuf(s)[i] = v;
 }
 
 void vrt_octetstring_singular(vrt_octetstring_t* dst, const vrt_octetstring_t* s, octetstring_size_t i) {
@@ -124,13 +124,13 @@ void vrt_octetstring_shift_right_impl(const octet_t* srcbuf, octet_t* buf, octet
 }  // namespace
 
 void vrt_octetstring_shift_left(vrt_octetstring_t* dst, const vrt_octetstring_t* s, std::int64_t n) {
-  rt::detail::str::PerformShift(dst, s, n,  //
-                                vrt_octetstring_shift_left_impl, vrt_octetstring_shift_right_impl);
+  rt::str::PerformShift(dst, s, n,  //
+                        vrt_octetstring_shift_left_impl, vrt_octetstring_shift_right_impl);
 }
 
 void vrt_octetstring_shift_right(vrt_octetstring_t* dst, const vrt_octetstring_t* s, std::int64_t n) {
-  rt::detail::str::PerformShift(dst, s, n,  //
-                                vrt_octetstring_shift_right_impl, vrt_octetstring_shift_left_impl);
+  rt::str::PerformShift(dst, s, n,  //
+                        vrt_octetstring_shift_right_impl, vrt_octetstring_shift_left_impl);
 }
 
 namespace {
@@ -145,19 +145,19 @@ void vrt_octetstring_rotate_right_impl(const octet_t* srcbuf, octet_t* buf, octe
 }  // namespace
 
 void vrt_octetstring_rotate_left(vrt_octetstring_t* dst, const vrt_octetstring_t* s, std::int64_t n) {
-  rt::detail::str::PerformRotate(dst, s, n,  //
-                                 vrt_octetstring_rotate_left_impl, vrt_octetstring_rotate_right_impl);
+  rt::str::PerformRotate(dst, s, n,  //
+                         vrt_octetstring_rotate_left_impl, vrt_octetstring_rotate_right_impl);
 }
 
 void vrt_octetstring_rotate_right(vrt_octetstring_t* dst, const vrt_octetstring_t* s, std::int64_t n) {
-  rt::detail::str::PerformRotate(dst, s, n,  //
-                                 vrt_octetstring_rotate_right_impl, vrt_octetstring_rotate_left_impl);
+  rt::str::PerformRotate(dst, s, n,  //
+                         vrt_octetstring_rotate_right_impl, vrt_octetstring_rotate_left_impl);
 }
 
 bool vrt_octetstring_eq(const vrt_octetstring_t* lhs, const vrt_octetstring_t* rhs) {
   AssertIsBound(lhs);
   AssertIsBound(rhs);
-  return rt::detail::str::Equal(lhs, rhs);
+  return rt::str::Equal(lhs, rhs);
 }
 bool vrt_octetstring_ne(const vrt_octetstring_t* lhs, const vrt_octetstring_t* rhs) {
   return !vrt_octetstring_eq(lhs, rhs);
@@ -167,7 +167,7 @@ bool vrt_octetstring_ne(const vrt_octetstring_t* lhs, const vrt_octetstring_t* r
 
 void vrt_octetstring_not4b(vrt_octetstring_t* dst, const vrt_octetstring_t* s) {
   AssertIsBound(s);
-  rt::detail::str::UnaryOp(dst, s, std::bit_not<octet_t>{});
+  rt::str::UnaryOp(dst, s, std::bit_not<octet_t>{});
 }
 
 namespace {
@@ -181,15 +181,15 @@ void AssertBinaryOpValidity(std::string_view op_name, const vrt_octetstring_t* l
 
 void vrt_octetstring_and4b(vrt_octetstring_t* dst, const vrt_octetstring_t* lhs, const vrt_octetstring_t* rhs) {
   AssertBinaryOpValidity("and4b", lhs, rhs);
-  rt::detail::str::BinaryOp(dst, lhs, rhs, std::bit_and<octet_t>{});
+  rt::str::BinaryOp(dst, lhs, rhs, std::bit_and<octet_t>{});
 }
 void vrt_octetstring_or4b(vrt_octetstring_t* dst, const vrt_octetstring_t* lhs, const vrt_octetstring_t* rhs) {
   AssertBinaryOpValidity("or4b", lhs, rhs);
-  rt::detail::str::BinaryOp(dst, lhs, rhs, std::bit_or<octet_t>{});
+  rt::str::BinaryOp(dst, lhs, rhs, std::bit_or<octet_t>{});
 }
 void vrt_octetstring_xor4b(vrt_octetstring_t* dst, const vrt_octetstring_t* lhs, const vrt_octetstring_t* rhs) {
   AssertBinaryOpValidity("xor4b", lhs, rhs);
-  rt::detail::str::BinaryOp(dst, lhs, rhs, std::bit_xor<octet_t>{});
+  rt::str::BinaryOp(dst, lhs, rhs, std::bit_xor<octet_t>{});
 }
 
 // NOLINTEND(readability-identifier-naming)

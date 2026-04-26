@@ -22,17 +22,12 @@ namespace {
 void CompileUnit(CodegenUnit& u) {
   u.mod.setSourceFileName(std::filesystem::path(u.sf.path).filename().string());
 
-  const auto symbols = [&](core::semantic::SymbolFlags::Value mask) {
-    return u.sf.module->scope->symbols.Enumerate() | std::views::values | std::views::filter([mask](const auto& sym) {
-             return bool(sym.Flags() & mask);
-           });
-  };
-
-  for (const auto& sym : symbols(core::semantic::SymbolFlags::kType)) {
-    CodegenType(u, &sym);
-  }
-  for (const auto& sym : symbols(core::semantic::SymbolFlags::kFunction)) {
-    CodegenFunction(u, &sym);
+  for (const auto& sym : u.sf.module->scope->symbols.Enumerate() | std::views::values) {
+    if (sym.Flags() & core::semantic::SymbolFlags::kType) {
+      CodegenType(u, &sym);
+    } else if (sym.Flags() & core::semantic::SymbolFlags::kFunction) {
+      CodegenFunction(u, &sym);
+    }
   }
 
   GenerateModuleRegistrationCode(u);

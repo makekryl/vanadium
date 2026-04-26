@@ -11,4 +11,6 @@ _vanadium_external(fmt)
 _vanadium_external(argparse)
 _vanadium_external(tomlplusplus)
 _vanadium_external(reflectcpp)
-_vanadium_external(llvm)
+
+# we need to access the variables set by find_package(LLVM), so don't wrap in a function
+include(${CMAKE_CURRENT_LIST_DIR}/external/llvm.cmake)

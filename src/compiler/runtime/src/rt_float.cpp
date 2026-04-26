@@ -15,7 +15,7 @@ inline void AssertIsBound(vrt_float_t& i) {
 
 const vrt_typeinfo_t float_typeinfo{
     .name = "float",
-    .kind = vrt_typekind_e::kScalar,
+    .kind = vrt_typekind_e::kFloat,
     .size = sizeof(vrt_float_t),
 
     .members = nullptr,
@@ -81,13 +81,13 @@ struct vrt_float_template_t {
   //
 
   union {
-    vrt_native_int_t val;
-    rt::detail::ValueList<vrt_float_template_t> list;
+    vrt_float_t val;
+    rt::tpl::ValueList<vrt_float_template_t> list;
     struct {
-      vrt_native_int_t vmin;
-      vrt_native_int_t vmax;
+      double vmin;
+      double vmax;
     } range;
-    rt::detail::Implication<vrt_float_template_t>* implication;
+    rt::tpl::Implication<vrt_float_template_t>* implication;
     vrt_dynmatcher_t dynmatch;
   };
 };
@@ -97,60 +97,32 @@ void vrt_float_template_ctor(vrt_float_template_t*);
 void vrt_float_template_dtor(vrt_float_template_t*);
 }
 
-const vrt_typeinfo_t integer_template_typeinfo{
-    .name = "integer",
-    .kind = vrt_typekind_e::kScalar,
+const vrt_typeinfo_t float_template_typeinfo{
+    .name = float_typeinfo.name,
+    .kind = float_typeinfo.kind,
     .is_template = true,
     .size = sizeof(vrt_float_template_t),
 
-    .members = integer_typeinfo.members,
+    .members = float_typeinfo.members,
 
     .construct = vanadium::rt::helpers::VoidErased<vrt_float_template_ctor>,
     .destruct = vanadium::rt::helpers::VoidErased<vrt_float_template_dtor>,
 
-    .counterpart = &integer_typeinfo,
+    .counterpart = &float_typeinfo,
 };
 
-void vrt_float_template_ctor(vrt_float_template_t* p) {}
+void vrt_float_template_ctor(vrt_float_template_t* p) {
+  rt::tpl::Construct(p);
+}
 void vrt_float_template_dtor(vrt_float_template_t* p) {
-  switch (p->tsel) {
-    case vrt_template_sel_e::kSpecificValue:
-    case vrt_template_sel_e::kOmitValue:
-    case vrt_template_sel_e::kAnyValue:
-    case vrt_template_sel_e::kAnyOrOmit:
-    case vrt_template_sel_e::kValueRange:
-      break;
-    case vrt_template_sel_e::kValueList:
-    case vrt_template_sel_e::kComplementedList:
-    case vrt_template_sel_e::kConjunctionMatch:
-      p->list.Release<vrt_float_template_dtor>();
-      break;
-    case vrt_template_sel_e::kImplicationMatch:
-      p->implication->Release<vrt_float_template_dtor>();
-      vrt_unifree(p->implication);
-      break;
-    case vrt_template_sel_e::kDynamicMatch:
-      rt::detail::FreeDynamicMatcher(&p->dynmatch);
-      break;
-    default:
-      assert(false);
-  }
+  rt::tpl::Destruct<vrt_float_template_dtor>(p);
 }
 
 bool vrt_float_template_match(const vrt_float_t* v, const vrt_float_template_t* t) {
   switch (t->tsel) {
     case vrt_template_sel_e::kSpecificValue:
-      return v->value == t->val;
-
-    case vrt_template_sel_e::kOmitValue:
-      return false;
-
-    case vrt_template_sel_e::kAnyValue:
-    case vrt_template_sel_e::kAnyOrOmit:
-      return true;
-
+      return v->value == t->val.value;
     case vrt_template_sel_e::kValueRange: {
-      // TODO: -+infinity
       bool matches = true;
       if (t->vmin_present) {
         matches = matches && (t->vmin_exclusive ? (t->range.vmin < v->value) : (t->range.vmin <= v->value));
@@ -160,22 +132,7 @@ bool vrt_float_template_match(const vrt_float_t* v, const vrt_float_template_t* 
       }
       return matches;
     }
-
-    case vrt_template_sel_e::kValueList:
-    case vrt_template_sel_e::kComplementedList:
-      return t->list.MatchAny<vrt_float_template_match>(v) && (t->tsel == vrt_template_sel_e::kValueList);
-
-    case vrt_template_sel_e::kConjunctionMatch:
-      return t->list.MatchAll<vrt_float_template_match>(v);
-
-    case vrt_template_sel_e::kImplicationMatch:
-      return t->implication->Match<vrt_float_template_match>(v);
-
-    case vrt_template_sel_e::kDynamicMatch:
-      return rt::detail::DynamicMatch(&t->dynmatch, v);
-
     default:
-      assert(false);
-      return false;
+      return rt::tpl::Match<vrt_float_template_match>(v, t);
   }
 }

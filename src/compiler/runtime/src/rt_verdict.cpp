@@ -9,7 +9,7 @@ vrt_verdicttype g_verdict{vrt_verdicttype::none};
 }  // namespace
 
 // ES 201 873-1 [TTCN-3: Core Language], par. 24.1
-void vrt_setverdict(const vrt_int_t* verdict, [[maybe_unused]] const vrt_charstring_t* reason) {
+void vrt_setverdict(const vrt_integer_t* verdict, [[maybe_unused]] const vrt_charstring_t* reason) {
   // TODO(compiler): pass int, float, bool by value
   const auto v = static_cast<vrt_verdicttype>(verdict->value);
   if (g_verdict < v) {

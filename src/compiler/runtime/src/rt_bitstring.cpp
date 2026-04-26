@@ -1,11 +1,14 @@
 #include "vanadium/runtime/rt_bitstring.h"
 
 #include <algorithm>
+#include <cassert>
 
 #include "vanadium/runtime/RuntimeHelpers.h"
 #include "vanadium/runtime/StringBase.h"
+#include "vanadium/runtime/TemplateMatching.h"
 #include "vanadium/runtime/rt_alloc.h"
 #include "vanadium/runtime/rt_reflect.h"
+#include "vanadium/runtime/rt_template.h"
 #include "vanadium/runtime/runtime.h"
 #include "vanadium/runtime/runtime.hpp"
 
@@ -40,17 +43,17 @@ void ClearUnusedBits(vrt_bitstring_t* s) {
   const bitstring_size_t used_bits_last = s->length % 8;
   if (used_bits_last != 0) {
     const std::uint8_t mask = std::uint8_t(-1) << (8 - used_bits_last);
-    rt::detail::str::GetBuf(s)[Bits2Bytes(s->length) - 1] &= mask;
+    rt::str::GetBuf(s)[Bits2Bytes(s->length) - 1] &= mask;
   }
 }
 }  // namespace
 
-namespace vanadium::rt::detail::str {
+namespace vanadium::rt::str {
 template <>
 RtStringSize_t GetByteLength<vrt_bitstring_t>(RtStringSize_t len) {
   return Bits2Bytes(len);
 }
-}  // namespace vanadium::rt::detail::str
+}  // namespace vanadium::rt::str
 
 const vrt_typeinfo_t bitstring_typeinfo{
     .name = "bitstring",
@@ -64,31 +67,31 @@ const vrt_typeinfo_t bitstring_typeinfo{
 };
 
 void vrt_bitstring_ctor(vrt_bitstring_t* p) {
-  rt::detail::str::Construct(p);
+  rt::str::Construct(p);
 }
 void vrt_bitstring_dtor(vrt_bitstring_t* p) {
-  rt::detail::str::Destruct(p);
+  rt::str::Destruct(p);
 }
 
 std::uint8_t* vrt_bitstring_get_buf(vrt_bitstring_t* s) {
-  return rt::detail::str::GetBuf(s);
+  return rt::str::GetBuf(s);
 }
 const std::uint8_t* vrt_bitstring_get_cbuf(const vrt_bitstring_t* s) {
-  return rt::detail::str::GetCBuf(s);
+  return rt::str::GetCBuf(s);
 }
 
 void vrt_bitstring_assign(vrt_bitstring_t* dst, const std::uint8_t* src, bitstring_size_t len) {
-  rt::detail::str::Assign(dst, src, len);
+  rt::str::Assign(dst, src, len);
 }
 
 void copy_bitstring(vrt_bitstring_t* dst, const vrt_bitstring_t* src) {
   AssertIsBound(src);
-  rt::detail::str::Copy(dst, src);
+  rt::str::Copy(dst, src);
 }
 
 extern "C" {
 void vrt_bitstring_init(vrt_bitstring_t* dst, const std::uint8_t* src, bitstring_size_t len) {
-  rt::detail::str::InitFrom(dst, src, len);
+  rt::str::InitFrom(dst, src, len);
   ClearUnusedBits(dst);
 }
 }
@@ -104,12 +107,12 @@ void vrt_bitstring_concat(vrt_bitstring_t* dst, const vrt_bitstring_t* a, const 
   const auto a_dangling_bits = a->length % 8;
 
   const auto total_bits = a->length + b->length;
-  auto tmp = rt::detail::str::MakeDummy<vrt_bitstring_t>(total_bits);
+  auto tmp = rt::str::MakeDummy<vrt_bitstring_t>(total_bits);
 
   std::uint8_t* dst_buf = vrt_bitstring_get_buf(&tmp);
-  std::copy_n(rt::detail::str::GetCBuf(a), a_bytes, dst_buf);
+  std::copy_n(rt::str::GetCBuf(a), a_bytes, dst_buf);
 
-  const auto* b_buf = rt::detail::str::GetCBuf(b);
+  const auto* b_buf = rt::str::GetCBuf(b);
   if (a_dangling_bits == 0) {
     std::copy_n(b_buf, b_bytes, dst_buf + a_bytes);
   } else {
@@ -143,7 +146,7 @@ bool vrt_bitstring_at(const vrt_bitstring_t* s, bitstring_size_t i) {
   AssertIsBound(s);
   AssertNoOverflow(s, i);
 
-  return bool(rt::detail::str::GetCBuf(s)[GetCellIdx(i)] & GetBitMask(i));
+  return bool(rt::str::GetCBuf(s)[GetCellIdx(i)] & GetBitMask(i));
 }
 
 void vrt_bitstring_set(vrt_bitstring_t* s, bitstring_size_t i, bool v) {
@@ -151,10 +154,10 @@ void vrt_bitstring_set(vrt_bitstring_t* s, bitstring_size_t i, bool v) {
   AssertNoOverflow(s, i);
 
   if (s->length == i) {
-    rt::detail::str::Resize<{.preserve = true}>(s, s->length + 1);
+    rt::str::Resize<{.preserve = true}>(s, s->length + 1);
   }
 
-  SetBit(rt::detail::str::GetBuf(s), i, v);
+  SetBit(rt::str::GetBuf(s), i, v);
 }
 
 void vrt_bitstring_singular(vrt_bitstring_t* dst, const vrt_bitstring_t* s, bitstring_size_t i) {
@@ -207,14 +210,14 @@ void vrt_bitstring_shift_right_impl(const std::uint8_t* srcbuf, std::uint8_t* bu
 }  // namespace
 
 void vrt_bitstring_shift_left(vrt_bitstring_t* dst, const vrt_bitstring_t* s, std::int64_t n) {
-  rt::detail::str::PerformShift(dst, s, n,  //
-                                vrt_bitstring_shift_left_impl, vrt_bitstring_shift_right_impl);
+  rt::str::PerformShift(dst, s, n,  //
+                        vrt_bitstring_shift_left_impl, vrt_bitstring_shift_right_impl);
   ClearUnusedBits(dst);
 }
 
 void vrt_bitstring_shift_right(vrt_bitstring_t* dst, const vrt_bitstring_t* s, std::int64_t n) {
-  rt::detail::str::PerformShift(dst, s, n,  //
-                                vrt_bitstring_shift_right_impl, vrt_bitstring_shift_left_impl);
+  rt::str::PerformShift(dst, s, n,  //
+                        vrt_bitstring_shift_right_impl, vrt_bitstring_shift_left_impl);
   ClearUnusedBits(dst);
 }
 
@@ -248,21 +251,21 @@ void vrt_bitstring_rotate_right_impl(const std::uint8_t* srcbuf, std::uint8_t* b
 }  // namespace
 
 void vrt_bitstring_rotate_left(vrt_bitstring_t* dst, const vrt_bitstring_t* s, std::int64_t n) {
-  rt::detail::str::PerformRotate(dst, s, n,  //
-                                 vrt_bitstring_rotate_left_impl, vrt_bitstring_rotate_right_impl);
+  rt::str::PerformRotate(dst, s, n,  //
+                         vrt_bitstring_rotate_left_impl, vrt_bitstring_rotate_right_impl);
   ClearUnusedBits(dst);
 }
 
 void vrt_bitstring_rotate_right(vrt_bitstring_t* dst, const vrt_bitstring_t* s, std::int64_t n) {
-  rt::detail::str::PerformRotate(dst, s, n,  //
-                                 vrt_bitstring_rotate_right_impl, vrt_bitstring_rotate_left_impl);
+  rt::str::PerformRotate(dst, s, n,  //
+                         vrt_bitstring_rotate_right_impl, vrt_bitstring_rotate_left_impl);
   ClearUnusedBits(dst);
 }
 
 bool vrt_bitstring_eq(const vrt_bitstring_t* lhs, const vrt_bitstring_t* rhs) {
   AssertIsBound(lhs);
   AssertIsBound(rhs);
-  return rt::detail::str::Equal(lhs, rhs);
+  return rt::str::Equal(lhs, rhs);
 }
 bool vrt_bitstring_ne(const vrt_bitstring_t* lhs, const vrt_bitstring_t* rhs) {
   return !vrt_bitstring_eq(lhs, rhs);
@@ -272,7 +275,7 @@ bool vrt_bitstring_ne(const vrt_bitstring_t* lhs, const vrt_bitstring_t* rhs) {
 
 void vrt_bitstring_not4b(vrt_bitstring_t* dst, const vrt_bitstring_t* s) {
   AssertIsBound(s);
-  rt::detail::str::UnaryOp(dst, s, std::bit_not<std::uint8_t>{});
+  rt::str::UnaryOp(dst, s, std::bit_not<std::uint8_t>{});
   ClearUnusedBits(dst);
 }
 
@@ -287,18 +290,74 @@ void AssertBinaryOpValidity(std::string_view op_name, const vrt_bitstring_t* lhs
 
 void vrt_bitstring_and4b(vrt_bitstring_t* dst, const vrt_bitstring_t* lhs, const vrt_bitstring_t* rhs) {
   AssertBinaryOpValidity("and4b", lhs, rhs);
-  rt::detail::str::BinaryOp(dst, lhs, rhs, std::bit_and<std::uint8_t>{});
+  rt::str::BinaryOp(dst, lhs, rhs, std::bit_and<std::uint8_t>{});
   ClearUnusedBits(dst);
 }
 void vrt_bitstring_or4b(vrt_bitstring_t* dst, const vrt_bitstring_t* lhs, const vrt_bitstring_t* rhs) {
   AssertBinaryOpValidity("or4b", lhs, rhs);
-  rt::detail::str::BinaryOp(dst, lhs, rhs, std::bit_or<std::uint8_t>{});
+  rt::str::BinaryOp(dst, lhs, rhs, std::bit_or<std::uint8_t>{});
   ClearUnusedBits(dst);
 }
 void vrt_bitstring_xor4b(vrt_bitstring_t* dst, const vrt_bitstring_t* lhs, const vrt_bitstring_t* rhs) {
   AssertBinaryOpValidity("xor4b", lhs, rhs);
-  rt::detail::str::BinaryOp(dst, lhs, rhs, std::bit_xor<std::uint8_t>{});
+  rt::str::BinaryOp(dst, lhs, rhs, std::bit_xor<std::uint8_t>{});
   ClearUnusedBits(dst);
 }
 
 // NOLINTEND(readability-identifier-naming)
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+struct vrt_bitstring_template_t {
+  vrt_template_sel_e tsel;
+
+  union {
+    vrt_bitstring_t val;
+    rt::tpl::ValueList<vrt_bitstring_template_t> list;
+    rt::tpl::Implication<vrt_bitstring_template_t>* implication;
+    vrt_dynmatcher_t dynmatch;
+  };
+};
+
+extern "C" {
+void vrt_bitstring_template_ctor(vrt_bitstring_template_t*);
+void vrt_bitstring_template_dtor(vrt_bitstring_template_t*);
+}
+
+const vrt_typeinfo_t bitstring_template_typeinfo{
+    .name = bitstring_typeinfo.name,
+    .kind = bitstring_typeinfo.kind,
+    .is_template = true,
+    .size = sizeof(vrt_bitstring_template_t),
+
+    .members = bitstring_typeinfo.members,
+
+    .construct = vanadium::rt::helpers::VoidErased<vrt_bitstring_template_ctor>,
+    .destruct = vanadium::rt::helpers::VoidErased<vrt_bitstring_template_dtor>,
+
+    .counterpart = &bitstring_typeinfo,
+};
+
+void vrt_bitstring_template_ctor(vrt_bitstring_template_t* p) {
+  rt::tpl::Construct(p);
+}
+void vrt_bitstring_template_dtor(vrt_bitstring_template_t* p) {
+  switch (p->tsel) {
+    case vrt_template_sel_e::kSpecificValue:
+      vrt_bitstring_dtor(&p->val);
+      break;
+    default:
+      rt::tpl::Destruct<vrt_bitstring_template_dtor>(p);
+      break;
+  }
+}
+
+bool vrt_bitstring_template_match(const vrt_bitstring_t* v, const vrt_bitstring_template_t* t) {
+  switch (t->tsel) {
+    case vrt_template_sel_e::kSpecificValue:
+      return rt::str::Equal(v, &t->val);
+    // TODO: other tsels
+    default:
+      return rt::tpl::Match<vrt_bitstring_template_match>(v, t);
+  }
+}

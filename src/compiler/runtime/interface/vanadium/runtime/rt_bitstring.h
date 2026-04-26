@@ -20,11 +20,13 @@ struct vrt_bitstring_t {
   bool is_bound;
   bool is_ext;
 };
+struct vrt_bitstring_template_t;
 
 extern "C" {
 //
 
 extern const vrt_typeinfo_t bitstring_typeinfo;
+extern const vrt_typeinfo_t bitstring_template_typeinfo;
 
 void vrt_bitstring_ctor(vrt_bitstring_t*);
 void vrt_bitstring_dtor(vrt_bitstring_t*);
@@ -56,6 +58,10 @@ void vrt_bitstring_not4b(vrt_bitstring_t* dst, const vrt_bitstring_t*);
 void vrt_bitstring_and4b(vrt_bitstring_t* dst, const vrt_bitstring_t*, const vrt_bitstring_t*);
 void vrt_bitstring_or4b(vrt_bitstring_t* dst, const vrt_bitstring_t*, const vrt_bitstring_t*);
 void vrt_bitstring_xor4b(vrt_bitstring_t* dst, const vrt_bitstring_t*, const vrt_bitstring_t*);
+
+///
+
+bool vrt_bitstring_template_match(const vrt_bitstring_t*, const vrt_bitstring_template_t*);
 
 //
 }

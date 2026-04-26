@@ -9,12 +9,16 @@
 namespace vanadium::compiler::names {
 
 namespace {
-std::string SymName(const core::semantic::Symbol* sym) {
+std::string SymName(const core::semantic::Symbol* sym, bool is_template = false) {
   if (sym->Flags() & core::semantic::SymbolFlags::kBuiltin) {
-    return std::string(sym->GetName());
+    return std::string(sym->GetName()) + (is_template ? "_template" : "");
   }
   const auto* sf = ast::utils::SourceFileOf(sym->Declaration());
-  return std::format("{}_{}", sf->module->name, sym->GetName());
+  return std::format("{}_{}{}", sf->module->name, sym->GetName(), is_template ? "_template" : "");
+}
+
+auto SymName(TypeSymbol ts) {
+  return SymName(ts.sym, ts.is_template);
 }
 }  // namespace
 
@@ -25,24 +29,24 @@ std::string Func(const core::semantic::Symbol* sym) {
   return SymName(sym);
 }
 
-std::string Ctor(const core::semantic::Symbol* sym) {
-  return std::format("{}_ctor", SymName(sym));
+std::string Ctor(TypeSymbol ts) {
+  return std::format("{}_ctor", SymName(ts));
 }
 
-std::string Dtor(const core::semantic::Symbol* sym) {
-  return std::format("{}_dtor", SymName(sym));
+std::string Dtor(TypeSymbol ts) {
+  return std::format("{}_dtor", SymName(ts));
 }
 
-std::string CopyCtor(const core::semantic::Symbol* sym) {
-  return std::format("copy_{}", sym->GetName());
+std::string CopyCtor(TypeSymbol ts) {
+  return std::format("copy_{}", SymName(ts));
+}
+
+std::string TInfo(TypeSymbol ts) {
+  return std::format("{}_typeinfo", SymName(ts));
 }
 
 std::string Getter(const core::semantic::Symbol* holder, std::string_view member) {
   return std::format("{}_get_{}", SymName(holder), member);
-}
-
-std::string TInfo(const core::semantic::Symbol* sym) {
-  return std::format("{}_typeinfo", SymName(sym));
 }
 
 }  // namespace vanadium::compiler::names

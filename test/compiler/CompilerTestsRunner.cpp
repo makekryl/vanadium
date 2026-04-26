@@ -101,7 +101,7 @@ void VerdictTest::TestBody() {
       (*tc)->fn();
     } catch (const std::runtime_error& err) {
       ADD_FAILURE() << "Testcase '" << (*tc)->name << "' raised an error: '" << err.what() << "'";
-      auto errverdict = vrt_int_wrap(std::to_underlying(vrt_verdicttype::error));
+      auto errverdict = vrt_integer_wrap(std::to_underlying(vrt_verdicttype::error));
       vrt_setverdict(&errverdict, nullptr);
     }
 

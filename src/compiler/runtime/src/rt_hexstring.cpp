@@ -37,21 +37,21 @@ void SetNibble(std::uint8_t* buf, hexstring_size_t i, std::uint8_t val) {
 
 void ClearUnusedNibbles(vrt_hexstring_t* s) {
   if (s->length % 2) {
-    rt::detail::str::GetBuf(s)[s->length / 2] &= 0xF0;
+    rt::str::GetBuf(s)[s->length / 2] &= 0xF0;
   }
 }
 }  // namespace
 
-namespace vanadium::rt::detail::str {
+namespace vanadium::rt::str {
 template <>
 RtStringSize_t GetByteLength<vrt_hexstring_t>(RtStringSize_t len) {
   return Nibbles2Bytes(len);
 }
-}  // namespace vanadium::rt::detail::str
+}  // namespace vanadium::rt::str
 
 const vrt_typeinfo_t hexstring_typeinfo{
     .name = "hexstring",
-    .kind = vrt_typekind_e::kString,
+    .kind = vrt_typekind_e::kHexstring,
     .size = sizeof(vrt_hexstring_t),
 
     .members = nullptr,
@@ -61,31 +61,31 @@ const vrt_typeinfo_t hexstring_typeinfo{
 };
 
 void vrt_hexstring_ctor(vrt_hexstring_t* p) {
-  rt::detail::str::Construct(p);
+  rt::str::Construct(p);
 }
 void vrt_hexstring_dtor(vrt_hexstring_t* p) {
-  rt::detail::str::Destruct(p);
+  rt::str::Destruct(p);
 }
 
 std::uint8_t* vrt_hexstring_get_buf(vrt_hexstring_t* s) {
-  return rt::detail::str::GetBuf(s);
+  return rt::str::GetBuf(s);
 }
 const std::uint8_t* vrt_hexstring_get_cbuf(const vrt_hexstring_t* s) {
-  return rt::detail::str::GetCBuf(s);
+  return rt::str::GetCBuf(s);
 }
 
 void vrt_hexstring_assign(vrt_hexstring_t* dst, const std::uint8_t* src, hexstring_size_t len) {
-  rt::detail::str::Assign(dst, src, len);
+  rt::str::Assign(dst, src, len);
 }
 
 void copy_hexstring(vrt_hexstring_t* dst, const vrt_hexstring_t* src) {
   AssertIsBound(src);
-  rt::detail::str::Copy(dst, src);
+  rt::str::Copy(dst, src);
 }
 
 extern "C" {
 void vrt_hexstring_init(vrt_hexstring_t* dst, const std::uint8_t* src, hexstring_size_t len) {
-  rt::detail::str::InitFrom(dst, src, len);
+  rt::str::InitFrom(dst, src, len);
   ClearUnusedNibbles(dst);
 }
 }
@@ -100,12 +100,12 @@ void vrt_hexstring_concat(vrt_hexstring_t* dst, const vrt_hexstring_t* a, const 
   const auto b_bytes = Nibbles2Bytes(b->length);
 
   const auto total_nibbles = a->length + b->length;
-  auto tmp = rt::detail::str::MakeDummy<vrt_hexstring_t>(total_nibbles);
+  auto tmp = rt::str::MakeDummy<vrt_hexstring_t>(total_nibbles);
 
   std::uint8_t* dst_buf = vrt_hexstring_get_buf(&tmp);
-  std::copy_n(rt::detail::str::GetCBuf(a), a_bytes, dst_buf);
+  std::copy_n(rt::str::GetCBuf(a), a_bytes, dst_buf);
 
-  const auto* b_buf = rt::detail::str::GetCBuf(b);
+  const auto* b_buf = rt::str::GetCBuf(b);
   if ((a->length % 2) == 0) {
     std::copy_n(b_buf, b_bytes, dst_buf + a_bytes);
     ClearUnusedNibbles(&tmp);
@@ -138,7 +138,7 @@ std::uint8_t vrt_hexstring_at(const vrt_hexstring_t* s, hexstring_size_t i) {
   AssertIsBound(s);
   AssertNoOverflow(s, i);
 
-  const auto octet = rt::detail::str::GetCBuf(s)[i / 2];
+  const auto octet = rt::str::GetCBuf(s)[i / 2];
   return (i % 2) ? (octet >> 4) : (octet & 0x0F);
 }
 
@@ -147,10 +147,10 @@ void vrt_hexstring_set(vrt_hexstring_t* s, hexstring_size_t i, bool v) {
   AssertNoOverflow(s, i);
 
   if (s->length == i) {
-    rt::detail::str::Resize<{.preserve = true}>(s, s->length + 1);
+    rt::str::Resize<{.preserve = true}>(s, s->length + 1);
   }
 
-  SetNibble(rt::detail::str::GetBuf(s), i, v);
+  SetNibble(rt::str::GetBuf(s), i, v);
 }
 
 void vrt_hexstring_singular(vrt_hexstring_t* dst, const vrt_hexstring_t* s, hexstring_size_t i) {
@@ -201,14 +201,14 @@ void vrt_hexstring_shift_right_impl(const std::uint8_t* srcbuf, std::uint8_t* bu
 }  // namespace
 
 void vrt_hexstring_shift_left(vrt_hexstring_t* dst, const vrt_hexstring_t* s, std::int64_t n) {
-  rt::detail::str::PerformShift(dst, s, n,  //
-                                vrt_hexstring_shift_left_impl, vrt_hexstring_shift_right_impl);
+  rt::str::PerformShift(dst, s, n,  //
+                        vrt_hexstring_shift_left_impl, vrt_hexstring_shift_right_impl);
   ClearUnusedNibbles(dst);
 }
 
 void vrt_hexstring_shift_right(vrt_hexstring_t* dst, const vrt_hexstring_t* s, std::int64_t n) {
-  rt::detail::str::PerformShift(dst, s, n,  //
-                                vrt_hexstring_shift_right_impl, vrt_hexstring_shift_left_impl);
+  rt::str::PerformShift(dst, s, n,  //
+                        vrt_hexstring_shift_right_impl, vrt_hexstring_shift_left_impl);
   ClearUnusedNibbles(dst);
 }
 
@@ -240,21 +240,21 @@ void vrt_hexstring_rotate_right_impl(const std::uint8_t* srcbuf, std::uint8_t* b
 }  // namespace
 
 void vrt_hexstring_rotate_left(vrt_hexstring_t* dst, const vrt_hexstring_t* s, std::int64_t n) {
-  rt::detail::str::PerformRotate(dst, s, n,  //
-                                 vrt_hexstring_rotate_left_impl, vrt_hexstring_rotate_right_impl);
+  rt::str::PerformRotate(dst, s, n,  //
+                         vrt_hexstring_rotate_left_impl, vrt_hexstring_rotate_right_impl);
   ClearUnusedNibbles(dst);
 }
 
 void vrt_hexstring_rotate_right(vrt_hexstring_t* dst, const vrt_hexstring_t* s, std::int64_t n) {
-  rt::detail::str::PerformRotate(dst, s, n,  //
-                                 vrt_hexstring_rotate_right_impl, vrt_hexstring_rotate_left_impl);
+  rt::str::PerformRotate(dst, s, n,  //
+                         vrt_hexstring_rotate_right_impl, vrt_hexstring_rotate_left_impl);
   ClearUnusedNibbles(dst);
 }
 
 bool vrt_hexstring_eq(const vrt_hexstring_t* lhs, const vrt_hexstring_t* rhs) {
   AssertIsBound(lhs);
   AssertIsBound(rhs);
-  return rt::detail::str::Equal(lhs, rhs);
+  return rt::str::Equal(lhs, rhs);
 }
 bool vrt_hexstring_ne(const vrt_hexstring_t* lhs, const vrt_hexstring_t* rhs) {
   return !vrt_hexstring_eq(lhs, rhs);
@@ -264,7 +264,7 @@ bool vrt_hexstring_ne(const vrt_hexstring_t* lhs, const vrt_hexstring_t* rhs) {
 
 void vrt_hexstring_not4b(vrt_hexstring_t* dst, const vrt_hexstring_t* s) {
   AssertIsBound(s);
-  rt::detail::str::UnaryOp(dst, s, std::bit_not<std::uint8_t>{});
+  rt::str::UnaryOp(dst, s, std::bit_not<std::uint8_t>{});
   ClearUnusedNibbles(dst);
 }
 
@@ -279,17 +279,17 @@ void AssertBinaryOpValidity(std::string_view op_name, const vrt_hexstring_t* lhs
 
 void vrt_hexstring_and4b(vrt_hexstring_t* dst, const vrt_hexstring_t* lhs, const vrt_hexstring_t* rhs) {
   AssertBinaryOpValidity("and4b", lhs, rhs);
-  rt::detail::str::BinaryOp(dst, lhs, rhs, std::bit_and<std::uint8_t>{});
+  rt::str::BinaryOp(dst, lhs, rhs, std::bit_and<std::uint8_t>{});
   ClearUnusedNibbles(dst);
 }
 void vrt_hexstring_or4b(vrt_hexstring_t* dst, const vrt_hexstring_t* lhs, const vrt_hexstring_t* rhs) {
   AssertBinaryOpValidity("or4b", lhs, rhs);
-  rt::detail::str::BinaryOp(dst, lhs, rhs, std::bit_or<std::uint8_t>{});
+  rt::str::BinaryOp(dst, lhs, rhs, std::bit_or<std::uint8_t>{});
   ClearUnusedNibbles(dst);
 }
 void vrt_hexstring_xor4b(vrt_hexstring_t* dst, const vrt_hexstring_t* lhs, const vrt_hexstring_t* rhs) {
   AssertBinaryOpValidity("xor4b", lhs, rhs);
-  rt::detail::str::BinaryOp(dst, lhs, rhs, std::bit_xor<std::uint8_t>{});
+  rt::str::BinaryOp(dst, lhs, rhs, std::bit_xor<std::uint8_t>{});
   ClearUnusedNibbles(dst);
 }
 

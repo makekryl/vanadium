@@ -21,7 +21,7 @@ inline void AssertIsBound(const vrt_charstring_t* s) {
 
 const vrt_typeinfo_t charstring_typeinfo{
     .name = "charstring",
-    .kind = vrt_typekind_e::kString,
+    .kind = vrt_typekind_e::kCharstring,
     .size = sizeof(vrt_charstring_t),
 
     .members = nullptr,
@@ -31,31 +31,31 @@ const vrt_typeinfo_t charstring_typeinfo{
 };
 
 void vrt_charstring_ctor(vrt_charstring_t* p) {
-  rt::detail::str::Construct(p);
+  rt::str::Construct(p);
 }
 void vrt_charstring_dtor(vrt_charstring_t* p) {
-  rt::detail::str::Destruct(p);
+  rt::str::Destruct(p);
 }
 
 char* vrt_charstring_get_buf(vrt_charstring_t* s) {
-  return rt::detail::str::GetBuf(s);
+  return rt::str::GetBuf(s);
 }
 const char* vrt_charstring_get_cbuf(const vrt_charstring_t* s) {
-  return rt::detail::str::GetCBuf(s);
+  return rt::str::GetCBuf(s);
 }
 
 void vrt_charstring_assign(vrt_charstring_t* dst, const char* src, charstring_size_t len) {
-  rt::detail::str::Assign(dst, src, len);
+  rt::str::Assign(dst, src, len);
 }
 
 void copy_charstring(vrt_charstring_t* dst, const vrt_charstring_t* src) {
   AssertIsBound(src);
-  rt::detail::str::Copy(dst, src);
+  rt::str::Copy(dst, src);
 }
 
 extern "C" {
 void vrt_charstring_init(vrt_charstring_t* dst, const char* src, charstring_size_t len) {
-  rt::detail::str::InitFrom(dst, src, len);
+  rt::str::InitFrom(dst, src, len);
 }
 }
 
@@ -67,11 +67,11 @@ void vrt_charstring_concat(vrt_charstring_t* dst, const vrt_charstring_t* a, con
 
   const auto total_len = a->length + b->length;
 
-  auto tmp = rt::detail::str::MakeDummy<vrt_charstring_t>(total_len);
+  auto tmp = rt::str::MakeDummy<vrt_charstring_t>(total_len);
 
-  char* dst_buf = rt::detail::str::GetBuf(&tmp);
-  dst_buf = std::copy_n(rt::detail::str::GetCBuf(a), a->length, dst_buf);
-  dst_buf = std::copy_n(rt::detail::str::GetCBuf(b), b->length, dst_buf);
+  char* dst_buf = rt::str::GetBuf(&tmp);
+  dst_buf = std::copy_n(rt::str::GetCBuf(a), a->length, dst_buf);
+  dst_buf = std::copy_n(rt::str::GetCBuf(b), b->length, dst_buf);
 
   //
   *dst = tmp;
@@ -90,7 +90,7 @@ char vrt_charstring_at(const vrt_charstring_t* s, charstring_size_t i) {
   AssertIsBound(s);
   AssertNoOverflow(s, i);
 
-  return rt::detail::str::GetCBuf(s)[i];
+  return rt::str::GetCBuf(s)[i];
 }
 
 void vrt_charstring_set(vrt_charstring_t* s, charstring_size_t i, char v) {
@@ -98,10 +98,10 @@ void vrt_charstring_set(vrt_charstring_t* s, charstring_size_t i, char v) {
   AssertNoOverflow(s, i);
 
   if (s->length == i) {
-    rt::detail::str::Resize<{.preserve = true}>(s, s->length + 1);
+    rt::str::Resize<{.preserve = true}>(s, s->length + 1);
   }
 
-  rt::detail::str::GetBuf(s)[i] = v;
+  rt::str::GetBuf(s)[i] = v;
 }
 
 void vrt_charstring_singular(vrt_charstring_t* dst, const vrt_charstring_t* s, charstring_size_t i) {
@@ -126,19 +126,19 @@ void vrt_charstring_rotate_right_impl(const char* srcbuf, char* buf, charstring_
 }  // namespace
 
 void vrt_charstring_rotate_left(vrt_charstring_t* dst, const vrt_charstring_t* s, std::int64_t n) {
-  rt::detail::str::PerformRotate(dst, s, n,  //
-                                 vrt_charstring_rotate_left_impl, vrt_charstring_rotate_right_impl);
+  rt::str::PerformRotate(dst, s, n,  //
+                         vrt_charstring_rotate_left_impl, vrt_charstring_rotate_right_impl);
 }
 
 void vrt_charstring_rotate_right(vrt_charstring_t* dst, const vrt_charstring_t* s, std::int64_t n) {
-  rt::detail::str::PerformRotate(dst, s, n,  //
-                                 vrt_charstring_rotate_right_impl, vrt_charstring_rotate_left_impl);
+  rt::str::PerformRotate(dst, s, n,  //
+                         vrt_charstring_rotate_right_impl, vrt_charstring_rotate_left_impl);
 }
 
 bool vrt_charstring_eq(const vrt_charstring_t* lhs, const vrt_charstring_t* rhs) {
   AssertIsBound(lhs);
   AssertIsBound(rhs);
-  return rt::detail::str::Equal(lhs, rhs);
+  return rt::str::Equal(lhs, rhs);
 }
 bool vrt_charstring_ne(const vrt_charstring_t* lhs, const vrt_charstring_t* rhs) {
   return !vrt_charstring_eq(lhs, rhs);

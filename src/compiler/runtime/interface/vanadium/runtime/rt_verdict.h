@@ -17,7 +17,7 @@ enum class vrt_verdicttype : vrt_native_int_t {
 extern "C" {
 //
 
-void vrt_setverdict(const vrt_int_t* verdict, const vrt_charstring_t* reason);
+void vrt_setverdict(const vrt_integer_t* verdict, const vrt_charstring_t* reason);
 vrt_verdicttype vrt_getverdict();
 
 void vrt_clearverdict();

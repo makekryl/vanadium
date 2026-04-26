@@ -24,7 +24,7 @@ int main(int argc, char* argv[]) {
         (*t)->fn();
       } catch (const std::runtime_error& err) {
         std::println(stderr, "KAPUT : {}", err.what());
-        auto errverdict = vrt_int_wrap(std::to_underlying(vrt_verdicttype::error));
+        auto errverdict = vrt_integer_wrap(std::to_underlying(vrt_verdicttype::error));
         vrt_setverdict(&errverdict, nullptr);
       }
       std::println("Test case {} finished. Verdict: {}", mod->name, magic_enum::enum_name(vrt_getverdict()));
