@@ -36,7 +36,7 @@ type class PortSuperbase {
   external function send(in anytype msg);
 
   // The __receive__ operation is used to receive a message from an incoming message port queue.
-  external function receive(in anytype msg);
+  external function receive(in template anytype msg);
 
   // The __trigger__ operation is used to await a specific message on an incoming port queue.
   external function trigger(in anytype msg);
