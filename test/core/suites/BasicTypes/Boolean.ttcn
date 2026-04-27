@@ -1,0 +1,13 @@
+module Boolean {
+
+function f() {
+  var boolean b_true := true;
+  var boolean b_false := false;
+
+  var boolean b_invalid_1 := 1;  // EXPECT_ERROR
+  var boolean b_invalid_0 := 0;  // EXPECT_ERROR
+
+  var boolean inverted := not b_true;
+}
+
+}

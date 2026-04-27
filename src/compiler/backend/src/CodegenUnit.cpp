@@ -43,14 +43,17 @@ llvm::Type* CodegenUnit::GetSymbolType(TypeSymbol ts) {
     return builder.getPtrTy();
   }
 
+  if (ts == &core::checker::symbols::kVoidType) {
+    return builder.getVoidTy();
+  }
   if (ts == &core::builtins::kInteger) {
     return rt.integer.ty;
   }
   if (ts == &core::builtins::kFloat) {
     return rt.floatt.ty;
   }
-  if (ts == &core::checker::symbols::kVoidType) {
-    return builder.getVoidTy();
+  if (ts == &core::builtins::kBoolean) {
+    return rt.boolt.ty;
   }
   if (const auto* strb = GetStringTypeBindings(ts)) {
     return strb->ty;
@@ -142,12 +145,20 @@ llvm::Function* CodegenUnit::GetFunction(const core::semantic::Symbol* sym) {
   if (is_variadic) {
     fn->addFnAttr(kVarargsAttr);
   }
-  // for (const auto& [idx, param] : m->params->list | std::views::enumerate) {
-  //   if (!param->direction || param->direction->kind == ast::TokenKind::IN) {
-  //     fn->addParamAttr(idx, llvm::Attribute::NoCapture);
-  //     fn->addParamAttr(idx, llvm::Attribute::ReadOnly);
-  //   }
-  // }
+
+  const auto* sf = ast::utils::SourceFileOf(m);
+
+  const auto bidx = does_return ? 1 : 0;
+  for (const auto& [idx, param] : m->params->list | std::views::enumerate) {
+    fn->addParamAttr(bidx + idx, llvm::Attribute::NoCapture);
+    if (ast::utils::GetParamDirection(param) == ast::TokenKind::IN) {
+      fn->addParamAttr(bidx + idx, llvm::Attribute::ReadOnly);
+    }
+    if (sf->Text(param->type) == "__infer_arg_t") {
+      // it's faster than resolving the type through the entire checker pipeline
+      fn->addParamAttr(bidx + idx, llvm::Attribute::get(ctx, kGenericArgAttr));
+    }
+  }
 
   return fn;
 }

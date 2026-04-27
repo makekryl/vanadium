@@ -4,11 +4,11 @@
 #include <optional>
 #include <string_view>
 
-#include <llvm-19/llvm/IR/GlobalVariable.h>
 #include <llvm/IR/DIBuilder.h>
 #include <llvm/IR/DebugInfoMetadata.h>
 #include <llvm/IR/DerivedTypes.h>
 #include <llvm/IR/Function.h>
+#include <llvm/IR/GlobalVariable.h>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
@@ -103,6 +103,7 @@ struct CodegenUnit {
 };
 
 inline constexpr std::string_view kVarargsAttr = "vrt-varargs";
+inline constexpr std::string_view kGenericArgAttr = "vrt-garg";
 
 namespace names {
 std::string Func(const core::semantic::Symbol*);

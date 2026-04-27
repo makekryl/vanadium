@@ -165,6 +165,8 @@ RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ct
       std::tuple<llvm::Function*&, llvm::Type*, std::string_view, SpecificBinaryOperationGenerator>;
   auto* const nbool_ty = builder.getInt1Ty();
 
+  sizet_ty = mod.getDataLayout().getIntPtrType(mod.getContext());
+
   panic = llvm::Function::Create(llvm::FunctionType::get(builder.getVoidTy(), {builder.getPtrTy()}, false),
                                  llvm::GlobalValue::ExternalLinkage, "vrt_panic", mod);
 
@@ -172,12 +174,12 @@ RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ct
 
   typeinfo_ty = llvm::StructType::create(ctx_, "vrt_typeinfo_t");
   typeinfo_ty->setBody({
-      builder.getPtrTy(),    // const char* name
-      builder.getInt8Ty(),   // vrt_typekind_e
-      builder.getInt64Ty(),  // size_t size
-      builder.getPtrTy(),    // members**
-      builder.getPtrTy(),    // construct(*)(void*)
-      builder.getPtrTy()     // destruct(*)(void*)
+      builder.getPtrTy(),   // const char* name
+      builder.getInt8Ty(),  // vrt_typekind_e
+      sizet_ty,             // size_t size
+      builder.getPtrTy(),   // members**
+      builder.getPtrTy(),   // construct(*)(void*)
+      builder.getPtrTy()    // destruct(*)(void*)
   });
   //
   obj_ctor_fn_ty = llvm::FunctionType::get(builder.getVoidTy(), {builder.getPtrTy()}, false);
@@ -459,11 +461,22 @@ RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ct
 
   //
 
+  tpl.tsel_ty = builder.getInt8Ty();
+  tpl.listsize_ty = builder.getInt32Ty();
+  //
   tpl.value = declare_external_fn("vrt_tpl_value", builder.getPtrTy(),
                                   {
                                       builder.getPtrTy(),  // const vrt_typeinfo_t*
                                       builder.getPtrTy(),  // void*
                                   });
+  tpl.list = declare_external_fn("vrt_tpl_list", builder.getPtrTy(),
+                                 {
+                                     builder.getPtrTy(),  // const vrt_typeinfo_t*
+                                     builder.getPtrTy(),  // void*
+                                     tpl.listsize_ty,     // vrt_valuelist_size_t n
+                                     sizet_ty,            // [out] size_t* esz
+                                     tpl.tsel_ty,         // vrt_template_sel_e lkind
+                                 });
   tpl.omit = declare_external_fn("vrt_tpl_omit", builder.getVoidTy(),
                                  {
                                      builder.getPtrTy(),  // const vrt_typeinfo_t*

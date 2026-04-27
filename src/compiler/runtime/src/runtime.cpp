@@ -45,7 +45,6 @@ bool vrt_is_bound(const vrt_val_t* v) {
 void vrt_log(const vrt_val_t* args, std::uint32_t n) {
   std::string buf;
   std::for_each_n(args, n, [&](const auto& arg) {
-    printf("%p %s\n", arg.p, arg.ty->name);
     rt::StringifyObject(buf, arg);
     buf += " ";
   });

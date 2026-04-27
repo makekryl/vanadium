@@ -68,6 +68,8 @@ class RuntimeBindings {
   RuntimeBindings(llvm::LLVMContext&, llvm::Module&);
   //
 
+  llvm::Type* sizet_ty;
+
   llvm::Function* panic;
 
   llvm::FunctionType* generic_getter_fn_ty;
@@ -117,7 +119,11 @@ class RuntimeBindings {
   StringTypeBindings hexstring;
 
   struct {
+    llvm::Type* tsel_ty;
+    llvm::Type* listsize_ty;
+    //
     llvm::Function* value;
+    llvm::Function* list;
     llvm::Function* omit;
     llvm::Function* any;
     llvm::Function* any_or_omit;

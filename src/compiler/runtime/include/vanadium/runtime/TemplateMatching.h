@@ -93,10 +93,11 @@ bool Match(const RtTemplateType<T>* v, const T* t) {
       return true;
 
     case vrt_template_sel_e::kValueList:
+      return t->list.template MatchAny<Matcher>(v);
     case vrt_template_sel_e::kComplementedList:
-      return t->list.template MatchAny<Matcher>(v) && (t->tsel == vrt_template_sel_e::kValueList);
+      return !t->list.template MatchAny<Matcher>(v);
 
-    case vrt_template_sel_e::kConjunction:
+    case vrt_template_sel_e::kConjunctionList:
       return t->list.template MatchAll<Matcher>(v);
 
     case vrt_template_sel_e::kImplication:
@@ -125,7 +126,7 @@ void Destruct(RtTemplate auto* t) {
       break;
     case vrt_template_sel_e::kValueList:
     case vrt_template_sel_e::kComplementedList:
-    case vrt_template_sel_e::kConjunction:
+    case vrt_template_sel_e::kConjunctionList:
       t->list.template Release<Destructor>();
       break;
     case vrt_template_sel_e::kImplication:

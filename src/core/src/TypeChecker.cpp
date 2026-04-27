@@ -1036,10 +1036,14 @@ InstantiatedType ResolveExprSymbol(const SourceFile* file, const semantic::Scope
     }
     case ast::NodeKind::ParenExpr: {
       const auto* m = expr->As<ast::nodes::ParenExpr>();
-      if (m->list.size() == 1) [[likely]] {
-        return ResolveExprSymbol(file, scope, m->list.front());
+      if (m->list.empty()) {
+        return {.sym = &symbols::kTypeError};
       }
-      return InstantiatedType::None();
+      auto primary_isym = ResolveExprSymbol(file, scope, m->list.front());
+      if (m->list.size() > 1) {
+        primary_isym.restriction = TemplateRestrictionKind::kRegular;
+      }
+      return primary_isym;
     }
     default: {
       return {.sym = TryResolveExprSymbolViaHierarchy(file, scope, expr)};
@@ -1603,9 +1607,18 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, InstantiatedTyp
 
     case ast::NodeKind::ParenExpr: {
       const auto* m = n->As<ast::nodes::ParenExpr>();
-      if (m->list.size() == 1) [[likely]] {
-        resulting_type = CheckType(m->list.front(), desired_type);
+      if (m->list.empty()) {
+        return {.sym = &symbols::kTypeError};
       }
+
+      resulting_type = CheckType(m->list.front(), desired_type);
+      if (m->list.size() > 1) {
+        resulting_type.restriction = TemplateRestrictionKind::kRegular;
+        for (std::size_t i = 1; i < m->list.size(); ++i) {
+          CheckType(m->list.front(), resulting_type);
+        }
+      }
+
       break;
     }
 
@@ -1615,12 +1628,25 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, InstantiatedTyp
       const auto x_type = CheckType(m->x);
 
       switch (m->op.kind) {
-        case ast::TokenKind::INC:
+        case ast::TokenKind::NOT:
+          resulting_type = &builtins::kBoolean;
+          MatchTypes(m->x->nrange, x_type, {.sym = &builtins::kBoolean});
+          break;
+
+        case ast::TokenKind::NOT4B:
+          if (x_type && (!(x_type->Flags() & (semantic::SymbolFlags::kBuiltinString)) ||
+                         (x_type.sym == &builtins::kCharstring))) {
+            EmitError({
+                .range = m->x->nrange,
+                .message = std::format("binary string type expected, got '{}'", x_type->GetName()),
+            });
+          }
+          break;
+
+        case ast::TokenKind::INC:  // todo: is this really allowed?
+        case ast::TokenKind::DEC:  // ^
         case ast::TokenKind::ADD:
         case ast::TokenKind::SUB:
-        case ast::TokenKind::DEC:
-        case ast::TokenKind::MUL:
-        case ast::TokenKind::DIV:
           if (x_type && x_type.sym != &builtins::kInteger && x_type.sym != &builtins::kFloat) [[unlikely]] {
             EmitError(TypeError{
                 .range = m->x->nrange,
@@ -1632,6 +1658,7 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, InstantiatedTyp
           resulting_type = x_type;
           //
           break;
+
         default:
           break;
       }
@@ -1760,6 +1787,10 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, InstantiatedTyp
           //
           resulting_type = y_type;
           //
+          break;
+        case ast::TokenKind::RANGE:
+          match_both(x_type.sym);
+          resulting_type.restriction = TemplateRestrictionKind::kRegular;
           break;
         case ast::TokenKind::IMPLIES:
           resulting_type.restriction = TemplateRestrictionKind::kRegular;  // TODO: ?

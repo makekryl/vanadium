@@ -1,5 +1,3 @@
-#pragma once
-
 #include "vanadium/compiler/IRHelpers.h"
 
 #include <llvm/ADT/ArrayRef.h>

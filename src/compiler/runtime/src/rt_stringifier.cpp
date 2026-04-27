@@ -123,7 +123,7 @@ void StringifyValue(std::string& buf, const vrt_bitstring_t& v) {
   }
   if (remaining) {
     const std::uint8_t byte = sdata[full_bytes];
-    for (int b = 0; b < remaining; ++b) {
+    for (bitstring_size_t b = 0; b < remaining; ++b) {
       buf += ((byte >> (7 - b)) & 1) ? '1' : '0';
     }
   }
@@ -149,10 +149,15 @@ void StringifyTemplate(std::string& buf, const vrt_hexstring_template_t& t) {}
 void StringifyTemplateGeneric(std::string& buf, const tpl::RtTemplate auto& t) {
   const auto stringify_value_list = [&] {
     buf += "(";
-    std::for_each_n(t.list.data, t.list.length, [&](auto& e) {
-      StringifyTemplateGeneric(buf, e);
-      buf += ", ";  // todo: get rid of trailing comma
-    });
+    auto* it = t.list.data;
+    auto* const end = t.list.data + t.list.length;
+    if (it != end) {
+      StringifyTemplateGeneric(buf, *it++);
+    }
+    for (; it != end; ++it) {
+      buf += ", ";
+      StringifyTemplateGeneric(buf, *it);
+    }
     buf += ")";
   };
 
@@ -164,7 +169,7 @@ void StringifyTemplateGeneric(std::string& buf, const tpl::RtTemplate auto& t) {
       buf += "complement";
       stringify_value_list();
       break;
-    case vrt_template_sel_e::kConjunction:
+    case vrt_template_sel_e::kConjunctionList:
       buf += "conjunct";
       stringify_value_list();
       break;

@@ -10,6 +10,10 @@ struct vrt_boolean_t {
 };
 struct vrt_boolean_template_t;
 
+inline vrt_boolean_t vrt_boolean_wrap(bool v) {
+  return {.value = v, .is_bound = true};
+}
+
 extern "C" {
 //
 

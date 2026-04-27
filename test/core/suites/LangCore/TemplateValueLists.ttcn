@@ -1,0 +1,14 @@
+module TemplateValueLists {
+
+function f() {
+  var template integer tpl := (1, 2, 3);
+  var template integer tpl_2d_singular := ((1, 2, 3));
+  var template integer tpl_2d := ((1, 2, 3), (4, 5, 6));
+  var template integer tpl_nested := ((1, 2, 3), (4, 5, 6), ((7), ((8, 9, ((10, 11))))));
+
+  var integer val_boxed_ok := (1);
+  var integer val_invalid := (1, 2, 3);                                         // EXPECT_ERROR
+  var integer val_invalid_nested := (1, 2, (3, 4, 5, (6, ((7, 8, 9, (10))))));  // EXPECT_ERROR
+}
+
+}

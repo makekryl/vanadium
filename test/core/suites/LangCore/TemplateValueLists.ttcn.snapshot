@@ -1,0 +1,7 @@
+./TemplateValueLists.ttcn:
+  10:30: expected value, got template
+      var integer val_invalid := (1, 2, 3);                                         // EXPECT_ERROR
+                                 ~~~~~~~~~                                                         
+  11:37: expected value, got template
+      var integer val_invalid_nested := (1, 2, (3, 4, 5, (6, ((7, 8, 9, (10))))));  // EXPECT_ERROR
+                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~                  
