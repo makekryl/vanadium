@@ -59,10 +59,6 @@ void vrt_bitstring_and4b(vrt_bitstring_t* dst, const vrt_bitstring_t*, const vrt
 void vrt_bitstring_or4b(vrt_bitstring_t* dst, const vrt_bitstring_t*, const vrt_bitstring_t*);
 void vrt_bitstring_xor4b(vrt_bitstring_t* dst, const vrt_bitstring_t*, const vrt_bitstring_t*);
 
-///
-
-bool vrt_bitstring_template_match(const vrt_bitstring_t*, const vrt_bitstring_template_t*);
-
 //
 }
 

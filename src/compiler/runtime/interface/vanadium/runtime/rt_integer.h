@@ -45,10 +45,6 @@ vrt_integer_t vrt_integer_sub(vrt_integer_t, vrt_integer_t);
 vrt_integer_t vrt_integer_mul(vrt_integer_t, vrt_integer_t);
 vrt_integer_t vrt_integer_div(vrt_integer_t, vrt_integer_t);
 
-///
-
-bool vrt_integer_template_match(const vrt_integer_t*, const vrt_integer_template_t*);
-
 //
 }
 

@@ -59,10 +59,6 @@ void vrt_hexstring_and4b(vrt_hexstring_t* dst, const vrt_hexstring_t*, const vrt
 void vrt_hexstring_or4b(vrt_hexstring_t* dst, const vrt_hexstring_t*, const vrt_hexstring_t*);
 void vrt_hexstring_xor4b(vrt_hexstring_t* dst, const vrt_hexstring_t*, const vrt_hexstring_t*);
 
-///
-
-bool vrt_hexstring_template_match(const vrt_hexstring_t*, const vrt_hexstring_template_t*);
-
 //
 }
 

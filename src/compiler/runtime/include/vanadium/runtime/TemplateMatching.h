@@ -107,8 +107,7 @@ bool Match(const RtTemplateType<T>* v, const T* t) {
       return t->dynmatch.match(t->dynmatch.ctx, v);
 
     default:
-      assert(false);
-      return false;
+      return Matcher(v, t);
   }
 }
 

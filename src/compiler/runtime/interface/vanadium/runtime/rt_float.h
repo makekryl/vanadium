@@ -41,10 +41,6 @@ vrt_float_t vrt_float_sub(vrt_float_t, vrt_float_t);
 vrt_float_t vrt_float_mul(vrt_float_t, vrt_float_t);
 vrt_float_t vrt_float_div(vrt_float_t, vrt_float_t);
 
-///
-
-bool vrt_float_template_match(const vrt_float_t*, const vrt_float_template_t*);
-
 //
 }
 

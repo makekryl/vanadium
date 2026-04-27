@@ -188,6 +188,6 @@ bool vrt_charstring_template_match(const vrt_charstring_t* v, const vrt_charstri
       return rt::str::Equal(v, &t->val);
     // TODO: other tsels
     default:
-      return rt::tpl::Match<vrt_charstring_template_match>(v, t);
+      assert(false);
   }
 }

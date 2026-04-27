@@ -49,10 +49,6 @@ void vrt_charstring_set(vrt_charstring_t*, charstring_size_t i, char v);
 bool vrt_charstring_eq(const vrt_charstring_t*, const vrt_charstring_t*);
 bool vrt_charstring_ne(const vrt_charstring_t*, const vrt_charstring_t*);
 
-///
-
-bool vrt_charstring_template_match(const vrt_charstring_t*, const vrt_charstring_template_t*);
-
 //
 }
 

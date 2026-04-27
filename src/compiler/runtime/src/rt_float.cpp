@@ -111,6 +111,6 @@ bool vrt_float_template_match(const vrt_float_t* v, const vrt_float_template_t* 
       return matches;
     }
     default:
-      return rt::tpl::Match<vrt_float_template_match>(v, t);
+      assert(false);
   }
 }

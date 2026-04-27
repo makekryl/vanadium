@@ -348,6 +348,6 @@ bool vrt_bitstring_template_match(const vrt_bitstring_t* v, const vrt_bitstring_
       return rt::str::Equal(v, &t->val);
     // TODO: other tsels
     default:
-      return rt::tpl::Match<vrt_bitstring_template_match>(v, t);
+      assert(false);
   }
 }

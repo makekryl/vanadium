@@ -103,3 +103,7 @@ struct vrt_hexstring_template_t {
     vrt_dynmatcher_t dynmatch;
   };
 };
+
+#define X(name) bool vrt_##name##_template_match(const vrt_##name##_t*, const vrt_##name##_template_t*);
+#include "vanadium/runtime/BuiltinTypes.inc"
+#undef X

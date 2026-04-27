@@ -35,7 +35,7 @@ bool vrt_is_bound(const vrt_val_t* v) {
   if (v->ty == &name##_typeinfo) {                             \
     return static_cast<const vrt_##name##_t*>(v->p)->is_bound; \
   }
-#include "rt_builtin_types.inc"
+#include "vanadium/runtime/BuiltinTypes.inc"
 #undef X
 
   assert(false);

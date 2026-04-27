@@ -62,6 +62,6 @@ bool vrt_boolean_template_match(const vrt_boolean_t* v, const vrt_boolean_templa
     case vrt_template_sel_e::kSpecificValue:
       return v->value == t->val.value;
     default:
-      return rt::tpl::Match<vrt_boolean_template_match>(v, t);
+      assert(false);
   }
 }

@@ -3,8 +3,10 @@
 #include <cassert>
 #include <cstdio>
 
+#include "vanadium/runtime/BuiltinsTemplates.h"
 #include "vanadium/runtime/TemplateMatching.h"
 #include "vanadium/runtime/rt_alloc.h"
+#include "vanadium/runtime/rt_integer.h"
 #include "vanadium/runtime/rt_reflect.h"
 #include "vanadium/runtime/runtime.h"
 
@@ -78,11 +80,12 @@ void vrt_dynmatcher_free(const vrt_dynmatcher_t* p) {
 
 namespace {
 bool vrt_match_intl(const vrt_typeinfo_t* ty, const vrt_val_t* obj, const vrt_val_t* tobj) {
-#define X(name)                                                                                                 \
-  if (ty == &name##_typeinfo) {                                                                                 \
-    return vrt_##name##_template_match((const vrt_##name##_t*)obj->p, (const vrt_##name##_template_t*)tobj->p); \
+#define X(name)                                                                                  \
+  if (ty == &name##_typeinfo) {                                                                  \
+    return rt::tpl::Match<vrt_##name##_template_match>((const vrt_##name##_t*)obj->p,            \
+                                                       (const vrt_##name##_template_t*)tobj->p); \
   }
-#include "rt_builtin_types.inc"
+#include "vanadium/runtime/BuiltinTypes.inc"
 #undef X
 
   assert(false);

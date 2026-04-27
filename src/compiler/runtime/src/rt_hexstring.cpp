@@ -336,6 +336,6 @@ bool vrt_hexstring_template_match(const vrt_hexstring_t* v, const vrt_hexstring_
       return rt::str::Equal(v, &t->val);
     // TODO: other tsels
     default:
-      return rt::tpl::Match<vrt_hexstring_template_match>(v, t);
+      assert(false);
   }
 }

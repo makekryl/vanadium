@@ -23,10 +23,6 @@ extern const vrt_typeinfo_t boolean_template_typeinfo;
 // TODO: inline in codegen as a special case along with other primitives
 void copy_boolean(vrt_boolean_t* dst, vrt_boolean_t src);
 
-///
-
-bool vrt_boolean_template_match(const vrt_boolean_t*, const vrt_boolean_template_t*);
-
 //
 }
 

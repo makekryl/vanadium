@@ -204,7 +204,7 @@ void StringifyObject(std::string& buf, const vrt_val_t& v) {
     StringifyTemplateGeneric(buf, *static_cast<const vrt_##name##_template_t*>(v.p)); \
     return;                                                                           \
   }
-#include "rt_builtin_types.inc"
+#include "vanadium/runtime/BuiltinTypes.inc"
 #undef X
   } else {
 #define X(name)                                                    \
@@ -212,7 +212,7 @@ void StringifyObject(std::string& buf, const vrt_val_t& v) {
     StringifyValue(buf, *static_cast<const vrt_##name##_t*>(v.p)); \
     return;                                                        \
   }
-#include "rt_builtin_types.inc"
+#include "vanadium/runtime/BuiltinTypes.inc"
 #undef X
   }
 

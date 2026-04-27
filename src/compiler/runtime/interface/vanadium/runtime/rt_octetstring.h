@@ -60,10 +60,6 @@ void vrt_octetstring_and4b(vrt_octetstring_t* dst, const vrt_octetstring_t*, con
 void vrt_octetstring_or4b(vrt_octetstring_t* dst, const vrt_octetstring_t*, const vrt_octetstring_t*);
 void vrt_octetstring_xor4b(vrt_octetstring_t* dst, const vrt_octetstring_t*, const vrt_octetstring_t*);
 
-///
-
-bool vrt_octetstring_template_match(const vrt_octetstring_t*, const vrt_octetstring_template_t*);
-
 //
 }
 

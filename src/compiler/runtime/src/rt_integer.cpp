@@ -133,6 +133,6 @@ bool vrt_integer_template_match(const vrt_integer_t* v, const vrt_integer_templa
       return matches;
     }
     default:
-      return rt::tpl::Match<vrt_integer_template_match>(v, t);
+      assert(false);
   }
 }

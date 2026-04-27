@@ -236,6 +236,6 @@ bool vrt_octetstring_template_match(const vrt_octetstring_t* v, const vrt_octets
       return rt::str::Equal(v, &t->val);
     // TODO: other tsels
     default:
-      return rt::tpl::Match<vrt_octetstring_template_match>(v, t);
+      assert(false);
   }
 }
