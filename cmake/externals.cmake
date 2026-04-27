@@ -1,8 +1,8 @@
 include(FetchContent)
 
-function(_vanadium_external external_name)
+macro(_vanadium_external external_name)
   include(${CMAKE_CURRENT_LIST_DIR}/external/${external_name}.cmake)
-endfunction()
+endmacro()
 
 _vanadium_external(gtest)
 _vanadium_external(magic_enum)
@@ -11,6 +11,4 @@ _vanadium_external(fmt)
 _vanadium_external(argparse)
 _vanadium_external(tomlplusplus)
 _vanadium_external(reflectcpp)
-
-# we need to access the variables set by find_package(LLVM), so don't wrap in a function
-include(${CMAKE_CURRENT_LIST_DIR}/external/llvm.cmake)
+_vanadium_external(llvm)
