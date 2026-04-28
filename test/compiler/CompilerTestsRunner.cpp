@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 
 #include <filesystem>
+#include <format>
+#include <iterator>
 #include <memory>
 #include <print>
 #include <vector>
@@ -71,7 +73,29 @@ void VerdictTest::TestBody() {
   });
 
   const auto* sf = program.GetFile(sf_name);
-  ASSERT_TRUE(sf);  // TODO: check for errors
+  ASSERT_TRUE(sf);
+  ASSERT_TRUE(sf->ast.errors.empty()) << [&] -> std::string {
+    std::string errbuf = "Syntax errors:\n";
+    for (const auto& err : sf->ast.errors) {
+      std::format_to(std::back_inserter(errbuf), " {}:{} :: {}\n", err.range.begin, err.range.end, err.description);
+    }
+    return errbuf;
+  }();
+  ASSERT_TRUE(sf->semantic_errors.empty()) << [&] -> std::string {
+    std::string errbuf = "Semantic errors:\n";
+    for (const auto& err : sf->semantic_errors) {
+      std::format_to(std::back_inserter(errbuf), " {}:{} :: {}\n", err.range.begin, err.range.end,
+                     magic_enum::enum_name(err.type));
+    }
+    return errbuf;
+  }();
+  ASSERT_TRUE(sf->type_errors.empty()) << [&] -> std::string {
+    std::string errbuf = "Type errors:\n";
+    for (const auto& err : sf->type_errors) {
+      std::format_to(std::back_inserter(errbuf), " {}:{} :: {}\n", err.range.begin, err.range.end, err.message);
+    }
+    return errbuf;
+  }();
 
   // unique_ptr is required for ThreadSafeModule ownership transfer
   auto ctx = std::make_unique<llvm::LLVMContext>();

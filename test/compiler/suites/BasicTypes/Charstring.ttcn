@@ -127,7 +127,7 @@ testcase rotr_neg_12() {
   setverdict(pass);
 }
 //
-testcase rotl_empty() {
+testcase rotr_empty() {
   if (("" <@ 42) != "") { setverdict(fail); }
   setverdict(pass);
 }

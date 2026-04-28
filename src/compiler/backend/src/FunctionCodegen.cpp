@@ -89,6 +89,9 @@ class ScopeManager {
       kLoop,
     };
 
+    // 'temporaries' is used is purely as an AllocatedVar storage
+    // TODO: maybe store AllocatedVar* in vars, make ordered_vars a forward_list or any other iterator-stable container;
+    //       and get rid of temporaroes
     std::unordered_map<std::string_view, AllocatedVar> vars;
     std::forward_list<AllocatedVar> temporaries;
     std::vector<AllocatedVar*> ordered_vars;
@@ -113,6 +116,8 @@ class ScopeManager {
 
     if (!u_.builder.GetInsertBlock()->getTerminator()) {
       EmitDestructorCalls(frame);
+    } else {
+      assert(false);
     }
   }
 
@@ -404,10 +409,12 @@ void FunctionCodegen::CodegenStmt(const ast::nodes::Stmt* n) {
       auto* end_bb = llvm::BasicBlock::Create(u_.ctx, "if.end");
       auto* else_bb = m->alternate ? llvm::BasicBlock::Create(u_.ctx, "if.else") : end_bb;
 
-      {
-        auto tmp_frame{EnterStackFrame(ScopeManager::Frame::Kind::kTemporaries)};
-        u_.builder.CreateCondBr(u_.UnwrapBoolOrBoxedBoolPtr(CodegenExpr(m->cond)), then_bb, else_bb);
-      }
+      u_.builder.CreateCondBr(
+          [&] {
+            auto tmp_frame{EnterStackFrame(ScopeManager::Frame::Kind::kTemporaries)};
+            return u_.UnwrapBoolOrBoxedBoolPtr(CodegenExpr(m->cond));
+          }(),
+          then_bb, else_bb);
 
       fn_->insert(fn_->end(), then_bb);
       u_.builder.SetInsertPoint(then_bb);
@@ -445,10 +452,12 @@ void FunctionCodegen::CodegenStmt(const ast::nodes::Stmt* n) {
 
       u_.builder.CreateBr(cond_bb);
       u_.builder.SetInsertPoint(cond_bb);
-      {
-        auto tmp_frame{EnterStackFrame(ScopeManager::Frame::Kind::kTemporaries)};
-        u_.builder.CreateCondBr(u_.UnwrapBoolOrBoxedBoolPtr(CodegenExpr(m->cond)), body_bb, end_bb);
-      }
+      u_.builder.CreateCondBr(
+          [&] {
+            auto tmp_frame{EnterStackFrame(ScopeManager::Frame::Kind::kTemporaries)};
+            return u_.UnwrapBoolOrBoxedBoolPtr(CodegenExpr(m->cond));
+          }(),
+          body_bb, end_bb);
 
       u_.builder.SetInsertPoint(post_bb);
       CodegenStmt(m->post);
@@ -456,8 +465,8 @@ void FunctionCodegen::CodegenStmt(const ast::nodes::Stmt* n) {
 
       u_.builder.SetInsertPoint(body_bb);
       {
-        auto loop_frame{EnterStackFrame(ScopeManager::Frame::Kind::kLoop)};
         {
+          auto loop_frame{EnterStackFrame(ScopeManager::Frame::Kind::kLoop)};
           lib::ScopedValue loop_ctx_guard(loop_ctx_, {.post = post_bb, .end = end_bb});
           CodegenStmt(m->body);
         }
@@ -480,10 +489,12 @@ void FunctionCodegen::CodegenStmt(const ast::nodes::Stmt* n) {
 
       u_.builder.CreateBr(cond_bb);
       u_.builder.SetInsertPoint(cond_bb);
-      {
-        auto tmp_frame{EnterStackFrame(ScopeManager::Frame::Kind::kTemporaries)};
-        u_.builder.CreateCondBr(u_.UnwrapBoolOrBoxedBoolPtr(CodegenExpr(m->cond)), body_bb, end_bb);
-      }
+      u_.builder.CreateCondBr(
+          [&] {
+            auto tmp_frame{EnterStackFrame(ScopeManager::Frame::Kind::kTemporaries)};
+            return u_.UnwrapBoolOrBoxedBoolPtr(CodegenExpr(m->cond));
+          }(),
+          body_bb, end_bb);
 
       u_.builder.SetInsertPoint(body_bb);
       {
@@ -523,10 +534,12 @@ void FunctionCodegen::CodegenStmt(const ast::nodes::Stmt* n) {
 
       u_.builder.CreateBr(cond_bb);
       u_.builder.SetInsertPoint(cond_bb);
-      {
-        auto tmp_frame{EnterStackFrame(ScopeManager::Frame::Kind::kTemporaries)};
-        u_.builder.CreateCondBr(u_.UnwrapBoolOrBoxedBoolPtr(CodegenExpr(m->cond)), body_bb, end_bb);
-      }
+      u_.builder.CreateCondBr(
+          [&] {
+            auto tmp_frame{EnterStackFrame(ScopeManager::Frame::Kind::kTemporaries)};
+            return u_.UnwrapBoolOrBoxedBoolPtr(CodegenExpr(m->cond));
+          }(),
+          body_bb, end_bb);
 
       u_.builder.SetInsertPoint(end_bb);
 
@@ -802,7 +815,7 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, DestSlot
         if (m->op.kind == ast::TokenKind::RANGE) {
           // TODO: hook into CodegenExpr above to check for UnaryExpr w/ '!'
           u_.builder.CreateCall(u_.rt.tpl.range_integer, {
-                                                             dest.Unwrap(),
+                                                             dest.Unwrap(),  //
                                                              u_.UnwrapValue(vx),
                                                              u_.builder.getFalse(),  // todo
                                                              u_.UnwrapValue(vy),
@@ -1123,13 +1136,11 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, DestSlot
       auto tmp_frame{EnterStackFrame(ScopeManager::Frame::Kind::kTemporaries)};
       auto* esz_slot = scope_->AllocTrivialTemp(u_.rt.sizet_ty, "esz_slot");
       llvm::Value* vlist_ptr = u_.builder.CreateCall(
-          u_.rt.tpl.list, {
-                              u_.GetTypeInfo(dest.ts),
-                              dest.Unwrap(),
-                              llvm::ConstantInt::get(u_.rt.tpl.listsize_ty, m->list.size()),
-                              esz_slot,
-                              llvm::ConstantInt::get(u_.rt.tpl.tsel_ty, 5),  // TODO: UNHARDCODE THIS CONSTANT
-                          });
+          u_.rt.tpl.list,
+          {
+              u_.GetTypeInfo(dest.ts), dest.Unwrap(), llvm::ConstantInt::get(u_.rt.tpl.listsize_ty, m->list.size()),
+              esz_slot, llvm::ConstantInt::get(u_.rt.tpl.tsel_ty, 5),  // TODO: UNHARDCODE THIS CONSTANT
+          });
       auto* esz = u_.builder.CreateLoad(esz_slot->getAllocatedType(), esz_slot, "esz");
       for (const auto& el : m->list) {
         CodegenExpr(el, asDest(vlist_ptr, dest.ts));

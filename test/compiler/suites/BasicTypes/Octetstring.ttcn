@@ -123,7 +123,7 @@ testcase rotr_neg_13() {
   setverdict(pass);
 }
 //
-testcase rotl_empty() {
+testcase rotr_empty() {
   if ((''O <@ 42) != ''O) { setverdict(fail); }
   setverdict(pass);
 }
