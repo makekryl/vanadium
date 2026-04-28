@@ -492,6 +492,16 @@ RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ct
                                             builder.getPtrTy(),  // const vrt_typeinfo_t*
                                             builder.getPtrTy(),  // void*
                                         });
+  //
+  tpl.range_integer =
+      declare_external_fn("vrt_tpl_integer_range", builder.getVoidTy(),
+                          {
+                              builder.getPtrTy(),    // vrt_integer_template_t*
+                              builder.getInt32Ty(),  // TODO: store as integer.native_ty, revise all others
+                              builder.getInt1Ty(),
+                              builder.getInt32Ty(),
+                              builder.getInt1Ty(),
+                          });
 }
 
 llvm::ConstantInt* RuntimeBindings::GetRawInt(NativeIntType value) const {

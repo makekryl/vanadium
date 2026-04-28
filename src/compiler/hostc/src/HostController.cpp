@@ -19,7 +19,6 @@ int main(int argc, char* argv[]) {
     for (vrt_testcase_t** t = mod->testcases; *t; t++) {
       std::println("Test case {} started.", (*t)->name);
       vrt_clearverdict();
-      std::println(" | - {}", (*t)->name);
       try {
         (*t)->fn();
       } catch (const std::runtime_error& err) {
@@ -27,7 +26,7 @@ int main(int argc, char* argv[]) {
         auto errverdict = vrt_integer_wrap(std::to_underlying(vrt_verdicttype::error));
         vrt_setverdict(&errverdict, nullptr);
       }
-      std::println("Test case {} finished. Verdict: {}", mod->name, magic_enum::enum_name(vrt_getverdict()));
+      std::println("Test case {} finished. Verdict: {}", (*t)->name, magic_enum::enum_name(vrt_getverdict()));
     }
   }
 

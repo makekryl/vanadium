@@ -127,7 +127,7 @@ bool vrt_integer_template_match(const vrt_integer_t* v, const vrt_integer_templa
       if (t->vmin_present) {
         matches = matches && (t->vmin_exclusive ? (t->range.vmin < v->value) : (t->range.vmin <= v->value));
       }
-      if (t->vmax_exclusive) {
+      if (t->vmax_present) {
         matches = matches && (t->vmax_exclusive ? (t->range.vmax > v->value) : (t->range.vmax >= v->value));
       }
       return matches;
@@ -135,4 +135,18 @@ bool vrt_integer_template_match(const vrt_integer_t* v, const vrt_integer_templa
     default:
       assert(false);
   }
+}
+
+void vrt_tpl_integer_range(vrt_integer_template_t* p,  //
+                           vrt_native_int_t vmin, bool vmin_excl, vrt_native_int_t vmax, bool vmax_excl) {
+  vrt_integer_template_dtor(p);
+  p->tsel = vrt_template_sel_e::kValueRange;
+
+  p->vmin_present = true;  // TODO
+  p->vmax_present = true;  // TODO
+
+  p->vmin_exclusive = vmin_excl;
+  p->range.vmin = vmin;
+  p->range.vmax = vmax;
+  p->vmax_exclusive = vmax_excl;
 }

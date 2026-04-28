@@ -45,6 +45,11 @@ vrt_integer_t vrt_integer_sub(vrt_integer_t, vrt_integer_t);
 vrt_integer_t vrt_integer_mul(vrt_integer_t, vrt_integer_t);
 vrt_integer_t vrt_integer_div(vrt_integer_t, vrt_integer_t);
 
+///
+
+void vrt_tpl_integer_range(vrt_integer_template_t*,  //
+                           vrt_native_int_t vmin, bool vmin_excl, vrt_native_int_t vmax, bool vmax_excl);
+
 //
 }
 

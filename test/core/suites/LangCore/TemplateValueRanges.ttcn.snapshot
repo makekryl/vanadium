@@ -1,0 +1,19 @@
+./TemplateValueRanges.ttcn:
+  5:22: expected value, got template
+      var integer val := (1 .. 5);  // EXPECT_ERROR
+                         ~~~~~~~~                  
+  7:39: expected value of type 'integer', got 'float'
+      var template integer tpl_invalid := (1.0 .. 5.0);  // EXPECT_ERROR
+                                          ~~~~~~~~~~~~                  
+  8:50: expected value, got template
+      var template integer tpl_invalid_needs_val := (tpl .. 5);  // EXPECT_ERROR
+                                                     ~~~                        
+  13:20: expected value, got template
+      var float val := (1.0 .. 5.0);  // EXPECT_ERROR
+                       ~~~~~~~~~~~~                  
+  15:37: expected value of type 'float', got 'integer'
+      var template float tpl_invalid := (1 .. 5);  // EXPECT_ERROR
+                                        ~~~~~~~~                  
+  16:48: expected value, got template
+      var template float tpl_invalid_needs_val := (tpl .. 5.0);  // EXPECT_ERROR
+                                                   ~~~                          

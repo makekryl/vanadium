@@ -127,6 +127,8 @@ class RuntimeBindings {
     llvm::Function* omit;
     llvm::Function* any;
     llvm::Function* any_or_omit;
+    //
+    llvm::Function* range_integer;
   } tpl;
 
   [[nodiscard]] llvm::Type* MakeUnion(std::span<llvm::Type*> members) const;

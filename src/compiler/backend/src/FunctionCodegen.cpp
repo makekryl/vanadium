@@ -145,8 +145,8 @@ class ScopeManager {
 
     return alloca;
   }
-  llvm::AllocaInst* AllocTemp(const core::semantic::Symbol* sym) {
-    auto* ty = u_.GetSymbolType(sym);
+  llvm::AllocaInst* AllocTemp(TypeSymbol ts) {
+    auto* ty = u_.GetSymbolType(ts);
     auto* alloca = createEntryBlockAlloca(ty, "tmp");
     u_.builder.CreateLifetimeStart(alloca);
 
@@ -154,7 +154,7 @@ class ScopeManager {
     auto& var = frame.temporaries.emplace_front(AllocatedVar{
         .value = alloca,
         .ty = ty,
-        .ts = sym,
+        .ts = ts,
     });
     frame.ordered_vars.emplace_back(&var);
 
@@ -773,6 +773,17 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, DestSlot
           core::checker::ResolveExprType(&u_.sf, core::semantic::utils::FindScope(u_.sf.module->scope, m->x), m->x).sym;
 
       if (sym == &core::builtins::kInteger) {
+        if (m->op.kind == ast::TokenKind::RANGE) {
+          // TODO: hook into CodegenExpr above to check for UnaryExpr w/ '!'
+          u_.builder.CreateCall(u_.rt.tpl.range_integer, {
+                                                             dest.Unwrap(),
+                                                             u_.UnwrapValue(vx),
+                                                             u_.builder.getFalse(),  // todo
+                                                             u_.UnwrapValue(vy),
+                                                             u_.builder.getFalse(),  // todo
+                                                         });
+          return dest.Unwrap();
+        }
         vx = promote_trivial(u_.rt.integer.ty, vx);
         vy = promote_trivial(u_.rt.integer.ty, vy);
         switch (m->op.kind) {
@@ -1007,6 +1018,18 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, DestSlot
     case ast::NodeKind::CallExpr: {
       const auto* m = expr->As<ast::nodes::CallExpr>();
 
+      const auto* func_sym = core::checker::ResolveExprSymbol(&u_.sf, u_.sf.module->scope, m->fun).sym;
+      assert(func_sym->Flags() & core::semantic::SymbolFlags::kFunction);
+
+      const bool does_return = ast::utils::DoesFunctionLikeReturn(func_sym->Declaration());
+      if (does_return && !dest) {
+        const auto ret_isym = core::checker::ResolveCallableReturnType(
+            ast::utils::SourceFileOf(func_sym->Declaration()), func_sym->Declaration()->As<ast::nodes::Decl>());
+        assert(ret_isym);
+        dest = asDest(scope_->AllocTemp(ret_isym), ret_isym);
+        std::println("dest = {}", (void*)dest.Unwrap());
+      }
+
       auto tmp_frame{EnterStackFrame(ScopeManager::Frame::Kind::kTemporaries)};
       const auto prepare_argument = [this](llvm::Value* av) -> llvm::Value* {
         if (!av->getType()->isPointerTy()) {
@@ -1019,11 +1042,6 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, DestSlot
         }
         return av;
       };
-
-      const auto* func_sym = core::checker::ResolveExprSymbol(&u_.sf, u_.sf.module->scope, m->fun).sym;
-      assert(func_sym->Flags() & core::semantic::SymbolFlags::kFunction);
-
-      const bool does_return = ast::utils::DoesFunctionLikeReturn(func_sym->Declaration());
 
       auto* callee = u_.GetFunction(func_sym);
 
@@ -1065,9 +1083,9 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, DestSlot
         }
       }
 
-      auto* res = u_.builder.CreateCall(callee, args);
+      u_.builder.CreateCall(callee, args);
 
-      return res;
+      return dest.Unwrap();
     }
 
     case ast::NodeKind::ParenExpr: {

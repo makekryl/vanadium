@@ -1,0 +1,19 @@
+module TemplateValueRanges {
+
+function integers() {
+  var template integer tpl := (1 .. 5);
+  var integer val := (1 .. 5);  // EXPECT_ERROR
+
+  var template integer tpl_invalid := (1.0 .. 5.0);  // EXPECT_ERROR
+  var template integer tpl_invalid_needs_val := (tpl .. 5);  // EXPECT_ERROR
+}
+
+function floats() {
+  var template float tpl := (1.0 .. 5.0);
+  var float val := (1.0 .. 5.0);  // EXPECT_ERROR
+
+  var template float tpl_invalid := (1 .. 5);  // EXPECT_ERROR
+  var template float tpl_invalid_needs_val := (tpl .. 5.0);  // EXPECT_ERROR
+}
+
+}
