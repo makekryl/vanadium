@@ -110,6 +110,11 @@ class RuntimeBindings {
     //
     llvm::Function* get_f;
     llvm::Function* wrap_f;
+    //
+    llvm::Function* not_f;
+    //
+    llvm::Function* eq_f;
+    llvm::Function* ne_f;
   } boolt;
   [[nodiscard]] llvm::Value* GetBool(bool) const;
 

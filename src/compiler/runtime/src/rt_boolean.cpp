@@ -9,7 +9,7 @@
 #include "vanadium/runtime/runtime.hpp"
 
 namespace {
-inline void CheckIsBound(vrt_boolean_t b) {
+inline void AssertIsBound(vrt_boolean_t b) {
   rt::Assert(b.is_bound, "accessing an unbound boolean value");
 }
 }  // namespace
@@ -27,6 +27,21 @@ const vrt_typeinfo_t boolean_typeinfo{
 
 void copy_boolean(vrt_boolean_t* dst, vrt_boolean_t src) {
   *dst = src;
+}
+
+#define DEFINE_BINARY_OP_TO_BOOL(name, op)                    \
+  bool vrt_boolean_##name(vrt_boolean_t a, vrt_boolean_t b) { \
+    AssertIsBound(a);                                         \
+    AssertIsBound(b);                                         \
+    return a.value op b.value;                                \
+  }
+
+DEFINE_BINARY_OP_TO_BOOL(eq, ==);
+DEFINE_BINARY_OP_TO_BOOL(ne, !=);
+
+vrt_boolean_t vrt_boolean_not(vrt_boolean_t b) {
+  AssertIsBound(b);
+  return vrt_boolean_wrap(!b.value);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

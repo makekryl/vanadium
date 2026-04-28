@@ -404,7 +404,10 @@ void FunctionCodegen::CodegenStmt(const ast::nodes::Stmt* n) {
       auto* end_bb = llvm::BasicBlock::Create(u_.ctx, "if.end");
       auto* else_bb = m->alternate ? llvm::BasicBlock::Create(u_.ctx, "if.else") : end_bb;
 
-      u_.builder.CreateCondBr(u_.UnwrapValue(CodegenExpr(m->cond)), then_bb, else_bb);
+      {
+        auto tmp_frame{EnterStackFrame(ScopeManager::Frame::Kind::kTemporaries)};
+        u_.builder.CreateCondBr(u_.UnwrapBoolOrBoxedBoolPtr(CodegenExpr(m->cond)), then_bb, else_bb);
+      }
 
       fn_->insert(fn_->end(), then_bb);
       u_.builder.SetInsertPoint(then_bb);
@@ -442,7 +445,10 @@ void FunctionCodegen::CodegenStmt(const ast::nodes::Stmt* n) {
 
       u_.builder.CreateBr(cond_bb);
       u_.builder.SetInsertPoint(cond_bb);
-      u_.builder.CreateCondBr(u_.UnwrapValue(CodegenExpr(m->cond)), body_bb, end_bb);
+      {
+        auto tmp_frame{EnterStackFrame(ScopeManager::Frame::Kind::kTemporaries)};
+        u_.builder.CreateCondBr(u_.UnwrapBoolOrBoxedBoolPtr(CodegenExpr(m->cond)), body_bb, end_bb);
+      }
 
       u_.builder.SetInsertPoint(post_bb);
       CodegenStmt(m->post);
@@ -474,7 +480,10 @@ void FunctionCodegen::CodegenStmt(const ast::nodes::Stmt* n) {
 
       u_.builder.CreateBr(cond_bb);
       u_.builder.SetInsertPoint(cond_bb);
-      u_.builder.CreateCondBr(u_.UnwrapValue(CodegenExpr(m->cond)), body_bb, end_bb);
+      {
+        auto tmp_frame{EnterStackFrame(ScopeManager::Frame::Kind::kTemporaries)};
+        u_.builder.CreateCondBr(u_.UnwrapBoolOrBoxedBoolPtr(CodegenExpr(m->cond)), body_bb, end_bb);
+      }
 
       u_.builder.SetInsertPoint(body_bb);
       {
@@ -514,7 +523,10 @@ void FunctionCodegen::CodegenStmt(const ast::nodes::Stmt* n) {
 
       u_.builder.CreateBr(cond_bb);
       u_.builder.SetInsertPoint(cond_bb);
-      u_.builder.CreateCondBr(u_.UnwrapValue(CodegenExpr(m->cond)), body_bb, end_bb);
+      {
+        auto tmp_frame{EnterStackFrame(ScopeManager::Frame::Kind::kTemporaries)};
+        u_.builder.CreateCondBr(u_.UnwrapBoolOrBoxedBoolPtr(CodegenExpr(m->cond)), body_bb, end_bb);
+      }
 
       u_.builder.SetInsertPoint(end_bb);
 
@@ -772,7 +784,21 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, DestSlot
       const auto* sym =
           core::checker::ResolveExprType(&u_.sf, core::semantic::utils::FindScope(u_.sf.module->scope, m->x), m->x).sym;
 
-      if (sym == &core::builtins::kInteger) {
+      if (sym == &core::builtins::kBoolean) {
+        // TODO: cleanup promote_trivial calls here and below
+        vx = promote_trivial(u_.rt.boolt.ty, vx);
+        vy = promote_trivial(u_.rt.boolt.ty, vy);
+        switch (m->op.kind) {
+          case ast::TokenKind::EQ:
+            return u_.builder.CreateCall(u_.rt.boolt.eq_f, {vx, vy});
+          case ast::TokenKind::NE:
+            return u_.builder.CreateCall(u_.rt.boolt.ne_f, {vx, vy});
+          //
+          default:
+            VANADIUM_DEBUG_ERROR("Unhandled BinaryExpr bool op = {}", magic_enum::enum_name(m->op.kind));
+            break;
+        }
+      } else if (sym == &core::builtins::kInteger) {
         if (m->op.kind == ast::TokenKind::RANGE) {
           // TODO: hook into CodegenExpr above to check for UnaryExpr w/ '!'
           u_.builder.CreateCall(u_.rt.tpl.range_integer, {
@@ -910,12 +936,12 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, DestSlot
           core::checker::ResolveExprType(&u_.sf, core::semantic::utils::FindScope(u_.sf.module->scope, m->x), m->x).sym;
 
       if (sym == &core::builtins::kBoolean) {
-        //  TODO: TokenKind::NOT
+        return ret_trivial(u_.builder.CreateCall(u_.rt.boolt.not_f, {promote_trivial(u_.rt.boolt.ty, vx)}));
       } else if (sym == &core::builtins::kInteger) {
         vx = promote_trivial(u_.rt.integer.ty, vx);
         switch (m->op.kind) {
           case ast::TokenKind::SUB:
-            return u_.builder.CreateCall(u_.rt.integer.neg_f, {vx});
+            return ret_trivial(u_.builder.CreateCall(u_.rt.integer.neg_f, {vx}));
           default:
             VANADIUM_DEBUG_ERROR("Unhandled UnaryExpr int op = {}", magic_enum::enum_name(m->op.kind));
             break;
@@ -924,7 +950,7 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, DestSlot
         vx = promote_trivial(u_.rt.floatt.ty, vx);
         switch (m->op.kind) {
           case ast::TokenKind::SUB:
-            return u_.builder.CreateCall(u_.rt.floatt.neg_f, {vx});
+            return ret_trivial(u_.builder.CreateCall(u_.rt.floatt.neg_f, {vx}));
           default:
             VANADIUM_DEBUG_ERROR("Unhandled UnaryExpr int op = {}", magic_enum::enum_name(m->op.kind));
             break;
@@ -1027,7 +1053,6 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, DestSlot
             ast::utils::SourceFileOf(func_sym->Declaration()), func_sym->Declaration()->As<ast::nodes::Decl>());
         assert(ret_isym);
         dest = asDest(scope_->AllocTemp(ret_isym), ret_isym);
-        std::println("dest = {}", (void*)dest.Unwrap());
       }
 
       auto tmp_frame{EnterStackFrame(ScopeManager::Frame::Kind::kTemporaries)};

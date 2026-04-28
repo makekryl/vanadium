@@ -73,6 +73,9 @@ llvm::Value* CodegenUnit::GetUndef(TypeSymbol ts) {
   if (ts == &core::builtins::kFloat) {
     return rt.floatt.undef;
   }
+  if (ts == &core::builtins::kBoolean) {
+    return rt.boolt.undef;
+  }
   if (const auto* strb = GetStringTypeBindings(ts)) {
     return strb->undef;
   }
@@ -198,6 +201,14 @@ llvm::Value* CodegenUnit::UnwrapValue(llvm::Value* v) {
     get_f = rt.floatt.get_f;
   }
   return get_f ? builder.CreateCall(get_f, {v}) : v;
+}
+
+llvm::Value* CodegenUnit::UnwrapBoolOrBoxedBoolPtr(llvm::Value* v) {
+  assert(v);
+  if (v->getType()->isPointerTy()) {
+    v = builder.CreateLoad(rt.boolt.ty, v);
+  }
+  return UnwrapValue(v);
 }
 
 }  // namespace vanadium::compiler

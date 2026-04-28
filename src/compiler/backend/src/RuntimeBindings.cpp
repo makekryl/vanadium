@@ -343,6 +343,19 @@ RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ct
   boolt.wrap_f = llvm::Function::Create(llvm::FunctionType::get(boolt.ty, {builder.getInt1Ty()}, false),
                                         llvm::GlobalValue::InternalLinkage, "__vrt_boolean_wrap", mod);
   GenerateWrapFn(ctx, boolt.wrap_f, boolt.undef);
+  //
+  boolt.not_f = llvm::Function::Create(llvm::FunctionType::get(boolt.ty, {boolt.ty}, false),
+                                       llvm::GlobalValue::InternalLinkage, "__vrt_boolean_not", mod);
+  GenerateGenericUnaryNumericOperation(ctx, boolt.not_f, bool_assert_is_bound_fn,
+                                       [](llvm::IRBuilder<>& builder, llvm::Type* ty, llvm::Value* va) -> llvm::Value* {
+                                         return MakeBoundValW(builder, ty, builder.CreateNot(va));
+                                       });
+  //
+  boolt.eq_f = declare_embedded_fn("__vrt_boolean_eq", nbool_ty, {boolt.ty, boolt.ty});
+  GenerateGenericBinaryNumericOperation(ctx, boolt.eq_f, bool_assert_is_bound_fn, BLD_BINOP_TO_BOOL(CreateICmpEQ));
+  //
+  boolt.ne_f = declare_embedded_fn("__vrt_boolean_ne", nbool_ty, {boolt.ty, boolt.ty});
+  GenerateGenericBinaryNumericOperation(ctx, boolt.ne_f, bool_assert_is_bound_fn, BLD_BINOP_TO_BOOL(CreateICmpNE));
 
   const auto fill_string_bindings = [&](StringTypeBindings& b, std::string_view ty_name) {
     const auto sty_name = [&](std::format_string<std::string_view&> sname) {

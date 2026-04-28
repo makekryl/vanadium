@@ -1,0 +1,72 @@
+module Boolean {
+
+testcase init() {
+  var boolean b_true := true;
+  var boolean b_false := false;
+  setverdict(pass);
+}
+
+testcase assign() {
+  var boolean b;
+  b := true;
+  b := false;
+  setverdict(pass);
+}
+
+testcase eq() {
+  if (true == false) {
+    setverdict(fail);
+  }
+  if (false == true) {
+    setverdict(fail);
+  }
+
+  var boolean b_true := true;
+  var boolean b_false := false;
+  if (b_true == b_false) {
+    setverdict(fail);
+  }
+  if (b_false == b_true) {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+
+testcase ne() {
+  if (true != true) {
+    setverdict(fail);
+  }
+  if (false != false) {
+    setverdict(fail);
+  }
+
+  var boolean b_true := true;
+  var boolean b_false := false;
+  if (b_true != b_true) {
+    setverdict(fail);
+  }
+  if (b_false != b_false) {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+
+testcase neg() {
+  var boolean b;
+
+  b := true;
+  if (not b) {
+    setverdict(fail);
+  }
+
+  b := not b;  // -> false
+  if (b) {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+
+}

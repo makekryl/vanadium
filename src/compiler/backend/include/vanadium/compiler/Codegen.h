@@ -100,6 +100,8 @@ struct CodegenUnit {
 
   llvm::Value* WrapValue(llvm::Value*);    // primitive -> primitive wrapper (integer, float, bool)
   llvm::Value* UnwrapValue(llvm::Value*);  // primitive wrapper -> primitive
+
+  llvm::Value* UnwrapBoolOrBoxedBoolPtr(llvm::Value*);
 };
 
 inline constexpr std::string_view kVarargsAttr = "vrt-varargs";
