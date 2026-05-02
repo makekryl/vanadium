@@ -1028,33 +1028,36 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, DestSlot
         case ast::NodeKind::SelectorExpr: {
           // TODO: this should be rewriten during implementing of OOP support
           // a.b().c().d := ...;
-          const auto cgen_mutable_val = [&](this auto&& self, const ast::nodes::Expr* xse) -> llvm::Value* {
+          const auto cgen_mutable_val = [pthis = this /* gcc bug W/A */, &m](
+                                            this auto&& self, const ast::nodes::Expr* xse) -> llvm::Value* {
             switch (xse->nkind) {
               case ast::NodeKind::SelectorExpr: {
                 const auto* se = xse->As<ast::nodes::SelectorExpr>();
                 auto* xval = self(se->x);
                 // TODO: optimize xsym chain resolution
                 const auto& xsym = core::checker::ResolveExprType(
-                    &u_.sf, core::semantic::utils::FindScope(u_.sf.module->scope, m), se->x);
-                return u_.builder.CreateCall(
-                    u_.getOrDeclareExternalFunc(names::Getter(xsym, Lit(se->sel)), u_.rt.generic_getter_fn_ty), {xval});
+                    &pthis->u_.sf, core::semantic::utils::FindScope(pthis->u_.sf.module->scope, m), se->x);
+                return pthis->u_.builder.CreateCall(
+                    pthis->u_.getOrDeclareExternalFunc(names::Getter(xsym, pthis->Lit(se->sel)),
+                                                       pthis->u_.rt.generic_getter_fn_ty),
+                    {xval});
               }
               case ast::NodeKind::Ident: {
-                const auto* root_var = scope_->Lookup(Lit(xse));
-                assert(u_.IsOpaque(root_var->ts));
+                const auto* root_var = pthis->scope_->Lookup(pthis->Lit(xse));
+                assert(pthis->u_.IsOpaque(root_var->ts));
                 auto* root_val = root_var->value;
                 if (root_var->immutable) {
-                  root_val = scope_->Alloc(root_var->value->getName(), root_var->ts);
+                  root_val = pthis->scope_->Alloc(root_var->value->getName(), root_var->ts);
                   // TODO: deep copy
                 }
                 if (llvm::dyn_cast<llvm::AllocaInst>(root_val)) {
-                  root_val = u_.builder.CreateLoad(u_.builder.getPtrTy(), root_val);
+                  root_val = pthis->u_.builder.CreateLoad(pthis->u_.builder.getPtrTy(), root_val);
                 }
                 return root_val;
               }
               default:
                 // CallExpr?
-                return CodegenExpr(xse);
+                return pthis->CodegenExpr(xse);
             }
           };
 
