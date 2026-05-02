@@ -29,8 +29,8 @@ extern "C" {
 extern const vrt_typeinfo_t octetstring_typeinfo;
 extern const vrt_typeinfo_t octetstring_template_typeinfo;
 
-void vrt_octetstring_ctor(vrt_octetstring_t*);
-void vrt_octetstring_dtor(vrt_octetstring_t*);
+void octetstring_ctor(vrt_octetstring_t*);
+void octetstring_dtor(vrt_octetstring_t*);
 
 void copy_octetstring(vrt_octetstring_t* dst, const vrt_octetstring_t* src);
 

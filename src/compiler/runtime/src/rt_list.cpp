@@ -40,17 +40,17 @@ const vrt_typeinfo_t list_typeinfo{
 
     .members = nullptr,
 
-    .construct = rt::helpers::VoidErased<vrt_list_ctor>,
-    .destruct = rt::helpers::VoidErased<vrt_list_dtor>,
+    .construct = rt::helpers::VoidErased<list_ctor>,
+    .destruct = rt::helpers::VoidErased<list_dtor>,
 };
 
-void vrt_list_ctor(vrt_list_t* l) {
+void list_ctor(vrt_list_t* l) {
   l->data = kUnboundDataPointerValue;
   l->length = 0;
   l->capacity = 0;
   l->etype = nullptr;
 }
-void vrt_list_dtor(vrt_list_t* l) {
+void list_dtor(vrt_list_t* l) {
   if (l->length == 0) {
     return;
   }

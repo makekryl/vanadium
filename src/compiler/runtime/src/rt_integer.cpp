@@ -25,26 +25,26 @@ const vrt_typeinfo_t integer_typeinfo{
 
     .members = nullptr,
 
-    .construct = vanadium::rt::helpers::VoidErased<vrt_integer_ctor>,
-    .destruct = vanadium::rt::helpers::VoidErased<vrt_integer_dtor>,
+    .construct = vanadium::rt::helpers::VoidErased<integer_ctor>,
+    .destruct = vanadium::rt::helpers::VoidErased<integer_dtor>,
 
     .counterpart = &integer_template_typeinfo,
 };
 
 extern "C" {
-void vrt_integer_dtor_big(vrt_integer_t* p) {
+void integer_dtor_big(vrt_integer_t* p) {
   // assert(p->is_bound && p->is_big);
   // TODO: implement big numbers support
 }
 }
 
-void vrt_integer_ctor(vrt_integer_t* p) {
+void integer_ctor(vrt_integer_t* p) {
   p->is_bound = false;
   // p->is_big = false;
 }
-void vrt_integer_dtor(vrt_integer_t* p) {
+void integer_dtor(vrt_integer_t* p) {
   // if (p->is_bound && p->is_big) {
-  //   vrt_integer_dtor_big(p);
+  //   integer_dtor_big(p);
   // }
 }
 
@@ -86,8 +86,8 @@ vrt_integer_t vrt_integer_neg(vrt_integer_t a) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 extern "C" {
-void vrt_integer_template_ctor(vrt_integer_template_t*);
-void vrt_integer_template_dtor(vrt_integer_template_t*);
+void integer_template_ctor(vrt_integer_template_t*);
+void integer_template_dtor(vrt_integer_template_t*);
 }
 
 const vrt_typeinfo_t integer_template_typeinfo{
@@ -98,22 +98,22 @@ const vrt_typeinfo_t integer_template_typeinfo{
 
     .members = integer_typeinfo.members,
 
-    .construct = vanadium::rt::helpers::VoidErased<vrt_integer_template_ctor>,
-    .destruct = vanadium::rt::helpers::VoidErased<vrt_integer_template_dtor>,
+    .construct = vanadium::rt::helpers::VoidErased<integer_template_ctor>,
+    .destruct = vanadium::rt::helpers::VoidErased<integer_template_dtor>,
 
     .counterpart = &integer_typeinfo,
 };
 
-void vrt_integer_template_ctor(vrt_integer_template_t* p) {
+void integer_template_ctor(vrt_integer_template_t* p) {
   rt::tpl::Construct(p);
 }
-void vrt_integer_template_dtor(vrt_integer_template_t* p) {
+void integer_template_dtor(vrt_integer_template_t* p) {
   switch (p->tsel) {
     case vrt_template_sel_e::kSpecificValue:
     case vrt_template_sel_e::kValueRange:
       break;
     default:
-      rt::tpl::Destruct<vrt_integer_template_dtor>(p);
+      rt::tpl::Destruct<integer_template_dtor>(p);
       break;
   }
 }
@@ -139,7 +139,7 @@ bool vrt_integer_template_match(const vrt_integer_t* v, const vrt_integer_templa
 
 void vrt_tpl_integer_range(vrt_integer_template_t* p,  //
                            vrt_native_int_t vmin, bool vmin_excl, vrt_native_int_t vmax, bool vmax_excl) {
-  vrt_integer_template_dtor(p);
+  integer_template_dtor(p);
   p->tsel = vrt_template_sel_e::kValueRange;
 
   p->vmin_present = true;  // TODO

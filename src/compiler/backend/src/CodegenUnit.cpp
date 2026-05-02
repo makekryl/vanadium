@@ -170,6 +170,11 @@ llvm::GlobalVariable* CodegenUnit::GetTypeInfo(TypeSymbol ts) {
   return getOrDeclareExternalConst(names::TInfo(ts), rt.typeinfo_ty);
 }
 
+bool CodegenUnit::IsTrivial(llvm::Type* ty) const {
+  // int won't be trivial after bignum support
+  return ty == rt.boolt.ty || ty == rt.integer.ty || ty == rt.floatt.ty;
+}
+
 llvm::Value* CodegenUnit::WrapValue(llvm::Value* v) {
   llvm::Function* wrap_f = nullptr;
   if (v->getType() == builder.getInt1Ty()) {

@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <filesystem>
 #include <format>
 #include <iterator>
@@ -115,16 +116,16 @@ void VerdictTest::TestBody() {
 
   cantFail(jit->initialize(dylib));
   ASSERT_TRUE(vmodule);
-  for (auto** tc = vmodule->testcases; *tc; tc++) {
+  for (const auto& tc : std::span{vmodule->testcases, vmodule->testcases_count}) {
     vrt_clearverdict();
     logged_lines.clear();
 
-    std::println(" . {}", (*tc)->name);
+    std::println(" . {}", tc.name);
     std::fflush(stdout);
     try {
-      (*tc)->fn();
+      tc.fn();
     } catch (const std::runtime_error& err) {
-      ADD_FAILURE() << "Testcase '" << (*tc)->name << "' raised an error: '" << err.what() << "'";
+      ADD_FAILURE() << "Testcase '" << tc.name << "' raised an error: '" << err.what() << "'";
       auto errverdict = vrt_integer_wrap(std::to_underlying(vrt_verdicttype::error));
       vrt_setverdict(&errverdict, nullptr);
     }
@@ -134,8 +135,8 @@ void VerdictTest::TestBody() {
       continue;
     }
 
-    ADD_FAILURE() << "Testcase '" << (*tc)->name << "' failed with verdict: " << magic_enum::enum_name(verdict);
-    std::println(stderr, "Testcase '{}' log:", (*tc)->name);
+    ADD_FAILURE() << "Testcase '" << tc.name << "' failed with verdict: " << magic_enum::enum_name(verdict);
+    std::println(stderr, "Testcase '{}' log:", tc.name);
     for (const auto& line : logged_lines) {
       std::println(stderr, " | {}", line);
     }

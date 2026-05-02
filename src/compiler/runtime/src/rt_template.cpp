@@ -14,6 +14,7 @@ using namespace vanadium;
 
 namespace {
 void* ResetTemplate(const vrt_typeinfo_t* td, void* p, vrt_template_sel_e new_tsel) {
+  printf("ResetTemplate(td->name=%s)\n", td->name);
   assert(td->is_template);
 
   td->destruct(p);

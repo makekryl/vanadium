@@ -27,14 +27,14 @@ const vrt_typeinfo_t charstring_typeinfo{
 
     .members = nullptr,
 
-    .construct = rt::helpers::VoidErased<vrt_charstring_ctor>,
-    .destruct = rt::helpers::VoidErased<vrt_charstring_dtor>,
+    .construct = rt::helpers::VoidErased<charstring_ctor>,
+    .destruct = rt::helpers::VoidErased<charstring_dtor>,
 };
 
-void vrt_charstring_ctor(vrt_charstring_t* p) {
+void charstring_ctor(vrt_charstring_t* p) {
   rt::str::Construct(p);
 }
-void vrt_charstring_dtor(vrt_charstring_t* p) {
+void charstring_dtor(vrt_charstring_t* p) {
   rt::str::Destruct(p);
 }
 
@@ -150,8 +150,8 @@ bool vrt_charstring_ne(const vrt_charstring_t* lhs, const vrt_charstring_t* rhs)
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 extern "C" {
-void vrt_charstring_template_ctor(vrt_charstring_template_t*);
-void vrt_charstring_template_dtor(vrt_charstring_template_t*);
+void charstring_template_ctor(vrt_charstring_template_t*);
+void charstring_template_dtor(vrt_charstring_template_t*);
 }
 
 const vrt_typeinfo_t charstring_template_typeinfo{
@@ -162,22 +162,22 @@ const vrt_typeinfo_t charstring_template_typeinfo{
 
     .members = charstring_typeinfo.members,
 
-    .construct = vanadium::rt::helpers::VoidErased<vrt_charstring_template_ctor>,
-    .destruct = vanadium::rt::helpers::VoidErased<vrt_charstring_template_dtor>,
+    .construct = vanadium::rt::helpers::VoidErased<charstring_template_ctor>,
+    .destruct = vanadium::rt::helpers::VoidErased<charstring_template_dtor>,
 
     .counterpart = &charstring_typeinfo,
 };
 
-void vrt_charstring_template_ctor(vrt_charstring_template_t* p) {
+void charstring_template_ctor(vrt_charstring_template_t* p) {
   rt::tpl::Construct(p);
 }
-void vrt_charstring_template_dtor(vrt_charstring_template_t* p) {
+void charstring_template_dtor(vrt_charstring_template_t* p) {
   switch (p->tsel) {
     case vrt_template_sel_e::kSpecificValue:
-      vrt_charstring_dtor(&p->val);
+      charstring_dtor(&p->val);
       break;
     default:
-      rt::tpl::Destruct<vrt_charstring_template_dtor>(p);
+      rt::tpl::Destruct<charstring_template_dtor>(p);
       break;
   }
 }

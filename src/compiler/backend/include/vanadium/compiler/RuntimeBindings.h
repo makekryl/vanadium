@@ -4,6 +4,7 @@
 #include <string_view>
 #include <variant>
 
+#include <llvm/IR/Constant.h>
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/DerivedTypes.h>
 #include <llvm/IR/Function.h>
@@ -68,13 +69,14 @@ class RuntimeBindings {
   RuntimeBindings(llvm::LLVMContext&, llvm::Module&);
   //
 
-  llvm::Type* sizet_ty;
+  llvm::IntegerType* sizet_ty;
 
   llvm::Function* panic;
 
   llvm::FunctionType* generic_getter_fn_ty;
 
   llvm::StructType* typeinfo_ty;
+  llvm::StructType* smember_ty;
   //
   llvm::FunctionType* obj_ctor_fn_ty;
   llvm::FunctionType* obj_dtor_fn_ty;
@@ -137,6 +139,10 @@ class RuntimeBindings {
   } tpl;
 
   [[nodiscard]] llvm::Type* MakeUnion(std::span<llvm::Type*> members) const;
+
+  [[nodiscard]] llvm::ConstantInt* GetSizeI(std::size_t i) const {
+    return llvm::ConstantInt::get(sizet_ty, i);
+  }
 
  private:
   llvm::LLVMContext& ctx_;

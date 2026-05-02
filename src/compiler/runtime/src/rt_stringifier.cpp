@@ -7,6 +7,7 @@
 #include "vanadium/runtime/BuiltinsTemplates.h"
 #include "vanadium/runtime/Stringifier.h"
 #include "vanadium/runtime/TemplateMatching.h"
+#include "vanadium/runtime/TypeHelper.h"
 #include "vanadium/runtime/rt_bitstring.h"
 #include "vanadium/runtime/rt_boolean.h"
 #include "vanadium/runtime/rt_charstring.h"
@@ -14,6 +15,7 @@
 #include "vanadium/runtime/rt_hexstring.h"
 #include "vanadium/runtime/rt_integer.h"
 #include "vanadium/runtime/rt_octetstring.h"
+#include "vanadium/runtime/rt_reflect.h"
 #include "vanadium/runtime/rt_template.h"
 #include "vanadium/runtime/runtime.h"
 
@@ -192,6 +194,7 @@ void StringifyTemplateGeneric(std::string& buf, const tpl::RtTemplate auto& t) {
 }  // namespace
 
 void StringifyObject(std::string& buf, const vrt_val_t& v) {
+  // printf("stringify(%p)\n", v.p);
   if (!vrt_is_bound(&v)) {
     buf += v.ty->is_template ? "<uninitialized template>" : "<unbound>";
     return;
@@ -213,6 +216,36 @@ void StringifyObject(std::string& buf, const vrt_val_t& v) {
   }
 #include "vanadium/runtime/BuiltinTypes.inc"
 #undef X
+  }
+
+  // TODO: use switch(kind)-case instead of pointer comparison above
+  switch (v.ty->kind) {
+    case vrt_typekind_e::kRecord:
+    case vrt_typekind_e::kSet: {
+      buf += "{ ";
+      const std::span msp{v.ty->members, v.ty->members_count};
+      for (const auto& m : msp) {
+        // printf(" --> chk [%p] %s of type %s w/ off=%zu tp=%d\n", v.p, m.name, m.type->name, m.offset, m.type->kind);
+        buf += m.name;
+        buf += " := ";
+        void* x = static_cast<std::byte*>(v.p) + m.offset;
+        if (rt::IsIndirect(m.type)) {
+          // puts(" ^indirect");
+          x = *(void**)x;
+        }
+        StringifyObject(buf, {.p = x, .ty = m.type});
+
+        buf += ", ";
+      }
+      if (!msp.empty()) [[likely]] {
+        buf.erase(buf.size() - 2);
+      }
+      buf += " }";
+      return;
+    }
+
+    default:
+      assert(false);
   }
 
   buf += "<unknown_typeinfo>";

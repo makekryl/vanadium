@@ -58,19 +58,19 @@ RtStringSize_t GetByteLength<vrt_bitstring_t>(RtStringSize_t len) {
 
 const vrt_typeinfo_t bitstring_typeinfo{
     .name = "bitstring",
-    .kind = vrt_typekind_e::kString,
+    .kind = vrt_typekind_e::kBitstring,
     .size = sizeof(vrt_bitstring_t),
 
     .members = nullptr,
 
-    .construct = rt::helpers::VoidErased<vrt_bitstring_ctor>,
-    .destruct = rt::helpers::VoidErased<vrt_bitstring_dtor>,
+    .construct = rt::helpers::VoidErased<bitstring_ctor>,
+    .destruct = rt::helpers::VoidErased<bitstring_dtor>,
 };
 
-void vrt_bitstring_ctor(vrt_bitstring_t* p) {
+void bitstring_ctor(vrt_bitstring_t* p) {
   rt::str::Construct(p);
 }
-void vrt_bitstring_dtor(vrt_bitstring_t* p) {
+void bitstring_dtor(vrt_bitstring_t* p) {
   rt::str::Destruct(p);
 }
 
@@ -310,8 +310,8 @@ void vrt_bitstring_xor4b(vrt_bitstring_t* dst, const vrt_bitstring_t* lhs, const
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 extern "C" {
-void vrt_bitstring_template_ctor(vrt_bitstring_template_t*);
-void vrt_bitstring_template_dtor(vrt_bitstring_template_t*);
+void bitstring_template_ctor(vrt_bitstring_template_t*);
+void bitstring_template_dtor(vrt_bitstring_template_t*);
 }
 
 const vrt_typeinfo_t bitstring_template_typeinfo{
@@ -322,22 +322,22 @@ const vrt_typeinfo_t bitstring_template_typeinfo{
 
     .members = bitstring_typeinfo.members,
 
-    .construct = vanadium::rt::helpers::VoidErased<vrt_bitstring_template_ctor>,
-    .destruct = vanadium::rt::helpers::VoidErased<vrt_bitstring_template_dtor>,
+    .construct = vanadium::rt::helpers::VoidErased<bitstring_template_ctor>,
+    .destruct = vanadium::rt::helpers::VoidErased<bitstring_template_dtor>,
 
     .counterpart = &bitstring_typeinfo,
 };
 
-void vrt_bitstring_template_ctor(vrt_bitstring_template_t* p) {
+void bitstring_template_ctor(vrt_bitstring_template_t* p) {
   rt::tpl::Construct(p);
 }
-void vrt_bitstring_template_dtor(vrt_bitstring_template_t* p) {
+void bitstring_template_dtor(vrt_bitstring_template_t* p) {
   switch (p->tsel) {
     case vrt_template_sel_e::kSpecificValue:
-      vrt_bitstring_dtor(&p->val);
+      bitstring_dtor(&p->val);
       break;
     default:
-      rt::tpl::Destruct<vrt_bitstring_template_dtor>(p);
+      rt::tpl::Destruct<bitstring_template_dtor>(p);
       break;
   }
 }

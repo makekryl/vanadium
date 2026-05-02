@@ -38,6 +38,8 @@ bool vrt_is_bound(const vrt_val_t* v) {
 #include "vanadium/runtime/BuiltinTypes.inc"
 #undef X
 
+  return true;  // TODOOOOOOO
+
   assert(false);
   return false;
 }

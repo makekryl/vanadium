@@ -1,4 +1,7 @@
-#include <print>
+#include <algorithm>
+#include <ranges>
+#include <utility>
+#include <vector>
 
 #include <magic_enum/magic_enum.hpp>
 
@@ -6,112 +9,205 @@
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
+#include <llvm/IR/Type.h>
 
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/core/Program.h>
+#include <vanadium/core/Semantic.h>
 #include <vanadium/core/TypeChecker.h>
 #include <vanadium/lib/Assert.h>
 
 #include "vanadium/compiler/Codegen.h"
-#include "vanadium/core/Semantic.h"
+#include "vanadium/compiler/TypeSymbol.h"
 
 namespace vanadium::compiler {
 
 namespace {
 
-llvm::Function* CodegenStructGetter(CodegenUnit& ctx, llvm::StructType* sty, std::size_t idx,
-                                    const core::semantic::Symbol* struct_sym, const core::semantic::Symbol* member_sym,
-                                    std::string_view member_name) {
-  auto* m_getter_fn = ctx.declareExternalFunc(names::Getter(struct_sym, member_name), ctx.rt.generic_getter_fn_ty);
-  auto* p_arg = m_getter_fn->arg_begin();
+// !!!!!!!!!!! SHOULD BE KEPT IN SYNC w/ rt_reflect.h !!!!!!!!!!!
+// TODO: deduplicate
+enum class RtTypeKind : std::uint8_t {
+  kInteger,
+  kFloat,
+  kBoolean,
 
-  auto* bb_entry = llvm::BasicBlock::Create(ctx.ctx, "", m_getter_fn);
-  ctx.builder.SetInsertPoint(bb_entry);
+  kCharstring,
+  kOctetstring,
+  kBitstring,
+  kHexstring,
 
-  if (member_sym->Flags() & core::semantic::SymbolFlags::kBuiltin) {
-    ctx.builder.CreateRet(ctx.builder.CreateStructGEP(sty, p_arg, idx));
-    return m_getter_fn;
-  }
+  kRecord,
+  kSet,
 
-  llvm::Value* m_ptr = ctx.builder.CreateStructGEP(sty, p_arg, 0, "m_ptr");
-  llvm::Value* m_val = ctx.builder.CreateLoad(ctx.builder.getPtrTy(), m_ptr, "m_val");
+  kRecordOf,
+  kSetOf,
 
-  auto* bb_init = llvm::BasicBlock::Create(ctx.ctx, "init", m_getter_fn);
-  auto* bb_merge = llvm::BasicBlock::Create(ctx.ctx, "merge", m_getter_fn);
+  kOptionalMember,
+};
 
-  ctx.builder.CreateCondBr(ctx.builder.CreateIsNull(m_val), bb_init, bb_merge);
+llvm::Function* CodegenStructGetter(CodegenUnit& u, llvm::StructType* sty, std::size_t idx, TypeSymbol struct_sym,
+                                    const core::semantic::Symbol* member_sym, std::string_view member_name) {
+  auto* fn = u.getOrDeclareExternalFunc(names::Getter(struct_sym, member_name), u.rt.generic_getter_fn_ty);
+  auto* bb = llvm::BasicBlock::Create(u.ctx, "", fn);
+  u.builder.SetInsertPoint(bb);
 
-  //=== INIT ===//
-  ctx.builder.SetInsertPoint(bb_init);
-  llvm::Value* new_m = ctx.builder.CreateCall(
-      ctx.rt.type_new_f, {ctx.getOrDeclareExternalConst(names::TInfo(member_sym), ctx.rt.typeinfo_ty)}, "new_m");
-  ctx.builder.CreateStore(new_m, m_ptr);
-  ctx.builder.CreateBr(bb_merge);
+  auto* p_arg = fn->arg_begin();
 
-  //=== MERGE ===//
-  ctx.builder.SetInsertPoint(bb_merge);
-  //
-  llvm::PHINode* ret = ctx.builder.CreatePHI(ctx.builder.getPtrTy(), 2, "ret");
-  ret->addIncoming(m_val, bb_entry);
-  ret->addIncoming(new_m, bb_init);
-  //
-  ctx.builder.CreateRet(ret);
+  auto* v = u.builder.CreateStructGEP(sty, p_arg, idx);
+  if (u.IsOpaque(member_sym)) {
+    // V**
+    v = u.builder.CreateLoad(u.builder.getPtrTy(), v);
+  }  // else V*
+  u.builder.CreateRet(v);
 
-  return m_getter_fn;
+  return fn;
 }
 
-void CodegenStruct(CodegenUnit& u, const core::semantic::Symbol* sym, const ast::nodes::StructTypeDecl* m) {
-  auto* ty = llvm::StructType::create(u.ctx, u.sf.Text(*m->name));
+llvm::Function* CodegenStructMuttor(CodegenUnit& u, llvm::StructType* sty, std::size_t idx, TypeSymbol struct_sym,
+                                    const core::semantic::Symbol* member_sym, std::string_view member_name) {
+  auto* fn = u.getOrDeclareExternalFunc(names::Muttor(struct_sym, member_name), u.rt.generic_getter_fn_ty);
+  auto* bb = llvm::BasicBlock::Create(u.ctx, "", fn);
+  u.builder.SetInsertPoint(bb);
 
-  std::vector<llvm::Type*> body;
-  body.reserve(m->fields.size());
-  for (const auto& [idx, f] : m->fields | std::views::enumerate) {
-    const auto& fsym = u.sf.module->scope->Resolve(u.sf.Text(f->type));
-    body.push_back(u.GetSymbolType(fsym));
+  auto* p_arg = fn->arg_begin();
+
+  auto* v = u.builder.CreateStructGEP(sty, p_arg, idx);
+  if (u.IsOpaque(member_sym)) {
+    // V**
+    v = u.builder.CreateLoad(u.builder.getPtrTy(), v);
   }
-  ty->setBody(body);
-  const auto& ty_bytes = u.mod.getDataLayout().getTypeAllocSize(ty);
+  // TODO: recycle fn
+  u.builder.CreateCall(u.getOrDeclareExternalFunc(names::Dtor(member_sym), u.rt.obj_dtor_fn_ty), {v});
+  u.builder.CreateCall(u.getOrDeclareExternalFunc(names::Ctor(member_sym), u.rt.obj_ctor_fn_ty), {v});
 
-  llvm::IRBuilder<> fn_ctor_builder(u.ctx);
-  auto* fn_ctor = u.getOrDeclareExternalFunc(names::Ctor(sym), u.rt.obj_ctor_fn_ty);
-  fn_ctor_builder.SetInsertPoint(llvm::BasicBlock::Create(u.ctx, "", fn_ctor));
+  u.builder.CreateRet(v);
+
+  return fn;
+}
+
+void CodegenStructType(CodegenUnit& u, TypeSymbol ts, const ast::nodes::StructTypeDecl* m,
+                       std::span<TypeSymbol> members) {
+  auto* sty = llvm::StructType::create(u.ctx, names::Type(ts));
+  // https://github.com/llvm/llvm-project/issues/101614
+  std::vector<llvm::Type*> body =
+      std::ranges::to<std::vector>(members | std::views::transform([&](const auto& mts) -> llvm::Type* {
+                                     return u.GetSymbolType(mts);
+                                   }));
+  sty->setBody(body);
   //
-  llvm::IRBuilder<> fn_dtor_builder(u.ctx);
-  auto* fn_dtor = u.getOrDeclareExternalFunc(names::Dtor(sym), u.rt.obj_dtor_fn_ty);
-  fn_dtor_builder.SetInsertPoint(llvm::BasicBlock::Create(u.ctx, "", fn_dtor));
-  auto* fn_dtor_arg = fn_dtor->arg_begin();
-  for (const auto& [idx, f] : m->fields | std::views::enumerate) {
-    const auto& fsym = u.sf.module->scope->Resolve(u.sf.Text(f->type));
+  const auto& sty_sz = u.mod.getDataLayout().getTypeAllocSize(sty);
+  const auto* sty_layout = u.mod.getDataLayout().getStructLayout(sty);
 
-    CodegenStructGetter(u, ty, idx, sym, fsym, u.sf.Text(*f->name));
-
-    if (f->optional) {
-      fn_dtor_builder.CreateCall(u.rt.optional_dtor_f, {
-                                                           fn_dtor_builder.CreateStructGEP(ty, fn_dtor_arg, idx),
-                                                       });
-    } else if (!(fsym->Flags() & core::semantic::SymbolFlags::kBuiltin)) {
-      fn_dtor_builder.CreateCall(u.mod.getOrInsertFunction(names::Dtor(fsym), u.rt.obj_dtor_fn_ty),
-                                 {
-                                     fn_dtor_builder.CreateStructGEP(ty, fn_dtor_arg, idx),
-                                 });
+  auto* fn_ctor = [&] -> llvm::Function* {
+    llvm::Function* cfn = u.getOrDeclareExternalFunc(names::Ctor(ts), u.rt.obj_ctor_fn_ty);
+    u.builder.SetInsertPoint(llvm::BasicBlock::Create(u.ctx, "", cfn));
+    //
+    auto* p_arg = cfn->arg_begin();
+    for (const auto& [idx, f] : m->fields | std::views::enumerate) {
+      const auto& fts = members[idx];
+      auto* fv = u.builder.CreateStructGEP(sty, p_arg, idx);
+      if (u.IsOpaque(fts)) {
+        auto* aptrv = u.builder.CreateCall(u.rt.type_new_f, {u.GetTypeInfo(fts), fv});
+        u.builder.CreateStore(aptrv, fv);
+      } else {
+        u.builder.CreateCall(u.getOrDeclareExternalFunc(names::Ctor(fts), u.rt.obj_ctor_fn_ty), {fv});
+      }
     }
-  }
-  fn_ctor_builder.CreateMemSet(fn_ctor->arg_begin(), u.builder.getInt8(0), u.builder.getInt64(ty_bytes.getFixedValue()),
-                               llvm::MaybeAlign(u.mod.getDataLayout().getPrefTypeAlign(ty)));
-  fn_ctor_builder.CreateRetVoid();
-  //
-  fn_dtor_builder.CreateRetVoid();
+    //
+    u.builder.CreateRetVoid();
+    return cfn;
+  }();
 
-  u.getOrDeclareExternalConst(names::TInfo(sym), u.rt.typeinfo_ty)
-      ->setInitializer(llvm::ConstantStruct::get(u.rt.typeinfo_ty,
-                                                 {
-                                                     u.builder.CreateGlobalStringPtr(sym->GetName(), "", 0, &u.mod),
-                                                     u.builder.getInt8(0),
-                                                     u.builder.getInt64(ty_bytes.getFixedValue()),
-                                                     llvm::ConstantPointerNull::get(u.builder.getPtrTy()),
-                                                     llvm::ConstantExpr::getBitCast(fn_ctor, u.builder.getPtrTy()),
-                                                     llvm::ConstantExpr::getBitCast(fn_dtor, u.builder.getPtrTy()),
-                                                 }));
+  auto* fn_dtor = [&] -> llvm::Function* {
+    auto* dfn = u.getOrDeclareExternalFunc(names::Dtor(ts), u.rt.obj_dtor_fn_ty);
+    u.builder.SetInsertPoint(llvm::BasicBlock::Create(u.ctx, "", dfn));
+    //
+    auto* p_arg = dfn->arg_begin();
+    for (const auto& [idx, f] : m->fields | std::views::enumerate) {
+      if (u.IsTrivial(body[idx])) {
+        continue;
+      }
+      auto* fv = u.builder.CreateStructGEP(sty, p_arg, idx);
+
+      // TODO: below is copypaste from FunctionCodegen, should be unified + support for templates
+      const auto& fts = members[idx];
+      if (u.IsOpaque(fts)) {
+        u.builder.CreateCall(u.rt.type_del_f, {
+                                                  u.mod.getGlobalVariable(names::TInfo(fts)),
+                                                  u.builder.CreateLoad(u.builder.getPtrTy(), fv),
+                                              });
+      } else {
+        auto* fdtor_f = [&] -> llvm::Function* {
+          if (const auto* strb = u.GetStringTypeBindings(fts)) {
+            return strb->dtor_f;
+          }
+          return nullptr;
+        }();
+        if (fdtor_f) {
+          u.builder.CreateCall(fdtor_f, {fv});
+        }
+      }
+    }
+    //
+    u.builder.CreateRetVoid();
+    return dfn;
+  }();
+
+  std::vector<llvm::Constant*> member_descriptors;
+  member_descriptors.reserve(members.size());
+  for (const auto& [idx, f] : m->fields | std::views::enumerate) {
+    const auto& fts = members[idx];
+    CodegenStructGetter(u, sty, idx, ts, fts, u.sf.Text(*f->name));
+    CodegenStructMuttor(u, sty, idx, ts, fts, u.sf.Text(*f->name));
+
+    member_descriptors.emplace_back(
+        llvm::ConstantStruct::get(u.rt.smember_ty, {
+                                                       u.builder.CreateGlobalStringPtr(u.sf.Text(*f->name)),
+                                                       u.GetTypeInfo(fts),
+                                                       u.builder.getInt64(sty_layout->getElementOffset(idx)),
+                                                   }));
+  }
+  auto* member_descriptors_array =
+      llvm::ConstantArray::get(llvm::ArrayType::get(u.rt.smember_ty, member_descriptors.size()), member_descriptors);
+
+  u.getOrDeclareExternalConst(names::TInfo(ts), u.rt.typeinfo_ty)
+      ->setInitializer(llvm::ConstantStruct::get(
+          u.rt.typeinfo_ty,
+          {
+              u.builder.CreateGlobalStringPtr(ts->GetName()),               // name
+              u.builder.getInt8(std::to_underlying(RtTypeKind::kRecord)),   // kind
+              ts.is_template ? u.builder.getTrue() : u.builder.getFalse(),  // is_template
+              u.rt.GetSizeI(sty_sz.getFixedValue()),                        // size
+              new llvm::GlobalVariable(u.mod, member_descriptors_array->getType(), true,
+                                       llvm::GlobalValue::PrivateLinkage, member_descriptors_array,
+                                       std::format("{}_members", names::Type(ts))),  // *members
+              u.rt.GetSizeI(member_descriptors.size()),                              // members_count
+              llvm::ConstantExpr::getBitCast(fn_ctor, u.builder.getPtrTy()),         // ctor
+              llvm::ConstantExpr::getBitCast(fn_dtor, u.builder.getPtrTy()),         // dtor
+              llvm::ConstantPointerNull::get(u.builder.getPtrTy()),                  // copy
+              llvm::ConstantPointerNull::get(u.builder.getPtrTy()),                  // counterpart
+          }));
+}
+
+// TODO: THIS NEEDS CLEANUP BADLY
+void CodegenStruct(CodegenUnit& u, const core::semantic::Symbol* sym, const ast::nodes::StructTypeDecl* m) {
+  std::vector<TypeSymbol> members;
+  members.reserve(m->fields.size());
+  for (const auto& [idx, f] : m->fields | std::views::enumerate) {
+    // TODO: use checker::ResolveTypeSymbol, support for anonymous TypeSpec/ types
+    const auto* fsym = u.sf.module->scope->Resolve(u.sf.Text(f->type));
+    assert(fsym);
+    members.emplace_back(fsym, false);
+  }
+
+  TypeSymbol ts(sym, false);
+  CodegenStructType(u, ts, m, members);
+  //
+  ts.is_template = true;
+  std::ranges::for_each(members, [&](auto& mts) {
+    mts.is_template = true;
+  });
+  CodegenStructType(u, ts, m, members);
 }
 
 }  // namespace

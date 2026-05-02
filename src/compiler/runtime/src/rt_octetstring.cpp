@@ -26,14 +26,14 @@ const vrt_typeinfo_t octetstring_typeinfo{
 
     .members = nullptr,
 
-    .construct = rt::helpers::VoidErased<vrt_octetstring_ctor>,
-    .destruct = rt::helpers::VoidErased<vrt_octetstring_dtor>,
+    .construct = rt::helpers::VoidErased<octetstring_ctor>,
+    .destruct = rt::helpers::VoidErased<octetstring_dtor>,
 };
 
-void vrt_octetstring_ctor(vrt_octetstring_t* p) {
+void octetstring_ctor(vrt_octetstring_t* p) {
   rt::str::Construct(p);
 }
-void vrt_octetstring_dtor(vrt_octetstring_t* p) {
+void octetstring_dtor(vrt_octetstring_t* p) {
   rt::str::Destruct(p);
 }
 
@@ -198,8 +198,8 @@ void vrt_octetstring_xor4b(vrt_octetstring_t* dst, const vrt_octetstring_t* lhs,
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 extern "C" {
-void vrt_octetstring_template_ctor(vrt_octetstring_template_t*);
-void vrt_octetstring_template_dtor(vrt_octetstring_template_t*);
+void octetstring_template_ctor(vrt_octetstring_template_t*);
+void octetstring_template_dtor(vrt_octetstring_template_t*);
 }
 
 const vrt_typeinfo_t octetstring_template_typeinfo{
@@ -210,22 +210,22 @@ const vrt_typeinfo_t octetstring_template_typeinfo{
 
     .members = octetstring_typeinfo.members,
 
-    .construct = vanadium::rt::helpers::VoidErased<vrt_octetstring_template_ctor>,
-    .destruct = vanadium::rt::helpers::VoidErased<vrt_octetstring_template_dtor>,
+    .construct = vanadium::rt::helpers::VoidErased<octetstring_template_ctor>,
+    .destruct = vanadium::rt::helpers::VoidErased<octetstring_template_dtor>,
 
     .counterpart = &octetstring_typeinfo,
 };
 
-void vrt_octetstring_template_ctor(vrt_octetstring_template_t* p) {
+void octetstring_template_ctor(vrt_octetstring_template_t* p) {
   rt::tpl::Construct(p);
 }
-void vrt_octetstring_template_dtor(vrt_octetstring_template_t* p) {
+void octetstring_template_dtor(vrt_octetstring_template_t* p) {
   switch (p->tsel) {
     case vrt_template_sel_e::kSpecificValue:
-      vrt_octetstring_dtor(&p->val);
+      octetstring_dtor(&p->val);
       break;
     default:
-      rt::tpl::Destruct<vrt_octetstring_template_dtor>(p);
+      rt::tpl::Destruct<octetstring_template_dtor>(p);
       break;
   }
 }

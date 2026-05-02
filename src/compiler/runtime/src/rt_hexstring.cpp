@@ -56,14 +56,14 @@ const vrt_typeinfo_t hexstring_typeinfo{
 
     .members = nullptr,
 
-    .construct = rt::helpers::VoidErased<vrt_hexstring_ctor>,
-    .destruct = rt::helpers::VoidErased<vrt_hexstring_dtor>,
+    .construct = rt::helpers::VoidErased<hexstring_ctor>,
+    .destruct = rt::helpers::VoidErased<hexstring_dtor>,
 };
 
-void vrt_hexstring_ctor(vrt_hexstring_t* p) {
+void hexstring_ctor(vrt_hexstring_t* p) {
   rt::str::Construct(p);
 }
-void vrt_hexstring_dtor(vrt_hexstring_t* p) {
+void hexstring_dtor(vrt_hexstring_t* p) {
   rt::str::Destruct(p);
 }
 
@@ -298,8 +298,8 @@ void vrt_hexstring_xor4b(vrt_hexstring_t* dst, const vrt_hexstring_t* lhs, const
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 extern "C" {
-void vrt_hexstring_template_ctor(vrt_hexstring_template_t*);
-void vrt_hexstring_template_dtor(vrt_hexstring_template_t*);
+void hexstring_template_ctor(vrt_hexstring_template_t*);
+void hexstring_template_dtor(vrt_hexstring_template_t*);
 }
 
 const vrt_typeinfo_t hexstring_template_typeinfo{
@@ -310,22 +310,22 @@ const vrt_typeinfo_t hexstring_template_typeinfo{
 
     .members = hexstring_typeinfo.members,
 
-    .construct = vanadium::rt::helpers::VoidErased<vrt_hexstring_template_ctor>,
-    .destruct = vanadium::rt::helpers::VoidErased<vrt_hexstring_template_dtor>,
+    .construct = vanadium::rt::helpers::VoidErased<hexstring_template_ctor>,
+    .destruct = vanadium::rt::helpers::VoidErased<hexstring_template_dtor>,
 
     .counterpart = &hexstring_typeinfo,
 };
 
-void vrt_hexstring_template_ctor(vrt_hexstring_template_t* p) {
+void hexstring_template_ctor(vrt_hexstring_template_t* p) {
   rt::tpl::Construct(p);
 }
-void vrt_hexstring_template_dtor(vrt_hexstring_template_t* p) {
+void hexstring_template_dtor(vrt_hexstring_template_t* p) {
   switch (p->tsel) {
     case vrt_template_sel_e::kSpecificValue:
-      vrt_hexstring_dtor(&p->val);
+      hexstring_dtor(&p->val);
       break;
     default:
-      rt::tpl::Destruct<vrt_hexstring_template_dtor>(p);
+      rt::tpl::Destruct<hexstring_template_dtor>(p);
       break;
   }
 }

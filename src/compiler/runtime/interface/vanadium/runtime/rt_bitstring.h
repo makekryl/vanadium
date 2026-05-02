@@ -28,8 +28,8 @@ extern "C" {
 extern const vrt_typeinfo_t bitstring_typeinfo;
 extern const vrt_typeinfo_t bitstring_template_typeinfo;
 
-void vrt_bitstring_ctor(vrt_bitstring_t*);
-void vrt_bitstring_dtor(vrt_bitstring_t*);
+void bitstring_ctor(vrt_bitstring_t*);
+void bitstring_dtor(vrt_bitstring_t*);
 
 void copy_bitstring(vrt_bitstring_t* dst, const vrt_bitstring_t* src);
 

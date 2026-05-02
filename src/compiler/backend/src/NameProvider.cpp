@@ -29,6 +29,14 @@ std::string Func(const core::semantic::Symbol* sym) {
   return SymName(sym);
 }
 
+std::string Type(TypeSymbol ts) {
+  // TODO: reconsider
+  if (ts->Flags() & core::semantic::SymbolFlags::kBuiltin) {
+    return std::format("vrt_{}", SymName(ts));
+  }
+  return SymName(ts);
+}
+
 std::string Ctor(TypeSymbol ts) {
   return std::format("{}_ctor", SymName(ts));
 }
@@ -45,8 +53,12 @@ std::string TInfo(TypeSymbol ts) {
   return std::format("{}_typeinfo", SymName(ts));
 }
 
-std::string Getter(const core::semantic::Symbol* holder, std::string_view member) {
+std::string Getter(TypeSymbol holder, std::string_view member) {
   return std::format("{}_get_{}", SymName(holder), member);
+}
+
+std::string Muttor(TypeSymbol holder, std::string_view member) {
+  return std::format("{}_mut_{}", SymName(holder), member);
 }
 
 }  // namespace vanadium::compiler::names

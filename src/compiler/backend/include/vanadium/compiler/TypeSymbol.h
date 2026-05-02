@@ -29,6 +29,10 @@ struct TypeSymbol {
   [[nodiscard]] bool operator==(const core::semantic::Symbol* csym) const {
     return sym == csym;
   }
+
+  [[nodiscard]] TypeSymbol Derive(const core::semantic::Symbol* dsym) const {
+    return {dsym, is_template};
+  }
 };
 
 }  // namespace vanadium::compiler

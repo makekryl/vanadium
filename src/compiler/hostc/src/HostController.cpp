@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <print>
 #include <stdexcept>
 #include <utility>
@@ -16,17 +17,17 @@ int main(int argc, char* argv[]) {
 
   const auto& modules = hostc::GetModules();
   for (const auto& mod : modules) {
-    for (vrt_testcase_t** t = mod->testcases; *t; t++) {
-      std::println("Test case {} started.", (*t)->name);
+    for (const auto& tc : std::span{mod->testcases, mod->testcases_count}) {
+      std::println("Test case {} started.", tc.name);
       vrt_clearverdict();
       try {
-        (*t)->fn();
+        tc.fn();
       } catch (const std::runtime_error& err) {
         std::println(stderr, "KAPUT : {}", err.what());
         auto errverdict = vrt_integer_wrap(std::to_underlying(vrt_verdicttype::error));
         vrt_setverdict(&errverdict, nullptr);
       }
-      std::println("Test case {} finished. Verdict: {}", (*t)->name, magic_enum::enum_name(vrt_getverdict()));
+      std::println("Test case {} finished. Verdict: {}", tc.name, magic_enum::enum_name(vrt_getverdict()));
     }
   }
 

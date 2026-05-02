@@ -21,14 +21,14 @@ const vrt_typeinfo_t float_typeinfo{
 
     .members = nullptr,
 
-    .construct = vanadium::rt::helpers::VoidErased<vrt_float_ctor>,
-    .destruct = vanadium::rt::helpers::VoidErased<vrt_float_dtor>,
+    .construct = vanadium::rt::helpers::VoidErased<float_ctor>,
+    .destruct = vanadium::rt::helpers::VoidErased<float_dtor>,
 };
 
-void vrt_float_ctor(vrt_float_t* p) {
+void float_ctor(vrt_float_t* p) {
   p->is_bound = false;
 }
-void vrt_float_dtor(vrt_float_t* p) {}
+void float_dtor(vrt_float_t* p) {}
 
 #define DEFINE_BINARY_OP_TO_BOOL(name, op)              \
   bool vrt_float_##name(vrt_float_t a, vrt_float_t b) { \
@@ -71,8 +71,8 @@ vrt_float_t vrt_float_neg(vrt_float_t a) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 extern "C" {
-void vrt_float_template_ctor(vrt_float_template_t*);
-void vrt_float_template_dtor(vrt_float_template_t*);
+void float_template_ctor(vrt_float_template_t*);
+void float_template_dtor(vrt_float_template_t*);
 }
 
 const vrt_typeinfo_t float_template_typeinfo{
@@ -83,17 +83,17 @@ const vrt_typeinfo_t float_template_typeinfo{
 
     .members = float_typeinfo.members,
 
-    .construct = vanadium::rt::helpers::VoidErased<vrt_float_template_ctor>,
-    .destruct = vanadium::rt::helpers::VoidErased<vrt_float_template_dtor>,
+    .construct = vanadium::rt::helpers::VoidErased<float_template_ctor>,
+    .destruct = vanadium::rt::helpers::VoidErased<float_template_dtor>,
 
     .counterpart = &float_typeinfo,
 };
 
-void vrt_float_template_ctor(vrt_float_template_t* p) {
+void float_template_ctor(vrt_float_template_t* p) {
   rt::tpl::Construct(p);
 }
-void vrt_float_template_dtor(vrt_float_template_t* p) {
-  rt::tpl::Destruct<vrt_float_template_dtor>(p);
+void float_template_dtor(vrt_float_template_t* p) {
+  rt::tpl::Destruct<float_template_dtor>(p);
 }
 
 bool vrt_float_template_match(const vrt_float_t* v, const vrt_float_template_t* t) {

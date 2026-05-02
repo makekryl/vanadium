@@ -5,22 +5,18 @@
 // NOLINTBEGIN(readability-identifier-naming)
 
 enum class vrt_typekind_e : std::uint8_t {
-  kScalar,
   kInteger,
   kFloat,
   kBoolean,
 
-  kString,
   kCharstring,
   kOctetstring,
   kBitstring,
   kHexstring,
 
-  kStruct,
   kRecord,
   kSet,
 
-  kList,
   kRecordOf,
   kSetOf,
 
@@ -35,7 +31,8 @@ struct vrt_typeinfo_t {
   bool is_template{false};
   std::size_t size;
 
-  const vrt_struct_member_t** members;
+  const vrt_struct_member_t* members;
+  std::size_t members_count;
 
   void (*construct)(void*);
   void (*destruct)(void*);
@@ -54,7 +51,7 @@ struct vrt_val_t {
 struct vrt_struct_member_t {
   const char* name;
   const vrt_typeinfo_t* type;
-  // TODO: offset
+  std::size_t offset;
 };
 
 struct vrt_testcase_t {
@@ -65,7 +62,8 @@ struct vrt_testcase_t {
 
 struct vrt_module_t {
   const char* name;
-  vrt_testcase_t** testcases;
+  const vrt_testcase_t* testcases;
+  std::size_t testcases_count;
   bool has_control_block;
 };
 

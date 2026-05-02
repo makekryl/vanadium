@@ -98,6 +98,10 @@ struct CodegenUnit {
 
   //
 
+  bool IsTrivial(llvm::Type*) const;
+
+  //
+
   llvm::Value* WrapValue(llvm::Value*);    // primitive -> primitive wrapper (integer, float, bool)
   llvm::Value* UnwrapValue(llvm::Value*);  // primitive wrapper -> primitive
 
@@ -109,11 +113,13 @@ inline constexpr std::string_view kGenericArgAttr = "vrt-garg";
 
 namespace names {
 std::string Func(const core::semantic::Symbol*);
+std::string Type(TypeSymbol);
 std::string Ctor(TypeSymbol);
 std::string Dtor(TypeSymbol);
 std::string CopyCtor(TypeSymbol);
 std::string TInfo(TypeSymbol);
-std::string Getter(const core::semantic::Symbol* holder, std::string_view member);
+std::string Getter(TypeSymbol holder, std::string_view member);
+std::string Muttor(TypeSymbol holder, std::string_view member);
 }  // namespace names
 
 namespace values {}

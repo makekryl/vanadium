@@ -24,7 +24,7 @@ void vrt_unifree(void* p) {
 
 void* vrt_new(const vrt_typeinfo_t* td) {
   // TODO: write alignment to typeinfo, use it below
-  auto* p = vrt_alloc(td->size, 8);
+  auto* p = vrt_alloc(td->size, 4);
   td->construct(p);
   return p;
 }

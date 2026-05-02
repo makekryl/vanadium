@@ -18,7 +18,7 @@
 namespace vanadium::compiler {
 
 namespace {
-void ForEachTestcase(const core::SourceFile& sf, mp::Consumer<const ast::nodes::FuncDecl*> auto accept) {
+void ForEachTestcaseDecl(const core::SourceFile& sf, mp::Consumer<const ast::nodes::FuncDecl*> auto accept) {
   for (const auto* def : sf.ast.root->nodes[0]->As<ast::nodes::Module>()->defs) {
     if (def->def->nkind != ast::NodeKind::FuncDecl) {
       continue;
@@ -46,25 +46,18 @@ void GenerateModuleRegistrationCode(CodegenUnit& u) {
       u.builder.getInt1Ty(),  // bool has_control
   });
 
-  std::vector<llvm::Constant*> testcase_constants;
-
-  ForEachTestcase(u.sf, [&](const ast::nodes::FuncDecl* f) {
-    const auto* sym = core::checker::ResolveExprSymbol(&u.sf, u.sf.module->scope, &(*f->name)).sym;
-    testcase_constants.emplace_back(llvm::ConstantExpr::getBitCast(
-        new llvm::GlobalVariable(
-            u.mod, testcase_ty, true, llvm::GlobalValue::PrivateLinkage,
-            llvm::ConstantStruct::get(testcase_ty,
-                                      {
-                                          u.builder.CreateGlobalStringPtr(u.sf.Text(*f->name)),
-                                          llvm::ConstantExpr::getBitCast(u.GetFunction(sym), u.builder.getPtrTy()),
-                                          u.builder.getInt1(!f->params->list.empty()),
-                                      })),
-        u.builder.getPtrTy()));
+  std::vector<llvm::Constant*> testcase_descriptors;
+  ForEachTestcaseDecl(u.sf, [&](const ast::nodes::FuncDecl* f) {
+    const auto* sym = core::checker::ResolveDeclarationType(&u.sf, f).sym;
+    testcase_descriptors.emplace_back(llvm::ConstantStruct::get(
+        testcase_ty, {
+                         u.builder.CreateGlobalStringPtr(u.sf.Text(*f->name)),
+                         llvm::ConstantExpr::getBitCast(u.GetFunction(sym), u.builder.getPtrTy()),
+                         u.builder.getInt1(!f->params->list.empty()),
+                     }));
   });
-  testcase_constants.emplace_back(llvm::ConstantPointerNull::get(u.builder.getPtrTy()));
-
-  auto* testcase_array = llvm::ConstantArray::get(llvm::ArrayType::get(u.builder.getPtrTy(), testcase_constants.size()),
-                                                  testcase_constants);
+  auto* testcases_array =
+      llvm::ConstantArray::get(llvm::ArrayType::get(testcase_ty, testcase_descriptors.size()), testcase_descriptors);
 
   auto* g_module = new llvm::GlobalVariable(
       u.mod, module_ty, true, llvm::GlobalValue::InternalLinkage,
@@ -73,8 +66,8 @@ void GenerateModuleRegistrationCode(CodegenUnit& u) {
           {
               u.builder.CreateGlobalStringPtr(u.sf.module->name),
               llvm::ConstantExpr::getBitCast(
-                  new llvm::GlobalVariable(u.mod, testcase_array->getType(), true, llvm::GlobalValue::PrivateLinkage,
-                                           testcase_array, "__testcases"),
+                  new llvm::GlobalVariable(u.mod, testcases_array->getType(), true, llvm::GlobalValue::PrivateLinkage,
+                                           testcases_array, "__vrt_testcases"),
                   u.builder.getPtrTy()),
               llvm::ConstantInt::get(u.builder.getInt1Ty(), 1),
           }),

@@ -176,10 +176,21 @@ RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ct
   typeinfo_ty->setBody({
       builder.getPtrTy(),   // const char* name
       builder.getInt8Ty(),  // vrt_typekind_e
+      builder.getInt1Ty(),  // bool is_template
       sizet_ty,             // size_t size
-      builder.getPtrTy(),   // members**
+      builder.getPtrTy(),   // *members
+      sizet_ty,             // size_t members_count
       builder.getPtrTy(),   // construct(*)(void*)
-      builder.getPtrTy()    // destruct(*)(void*)
+      builder.getPtrTy(),   // destruct(*)(void*)
+      builder.getPtrTy(),   // copy(*)(void*, const void*)
+      builder.getPtrTy(),   // const vrt_typeinfo_t* counterpart
+  });
+  //
+  smember_ty = llvm::StructType::create(ctx_, "vrt_struct_member_t");
+  smember_ty->setBody({
+      builder.getPtrTy(),  // const char* name
+      builder.getPtrTy(),  // const vrt_typeinfo_t* type
+      sizet_ty,            // size_t offset
   });
   //
   obj_ctor_fn_ty = llvm::FunctionType::get(builder.getVoidTy(), {builder.getPtrTy()}, false);
@@ -225,7 +236,7 @@ RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ct
                                            builder.getPtrTy(),  // void*
                                        });
   optional_ispresent_f = declare_external_fn("vrt_optional_is_present", builder.getInt1Ty(), {builder.getPtrTy()});
-  optional_dtor_f = declare_external_fn("vrt_optional_dtor", builder.getVoidTy(), {builder.getPtrTy()});
+  optional_dtor_f = declare_external_fn("optional_dtor", builder.getVoidTy(), {builder.getPtrTy()});
 
   integer.ty = llvm::StructType::create(ctx, "vrt_integer_t");
   integer.ty->setBody({
@@ -371,7 +382,7 @@ RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ct
         builder.getInt1Ty(),   // bool is_ext
     });
     //
-    b.dtor_f = declare_external_fn(sty_name("vrt_{}_dtor"), builder.getVoidTy(), {builder.getPtrTy()});
+    b.dtor_f = declare_external_fn(sty_name("{}_dtor"), builder.getVoidTy(), {builder.getPtrTy()});
     b.init_f = declare_external_fn(sty_name("vrt_{}_init"), builder.getVoidTy(),
                                    {
                                        builder.getPtrTy(),    // StringType*

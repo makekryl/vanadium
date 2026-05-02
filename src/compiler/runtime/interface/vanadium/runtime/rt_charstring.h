@@ -28,8 +28,8 @@ extern "C" {
 extern const vrt_typeinfo_t charstring_typeinfo;
 extern const vrt_typeinfo_t charstring_template_typeinfo;
 
-void vrt_charstring_ctor(vrt_charstring_t*);
-void vrt_charstring_dtor(vrt_charstring_t*);
+void charstring_ctor(vrt_charstring_t*);
+void charstring_dtor(vrt_charstring_t*);
 
 void copy_charstring(vrt_charstring_t* dst, const vrt_charstring_t* src);
 

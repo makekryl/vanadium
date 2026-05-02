@@ -28,8 +28,8 @@ extern "C" {
 extern const vrt_typeinfo_t hexstring_typeinfo;
 extern const vrt_typeinfo_t hexstring_template_typeinfo;
 
-void vrt_hexstring_ctor(vrt_hexstring_t*);
-void vrt_hexstring_dtor(vrt_hexstring_t*);
+void hexstring_ctor(vrt_hexstring_t*);
+void hexstring_dtor(vrt_hexstring_t*);
 
 void copy_hexstring(vrt_hexstring_t* dst, const vrt_hexstring_t* src);
 

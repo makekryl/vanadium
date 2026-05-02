@@ -47,8 +47,8 @@ vrt_boolean_t vrt_boolean_not(vrt_boolean_t b) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 extern "C" {
-void vrt_boolean_template_ctor(vrt_boolean_template_t*);
-void vrt_boolean_template_dtor(vrt_boolean_template_t*);
+void boolean_template_ctor(vrt_boolean_template_t*);
+void boolean_template_dtor(vrt_boolean_template_t*);
 }
 
 const vrt_typeinfo_t boolean_template_typeinfo{
@@ -59,17 +59,17 @@ const vrt_typeinfo_t boolean_template_typeinfo{
 
     .members = boolean_typeinfo.members,
 
-    .construct = vanadium::rt::helpers::VoidErased<vrt_boolean_template_ctor>,
-    .destruct = vanadium::rt::helpers::VoidErased<vrt_boolean_template_dtor>,
+    .construct = vanadium::rt::helpers::VoidErased<boolean_template_ctor>,
+    .destruct = vanadium::rt::helpers::VoidErased<boolean_template_dtor>,
 
     .counterpart = &boolean_typeinfo,
 };
 
-void vrt_boolean_template_ctor(vrt_boolean_template_t* p) {
+void boolean_template_ctor(vrt_boolean_template_t* p) {
   rt::tpl::Construct(p);
 }
-void vrt_boolean_template_dtor(vrt_boolean_template_t* p) {
-  rt::tpl::Destruct<vrt_boolean_template_dtor>(p);
+void boolean_template_dtor(vrt_boolean_template_t* p) {
+  rt::tpl::Destruct<boolean_template_dtor>(p);
 }
 
 bool vrt_boolean_template_match(const vrt_boolean_t* v, const vrt_boolean_template_t* t) {

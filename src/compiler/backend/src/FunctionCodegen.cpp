@@ -357,11 +357,6 @@ class FunctionCodegen {
   void CodegenDecl(const ast::nodes::Decl*);
   llvm::Value* CodegenExpr(const ast::nodes::Expr*, DestSlot dest = {});
 
-  bool IsTrivial(llvm::Type* ty) const {
-    // int won't be trivial after bignum support
-    return ty == u_.rt.boolt.ty || ty == u_.rt.integer.ty || ty == u_.rt.floatt.ty;
-  }
-
   void EmitGenericVal(llvm::Value* slot, TypeSymbol ts, llvm::Value* v) {
     // p field
     auto* p_gep = u_.builder.CreateStructGEP(u_.rt.generic_val_ty, slot, 0, "gvt_p");
@@ -661,6 +656,7 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, DestSlot
 
       const auto& isym =
           core::checker::ResolveExprType(&u_.sf, core::semantic::utils::FindScope(u_.sf.module->scope, m), m);
+      assert(isym);
       if (isym->Flags() & core::semantic::SymbolFlags::kEnumMember) {
         // TODO(tc): calculate actual value taking explicitly set members into account
         // TODO: support EnumSpec, move in another function
@@ -703,16 +699,6 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, DestSlot
 
       VANADIUM_DEBUG_ERROR("Unhandled IndexExpr type");
       return nullptr;
-    }
-
-    case ast::NodeKind::SelectorExpr: {
-      const auto* m = expr->As<ast::nodes::SelectorExpr>();
-
-      auto* vx = CodegenExpr(m->x);
-      const auto* xsym =
-          core::checker::ResolveExprType(&u_.sf, core::semantic::utils::FindScope(u_.sf.module->scope, m), m->x).sym;
-      return u_.builder.CreateCall(
-          u_.getOrDeclareExternalFunc(names::Getter(xsym, Lit(m->sel)), u_.rt.generic_getter_fn_ty), {vx});
     }
 
     case ast::NodeKind::ValueLiteral: {
@@ -989,6 +975,20 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, DestSlot
       break;
     }
 
+    case ast::NodeKind::SelectorExpr: {
+      const auto* m = expr->As<ast::nodes::SelectorExpr>();
+
+      // TODO: optimize xsym chain resolution
+      auto* vx = CodegenExpr(m->x);
+      if (llvm::dyn_cast<llvm::AllocaInst>(vx)) {
+        vx = u_.builder.CreateLoad(u_.builder.getPtrTy(), vx);
+      }
+      const auto& xsym =
+          core::checker::ResolveExprType(&u_.sf, core::semantic::utils::FindScope(u_.sf.module->scope, m), m->x);
+      return u_.builder.CreateCall(
+          u_.getOrDeclareExternalFunc(names::Getter(xsym, Lit(m->sel)), u_.rt.generic_getter_fn_ty), {vx});
+    }
+
     case ast::NodeKind::AssignmentExpr: {
       const auto* m = expr->As<ast::nodes::AssignmentExpr>();
 
@@ -999,7 +999,7 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, DestSlot
             auto* owned_var_copy = scope_->Alloc(var->value->getName(), var->ts);
             CodegenExpr(m->value, asDest(owned_var_copy));
           } else {
-            if (IsTrivial(var->ty)) {
+            if (u_.IsTrivial(var->ty)) {
               // no dtor call needed
               CodegenExpr(m->value, asDest(var->value));
             } else {
@@ -1023,23 +1023,54 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, DestSlot
             }
           }
 
-          break;
+          return nullptr;
         }
         case ast::NodeKind::SelectorExpr: {
-          auto* vv = CodegenExpr(m->value);
-          const auto* propsym = core::checker::ResolveExprType(
-                                    &u_.sf, core::semantic::utils::FindScope(u_.sf.module->scope, m), m->property)
-                                    .sym;
-          auto* vtgt = CodegenExpr(m->property);
-          u_.builder.CreateCall(
-              u_.getOrDeclareExternalFunc(
-                  names::CopyCtor(propsym),
-                  llvm::FunctionType::get(u_.builder.getVoidTy(), {u_.builder.getPtrTy(), vv->getType()}, false)),
-              {vtgt, vv});
-          break;
+          // TODO: this should be rewriten during implementing of OOP support
+          // a.b().c().d := ...;
+          const auto cgen_mutable_val = [&](this auto&& self, const ast::nodes::Expr* xse) -> llvm::Value* {
+            switch (xse->nkind) {
+              case ast::NodeKind::SelectorExpr: {
+                const auto* se = xse->As<ast::nodes::SelectorExpr>();
+                auto* xval = self(se->x);
+                // TODO: optimize xsym chain resolution
+                const auto& xsym = core::checker::ResolveExprType(
+                    &u_.sf, core::semantic::utils::FindScope(u_.sf.module->scope, m), se->x);
+                return u_.builder.CreateCall(
+                    u_.getOrDeclareExternalFunc(names::Getter(xsym, Lit(se->sel)), u_.rt.generic_getter_fn_ty), {xval});
+              }
+              case ast::NodeKind::Ident: {
+                const auto* root_var = scope_->Lookup(Lit(xse));
+                assert(u_.IsOpaque(root_var->ts));
+                auto* root_val = root_var->value;
+                if (root_var->immutable) {
+                  root_val = scope_->Alloc(root_var->value->getName(), root_var->ts);
+                  // TODO: deep copy
+                }
+                if (llvm::dyn_cast<llvm::AllocaInst>(root_val)) {
+                  root_val = u_.builder.CreateLoad(u_.builder.getPtrTy(), root_val);
+                }
+                return root_val;
+              }
+              default:
+                // CallExpr?
+                return CodegenExpr(xse);
+            }
+          };
+
+          const auto* pse = m->property->As<ast::nodes::SelectorExpr>();
+          auto* pxval = cgen_mutable_val(pse->x);
+          // TODO: optimize xsym chain resolution
+          const auto& pxsym =
+              core::checker::ResolveExprType(&u_.sf, core::semantic::utils::FindScope(u_.sf.module->scope, m), pse->x);
+          auto* pxval_ptr = u_.builder.CreateCall(
+              u_.getOrDeclareExternalFunc(names::Muttor(pxsym, Lit(pse->sel)), u_.rt.generic_getter_fn_ty), {pxval});
+          CodegenExpr(m->value, asDest(pxval_ptr, pxsym));
+
+          return nullptr;
         }
         default: {
-          std::unreachable();
+          assert(false);
           break;
         }
       }
@@ -1048,10 +1079,35 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, DestSlot
     }
 
     case ast::NodeKind::CompositeLiteral: {
+      assert(dest);
+      assert(dest.ts);
+      // TODO: list support
+
       const auto* m = expr->As<ast::nodes::CompositeLiteral>();
-      const auto& itype = core::checker::ext::DeduceCompositeLiteralType(&u_.sf, u_.sf.module->scope, m);
-      return u_.builder.CreateCall(u_.rt.type_new_f,
-                                   {u_.mod.getOrInsertGlobal(names::TInfo(itype.sym), u_.rt.typeinfo_ty)});
+      for (const auto& attr : m->list) {
+        // todo: positionals
+        assert(attr->nkind == ast::NodeKind::AssignmentExpr);
+        const auto* ae = attr->As<ast::nodes::AssignmentExpr>();
+        const auto& get_accessor =
+            (ae->value->nkind == ast::NodeKind::CompositeLiteral) ? names::Getter : names::Muttor;
+
+        const auto& attr_sym = dest.ts.Derive([&] {
+          const auto& property_name = Lit(ae->property);
+          const auto* property_sym = dest.ts->Members()->Lookup(property_name);
+          const auto* fnode = property_sym->Declaration()->As<ast::nodes::Field>();
+          if (fnode->type->nkind == ast::NodeKind::RefSpec) {
+            const auto* fnode_file = ast::utils::SourceFileOf(fnode);
+            return core::checker::ResolveTypeSpecSymbol(fnode_file, fnode->type);
+          }
+          return dest.ts->Members()->LookupShadow(property_name);
+        }());
+
+        auto* pxval_ptr = u_.builder.CreateCall(
+            u_.getOrDeclareExternalFunc(get_accessor(dest.ts, Lit(ae->property)), u_.rt.generic_getter_fn_ty), {dest});
+        CodegenExpr(ae->value, asDest(pxval_ptr, attr_sym));
+      }
+
+      return dest.Unwrap();
     }
 
     case ast::NodeKind::CallExpr: {
@@ -1075,7 +1131,7 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, DestSlot
           u_.builder.CreateStore(av, val_slot);
           return val_slot;
         }
-        if (auto* alloca = llvm::dyn_cast<llvm::AllocaInst>(av); alloca->getAllocatedType()->isPointerTy()) {
+        if (auto* alloca = llvm::dyn_cast<llvm::AllocaInst>(av); alloca && alloca->getAllocatedType()->isPointerTy()) {
           return u_.builder.CreateLoad(alloca->getAllocatedType(), alloca);
         }
         return av;
@@ -1136,11 +1192,13 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, DestSlot
       auto tmp_frame{EnterStackFrame(ScopeManager::Frame::Kind::kTemporaries)};
       auto* esz_slot = scope_->AllocTrivialTemp(u_.rt.sizet_ty, "esz_slot");
       llvm::Value* vlist_ptr = u_.builder.CreateCall(
-          u_.rt.tpl.list,
-          {
-              u_.GetTypeInfo(dest.ts), dest.Unwrap(), llvm::ConstantInt::get(u_.rt.tpl.listsize_ty, m->list.size()),
-              esz_slot, llvm::ConstantInt::get(u_.rt.tpl.tsel_ty, 5),  // TODO: UNHARDCODE THIS CONSTANT
-          });
+          u_.rt.tpl.list, {
+                              u_.GetTypeInfo(dest.ts),
+                              dest.Unwrap(),
+                              llvm::ConstantInt::get(u_.rt.tpl.listsize_ty, m->list.size()),
+                              esz_slot,
+                              llvm::ConstantInt::get(u_.rt.tpl.tsel_ty, 5),  // TODO: UNHARDCODE THIS CONSTANT
+                          });
       auto* esz = u_.builder.CreateLoad(esz_slot->getAllocatedType(), esz_slot, "esz");
       for (const auto& el : m->list) {
         CodegenExpr(el, asDest(vlist_ptr, dest.ts));

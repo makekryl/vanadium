@@ -20,8 +20,8 @@ extern "C" {
 
 extern const vrt_typeinfo_t list_typeinfo;
 
-void vrt_list_ctor(vrt_list_t*);
-void vrt_list_dtor(vrt_list_t*);
+void list_ctor(vrt_list_t*);
+void list_dtor(vrt_list_t*);
 
 bool vrt_list_isbound(const vrt_list_t*);
 

@@ -60,7 +60,7 @@ class ValueWrapper {
 class Charstring : public ValueWrapper<vrt_charstring_t> {
  public:
   Charstring() {
-    vrt_charstring_ctor(&value_);
+    charstring_ctor(&value_);
   }
   Charstring(vrt_charstring_t&& instance) : ValueWrapper(std::move(instance)) {}
 
@@ -74,7 +74,7 @@ class Charstring : public ValueWrapper<vrt_charstring_t> {
   }
 
   ~Charstring() {
-    vrt_charstring_dtor(&value_);
+    charstring_dtor(&value_);
   }
 
   [[nodiscard]] operator std::string_view() const {
@@ -172,7 +172,7 @@ class Charstring : public ValueWrapper<vrt_charstring_t> {
 class Octetstring : public ValueWrapper<vrt_octetstring_t> {
  public:
   Octetstring() {
-    vrt_octetstring_ctor(&value_);
+    octetstring_ctor(&value_);
   }
   Octetstring(vrt_octetstring_t&& instance) : ValueWrapper(std::move(instance)) {}
 
@@ -186,7 +186,7 @@ class Octetstring : public ValueWrapper<vrt_octetstring_t> {
   }
 
   ~Octetstring() {
-    vrt_octetstring_dtor(&value_);
+    octetstring_dtor(&value_);
   }
 
   [[nodiscard]] operator std::span<const octet_t>() const {
