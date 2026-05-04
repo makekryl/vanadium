@@ -13,23 +13,48 @@
 using namespace vanadium;
 
 namespace {
+rt::tpl::GenericTemplateType* AsGenericTemplateType(void* p) {
+  return static_cast<rt::tpl::GenericTemplateType*>(p);
+}
+
 void* ResetTemplate(const vrt_typeinfo_t* td, void* p, vrt_template_sel_e new_tsel) {
-  printf("ResetTemplate(td->name=%s)\n", td->name);
-  assert(td->is_template);
+  // printf("ResetTemplate(td->name=%s)\n", td->name);
+  assert(rt::tpl::IsTemplateType(td));
 
   td->destruct(p);
-  // assuming ctor is trivial (sets tsel to kSpecificValue), we won't call it
+  // assuming ctor is trivial (sets tsel to kSpecificValue, vrt_tpl_generic_ctor), we won't call it
 
-  auto* t = static_cast<rt::tpl::GenericTemplateTypeLayout*>(p);
-  t->tsel = new_tsel;
-
-  return t->GetPayload();
+  AsGenericTemplateType(p)->tsel = new_tsel;
+  return AsGenericTemplateType(p)->GetPayload();
 }
 }  // namespace
 
+void vrt_tpl_generic_ctor(void* p) {
+  static_cast<rt::tpl::GenericTemplateType*>(p)->tsel = vrt_template_sel_e::kUninitialized;
+}
+void vrt_tpl_generic_dtor(void (*destruct_tpl)(void*), void* p) {
+  auto* t = static_cast<rt::tpl::GenericTemplateType*>(p);
+  switch (t->tsel) {
+    case vrt_template_sel_e::kSpecificValue:
+      assert(false);
+      break;
+    default:
+      rt::tpl::Destruct(destruct_tpl, t);
+      break;
+  }
+}
+
+void* vrt_tpl_get_value(void* p) {
+  if (AsGenericTemplateType(p)->tsel != vrt_template_sel_e::kSpecificValue) {
+    vrt_panic("Accessing field a of a non-specific template");
+  }
+  return AsGenericTemplateType(p)->GetPayload();
+}
+
 void* vrt_tpl_value(const vrt_typeinfo_t* td, void* p) {
+  // printf("vrt_tpl_val(td.name=%s, p=%p)\n", td->name, p);
   auto* val = ResetTemplate(td, p, vrt_template_sel_e::kSpecificValue);
-  td->counterpart->construct(val);
+  td->tpl_construct_value(val);
   return val;
 }
 
@@ -50,7 +75,9 @@ void* vrt_tpl_list(const vrt_typeinfo_t* td, void* p, vrt_valuelist_size_t n, st
   auto* vlist = static_cast<rt::tpl::ValueList<void>*>(ResetTemplate(td, p, lkind));
   vlist->data = vrt_alloc(n * esize, 8);  // TODO: take alignment from typeinfo
   vlist->length = n;
+  vlist->esize = esize;
   for (vrt_valuelist_size_t i = 0; i < n; ++i) {
+    // printf("vrt_tpl_list->ctor(%p)\n", static_cast<std::byte*>(vlist->data) + (i * esize));
     td->construct(static_cast<std::byte*>(vlist->data) + (i * esize));
   }
 

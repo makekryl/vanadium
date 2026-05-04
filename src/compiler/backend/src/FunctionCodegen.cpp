@@ -1,4 +1,5 @@
 #include <cassert>
+#include <cstddef>
 #include <forward_list>
 #include <limits>
 #include <optional>
@@ -55,25 +56,7 @@ struct AllocatedVar {
 
 void EmitDestructorCall(CodegenUnit& u, TypeSymbol ts, llvm::Value* val) {
   if (ts) {
-    if (!u.IsOpaque(ts)) {
-      auto* dtor_f = [&] -> llvm::Function* {
-        if (const auto* strb = u.GetStringTypeBindings(ts)) {
-          return strb->dtor_f;
-        }
-        return nullptr;
-      }();
-      if (dtor_f) {
-        // TODO: partial inline (is_bound && is_ext) in RuntimeBindings
-        u.builder.CreateCall(dtor_f, {val});
-      }
-    } else {
-      auto* alloca = llvm::dyn_cast<llvm::AllocaInst>(val);
-      assert(alloca);
-      u.builder.CreateCall(u.rt.type_del_f, {
-                                                u.mod.getGlobalVariable(names::TInfo(ts)),
-                                                u.builder.CreateLoad(alloca->getAllocatedType(), alloca),
-                                            });
-    }
+    u.EmitDestructorInvocation(ts, val);
   }
   u.builder.CreateLifetimeEnd(val);
 }
@@ -245,27 +228,50 @@ class ScopeGuard {
   ScopeManager& m_;
 };
 
-struct DestSlot {
+struct RtSlot {
   CodegenUnit* u{nullptr};
   llvm::Value* val{nullptr};
   TypeSymbol ts{nullptr};
+  //
+  bool needs_promotion{false};
 
-  operator bool() const {
-    return val != nullptr;
-  }
+  RtSlot(llvm::Value* v = nullptr) : val(v) {}
+  RtSlot(CodegenUnit* u, llvm::Value* val, TypeSymbol ts) : u(u), val(val), ts(ts) {}
 
-  operator llvm::Value*() const {
+  [[nodiscard]] llvm::Value* Promote() const {
     if (!ts.is_template) {
       return val;
     }
     return u->builder.CreateCall(u->rt.tpl.value, {u->GetTypeInfo(ts), val});
   }
 
+  [[nodiscard]] llvm::Value* ReadSpecific() const {
+    if (!ts.is_template) {
+      return val;
+    }
+    return u->builder.CreateCall(u->rt.tpl.get_value, {val});
+  }
+
+  bool operator!=(std::nullptr_t) const {
+    return val != nullptr;
+  }
+
+  // todo: this conversion operator has precedence over operator bool() for some reason (i removed it for now though),
+  //       rendering constructs like if(dest) harmful as they invoke Promote() or ReadSpecific() as side-effect
+  //       this should be fixed
+  operator llvm::Value*() {
+    if (needs_promotion) {
+      needs_promotion = false;
+      return Promote();
+    }
+    return ReadSpecific();
+  }
+
   [[nodiscard]] bool IsTemplate() const {
     return val != nullptr && ts != nullptr;
   }
 
-  // Even if DestSlot holds a template, returns direct reference
+  // Even if RtSlot holds a template, returns direct reference
   // (i.e. it's a fancy way to access .val)
   [[nodiscard]] llvm::Value* Unwrap() const {
     return val;
@@ -346,16 +352,18 @@ class FunctionCodegen {
     return *scope_;
   }
 
-  DestSlot asDest(llvm::Value* val) {
-    return {.val = val};
+  RtSlot TypedSlot(llvm::Value* val, TypeSymbol ts) {
+    return {&u_, val, ts};
   }
-  DestSlot asDest(llvm::Value* val, TypeSymbol ts) {
-    return {.u = &u_, .val = val, .ts = ts};
+  RtSlot PromotedTypedSlot(llvm::Value* val, TypeSymbol ts) {
+    RtSlot slot{&u_, val, ts};
+    slot.needs_promotion = true;
+    return slot;
   }
 
   void CodegenStmt(const ast::nodes::Stmt*);
   void CodegenDecl(const ast::nodes::Decl*);
-  llvm::Value* CodegenExpr(const ast::nodes::Expr*, DestSlot dest = {});
+  RtSlot CodegenExpr(const ast::nodes::Expr*, RtSlot dest = {});
 
   void EmitGenericVal(llvm::Value* slot, TypeSymbol ts, llvm::Value* v) {
     // p field
@@ -366,7 +374,7 @@ class FunctionCodegen {
     auto* ty_gep = u_.builder.CreateStructGEP(u_.rt.generic_val_ty, slot, 1, "gvt_ty");
     u_.builder.CreateStore(u_.getOrDeclareExternalConst(names::TInfo(ts), u_.rt.typeinfo_ty), ty_gep);
 
-    std::println("EmitGenericVal name={}, tpl={}", ts->GetName(), ts.is_template);
+    // std::println("EmitGenericVal name={}, tpl={}", ts->GetName(), ts.is_template);
   }
 
   llvm::Value* retval_;
@@ -544,7 +552,7 @@ void FunctionCodegen::CodegenStmt(const ast::nodes::Stmt* n) {
     case ast::NodeKind::ReturnStmt: {
       const auto* m = n->As<ast::nodes::ReturnStmt>();
       if (m->result) {
-        CodegenExpr(m->result, asDest(retval_));
+        CodegenExpr(m->result, retval_);
       }
       scope_->EmitDestructorCalls();
       u_.builder.CreateBr(retbb_);
@@ -609,7 +617,7 @@ void FunctionCodegen::CodegenDecl(const ast::nodes::Decl* n) {
         }
         if (decl->value) {
           auto tmp_frame{EnterStackFrame(ScopeManager::Frame::Kind::kTemporaries)};
-          CodegenExpr(decl->value, asDest(dest, ts));
+          CodegenExpr(decl->value, TypedSlot(dest, ts));
         } else if (!is_opaque) {
           u_.builder.CreateStore(u_.GetUndef(ts), alloca);
         }
@@ -625,15 +633,15 @@ void FunctionCodegen::CodegenDecl(const ast::nodes::Decl* n) {
   }
 }
 
-llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, DestSlot dest) {
+RtSlot FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, RtSlot dest) {
   const auto promote_trivial = [this](llvm::Type* ty, llvm::Value* v) -> llvm::Value* {
     if (v->getType()->isPointerTy()) {
       return u_.builder.CreateLoad(ty, v);
     }
     return u_.WrapValue(v);
   };
-  const auto ret_trivial = [&](llvm::Value* rv) -> llvm::Value* {
-    if (dest) {
+  const auto ret_trivial = [&](llvm::Value* rv) -> RtSlot {
+    if (dest != nullptr) {
       u_.builder.CreateStore(u_.WrapValue(rv), dest);
       return dest;
     }
@@ -646,12 +654,14 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, DestSlot
 
       if (const auto* var = scope_->Lookup(Lit(m))) {
         // todo: deep copy
-        if (dest) {
+        if (dest != nullptr) {
           u_.builder.CreateStore(u_.builder.CreateLoad(var->ty, var->value), dest);
           return dest;
         }
-
-        return var->value;
+        if (u_.IsOpaque(var->ts)) {
+          return TypedSlot(u_.builder.CreateLoad(var->ty, var->value), var->ts);
+        }
+        return TypedSlot(var->value, var->ts);
       }
 
       const auto& isym =
@@ -677,8 +687,8 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, DestSlot
     case ast::NodeKind::IndexExpr: {
       const auto* m = expr->As<ast::nodes::IndexExpr>();
 
-      auto* vx = CodegenExpr(m->x);
-      auto* vidx = CodegenExpr(m->index);
+      auto vx = CodegenExpr(m->x);
+      auto vidx = CodegenExpr(m->index);
 
       // TODO: remove all FindScope in FunctionCodegen
       const auto* xsym =
@@ -688,7 +698,7 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, DestSlot
         const StringTypeBindings* strb = u_.GetStringTypeBindings(xsym);
         VANADIUM_DEBUG_ASSERT(strb, "Unhandled string type");
 
-        auto* out = dest ? dest : scope_->AllocTemp(xsym);
+        auto out = dest ? dest : scope_->AllocTemp(xsym);
         u_.builder.CreateCall(strb->singular_f, {
                                                     out,
                                                     vx,
@@ -720,7 +730,7 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, DestSlot
         }
 
         case ast::TokenKind::STRING: {
-          auto* out = dest ? dest : scope_->AllocTemp(&core::builtins::kCharstring);
+          auto out = dest ? dest : scope_->AllocTemp(&core::builtins::kCharstring);
           const auto& sv = literals::ParseCharstring(u_.sf.Text(m->tok));
           assert(sv.length() <= std::numeric_limits<std::uint32_t>::max());
           u_.builder.CreateCall(u_.rt.charstring.init_f,
@@ -733,7 +743,7 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, DestSlot
         }
 
         case ast::TokenKind::OCTETSTRING: {
-          auto* out = dest ? dest : scope_->AllocTemp(&core::builtins::kOctetstring);
+          auto out = dest ? dest : scope_->AllocTemp(&core::builtins::kOctetstring);
           const auto& sv = literals::ParseOctetstring(u_.sf.Text(m->tok));
           assert(sv.size() <= std::numeric_limits<std::uint32_t>::max());
           u_.builder.CreateCall(u_.rt.octetstring.init_f,
@@ -746,7 +756,7 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, DestSlot
         }
 
         case ast::TokenKind::BITSTRING: {
-          auto* out = dest ? dest : scope_->AllocTemp(&core::builtins::kBitstring);
+          auto out = dest ? dest : scope_->AllocTemp(&core::builtins::kBitstring);
           const auto& [sv, bits] = literals::ParseBitstring(u_.sf.Text(m->tok));
           u_.builder.CreateCall(u_.rt.bitstring.init_f, {
                                                             out,
@@ -757,7 +767,7 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, DestSlot
         }
 
         case ast::TokenKind::HEXSTRING: {
-          auto* out = dest ? dest : scope_->AllocTemp(&core::builtins::kHexstring);
+          auto out = dest ? dest : scope_->AllocTemp(&core::builtins::kHexstring);
           const auto& [sv, nibbles] = literals::ParseHexstring(u_.sf.Text(m->tok));
           u_.builder.CreateCall(u_.rt.hexstring.init_f, {
                                                             out,
@@ -777,8 +787,8 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, DestSlot
     case ast::NodeKind::BinaryExpr: {
       const auto* m = expr->As<ast::nodes::BinaryExpr>();
 
-      auto* vx = CodegenExpr(m->x);
-      auto* vy = CodegenExpr(m->y);
+      auto vx = CodegenExpr(m->x);
+      auto vy = CodegenExpr(m->y);
 
       const auto* sym =
           core::checker::ResolveExprType(&u_.sf, core::semantic::utils::FindScope(u_.sf.module->scope, m->x), m->x).sym;
@@ -881,7 +891,7 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, DestSlot
             break;
         }
 
-        auto* out = dest ? dest : scope_->AllocTemp(sym);
+        auto out = dest ? dest : scope_->AllocTemp(sym);
         switch (m->op.kind) {
           case ast::TokenKind::CONCAT: {
             u_.builder.CreateCall(strb->concat_f, {out, vx, vy});
@@ -929,7 +939,7 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, DestSlot
     case ast::NodeKind::UnaryExpr: {
       const auto* m = expr->As<ast::nodes::UnaryExpr>();
 
-      auto* vx = CodegenExpr(m->x);
+      auto vx = CodegenExpr(m->x);
 
       const auto* sym =
           core::checker::ResolveExprType(&u_.sf, core::semantic::utils::FindScope(u_.sf.module->scope, m->x), m->x).sym;
@@ -958,7 +968,7 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, DestSlot
         const StringTypeBindings* strb = u_.GetStringTypeBindings(sym);
         VANADIUM_DEBUG_ASSERT(strb, "Unhandled BinaryExpr xsym = {}", sym->GetName());
 
-        auto* out = dest ? dest : scope_->AllocTemp(sym);
+        auto out = dest ? dest : scope_->AllocTemp(sym);
         switch (m->op.kind) {
           case ast::TokenKind::NOT4B: {
             u_.builder.CreateCall(strb->not4b_f, {out, vx});
@@ -979,10 +989,7 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, DestSlot
       const auto* m = expr->As<ast::nodes::SelectorExpr>();
 
       // TODO: optimize xsym chain resolution
-      auto* vx = CodegenExpr(m->x);
-      if (llvm::dyn_cast<llvm::AllocaInst>(vx)) {
-        vx = u_.builder.CreateLoad(u_.builder.getPtrTy(), vx);
-      }
+      auto vx = CodegenExpr(m->x);
       const auto& xsym =
           core::checker::ResolveExprType(&u_.sf, core::semantic::utils::FindScope(u_.sf.module->scope, m), m->x);
       return u_.builder.CreateCall(
@@ -997,15 +1004,15 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, DestSlot
           const auto* var = scope_->Lookup(Lit(m->property));
           if (var->immutable) {
             auto* owned_var_copy = scope_->Alloc(var->value->getName(), var->ts);
-            CodegenExpr(m->value, asDest(owned_var_copy));
+            CodegenExpr(m->value, owned_var_copy);
           } else {
             if (u_.IsTrivial(var->ty)) {
               // no dtor call needed
-              CodegenExpr(m->value, asDest(var->value));
+              CodegenExpr(m->value, var->value);
             } else {
               if (var->ty->isPointerTy()) {
                 auto* old_val = u_.builder.CreateLoad(var->ty, var->value);
-                CodegenExpr(m->value, asDest(var->value));
+                CodegenExpr(m->value, var->value);
                 EmitDestructorCall(u_, var->ts, old_val);
               } else {
                 // charstring, ...
@@ -1015,7 +1022,7 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, DestSlot
                 u_.builder.CreateMemCpy(tmp_alloca, align, var->value, align,
                                         u_.mod.getDataLayout().getTypeAllocSize(var->ty));
                 //
-                CodegenExpr(m->value, asDest(var->value));
+                CodegenExpr(m->value, var->value);
                 EmitDestructorCall(u_, var->ts, tmp_alloca);
                 //
                 u_.builder.CreateLifetimeEnd(tmp_alloca);
@@ -1050,9 +1057,6 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, DestSlot
                   root_val = pthis->scope_->Alloc(root_var->value->getName(), root_var->ts);
                   // TODO: deep copy
                 }
-                if (llvm::dyn_cast<llvm::AllocaInst>(root_val)) {
-                  root_val = pthis->u_.builder.CreateLoad(pthis->u_.builder.getPtrTy(), root_val);
-                }
                 return root_val;
               }
               default:
@@ -1068,7 +1072,7 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, DestSlot
               core::checker::ResolveExprType(&u_.sf, core::semantic::utils::FindScope(u_.sf.module->scope, m), pse->x);
           auto* pxval_ptr = u_.builder.CreateCall(
               u_.getOrDeclareExternalFunc(names::Muttor(pxsym, Lit(pse->sel)), u_.rt.generic_getter_fn_ty), {pxval});
-          CodegenExpr(m->value, asDest(pxval_ptr, pxsym));
+          CodegenExpr(m->value, TypedSlot(pxval_ptr, pxsym));
 
           return nullptr;
         }
@@ -1082,8 +1086,9 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, DestSlot
     }
 
     case ast::NodeKind::CompositeLiteral: {
-      assert(dest);
+      assert(dest != nullptr);
       assert(dest.ts);
+      auto* dest_val = dest.Promote();
       // TODO: list support
 
       const auto* m = expr->As<ast::nodes::CompositeLiteral>();
@@ -1106,8 +1111,9 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, DestSlot
         }());
 
         auto* pxval_ptr = u_.builder.CreateCall(
-            u_.getOrDeclareExternalFunc(get_accessor(dest.ts, Lit(ae->property)), u_.rt.generic_getter_fn_ty), {dest});
-        CodegenExpr(ae->value, asDest(pxval_ptr, attr_sym));
+            u_.getOrDeclareExternalFunc(get_accessor(dest.ts, Lit(ae->property)), u_.rt.generic_getter_fn_ty),
+            {dest_val});
+        CodegenExpr(ae->value, PromotedTypedSlot(pxval_ptr, attr_sym));
       }
 
       return dest.Unwrap();
@@ -1124,7 +1130,7 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, DestSlot
         const auto ret_isym = core::checker::ResolveCallableReturnType(
             ast::utils::SourceFileOf(func_sym->Declaration()), func_sym->Declaration()->As<ast::nodes::Decl>());
         assert(ret_isym);
-        dest = asDest(scope_->AllocTemp(ret_isym), ret_isym);
+        dest = TypedSlot(scope_->AllocTemp(ret_isym), ret_isym);
       }
 
       auto tmp_frame{EnterStackFrame(ScopeManager::Frame::Kind::kTemporaries)};
@@ -1133,9 +1139,6 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, DestSlot
           auto* val_slot = scope_->AllocTrivialTemp(av->getType());
           u_.builder.CreateStore(av, val_slot);
           return val_slot;
-        }
-        if (auto* alloca = llvm::dyn_cast<llvm::AllocaInst>(av); alloca && alloca->getAllocatedType()->isPointerTy()) {
-          return u_.builder.CreateLoad(alloca->getAllocatedType(), alloca);
         }
         return av;
       };
@@ -1151,7 +1154,7 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, DestSlot
           auto* slot =
               u_.builder.CreateGEP(array_ty, arr, {u_.builder.getInt32(0), u_.builder.getInt32(idx)}, "generic_arg");
 
-          auto* av = prepare_argument(u_.WrapValue(CodegenExpr(argnode)));
+          auto* av = prepare_argument(u_.WrapValue(CodegenExpr(argnode).Unwrap()));
           const auto& isym = core::checker::ResolveExprType(
               &u_.sf, core::semantic::utils::FindScope(u_.sf.module->scope, argnode), argnode);
           EmitGenericVal(slot, isym, av);
@@ -1163,7 +1166,7 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, DestSlot
       std::vector<llvm::Value*> args;
       args.reserve(m->args->list.size() + (does_return ? 1 : 0));
       if (does_return) {
-        assert(dest);
+        assert(dest != nullptr);
         args.push_back(dest);
       }
       for (const auto& [idx, argnode] : m->args->list | std::views::enumerate) {
@@ -1204,7 +1207,7 @@ llvm::Value* FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, DestSlot
                           });
       auto* esz = u_.builder.CreateLoad(esz_slot->getAllocatedType(), esz_slot, "esz");
       for (const auto& el : m->list) {
-        CodegenExpr(el, asDest(vlist_ptr, dest.ts));
+        CodegenExpr(el, PromotedTypedSlot(vlist_ptr, dest.ts));
         vlist_ptr = u_.builder.CreateGEP(u_.builder.getInt8Ty(), vlist_ptr, esz);
       }
 

@@ -1,6 +1,7 @@
 #include "vanadium/runtime/rt_float.h"
 
 #include <cassert>
+#include <cstddef>
 
 #include "vanadium/runtime/BuiltinsTemplates.h"
 #include "vanadium/runtime/RuntimeHelpers.h"
@@ -23,6 +24,9 @@ const vrt_typeinfo_t float_typeinfo{
 
     .construct = vanadium::rt::helpers::VoidErased<float_ctor>,
     .destruct = vanadium::rt::helpers::VoidErased<float_dtor>,
+
+    .counterpart = &float_template_typeinfo,
+    .tpl_construct_value = nullptr,
 };
 
 void float_ctor(vrt_float_t* p) {
@@ -78,15 +82,15 @@ void float_template_dtor(vrt_float_template_t*);
 const vrt_typeinfo_t float_template_typeinfo{
     .name = float_typeinfo.name,
     .kind = float_typeinfo.kind,
-    .is_template = true,
     .size = sizeof(vrt_float_template_t),
 
-    .members = float_typeinfo.members,
+    .members = nullptr,
 
     .construct = vanadium::rt::helpers::VoidErased<float_template_ctor>,
     .destruct = vanadium::rt::helpers::VoidErased<float_template_dtor>,
 
     .counterpart = &float_typeinfo,
+    .tpl_construct_value = vanadium::rt::helpers::VoidErased<float_template_ctor>,
 };
 
 void float_template_ctor(vrt_float_template_t* p) {

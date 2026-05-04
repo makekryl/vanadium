@@ -29,6 +29,7 @@ const vrt_typeinfo_t integer_typeinfo{
     .destruct = vanadium::rt::helpers::VoidErased<integer_dtor>,
 
     .counterpart = &integer_template_typeinfo,
+    .tpl_construct_value = nullptr,
 };
 
 extern "C" {
@@ -93,7 +94,6 @@ void integer_template_dtor(vrt_integer_template_t*);
 const vrt_typeinfo_t integer_template_typeinfo{
     .name = integer_typeinfo.name,
     .kind = integer_typeinfo.kind,
-    .is_template = true,
     .size = sizeof(vrt_integer_template_t),
 
     .members = integer_typeinfo.members,
@@ -102,6 +102,7 @@ const vrt_typeinfo_t integer_template_typeinfo{
     .destruct = vanadium::rt::helpers::VoidErased<integer_template_dtor>,
 
     .counterpart = &integer_typeinfo,
+    .tpl_construct_value = vanadium::rt::helpers::VoidErased<integer_template_ctor>,
 };
 
 void integer_template_ctor(vrt_integer_template_t* p) {

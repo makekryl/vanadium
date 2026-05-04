@@ -1,11 +1,12 @@
 #pragma once
 
+#include "vanadium/runtime/TemplateMatching.h"
 #include "vanadium/runtime/rt_reflect.h"
 
 namespace vanadium::rt {
 
 inline bool IsIndirect(const vrt_typeinfo_t* type) {
-  if (type->is_template) {
+  if (tpl::IsTemplateType(type)) {
     return true;
   }
 

@@ -23,6 +23,9 @@ const vrt_typeinfo_t boolean_typeinfo{
 
     .construct = nullptr,
     .destruct = nullptr,
+
+    .counterpart = &boolean_template_typeinfo,
+    .tpl_construct_value = nullptr,
 };
 
 void copy_boolean(vrt_boolean_t* dst, vrt_boolean_t src) {
@@ -54,15 +57,15 @@ void boolean_template_dtor(vrt_boolean_template_t*);
 const vrt_typeinfo_t boolean_template_typeinfo{
     .name = boolean_typeinfo.name,
     .kind = boolean_typeinfo.kind,
-    .is_template = true,
     .size = sizeof(vrt_boolean_template_t),
 
-    .members = boolean_typeinfo.members,
+    .members = nullptr,
 
     .construct = vanadium::rt::helpers::VoidErased<boolean_template_ctor>,
     .destruct = vanadium::rt::helpers::VoidErased<boolean_template_dtor>,
 
     .counterpart = &boolean_typeinfo,
+    .tpl_construct_value = vanadium::rt::helpers::VoidErased<boolean_template_dtor>,
 };
 
 void boolean_template_ctor(vrt_boolean_template_t* p) {

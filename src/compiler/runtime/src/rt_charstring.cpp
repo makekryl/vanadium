@@ -29,6 +29,9 @@ const vrt_typeinfo_t charstring_typeinfo{
 
     .construct = rt::helpers::VoidErased<charstring_ctor>,
     .destruct = rt::helpers::VoidErased<charstring_dtor>,
+
+    .counterpart = &charstring_template_typeinfo,
+    .tpl_construct_value = nullptr,
 };
 
 void charstring_ctor(vrt_charstring_t* p) {
@@ -157,15 +160,15 @@ void charstring_template_dtor(vrt_charstring_template_t*);
 const vrt_typeinfo_t charstring_template_typeinfo{
     .name = charstring_typeinfo.name,
     .kind = charstring_typeinfo.kind,
-    .is_template = true,
     .size = sizeof(vrt_charstring_template_t),
 
-    .members = charstring_typeinfo.members,
+    .members = nullptr,
 
     .construct = vanadium::rt::helpers::VoidErased<charstring_template_ctor>,
     .destruct = vanadium::rt::helpers::VoidErased<charstring_template_dtor>,
 
     .counterpart = &charstring_typeinfo,
+    .tpl_construct_value = vanadium::rt::helpers::VoidErased<charstring_template_ctor>,
 };
 
 void charstring_template_ctor(vrt_charstring_template_t* p) {

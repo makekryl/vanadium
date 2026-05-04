@@ -106,6 +106,10 @@ struct CodegenUnit {
   llvm::Value* UnwrapValue(llvm::Value*);  // primitive wrapper -> primitive
 
   llvm::Value* UnwrapBoolOrBoxedBoolPtr(llvm::Value*);
+
+  //
+
+  void EmitDestructorInvocation(TypeSymbol ts, llvm::Value* val);
 };
 
 inline constexpr std::string_view kVarargsAttr = "vrt-varargs";
@@ -120,6 +124,7 @@ std::string CopyCtor(TypeSymbol);
 std::string TInfo(TypeSymbol);
 std::string Getter(TypeSymbol holder, std::string_view member);
 std::string Muttor(TypeSymbol holder, std::string_view member);
+std::string TplValCtor(TypeSymbol);
 }  // namespace names
 
 namespace values {}

@@ -58,6 +58,9 @@ const vrt_typeinfo_t hexstring_typeinfo{
 
     .construct = rt::helpers::VoidErased<hexstring_ctor>,
     .destruct = rt::helpers::VoidErased<hexstring_dtor>,
+
+    .counterpart = &hexstring_template_typeinfo,
+    .tpl_construct_value = nullptr,
 };
 
 void hexstring_ctor(vrt_hexstring_t* p) {
@@ -305,15 +308,15 @@ void hexstring_template_dtor(vrt_hexstring_template_t*);
 const vrt_typeinfo_t hexstring_template_typeinfo{
     .name = hexstring_typeinfo.name,
     .kind = hexstring_typeinfo.kind,
-    .is_template = true,
     .size = sizeof(vrt_hexstring_template_t),
 
-    .members = hexstring_typeinfo.members,
+    .members = nullptr,
 
     .construct = vanadium::rt::helpers::VoidErased<hexstring_template_ctor>,
     .destruct = vanadium::rt::helpers::VoidErased<hexstring_template_dtor>,
 
     .counterpart = &hexstring_typeinfo,
+    .tpl_construct_value = vanadium::rt::helpers::VoidErased<hexstring_template_ctor>,
 };
 
 void hexstring_template_ctor(vrt_hexstring_template_t* p) {

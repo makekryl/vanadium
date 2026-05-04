@@ -1,10 +1,10 @@
 #include <format>
 
+#include <vanadium/ast/utils/ASTUtils.h>
+#include <vanadium/core/Semantic.h>
 #include <vanadium/core/TypeChecker.h>
 
-#include "vanadium/ast/utils/ASTUtils.h"
 #include "vanadium/compiler/Codegen.h"
-#include "vanadium/core/Semantic.h"
 
 namespace vanadium::compiler::names {
 
@@ -59,6 +59,11 @@ std::string Getter(TypeSymbol holder, std::string_view member) {
 
 std::string Muttor(TypeSymbol holder, std::string_view member) {
   return std::format("{}_mut_{}", SymName(holder), member);
+}
+
+std::string TplValCtor(TypeSymbol ts) {
+  assert(ts.is_template);
+  return std::format("{}_tplval_ctor", SymName(ts));
 }
 
 }  // namespace vanadium::compiler::names

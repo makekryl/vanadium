@@ -27,8 +27,8 @@ void vrt_panic(const char* rr) {
 }
 
 bool vrt_is_bound(const vrt_val_t* v) {
-  if (v->ty->is_template) {
-    return static_cast<const rt::tpl::GenericTemplateTypeLayout*>(v->p)->tsel != vrt_template_sel_e::kUninitialized;
+  if (rt::tpl::IsTemplateType(v->ty)) {
+    return static_cast<const rt::tpl::GenericTemplateType*>(v->p)->tsel != vrt_template_sel_e::kUninitialized;
   }
 
 #define X(name)                                                \

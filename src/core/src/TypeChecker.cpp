@@ -1182,7 +1182,13 @@ InstantiatedType ResolveExprType(const SourceFile* file, const semantic::Scope* 
     return itype;
   }
 
-  return ResolveDeclarationType(decl_file, decl);
+  // TODO: decl_type should be renamed to decl_sym and decl_sym to decl_type
+  auto decl_sym = ResolveDeclarationType(decl_file, decl);
+  if (decl_type.restriction != TemplateRestrictionKind::kNone) {
+    // TODO: change to .restriction > .restriction
+    decl_sym.restriction = decl_type.restriction;
+  }
+  return decl_sym;
 }
 
 class BasicTypeChecker {

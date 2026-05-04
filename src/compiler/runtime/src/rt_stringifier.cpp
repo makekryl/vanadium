@@ -150,8 +150,9 @@ void StringifyTemplate(std::string& buf, const vrt_hexstring_template_t& t) {}
 void StringifyTemplateGeneric(std::string& buf, const tpl::RtTemplate auto& t) {
   const auto stringify_value_list = [&] {
     buf += "(";
-    auto* it = t.list.data;
-    auto* const end = t.list.data + t.list.length;
+    auto range = t.list.Range();
+    auto* it = range.begin();
+    auto* end = range.end();
     if (it != end) {
       StringifyTemplateGeneric(buf, *it++);
     }
@@ -191,16 +192,96 @@ void StringifyTemplateGeneric(std::string& buf, const tpl::RtTemplate auto& t) {
   }
 }
 
+void StringifyStructReflect(std::string& buf, const vrt_val_t& v) {
+  buf += "{ ";
+  const std::span msp{v.ty->members, v.ty->members_count};
+  for (const auto& m : msp) {
+    // printf(" --> chk [%p] %s of type %s w/ off=%zu tp=%d\n", v.p, m.name, m.type->name, m.offset, m.type->kind);
+    buf += m.name;
+    buf += " := ";
+    void* x = static_cast<std::byte*>(v.p) + m.offset;
+    if (rt::IsIndirect(m.type)) {
+      // puts(" ^indirect");
+      x = *(void**)x;
+    }
+    StringifyObject(buf, {.p = x, .ty = m.type});
+
+    buf += ", ";
+  }
+  if (!msp.empty()) [[likely]] {
+    buf.erase(buf.size() - 2);
+  }
+  buf += " }";
+}
+
+void StringifyReflect(std::string& buf, const vrt_val_t& v) {
+  switch (v.ty->kind) {
+    case vrt_typekind_e::kRecord:
+    case vrt_typekind_e::kSet: {
+      if (tpl::IsTemplateType(v.ty)) {
+        auto* t = static_cast<tpl::GenericTemplateType*>(v.p);
+        const auto stringify_value_list = [&] {
+          buf += "(";
+          auto range = t->list.Range();
+          auto it = range.begin();
+          auto end = range.end();
+          if (it != end) {
+            StringifyStructReflect(buf, {.p = &(*it++), .ty = v.ty});
+          }
+          for (; it != end; ++it) {
+            buf += ", ";
+            StringifyStructReflect(buf, {.p = &(*it), .ty = v.ty});
+          }
+          buf += ")";
+        };
+        switch (t->tsel) {
+          case vrt_template_sel_e::kSpecificValue:
+            StringifyStructReflect(buf, v);
+            break;
+          case vrt_template_sel_e::kComplementedList:
+            buf += "complement";
+            stringify_value_list();
+            break;
+          case vrt_template_sel_e::kConjunctionList:
+            buf += "conjunct";
+            stringify_value_list();
+            break;
+          case vrt_template_sel_e::kValueList:
+            stringify_value_list();
+            break;
+          case vrt_template_sel_e::kImplication:
+            StringifyStructReflect(buf, {.p = &t->implication->precondition, .ty = v.ty});
+            buf += " implies ";
+            StringifyStructReflect(buf, {.p = &t->implication->implied, .ty = v.ty});
+            break;
+          case vrt_template_sel_e::kDynamic:
+            buf += "@dynamic template";
+            break;
+          default:
+            assert(false);
+            break;
+        }
+      } else {
+        StringifyStructReflect(buf, v);
+      }
+      break;
+    }
+    default:
+      assert(false);
+      break;
+  }
+}
+
 }  // namespace
 
 void StringifyObject(std::string& buf, const vrt_val_t& v) {
-  // printf("stringify(%p)\n", v.p);
+  // printf("stringify(%s, %p)\n", v.ty->name, v.p);
   if (!vrt_is_bound(&v)) {
-    buf += v.ty->is_template ? "<uninitialized template>" : "<unbound>";
+    buf += tpl::IsTemplateType(v.ty) ? "<uninitialized template>" : "<unbound>";
     return;
   }
 
-  if (v.ty->is_template) {
+  if (tpl::IsTemplateType(v.ty)) {
 #define X(name)                                                                       \
   if (v.ty == &name##_template_typeinfo) {                                            \
     StringifyTemplateGeneric(buf, *static_cast<const vrt_##name##_template_t*>(v.p)); \
@@ -219,36 +300,7 @@ void StringifyObject(std::string& buf, const vrt_val_t& v) {
   }
 
   // TODO: use switch(kind)-case instead of pointer comparison above
-  switch (v.ty->kind) {
-    case vrt_typekind_e::kRecord:
-    case vrt_typekind_e::kSet: {
-      buf += "{ ";
-      const std::span msp{v.ty->members, v.ty->members_count};
-      for (const auto& m : msp) {
-        // printf(" --> chk [%p] %s of type %s w/ off=%zu tp=%d\n", v.p, m.name, m.type->name, m.offset, m.type->kind);
-        buf += m.name;
-        buf += " := ";
-        void* x = static_cast<std::byte*>(v.p) + m.offset;
-        if (rt::IsIndirect(m.type)) {
-          // puts(" ^indirect");
-          x = *(void**)x;
-        }
-        StringifyObject(buf, {.p = x, .ty = m.type});
-
-        buf += ", ";
-      }
-      if (!msp.empty()) [[likely]] {
-        buf.erase(buf.size() - 2);
-      }
-      buf += " }";
-      return;
-    }
-
-    default:
-      assert(false);
-  }
-
-  buf += "<unknown_typeinfo>";
+  StringifyReflect(buf, v);
 }
 
 }  // namespace vanadium::rt

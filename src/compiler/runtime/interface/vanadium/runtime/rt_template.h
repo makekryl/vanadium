@@ -40,6 +40,10 @@ struct vrt_dynmatcher_t {
 extern "C" {
 //
 
+void vrt_tpl_generic_ctor(void* p);
+void vrt_tpl_generic_dtor(void (*destruct_tpl)(void*), void* p);
+
+void* vrt_tpl_get_value(void*);
 void* vrt_tpl_value(const vrt_typeinfo_t*, void*);
 void* vrt_tpl_list(const vrt_typeinfo_t*, void*, vrt_valuelist_size_t n, /* out */ std::size_t* esz,
                    vrt_template_sel_e lkind);

@@ -5,9 +5,11 @@
 #include <utility>
 #include <variant>
 
+#include <llvm/ADT/ArrayRef.h>
 #include <llvm/IR/Attributes.h>
 #include <llvm/IR/BasicBlock.h>
 #include <llvm/IR/Constants.h>
+#include <llvm/IR/DerivedTypes.h>
 #include <llvm/IR/Function.h>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
@@ -176,7 +178,6 @@ RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ct
   typeinfo_ty->setBody({
       builder.getPtrTy(),   // const char* name
       builder.getInt8Ty(),  // vrt_typekind_e
-      builder.getInt1Ty(),  // bool is_template
       sizet_ty,             // size_t size
       builder.getPtrTy(),   // *members
       sizet_ty,             // size_t members_count
@@ -184,6 +185,7 @@ RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ct
       builder.getPtrTy(),   // destruct(*)(void*)
       builder.getPtrTy(),   // copy(*)(void*, const void*)
       builder.getPtrTy(),   // const vrt_typeinfo_t* counterpart
+      builder.getPtrTy(),   // (*tpl_construct_value)(void*);
   });
   //
   smember_ty = llvm::StructType::create(ctx_, "vrt_struct_member_t");
@@ -488,6 +490,10 @@ RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ct
   tpl.tsel_ty = builder.getInt8Ty();
   tpl.listsize_ty = builder.getInt32Ty();
   //
+  tpl.get_value = declare_external_fn("vrt_tpl_get_value", builder.getPtrTy(),
+                                      {
+                                          builder.getPtrTy(),  // void*
+                                      });
   tpl.value = declare_external_fn("vrt_tpl_value", builder.getPtrTy(),
                                   {
                                       builder.getPtrTy(),  // const vrt_typeinfo_t*
@@ -526,6 +532,40 @@ RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ct
                               builder.getInt32Ty(),
                               builder.getInt1Ty(),
                           });
+  //
+  tpl.generic_opaque_struct_ctor_fn =
+      llvm::Function::Create(obj_ctor_fn_ty, llvm::GlobalValue::ExternalLinkage, "vrt_tpl_generic_ctor", mod);
+  tpl.generic_opaque_struct_dtor_fn = declare_external_fn("vrt_tpl_generic_dtor", builder.getVoidTy(),
+                                                          {
+                                                              builder.getPtrTy(),  // void (*destruct_tpl)(void*)
+                                                              builder.getPtrTy(),  // void* p
+                                                          });
+  //
+  // tpl.generic_opaque_struct_size = mod.getDataLayout().getTypeAllocSize(llvm::StructType::create(
+  //     {
+  //         builder.getInt8Ty(),  // vrt_template_sel_e tsel
+  //         MakeUnion({
+  //             builder.getPtrTy(),  // val
+  //             llvm::StructType::create(
+  //                 {
+  //                     builder.getPtrTy(),
+  //                     tpl.listsize_ty,
+  //                 },
+  //                 "__vrt_template_generic_valuelist"),
+  //             llvm::StructType::create(
+  //                 {
+  //                     builder.getPtrTy(),
+  //                     builder.getPtrTy(),
+  //                 },
+  //                 "__vrt_template_generic_implication"),
+  //             llvm::StructType::create(
+  //                 {
+  //                     builder.getPtrTy(),
+  //                 },
+  //                 "__vrt_template_generic_dynmatch"),
+  //         }),
+  //     },
+  //     "__vrt_template_generic_opaque_struct"));
 }
 
 llvm::ConstantInt* RuntimeBindings::GetRawInt(NativeIntType value) const {
@@ -560,7 +600,7 @@ llvm::Value* RuntimeBindings::GetBool(bool v) const {
                                              });
 }
 
-llvm::Type* RuntimeBindings::MakeUnion(std::span<llvm::Type*> members) const {
+llvm::Type* RuntimeBindings::MakeUnion(llvm::ArrayRef<llvm::Type*> members) const {
   const auto& dl = mod_.getDataLayout();
 
   std::uint64_t max_size = 0;
@@ -575,6 +615,15 @@ llvm::Type* RuntimeBindings::MakeUnion(std::span<llvm::Type*> members) const {
   }
 
   return largest_ty;
+}
+
+std::vector<llvm::Type*> RuntimeBindings::WrapTemplateStruct(llvm::StructType* specific_sty) const {
+  std::vector<llvm::Type*> body;
+  // TODO: pad if not sufficient
+  body.reserve(2);
+  body.emplace_back(tpl.tsel_ty);
+  body.emplace_back(specific_sty);
+  return body;
 }
 
 }  // namespace vanadium::compiler

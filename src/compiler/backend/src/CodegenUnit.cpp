@@ -216,4 +216,24 @@ llvm::Value* CodegenUnit::UnwrapBoolOrBoxedBoolPtr(llvm::Value* v) {
   return UnwrapValue(v);
 }
 
+void CodegenUnit::EmitDestructorInvocation(TypeSymbol ts, llvm::Value* val) {
+  if (IsOpaque(ts)) {
+    builder.CreateCall(rt.type_del_f, {
+                                          mod.getGlobalVariable(names::TInfo(ts)),
+                                          builder.CreateLoad(builder.getPtrTy(), val),
+                                      });
+  } else {
+    auto* dtor_f = [&] -> llvm::Function* {
+      if (const auto* strb = GetStringTypeBindings(ts)) {
+        return strb->dtor_f;
+      }
+      return nullptr;
+    }();
+    if (dtor_f) {
+      // TODO: partial inline (is_bound && is_ext) in RuntimeBindings
+      builder.CreateCall(dtor_f, {val});
+    }
+  }
+}
+
 }  // namespace vanadium::compiler

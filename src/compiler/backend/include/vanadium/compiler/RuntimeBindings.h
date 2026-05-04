@@ -129,6 +129,7 @@ class RuntimeBindings {
     llvm::Type* tsel_ty;
     llvm::Type* listsize_ty;
     //
+    llvm::Function* get_value;
     llvm::Function* value;
     llvm::Function* list;
     llvm::Function* omit;
@@ -136,9 +137,14 @@ class RuntimeBindings {
     llvm::Function* any_or_omit;
     //
     llvm::Function* range_integer;
+    //
+    llvm::Function* generic_opaque_struct_ctor_fn;
+    llvm::Function* generic_opaque_struct_dtor_fn;
   } tpl;
 
-  [[nodiscard]] llvm::Type* MakeUnion(std::span<llvm::Type*> members) const;
+  [[nodiscard]] llvm::Type* MakeUnion(llvm::ArrayRef<llvm::Type*> members) const;
+
+  [[nodiscard]] std::vector<llvm::Type*> WrapTemplateStruct(llvm::StructType* specific_sty) const;
 
   [[nodiscard]] llvm::ConstantInt* GetSizeI(std::size_t i) const {
     return llvm::ConstantInt::get(sizet_ty, i);

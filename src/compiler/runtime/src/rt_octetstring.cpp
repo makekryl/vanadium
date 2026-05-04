@@ -28,6 +28,9 @@ const vrt_typeinfo_t octetstring_typeinfo{
 
     .construct = rt::helpers::VoidErased<octetstring_ctor>,
     .destruct = rt::helpers::VoidErased<octetstring_dtor>,
+
+    .counterpart = &octetstring_template_typeinfo,
+    .tpl_construct_value = nullptr,
 };
 
 void octetstring_ctor(vrt_octetstring_t* p) {
@@ -205,15 +208,15 @@ void octetstring_template_dtor(vrt_octetstring_template_t*);
 const vrt_typeinfo_t octetstring_template_typeinfo{
     .name = octetstring_typeinfo.name,
     .kind = octetstring_typeinfo.kind,
-    .is_template = true,
     .size = sizeof(vrt_octetstring_template_t),
 
-    .members = octetstring_typeinfo.members,
+    .members = nullptr,
 
     .construct = vanadium::rt::helpers::VoidErased<octetstring_template_ctor>,
     .destruct = vanadium::rt::helpers::VoidErased<octetstring_template_dtor>,
 
     .counterpart = &octetstring_typeinfo,
+    .tpl_construct_value = vanadium::rt::helpers::VoidErased<octetstring_template_ctor>,
 };
 
 void octetstring_template_ctor(vrt_octetstring_template_t* p) {

@@ -2,6 +2,9 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cstddef>
+#include <ranges>
+#include <type_traits>
 #include <utility>
 
 #include "vanadium/runtime/rt_alloc.h"
@@ -26,38 +29,44 @@ concept RtTemplate = requires(T t) {
 template <RtTemplate T>
 using RtTemplateType = decltype(std::declval<T>().val);
 
-struct GenericTemplateTypeLayout {
-  vrt_template_sel_e tsel;
-  void* dp;  // ptr for alignment
-
-  void* GetPayload() {
-    return static_cast<void*>(&dp);
-  }
-};
+struct GenericTemplateType;
 
 template <typename T>
 struct ValueList {
   T* data;
   vrt_valuelist_size_t length;
+  std::uint32_t esize;  // actually u64, but it's nice to save up padded 8 bytes
+
+  [[nodiscard]] auto Range() const
+    requires(std::is_same_v<T, GenericTemplateType>)
+  {
+    return std::views::iota(vrt_valuelist_size_t{0}, length) | std::views::transform([&](auto i) -> T& {
+             return *reinterpret_cast<T*>(reinterpret_cast<std::byte*>(data) + (i * esize));
+           });
+  }
+  [[nodiscard]] auto Range() const
+    requires(!std::is_same_v<T, GenericTemplateType>)
+  {
+    return std::ranges::subrange(data, data + length);
+  }
 
   template <auto Matcher, typename V>
   bool MatchAny(const V* v) const {
-    return std::any_of(data, data + length, [&v](const auto& e) {
+    return std::ranges::any_of(Range(), [&v](const auto& e) {
       return Matcher(v, &e);
     });
   }
 
   template <auto Matcher, typename V>
   bool MatchAll(const V* v) const {
-    return std::all_of(data, data + length, [&v](const auto& e) {
+    return std::ranges::all_of(Range(), [&v](const auto& e) {
       return Matcher(v, &e);
     });
   }
 
-  template <auto Destruct>
-  void Release() {
-    for (vrt_valuelist_size_t i = 0; i < length; ++i) {
-      Destruct(&data[i]);
+  void Release(auto Destruct) {
+    for (auto& p : Range()) {
+      Destruct(&p);
     }
     vrt_unifree(data);
   }
@@ -73,8 +82,7 @@ struct Implication {
     return !Matcher(v, &precondition) || Matcher(v, &implied);
   }
 
-  template <auto Destruct>
-  void Release() {
+  void Release(auto Destruct) {
     Destruct(&precondition);
     Destruct(&implied);
   }
@@ -115,8 +123,7 @@ void Construct(RtTemplate auto* t) {
   t->tsel = vrt_template_sel_e::kUninitialized;
 }
 
-template <auto Destructor>
-void Destruct(RtTemplate auto* t) {
+void Destruct(auto Destructor, RtTemplate auto* t) {
   switch (t->tsel) {
     case vrt_template_sel_e::kUninitialized:
     case vrt_template_sel_e::kOmitValue:
@@ -126,10 +133,10 @@ void Destruct(RtTemplate auto* t) {
     case vrt_template_sel_e::kValueList:
     case vrt_template_sel_e::kComplementedList:
     case vrt_template_sel_e::kConjunctionList:
-      t->list.template Release<Destructor>();
+      t->list.Release(Destructor);
       break;
     case vrt_template_sel_e::kImplication:
-      t->implication->template Release<Destructor>();
+      t->implication->Release(Destructor);
       vrt_unifree(t->implication);
       break;
     case vrt_template_sel_e::kDynamic:
@@ -138,6 +145,30 @@ void Destruct(RtTemplate auto* t) {
     default:
       assert(false);
   }
+}
+
+template <auto Destructor>
+void Destruct(RtTemplate auto* t) {
+  Destruct(Destructor, t);
+}
+
+struct GenericTemplateType {
+  vrt_template_sel_e tsel;
+
+  union {
+    void* val;  // ptr for proper alignment
+    vanadium::rt::tpl::ValueList<GenericTemplateType> list;
+    vanadium::rt::tpl::Implication<GenericTemplateType>* implication;
+    vrt_dynmatcher_t dynmatch;
+  };
+
+  void* GetPayload() {
+    return static_cast<void*>(&val);
+  }
+};
+
+inline bool IsTemplateType(const vrt_typeinfo_t* td) {
+  return td->tpl_construct_value != nullptr;
 }
 
 }  // namespace vanadium::rt::tpl
