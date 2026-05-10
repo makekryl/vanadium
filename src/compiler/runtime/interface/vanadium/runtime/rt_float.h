@@ -24,7 +24,7 @@ void float_ctor(vrt_float_t*);
 void float_dtor(vrt_float_t*);
 
 // TODO: inline in codegen as a special case along with other primitives
-void copy_float(vrt_float_t* dst, vrt_float_t src);
+void copy_float(vrt_float_t* dst, const vrt_float_t* src);
 
 bool vrt_float_eq(vrt_float_t, vrt_float_t);
 bool vrt_float_ne(vrt_float_t, vrt_float_t);

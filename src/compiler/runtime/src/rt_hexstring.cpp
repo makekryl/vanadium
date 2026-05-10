@@ -56,8 +56,8 @@ const vrt_typeinfo_t hexstring_typeinfo{
 
     .members = nullptr,
 
-    .construct = rt::helpers::VoidErased<hexstring_ctor>,
-    .destruct = rt::helpers::VoidErased<hexstring_dtor>,
+    .construct = rt::helpers::void_erased_v<hexstring_ctor>,
+    .destruct = rt::helpers::void_erased_v<hexstring_dtor>,
 
     .counterpart = &hexstring_template_typeinfo,
     .tpl_construct_value = nullptr,
@@ -312,11 +312,12 @@ const vrt_typeinfo_t hexstring_template_typeinfo{
 
     .members = nullptr,
 
-    .construct = vanadium::rt::helpers::VoidErased<hexstring_template_ctor>,
-    .destruct = vanadium::rt::helpers::VoidErased<hexstring_template_dtor>,
+    .construct = rt::helpers::void_erased_v<hexstring_template_ctor>,
+    .destruct = rt::helpers::void_erased_v<hexstring_template_dtor>,
+    .copy = rt::helpers::void_erased_v<copy_hexstring>,
 
     .counterpart = &hexstring_typeinfo,
-    .tpl_construct_value = vanadium::rt::helpers::VoidErased<hexstring_template_ctor>,
+    .tpl_construct_value = rt::helpers::void_erased_v<hexstring_template_ctor>,
 };
 
 void hexstring_template_ctor(vrt_hexstring_template_t* p) {

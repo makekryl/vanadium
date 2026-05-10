@@ -20,8 +20,11 @@ extern "C" {
 extern const vrt_typeinfo_t boolean_typeinfo;
 extern const vrt_typeinfo_t boolean_template_typeinfo;
 
+void boolean_ctor(vrt_boolean_t*);
+void boolean_dtor(vrt_boolean_t*);
+
 // TODO: inline in codegen as a special case along with other primitives
-void copy_boolean(vrt_boolean_t* dst, vrt_boolean_t src);
+void copy_boolean(vrt_boolean_t* dst, const vrt_boolean_t* src);
 
 bool vrt_boolean_eq(vrt_boolean_t, vrt_boolean_t);
 bool vrt_boolean_ne(vrt_boolean_t, vrt_boolean_t);

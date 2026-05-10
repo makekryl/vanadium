@@ -1,3 +1,4 @@
+#include <cassert>
 #include <cctype>
 #include <filesystem>
 
@@ -11,7 +12,9 @@
 #include <vanadium/core/Builtins.h>
 #include <vanadium/core/Semantic.h>
 #include <vanadium/core/TypeChecker.h>
+#include <vanadium/lib/Assert.h>
 
+#include "vanadium/compiler/ABIHelper.h"
 #include "vanadium/compiler/Codegen.h"
 
 namespace vanadium::compiler {
@@ -31,13 +34,17 @@ CodegenUnit::CodegenUnit(llvm::Module& mod_, const core::SourceFile& sf_, bool d
       builder{ctx},
       mod{mod_},
       debug_info_(debug ? decltype(debug_info_){*this} : std::nullopt),
-      rt{ctx, mod} {}
+      rt{ctx, mod} {
+  ConfigureTargetTriple(mod);
+}
 
 bool CodegenUnit::IsOpaque(TypeSymbol ts) const {
-  return !bool(ts->Flags() & core::semantic::SymbolFlags::kBuiltin) || ts.is_template;
+  return ts.is_template || !bool(ts->Flags() & core::semantic::SymbolFlags::kBuiltin);
 }
 
 llvm::Type* CodegenUnit::GetSymbolType(TypeSymbol ts) {
+  assert(ts);
+
   // TODO: make builtin types templates non-opaque
   if (IsOpaque(ts)) {
     return builder.getPtrTy();
@@ -59,7 +66,7 @@ llvm::Type* CodegenUnit::GetSymbolType(TypeSymbol ts) {
     return strb->ty;
   }
 
-  assert(false);
+  VANADIUM_DEBUG_ERROR("GetSymbolType failed for symbol '{}'", ts->GetName());
 }
 
 llvm::Value* CodegenUnit::GetUndef(TypeSymbol ts) {
@@ -168,6 +175,13 @@ llvm::Function* CodegenUnit::GetFunction(const core::semantic::Symbol* sym) {
 
 llvm::GlobalVariable* CodegenUnit::GetTypeInfo(TypeSymbol ts) {
   return getOrDeclareExternalConst(names::TInfo(ts), rt.typeinfo_ty);
+}
+
+bool CodegenUnit::IsTrivial(TypeSymbol ts) const {
+  // TODO: unify w/ IsTrivial(llvm::Type*)
+  assert(ts);
+  return !ts.is_template && (ts.sym == &core::builtins::kBoolean || ts.sym == &core::builtins::kInteger ||
+                             ts.sym == &core::builtins::kFloat);
 }
 
 bool CodegenUnit::IsTrivial(llvm::Type* ty) const {

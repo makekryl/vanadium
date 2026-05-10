@@ -22,8 +22,9 @@ const vrt_typeinfo_t float_typeinfo{
 
     .members = nullptr,
 
-    .construct = vanadium::rt::helpers::VoidErased<float_ctor>,
-    .destruct = vanadium::rt::helpers::VoidErased<float_dtor>,
+    .construct = rt::helpers::void_erased_v<float_ctor>,
+    .destruct = rt::helpers::void_erased_v<float_dtor>,
+    .copy = rt::helpers::void_erased_v<copy_float>,
 
     .counterpart = &float_template_typeinfo,
     .tpl_construct_value = nullptr,
@@ -50,8 +51,8 @@ void float_dtor(vrt_float_t* p) {}
     };                                                         \
   }
 
-void copy_float(vrt_float_t* dst, vrt_float_t src) {
-  *dst = src;
+void copy_float(vrt_float_t* dst, const vrt_float_t* src) {
+  *dst = *src;
 }
 
 DEFINE_BINARY_OP_TO_BOOL(eq, ==);
@@ -86,18 +87,26 @@ const vrt_typeinfo_t float_template_typeinfo{
 
     .members = nullptr,
 
-    .construct = vanadium::rt::helpers::VoidErased<float_template_ctor>,
-    .destruct = vanadium::rt::helpers::VoidErased<float_template_dtor>,
+    .construct = rt::helpers::void_erased_v<float_template_ctor>,
+    .destruct = rt::helpers::void_erased_v<float_template_dtor>,
+    .copy = rt::helpers::void_erased_v<copy_float>,
 
     .counterpart = &float_typeinfo,
-    .tpl_construct_value = vanadium::rt::helpers::VoidErased<float_template_ctor>,
+    .tpl_construct_value = rt::helpers::void_erased_v<float_template_ctor>,
 };
 
 void float_template_ctor(vrt_float_template_t* p) {
   rt::tpl::Construct(p);
 }
 void float_template_dtor(vrt_float_template_t* p) {
-  rt::tpl::Destruct<float_template_dtor>(p);
+  switch (p->tsel) {
+    case vrt_template_sel_e::kSpecificValue:
+    case vrt_template_sel_e::kValueRange:
+      break;
+    default:
+      rt::tpl::Destruct<float_template_dtor>(p);
+      break;
+  }
 }
 
 bool vrt_float_template_match(const vrt_float_t* v, const vrt_float_template_t* t) {

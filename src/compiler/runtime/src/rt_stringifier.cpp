@@ -199,12 +199,7 @@ void StringifyStructReflect(std::string& buf, const vrt_val_t& v) {
     // printf(" --> chk [%p] %s of type %s w/ off=%zu tp=%d\n", v.p, m.name, m.type->name, m.offset, m.type->kind);
     buf += m.name;
     buf += " := ";
-    void* x = static_cast<std::byte*>(v.p) + m.offset;
-    if (rt::IsIndirect(m.type)) {
-      // puts(" ^indirect");
-      x = *(void**)x;
-    }
-    StringifyObject(buf, {.p = x, .ty = m.type});
+    StringifyObject(buf, {.p = GetMemberPtr(m, v.p), .ty = m.type});
 
     buf += ", ";
   }
@@ -226,11 +221,11 @@ void StringifyReflect(std::string& buf, const vrt_val_t& v) {
           auto it = range.begin();
           auto end = range.end();
           if (it != end) {
-            StringifyStructReflect(buf, {.p = &(*it++), .ty = v.ty});
+            StringifyReflect(buf, {.p = &(*it++), .ty = v.ty});
           }
           for (; it != end; ++it) {
             buf += ", ";
-            StringifyStructReflect(buf, {.p = &(*it), .ty = v.ty});
+            StringifyReflect(buf, {.p = &(*it), .ty = v.ty});
           }
           buf += ")";
         };
@@ -250,9 +245,9 @@ void StringifyReflect(std::string& buf, const vrt_val_t& v) {
             stringify_value_list();
             break;
           case vrt_template_sel_e::kImplication:
-            StringifyStructReflect(buf, {.p = &t->implication->precondition, .ty = v.ty});
+            StringifyReflect(buf, {.p = &t->implication->precondition, .ty = v.ty});
             buf += " implies ";
-            StringifyStructReflect(buf, {.p = &t->implication->implied, .ty = v.ty});
+            StringifyReflect(buf, {.p = &t->implication->implied, .ty = v.ty});
             break;
           case vrt_template_sel_e::kDynamic:
             buf += "@dynamic template";

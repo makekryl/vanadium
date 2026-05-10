@@ -5,10 +5,12 @@
 
 #include "vanadium/runtime/BuiltinsTemplates.h"
 #include "vanadium/runtime/TemplateMatching.h"
+#include "vanadium/runtime/TypeHelper.h"
 #include "vanadium/runtime/rt_alloc.h"
 #include "vanadium/runtime/rt_integer.h"
 #include "vanadium/runtime/rt_reflect.h"
 #include "vanadium/runtime/runtime.h"
+#include "vanadium/runtime/runtime.hpp"
 
 using namespace vanadium;
 
@@ -47,6 +49,7 @@ void vrt_tpl_generic_dtor(void (*destruct_tpl)(void*), void* p) {
 void* vrt_tpl_get_value(void* p) {
   if (AsGenericTemplateType(p)->tsel != vrt_template_sel_e::kSpecificValue) {
     vrt_panic("Accessing field a of a non-specific template");
+    return nullptr;
   }
   return AsGenericTemplateType(p)->GetPayload();
 }
@@ -107,7 +110,52 @@ void vrt_dynmatcher_free(const vrt_dynmatcher_t* p) {
 }
 
 namespace {
-bool vrt_match_intl(const vrt_typeinfo_t* ty, const vrt_val_t* obj, const vrt_val_t* tobj) {
+void vrt_valueof_internal(void* result, const vrt_val_t& obj) {
+  if (AsGenericTemplateType(obj.p)->tsel != vrt_template_sel_e::kSpecificValue) {
+    rt::Panic("Performing valueof operation on a non-specific template of type {}", obj.ty->name);
+    return;
+  }
+  switch (obj.ty->kind) {
+    case vrt_typekind_e::kInteger:
+    case vrt_typekind_e::kFloat:
+    case vrt_typekind_e::kBoolean:
+    case vrt_typekind_e::kCharstring:
+    case vrt_typekind_e::kOctetstring:
+    case vrt_typekind_e::kBitstring:
+    case vrt_typekind_e::kHexstring: {
+      // printf(" valueof copy %s %p -> %p\n", obj.ty->name, AsGenericTemplateType(obj.p)->GetPayload(), result);
+      obj.ty->counterpart->copy(result, AsGenericTemplateType(obj.p)->GetPayload());
+      break;
+    }
+    case vrt_typekind_e::kRecord:
+    case vrt_typekind_e::kSet: {
+      assert(obj.ty->members_count == obj.ty->counterpart->members_count);
+      for (std::size_t i = 0; i < obj.ty->members_count; ++i) {
+        const auto& t_member = obj.ty->members[i];
+        const auto& v_member = obj.ty->counterpart->members[i];
+        vrt_valueof_internal(rt::GetMemberPtr(v_member, result),
+                             {.p = rt::GetMemberPtr(t_member, obj.p), .ty = t_member.type});
+      }
+      break;
+    }
+    default:
+      assert(false && "TODO");
+      break;
+  }
+}
+}  // namespace
+
+void vrt_valueof(void* result, const vrt_val_t* obj) {
+  if (!rt::tpl::IsTemplateType(obj->ty)) {
+    // TODO: can be optimized (?), check whether it's worth it
+    obj->ty->copy(result, obj->p);
+    return;
+  }
+  vrt_valueof_internal(result, *obj);
+}
+
+namespace {
+bool vrt_match_internal(const vrt_typeinfo_t* ty, const vrt_val_t* obj, const vrt_val_t* tobj) {
 #define X(name)                                                                                  \
   if (ty == &name##_typeinfo) {                                                                  \
     return rt::tpl::Match<vrt_##name##_template_match>((const vrt_##name##_t*)obj->p,            \
@@ -124,5 +172,5 @@ bool vrt_match_intl(const vrt_typeinfo_t* ty, const vrt_val_t* obj, const vrt_va
 
 void vrt_match(vrt_boolean_t* res, const vrt_val_t* obj, const vrt_val_t* tobj) {
   assert((obj->ty == tobj->ty->counterpart) && (obj->ty->counterpart == tobj->ty));
-  *res = vrt_boolean_wrap(vrt_match_intl(obj->ty, obj, tobj));
+  *res = vrt_boolean_wrap(vrt_match_internal(obj->ty, obj, tobj));
 }

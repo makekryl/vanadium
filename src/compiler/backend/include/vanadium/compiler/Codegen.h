@@ -98,6 +98,7 @@ struct CodegenUnit {
 
   //
 
+  bool IsTrivial(TypeSymbol) const;
   bool IsTrivial(llvm::Type*) const;
 
   //

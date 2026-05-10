@@ -19,4 +19,15 @@ inline bool IsIndirect(const vrt_typeinfo_t* type) {
   }
 }
 
+// TODO: optimize by splitting up to GetMemberPtr, GetValueMemberPtr, GetTemplateMemberPtr -- diffs in IsIndirect checks
+inline void* GetMemberPtr(const vrt_struct_member_t& m, void* p) {
+  // printf(" ** GetMemberPtr(%s %s, %p + %zu)\n", m.type->name, m.name, p, m.offset);
+  void* x = static_cast<std::byte*>(p) + m.offset;
+  if (IsIndirect(m.type)) {
+    // printf("   @ INDIRECT\n");
+    x = *(void**)x;
+  }
+  return x;
+}
+
 }  // namespace vanadium::rt

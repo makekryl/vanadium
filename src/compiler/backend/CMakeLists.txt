@@ -1,5 +1,6 @@
 add_library(vanadium_compiler STATIC
   src/Compiler.cpp
+  src/ABIHelper.cpp
   src/CodegenUnit.cpp
   src/IRHelpers.cpp
   src/LiteralsParser.cpp
@@ -27,6 +28,7 @@ llvm_map_components_to_libnames(llvm_libs
   support
   core
   irreader
+  native
   TransformUtils
 )
 target_link_libraries(vanadium_compiler PRIVATE

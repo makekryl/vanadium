@@ -1,0 +1,63 @@
+module ValueofPrimitives {
+
+testcase tc_integer() {
+  var template integer t := 5;
+  var integer v := valueof(t);
+  if (v != 5) {
+    setverdict(fail);
+  }
+  setverdict(pass);
+}
+
+testcase tc_float() {
+  var template float t := 5.0;
+  var float v := valueof(t);
+  if (v != 5.0) {
+    setverdict(fail);
+  }
+  setverdict(pass);
+}
+
+testcase tc_boolean() {
+  var template boolean t := true;
+  var boolean v := valueof(t);
+  if (v != true) {
+    setverdict(fail);
+  }
+  setverdict(pass);
+}
+
+testcase tc_charstring() {
+  var template charstring t := "Hello";
+  var charstring v := valueof(t);
+  if (v != "Hello") {
+    setverdict(fail);
+  }
+  setverdict(pass);
+}
+testcase tc_octetstring() {
+  var template octetstring t := '123A'O;
+  var octetstring v := valueof(t);
+  if (v != '123A'O) {
+    setverdict(fail);
+  }
+  setverdict(pass);
+}
+testcase tc_hexstring() {
+  var template hexstring t := '123A'H;
+  var hexstring v := valueof(t);
+  if (v != '123A'H) {
+    setverdict(fail);
+  }
+  setverdict(pass);
+}
+testcase tc_bitstring() {
+  var template bitstring t := '010101'B;
+  var bitstring v := valueof(t);
+  if (v != '010101'B) {
+    setverdict(fail);
+  }
+  setverdict(pass);
+}
+
+}

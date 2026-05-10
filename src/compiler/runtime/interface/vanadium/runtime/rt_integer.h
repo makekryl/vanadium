@@ -28,7 +28,7 @@ void integer_ctor(vrt_integer_t*);
 void integer_dtor(vrt_integer_t*);
 
 // TODO: inline in codegen as a special case along with other primitives
-void copy_integer(vrt_integer_t* dst, vrt_integer_t src);
+void copy_integer(vrt_integer_t* dst, const vrt_integer_t* src);
 
 bool vrt_integer_eq(vrt_integer_t, vrt_integer_t);
 bool vrt_integer_ne(vrt_integer_t, vrt_integer_t);

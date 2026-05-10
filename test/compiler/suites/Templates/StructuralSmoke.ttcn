@@ -1,0 +1,36 @@
+module StructuralSmoke {
+
+type record MyRecord {
+  integer i,
+  charstring cs
+}
+
+testcase specific() {
+  var template MyRecord t := {
+    i := (5, 10),
+    cs := "cs value"
+  };
+  log(t);
+  setverdict(pass);
+}
+
+testcase valuelist() {
+  var template MyRecord t := (
+    {
+      i := (5, 10),
+      cs := "first cs value"
+    },
+    {
+      i := 1,
+      cs := "second cs value"
+    },
+    {
+      i := (7, 8),
+      cs := "third cs value"
+    }
+  );
+  log(t);
+  setverdict(pass);
+}
+
+}

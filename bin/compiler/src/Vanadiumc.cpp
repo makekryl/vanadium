@@ -2,6 +2,7 @@
 #include <print>
 
 #include <argparse/argparse.hpp>
+#include <magic_enum/magic_enum.hpp>
 
 #include <llvm/IR/Module.h>
 #include <llvm/Support/raw_ostream.h>
@@ -12,6 +13,28 @@
 #include <vanadium/version.h>
 
 namespace {
+bool CheckErrors(const vanadium::core::SourceFile* sf) {
+  if (!sf->ast.errors.empty()) {
+    for (const auto& err : sf->ast.errors) {
+      std::println(" {}:{} :: {}", err.range.begin, err.range.end, err.description);
+    }
+    return false;
+  }
+  if (!sf->semantic_errors.empty()) {
+    for (const auto& err : sf->semantic_errors) {
+      std::println(" {}:{} :: {}", err.range.begin, err.range.end, magic_enum::enum_name(err.type));
+    }
+    return false;
+  }
+  if (!sf->type_errors.empty()) {
+    for (const auto& err : sf->type_errors) {
+      std::println(" {}:{} :: {}", err.range.begin, err.range.end, err.message);
+    }
+    return false;
+  }
+  return true;
+}
+
 int main(int argc, char* argv[]) {
   argparse::ArgumentParser ap("vanadiumc", vanadium::bin::kVersion);
   ap.add_description("TTCN-3 Compiler");
@@ -41,11 +64,9 @@ int main(int argc, char* argv[]) {
   });
 
   const auto* sf = program.GetFile(filepath);
-  assert(sf != nullptr);
-  assert(sf->ast.errors.empty());
-  assert(sf->semantic_errors.empty());
-  assert(sf->type_errors.empty());
-  assert(sf->module.has_value());
+  if (!CheckErrors(sf)) {
+    return 1;
+  }
 
   vanadium::compiler::Compile(program, {.debug = use_debug},
                               [&](const vanadium::core::SourceFile& sf, llvm::Module& mod) {

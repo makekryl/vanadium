@@ -15,6 +15,51 @@
 
 namespace vanadium::compiler {
 
+// !!!!!!!!!!! SHOULD BE KEPT IN SYNC w/ rt_reflect.h !!!!!!!!!!!
+// TODO: deduplicate
+enum class RtTplSelection : std::uint8_t {
+  kUninitialized = 0,
+
+  kSpecificValue,
+
+  kOmitValue,
+  kAnyValue,
+  kAnyOrOmit,
+
+  kValueList,
+  kComplementedList,
+  kConjunctionList,
+
+  kValueRange,
+  kStringPattern,
+
+  kSuperset,
+  kSubset,
+
+  kImplication,
+
+  kDecode,
+  kDynamic,
+};
+enum class RtTypeKind : std::uint8_t {
+  kInteger,
+  kFloat,
+  kBoolean,
+
+  kCharstring,
+  kOctetstring,
+  kBitstring,
+  kHexstring,
+
+  kRecord,
+  kSet,
+
+  kRecordOf,
+  kSetOf,
+
+  kOptionalMember,
+};
+
 struct NumericTypeBindings {
   llvm::StructType* ty;
   //

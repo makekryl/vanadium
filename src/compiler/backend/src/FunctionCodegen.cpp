@@ -118,7 +118,7 @@ class ScopeManager {
     }
   }
 
-  llvm::AllocaInst* Alloc(std::string_view name, TypeSymbol ts) {
+  llvm::Value* Alloc(std::string_view name, TypeSymbol ts) {
     auto* ty = u_.GetSymbolType(ts);
     auto* alloca = createEntryBlockAlloca(ty, name);
     u_.builder.CreateLifetimeStart(alloca);
@@ -131,9 +131,9 @@ class ScopeManager {
                                                    });
     frame.ordered_vars.emplace_back(&it->second);
 
-    return alloca;
+    return EmitConstructorCall(alloca, ts);
   }
-  llvm::AllocaInst* AllocTemp(TypeSymbol ts) {
+  llvm::Value* AllocTemp(TypeSymbol ts) {
     auto* ty = u_.GetSymbolType(ts);
     auto* alloca = createEntryBlockAlloca(ty, "tmp");
     u_.builder.CreateLifetimeStart(alloca);
@@ -146,7 +146,7 @@ class ScopeManager {
     });
     frame.ordered_vars.emplace_back(&var);
 
-    return alloca;
+    return EmitConstructorCall(alloca, ts);
   }
   llvm::AllocaInst* AllocTrivialTemp(llvm::Type* ty, std::string_view name = "") {
     auto* alloca = createEntryBlockAlloca(ty, name);
@@ -191,6 +191,15 @@ class ScopeManager {
   }
 
  private:
+  llvm::Value* EmitConstructorCall(llvm::AllocaInst* alloca, TypeSymbol ts) {
+    if (!u_.IsOpaque(ts)) {
+      return alloca;
+    }
+    auto* pv = u_.builder.CreateCall(u_.rt.type_new_f, {u_.GetTypeInfo(ts)});
+    u_.builder.CreateStore(pv, alloca);
+    return pv;
+  }
+
   void EmitDestructorCalls(const Frame& frame) {
     if (frame.ordered_vars.empty()) {
       return;
@@ -590,18 +599,12 @@ void FunctionCodegen::CodegenDecl(const ast::nodes::Decl* n) {
       const bool is_opaque = u_.IsOpaque(ts);
 
       for (auto* decl : m->decls) {
-        auto* alloca = scope_->Alloc(Lit(decl->name), ts);
-        // TODO: unify w/ AssignmentExpr
-        llvm::Value* dest = alloca;
-        if (is_opaque) {
-          dest = u_.builder.CreateCall(u_.rt.type_new_f, {u_.GetTypeInfo(ts)});
-          u_.builder.CreateStore(dest, alloca);
-        }
+        auto* dest = scope_->Alloc(Lit(decl->name), ts);
         if (decl->value) {
           auto tmp_frame{EnterStackFrame(ScopeManager::Frame::Kind::kTemporaries)};
           CodegenExpr(decl->value, TypedSlot(dest, ts));
         } else if (!is_opaque) {
-          u_.builder.CreateStore(u_.GetUndef(ts), alloca);
+          u_.builder.CreateStore(u_.GetUndef(ts), dest);
         }
       }
 
@@ -921,7 +924,7 @@ RtSlot FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, RtSlot dest) {
     case ast::NodeKind::UnaryExpr: {
       const auto* m = expr->As<ast::nodes::UnaryExpr>();
 
-      auto vx = CodegenExpr(m->x).Unwrap();
+      auto* vx = CodegenExpr(m->x).Unwrap();
 
       const auto* sym =
           core::checker::ResolveExprType(&u_.sf, core::semantic::utils::FindScope(u_.sf.module->scope, m->x), m->x).sym;
@@ -950,7 +953,7 @@ RtSlot FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, RtSlot dest) {
         const StringTypeBindings* strb = u_.GetStringTypeBindings(sym);
         VANADIUM_DEBUG_ASSERT(strb, "Unhandled BinaryExpr xsym = {}", sym->GetName());
 
-        auto out = dest ? dest.Unwrap() : scope_->AllocTemp(sym);
+        auto* out = dest ? dest.Unwrap() : scope_->AllocTemp(sym);
         switch (m->op.kind) {
           case ast::TokenKind::NOT4B: {
             u_.builder.CreateCall(strb->not4b_f, {out, vx});
@@ -970,12 +973,16 @@ RtSlot FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, RtSlot dest) {
     case ast::NodeKind::SelectorExpr: {
       const auto* m = expr->As<ast::nodes::SelectorExpr>();
 
-      // TODO: optimize xsym chain resolution
+      // TODO: optimize chain symbols resolution
       auto* vx = CodegenExpr(m->x).ReadValue();
       const auto& xsym =
           core::checker::ResolveExprType(&u_.sf, core::semantic::utils::FindScope(u_.sf.module->scope, m), m->x);
-      return u_.builder.CreateCall(
-          u_.getOrDeclareExternalFunc(names::Getter(xsym, Lit(m->sel)), u_.rt.generic_getter_fn_ty), {vx});
+      const auto& sym =
+          core::checker::ResolveExprType(&u_.sf, core::semantic::utils::FindScope(u_.sf.module->scope, m), m);
+      return TypedSlot(
+          u_.builder.CreateCall(
+              u_.getOrDeclareExternalFunc(names::Getter(xsym, Lit(m->sel)), u_.rt.generic_getter_fn_ty), {vx}),
+          sym);
     }
 
     case ast::NodeKind::AssignmentExpr: {
@@ -1109,8 +1116,14 @@ RtSlot FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, RtSlot dest) {
 
       const bool does_return = ast::utils::DoesFunctionLikeReturn(func_sym->Declaration());
       if (does_return && !dest) {
-        const auto ret_isym = core::checker::ResolveCallableReturnType(
-            ast::utils::SourceFileOf(func_sym->Declaration()), func_sym->Declaration()->As<ast::nodes::Decl>());
+        auto ret_isym = core::checker::ResolveCallableReturnType(ast::utils::SourceFileOf(func_sym->Declaration()),
+                                                                 func_sym->Declaration()->As<ast::nodes::Decl>());
+        if (ret_isym.sym == &core::checker::symbols::kInferType) {
+          // TODO: sync/unify with ResolveExprType
+          ret_isym.sym = core::checker::ResolveExprType(
+                             &u_.sf, core::semantic::utils::FindScope(u_.sf.module->scope, m), m->args->list.back())
+                             .sym;
+        }
         assert(ret_isym);
         dest = TypedSlot(scope_->AllocTemp(ret_isym), ret_isym);
       }
@@ -1185,7 +1198,7 @@ RtSlot FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, RtSlot dest) {
                               dest.Unwrap(),
                               llvm::ConstantInt::get(u_.rt.tpl.listsize_ty, m->list.size()),
                               esz_slot,
-                              llvm::ConstantInt::get(u_.rt.tpl.tsel_ty, 5),  // TODO: UNHARDCODE THIS CONSTANT
+                              llvm::ConstantInt::get(u_.rt.tpl.tsel_ty, std::to_underlying(RtTplSelection::kValueList)),
                           });
       auto* esz = u_.builder.CreateLoad(esz_slot->getAllocatedType(), esz_slot, "esz");
       for (const auto& el : m->list) {

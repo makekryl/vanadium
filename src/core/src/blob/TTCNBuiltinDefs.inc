@@ -111,7 +111,7 @@ var ExampleType val = valueof(templateA); // OK
 var ExampleType val = valueof(templateB); // runtime error: omit is not a value
 ```
 */
-external function valueof(in template anytype instance) return __infer_arg_t
+external function valueof(in template __infer_arg_t instance) return __infer_arg_t
 
 external function log(in __vargs_t s)
 

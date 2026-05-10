@@ -1,0 +1,55 @@
+module ValueofStructs {
+
+type record SimpleRecord {
+  integer i,
+  float f,
+  boolean b,
+  charstring cs
+}
+testcase tc_simple() {
+  var template SimpleRecord t := {
+    i := 1,
+    f := 2.0,
+    b := true,
+    cs := "Hello"
+  };
+  var SimpleRecord v := valueof(t);
+
+  if (v.i != 1) { setverdict(fail); }
+  if (v.f != 2.0) { setverdict(fail); }
+  if (v.b != true) { setverdict(fail); }
+  if (v.cs != "Hello") { setverdict(fail); }
+
+  setverdict(pass);
+}
+
+type record CompositeRecord {
+  integer b,
+  SimpleRecord inner,
+  integer e
+}
+testcase tc_composite() {
+  var template CompositeRecord t := {
+    b := 111,
+    inner := {
+      i := 1,
+      f := 2.0,
+      b := true,
+      cs := "Hello"
+    },
+    e := 999
+  };
+  var CompositeRecord v := valueof(t);
+
+  if (v.b != 111) { setverdict(fail); }
+  if (v.e != 999) { setverdict(fail); }
+
+  if (v.inner.i != 1) { setverdict(fail); }
+  if (v.inner.f != 2.0) { setverdict(fail); }
+  if (v.inner.b != true) { setverdict(fail); }
+  if (v.inner.cs != "Hello") { setverdict(fail); }
+
+  setverdict(pass);
+}
+
+}

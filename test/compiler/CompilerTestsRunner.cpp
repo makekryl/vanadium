@@ -147,9 +147,6 @@ void VerdictTest::TestBody() {
 }  // namespace
 
 int main(int argc, char* argv[]) {
-  llvm::InitializeNativeTarget();
-  llvm::InitializeNativeTargetAsmPrinter();
-
   return e2e::runner::Run(argc, argv, "test/compiler/suites",
                           e2e::runner::SingleTestRegistrar("Compiler", [](auto file) {
                             return new VerdictTest(std::move(file));

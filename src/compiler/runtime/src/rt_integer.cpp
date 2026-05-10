@@ -25,8 +25,9 @@ const vrt_typeinfo_t integer_typeinfo{
 
     .members = nullptr,
 
-    .construct = vanadium::rt::helpers::VoidErased<integer_ctor>,
-    .destruct = vanadium::rt::helpers::VoidErased<integer_dtor>,
+    .construct = rt::helpers::void_erased_v<integer_ctor>,
+    .destruct = rt::helpers::void_erased_v<integer_dtor>,
+    .copy = rt::helpers::void_erased_v<&copy_integer>,
 
     .counterpart = &integer_template_typeinfo,
     .tpl_construct_value = nullptr,
@@ -62,8 +63,8 @@ void integer_dtor(vrt_integer_t* p) {
     return vrt_integer_wrap(a.value op b.value);                       \
   }
 
-void copy_integer(vrt_integer_t* dst, vrt_integer_t src) {
-  *dst = src;
+void copy_integer(vrt_integer_t* dst, const vrt_integer_t* src) {
+  *dst = *src;
 }
 
 DEFINE_BINARY_OP_TO_BOOL(eq, ==);
@@ -98,11 +99,11 @@ const vrt_typeinfo_t integer_template_typeinfo{
 
     .members = integer_typeinfo.members,
 
-    .construct = vanadium::rt::helpers::VoidErased<integer_template_ctor>,
-    .destruct = vanadium::rt::helpers::VoidErased<integer_template_dtor>,
+    .construct = rt::helpers::void_erased_v<integer_template_ctor>,
+    .destruct = rt::helpers::void_erased_v<integer_template_dtor>,
 
     .counterpart = &integer_typeinfo,
-    .tpl_construct_value = vanadium::rt::helpers::VoidErased<integer_template_ctor>,
+    .tpl_construct_value = rt::helpers::void_erased_v<integer_template_ctor>,
 };
 
 void integer_template_ctor(vrt_integer_template_t* p) {

@@ -26,27 +26,6 @@ namespace vanadium::compiler {
 
 namespace {
 
-// !!!!!!!!!!! SHOULD BE KEPT IN SYNC w/ rt_reflect.h !!!!!!!!!!!
-// TODO: deduplicate
-enum class RtTypeKind : std::uint8_t {
-  kInteger,
-  kFloat,
-  kBoolean,
-
-  kCharstring,
-  kOctetstring,
-  kBitstring,
-  kHexstring,
-
-  kRecord,
-  kSet,
-
-  kRecordOf,
-  kSetOf,
-
-  kOptionalMember,
-};
-
 llvm::Function* CodegenStructValueGetter(CodegenUnit& u, llvm::StructType* sty, std::size_t idx, TypeSymbol struct_sym,
                                          const core::semantic::Symbol* member_sym, std::string_view member_name) {
   auto* fn = u.getOrDeclareExternalFunc(names::Getter(struct_sym, member_name), u.rt.generic_getter_fn_ty);
@@ -78,8 +57,10 @@ llvm::Function* CodegenStructValueMuttor(CodegenUnit& u, llvm::StructType* sty, 
     v = u.builder.CreateLoad(u.builder.getPtrTy(), v);
   }  // else V*
   // TODO: recycle fn
-  u.builder.CreateCall(u.getOrDeclareExternalFunc(names::Dtor(member_sym), u.rt.obj_dtor_fn_ty), {v});
-  u.builder.CreateCall(u.getOrDeclareExternalFunc(names::Ctor(member_sym), u.rt.obj_ctor_fn_ty), {v});
+  if (!u.IsTrivial(member_sym)) {
+    u.builder.CreateCall(u.getOrDeclareExternalFunc(names::Dtor(member_sym), u.rt.obj_dtor_fn_ty), {v});
+    u.builder.CreateCall(u.getOrDeclareExternalFunc(names::Ctor(member_sym), u.rt.obj_ctor_fn_ty), {v});
+  }
 
   u.builder.CreateRet(v);
 
@@ -107,7 +88,7 @@ void CodegenStructValueType(CodegenUnit& u, const core::semantic::Symbol* sym, c
       if (u.IsOpaque(fts)) {
         auto* aptrv = u.builder.CreateCall(u.rt.type_new_f, {u.GetTypeInfo(fts), fv});
         u.builder.CreateStore(aptrv, fv);
-      } else {
+      } else if (!u.IsTrivial(fts)) {
         u.builder.CreateCall(u.getOrDeclareExternalFunc(names::Ctor(fts), u.rt.obj_ctor_fn_ty), {fv});
       }
     }
@@ -318,7 +299,7 @@ void CodegenStructTemplateType(CodegenUnit& u, const core::semantic::Symbol* sem
               fn_ctor,                                                                // ctor
               fn_dtor,                                                                // dtor
               llvm::ConstantPointerNull::get(u.builder.getPtrTy()),                   // copy
-              llvm::ConstantPointerNull::get(u.builder.getPtrTy()),                   // counterpart
+              u.GetTypeInfo({sym, false}),                                            // counterpart
               fn_tpl_val_ctor,                                                        // tpl_construct_value
           }));
 }

@@ -54,6 +54,7 @@ void vrt_tpl_any_or_omit(const vrt_typeinfo_t*, void*);
 bool vrt_dynmatcher_invoke(const vrt_dynmatcher_t*, const void*);
 void vrt_dynmatcher_free(const vrt_dynmatcher_t*);
 
+void vrt_valueof(void* result, const vrt_val_t* obj);
 void vrt_match(vrt_boolean_t*, const vrt_val_t* obj, const vrt_val_t* tobj);
 
 //

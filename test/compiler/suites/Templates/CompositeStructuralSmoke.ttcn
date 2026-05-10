@@ -1,0 +1,75 @@
+module CompositeStructuralSmoke {
+
+type record DeepRecord {
+  integer di
+}
+
+type record InnerRecord {
+  integer ii,
+  charstring ics,
+  DeepRecord idr
+}
+
+type record MyRecord {
+  integer i,
+  charstring cs,
+  InnerRecord inner
+}
+
+testcase specific() {
+  var template MyRecord t := {
+    i := (5, 10),
+    cs := "cs value",
+    inner := {
+      ii := (15, 20),
+      ics := "inner cs value",
+      idr := {
+        di := (30, 50)
+      }
+    }
+  };
+  log(t);
+  setverdict(pass);
+}
+
+testcase valuelist() {
+  var template MyRecord t := (
+    {
+      i := (15, 110),
+      cs := "cs value 1",
+      inner := {
+        ii := (115, 120),
+        ics := "inner cs value 1",
+        idr := {
+          di := (130, 150)
+        }
+      }
+    },
+    {
+      i := (25, 210),
+      cs := "cs value 2",
+      inner := {
+        ii := (215, 220),
+        ics := "inner cs value 2",
+        idr := {
+          di := (230, 250)
+        }
+      }
+    },
+    {
+      i := (35, 310),
+      cs := "cs value 3",
+      inner := {
+        ii := (315, 320),
+        ics := "inner cs value 3",
+        idr := {
+          di := (330, 350)
+        }
+      }
+    }
+  );
+  log(t);
+  setverdict(pass);
+}
+
+}

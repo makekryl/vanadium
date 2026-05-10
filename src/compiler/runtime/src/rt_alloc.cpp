@@ -4,6 +4,7 @@
 #include <cstdlib>
 
 #include "vanadium/runtime/StaticArena.h"
+#include "vanadium/runtime/TemplateMatching.h"
 #include "vanadium/runtime/runtime.h"
 
 namespace {
@@ -25,7 +26,7 @@ void vrt_unifree(void* p) {
 void* vrt_new(const vrt_typeinfo_t* td) {
   // TODO: write alignment to typeinfo, use it below
   auto* p = vrt_alloc(td->size, 4);
-  // printf("vrt_new(td=%s) -> %p\n", td->name, p);
+  // printf("vrt_new(td=%s, tpl=%d, size=%zu) -> %p\n", td->name, vanadium::rt::tpl::IsTemplateType(td), td->size, p);
   td->construct(p);
   return p;
 }

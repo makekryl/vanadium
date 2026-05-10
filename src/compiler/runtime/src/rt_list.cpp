@@ -40,8 +40,8 @@ const vrt_typeinfo_t list_typeinfo{
 
     .members = nullptr,
 
-    .construct = rt::helpers::VoidErased<list_ctor>,
-    .destruct = rt::helpers::VoidErased<list_dtor>,
+    .construct = rt::helpers::void_erased_v<list_ctor>,
+    .destruct = rt::helpers::void_erased_v<list_dtor>,
 };
 
 void list_ctor(vrt_list_t* l) {

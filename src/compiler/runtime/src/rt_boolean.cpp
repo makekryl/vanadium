@@ -21,15 +21,21 @@ const vrt_typeinfo_t boolean_typeinfo{
 
     .members = nullptr,
 
-    .construct = nullptr,
-    .destruct = nullptr,
+    .construct = rt::helpers::void_erased_v<boolean_ctor>,
+    .destruct = rt::helpers::void_erased_v<boolean_dtor>,
+    .copy = rt::helpers::void_erased_v<&copy_boolean>,
 
     .counterpart = &boolean_template_typeinfo,
     .tpl_construct_value = nullptr,
 };
 
-void copy_boolean(vrt_boolean_t* dst, vrt_boolean_t src) {
-  *dst = src;
+void boolean_ctor(vrt_boolean_t* p) {
+  p->is_bound = false;
+}
+void boolean_dtor(vrt_boolean_t* p) {}
+
+void copy_boolean(vrt_boolean_t* dst, const vrt_boolean_t* src) {
+  *dst = *src;
 }
 
 #define DEFINE_BINARY_OP_TO_BOOL(name, op)                    \
@@ -61,18 +67,26 @@ const vrt_typeinfo_t boolean_template_typeinfo{
 
     .members = nullptr,
 
-    .construct = vanadium::rt::helpers::VoidErased<boolean_template_ctor>,
-    .destruct = vanadium::rt::helpers::VoidErased<boolean_template_dtor>,
+    .construct = rt::helpers::void_erased_v<boolean_template_ctor>,
+    .destruct = rt::helpers::void_erased_v<boolean_template_dtor>,
+    .copy = rt::helpers::void_erased_v<copy_boolean>,
 
     .counterpart = &boolean_typeinfo,
-    .tpl_construct_value = vanadium::rt::helpers::VoidErased<boolean_template_dtor>,
+    .tpl_construct_value = rt::helpers::void_erased_v<boolean_template_ctor>,
 };
 
 void boolean_template_ctor(vrt_boolean_template_t* p) {
   rt::tpl::Construct(p);
 }
 void boolean_template_dtor(vrt_boolean_template_t* p) {
-  rt::tpl::Destruct<boolean_template_dtor>(p);
+  switch (p->tsel) {
+    case vrt_template_sel_e::kSpecificValue:
+    case vrt_template_sel_e::kValueRange:
+      break;
+    default:
+      rt::tpl::Destruct<boolean_template_dtor>(p);
+      break;
+  }
 }
 
 bool vrt_boolean_template_match(const vrt_boolean_t* v, const vrt_boolean_template_t* t) {

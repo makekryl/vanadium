@@ -63,8 +63,9 @@ const vrt_typeinfo_t bitstring_typeinfo{
 
     .members = nullptr,
 
-    .construct = rt::helpers::VoidErased<bitstring_ctor>,
-    .destruct = rt::helpers::VoidErased<bitstring_dtor>,
+    .construct = rt::helpers::void_erased_v<bitstring_ctor>,
+    .destruct = rt::helpers::void_erased_v<bitstring_dtor>,
+    .copy = rt::helpers::void_erased_v<copy_bitstring>,
 
     .counterpart = &bitstring_template_typeinfo,
     .tpl_construct_value = nullptr,
@@ -324,11 +325,11 @@ const vrt_typeinfo_t bitstring_template_typeinfo{
 
     .members = nullptr,
 
-    .construct = vanadium::rt::helpers::VoidErased<bitstring_template_ctor>,
-    .destruct = vanadium::rt::helpers::VoidErased<bitstring_template_dtor>,
+    .construct = rt::helpers::void_erased_v<bitstring_template_ctor>,
+    .destruct = rt::helpers::void_erased_v<bitstring_template_dtor>,
 
     .counterpart = &bitstring_typeinfo,
-    .tpl_construct_value = vanadium::rt::helpers::VoidErased<bitstring_template_ctor>,
+    .tpl_construct_value = rt::helpers::void_erased_v<bitstring_template_ctor>,
 };
 
 void bitstring_template_ctor(vrt_bitstring_template_t* p) {
