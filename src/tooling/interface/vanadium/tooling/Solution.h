@@ -38,7 +38,7 @@ class Solution {
 
   [[nodiscard]] const SolutionProject* ProjectOf(std::string_view path) const;
   [[nodiscard]] SolutionProject* ProjectOf(std::string_view path) {
-    return const_cast<SolutionProject*>(static_cast<const Solution*>(this)->ProjectOf(path));
+    return const_cast<SolutionProject*>(std::as_const(*this).ProjectOf(path));
   }
 
   auto Projects() const {

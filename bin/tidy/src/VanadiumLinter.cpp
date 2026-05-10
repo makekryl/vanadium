@@ -23,12 +23,14 @@
 #include <vanadium/version.h>
 
 namespace {
-vanadium::lint::Linter CreateLinter() {
-  vanadium::lint::Linter linter;
-  linter.RegisterRule<vanadium::lint::rules::NoEmpty>();
-  linter.RegisterRule<vanadium::lint::rules::NoUnusedVars>();
-  linter.RegisterRule<vanadium::lint::rules::NoUnusedImports>();
-  // linter.RegisterRule<vanadium::lint::rules::NoUnnecessaryValueof>();  // TODO: fix and re-enable
+using namespace vanadium;
+
+lint::Linter CreateLinter() {
+  lint::Linter linter;
+  linter.RegisterRule<lint::rules::NoEmpty>();
+  linter.RegisterRule<lint::rules::NoUnusedVars>();
+  linter.RegisterRule<lint::rules::NoUnusedImports>();
+  // linter.RegisterRule<lint::rules::NoUnnecessaryValueof>();  // TODO: fix and re-enable
   return linter;
 }
 
@@ -37,7 +39,7 @@ int main(int argc, char* argv[]) {
   bool use_autofix{false};
   std::string solution_path;
 
-  argparse::ArgumentParser ap("vanadium-tidy", vanadium::bin::kVersion);
+  argparse::ArgumentParser ap("vanadium-tidy", bin::kVersion);
   ap.add_description("TTCN-3 source code static analyzer");
   //
   ap.add_argument("--fix").store_into(use_autofix).help("apply autofixes where possible");
@@ -49,22 +51,19 @@ int main(int argc, char* argv[]) {
   PARSE_CLI_ARGS_OR_EXIT(ap, argc, argv, 1);
   //
 
-  vanadium::lib::concurrency::TaskArena task_arena(jobs);
+  lib::concurrency::TaskArena task_arena(jobs);
 
   const auto t_load_begin = std::chrono::steady_clock::now();
-  vanadium::lib::concurrency::TaskArena tttt(jobs);
-  auto solution_opt = task_arena.Execute([&] {
-    return vanadium::tooling::Solution::Load(
-        vanadium::tooling::fs::Root<vanadium::tooling::fs::SystemFS>(solution_path));
+  auto solution = task_arena.Execute([&] {
+    return tooling::Solution::Load(tooling::fs::Root<tooling::fs::SystemFS>(solution_path));
   });
 
-  if (!solution_opt) {
+  if (!solution) {
     fmt::println("{} {}", fmt::format(fmt::fg(fmt::color::red) | fmt::emphasis::bold, "error:"),
-                 solution_opt.error().String());
+                 solution.error().String());
     return 2;
   }
-  auto& solution = *solution_opt;
-  const auto& dir = solution.Directory();
+  const auto& dir = solution->Directory();
   const auto t_load_end = std::chrono::steady_clock::now();
 
   //
@@ -74,7 +73,7 @@ int main(int argc, char* argv[]) {
   std::size_t total_problems = 0;
   std::size_t fixed_problems = 0;
   auto linter = CreateLinter();
-  for (const auto& project : solution.Projects()) {
+  for (const auto& project : solution->Projects()) {
     if (!project.managed) {
       continue;
     }
@@ -85,7 +84,7 @@ int main(int argc, char* argv[]) {
         continue;
       }
 
-      fmt::print(fmt::emphasis::underline | fmt::emphasis::bold, "{}\n", solution.Directory().Join(sf.path));
+      fmt::print(fmt::emphasis::underline | fmt::emphasis::bold, "{}\n", dir.Join(sf.path));
       if (!sf.ast.errors.empty()) {
         fmt::println("\tFile has syntax errors");
         continue;
