@@ -462,25 +462,33 @@ class AstTransformer {
             //       while it is expected to be { name = 'oCTET_STRING', type = 'octetstring' }
             // todo: parse the value like asn1c does and validate it
 
-            // god we have to keep two versions: one with 1st letter in lowercase and one not...
-            std::string s(row.value);
-            auto* lc_field = NewNode<ttcn_ast::nodes::Field>([&](ttcn_ast::nodes::Field& f) {
-              // TODO: optimize
-              std::string ptypecpy(s);  // MEGA SHIT
-              ptypecpy[0] = std::tolower(ptypecpy[0]);
-              EmplaceIdent(f.name, AppendSource(ptypecpy));
-              f.type = NewNode<ttcn_ast::nodes::RefSpec>([&](ttcn_ast::nodes::RefSpec& rs) {
-                rs.x = NewNode<ttcn_ast::nodes::Ident>([&](ttcn_ast::nodes::Ident& ident) {
-                  ident.nrange = AppendSource(s);  // TODO: oh shi... (x2)
-                });
+            auto ftyperange = AppendSource(std::string(row.value));  // TODO: oh shi...
+            if (std::ranges::any_of(m.fields, [&](const ttcn_ast::nodes::Field* fld) -> bool {
+                  // comparing against ftyperange.String(range) because AppendSource also does token normalization
+                  return fld->type->As<ttcn_ast::nodes::RefSpec>()->x->On(adjusted_src_) ==
+                         ftyperange.String(adjusted_src_);
+                })) {
+              return true;  // legit duplicate type, continue search
+            }
+
+            auto* ftypenode = NewNode<ttcn_ast::nodes::RefSpec>([&](ttcn_ast::nodes::RefSpec& rs) {
+              rs.x = NewNode<ttcn_ast::nodes::Ident>([&](ttcn_ast::nodes::Ident& ident) {
+                ident.nrange = ftyperange;
               });
             });
-            m.fields.emplace_back(lc_field);
-            if (!std::islower(s[0])) {
+            m.fields.emplace_back(NewNode<ttcn_ast::nodes::Field>([&](ttcn_ast::nodes::Field& f) {
+              EmplaceIdent(f.name, ftyperange);
+              f.type = ftypenode;
+            }));
+            if (!std::islower(row.value[0])) {
+              // god we have to keep two versions: one with 1st letter in lowercase and one not...
               m.fields.emplace_back(NewNode<ttcn_ast::nodes::Field>([&](ttcn_ast::nodes::Field& f) {
-                // TODO: optimize
-                EmplaceIdent(f.name, AppendSource(s));
-                f.type = lc_field->type;  // cheap lol
+                EmplaceIdent(f.name, AppendSource([&] -> std::string {
+                               std::string ptypecpy(row.value);
+                               ptypecpy[0] = std::tolower(ptypecpy[0]);
+                               return ptypecpy;
+                             }()));
+                f.type = ftypenode;
               }));
             }
 
