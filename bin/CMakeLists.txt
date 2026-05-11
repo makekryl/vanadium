@@ -14,6 +14,7 @@ set(VANADIUM_TOOLS_TARGETS
   vanadium_fmt
   vanadiumd
   vanadium_tidy
+  vanadiumc
 )
 
 add_custom_target(vanadium_tools DEPENDS ${VANADIUM_TOOLS_TARGETS})
