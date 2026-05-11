@@ -1,5 +1,12 @@
+#include <cctype>
+#include <filesystem>
+#include <format>
 #include <fstream>
+#include <iterator>
 #include <print>
+#include <ranges>
+#include <string_view>
+#include <thread>
 
 #include <argparse/argparse.hpp>
 #include <magic_enum/magic_enum.hpp>
@@ -10,71 +17,160 @@
 #include <vanadium/bin/Bootstrap.h>
 #include <vanadium/compiler/Compiler.h>
 #include <vanadium/core/Program.h>
+#include <vanadium/lib/concurrency/TaskArena.h>
+#include <vanadium/tooling/Filesystem.h>
+#include <vanadium/tooling/Solution.h>
+#include <vanadium/tooling/impl/SystemFS.h>
 #include <vanadium/version.h>
 
+#include "vanadium/ast/ASTTypes.h"
+#include "vanadium/lib/Error.h"
+#include "vanadium/lib/FunctionRef.h"
+#include "vanadium/tooling/Project.h"
+
 namespace {
-bool CheckErrors(const vanadium::core::SourceFile* sf) {
-  if (!sf->ast.errors.empty()) {
-    for (const auto& err : sf->ast.errors) {
-      std::println(" {}:{} :: {}", err.range.begin, err.range.end, err.description);
+using namespace vanadium;
+
+void FormatError(std::string& buf, const tooling::fs::Path& base_path, const core::SourceFile* sf,
+                 const ast::Range& range, std::string_view message) {
+  const auto loc_begin = sf->ast.lines.Translate(range.begin);
+  const auto loc_end = sf->ast.lines.Translate(range.end);
+
+  std::format_to(std::back_inserter(buf), "{}:{}:{}: error: {}\n", base_path.Join(sf->path), loc_begin.line + 1,
+                 loc_begin.column + 1, message);
+
+  auto append_source_line = [&](std::size_t line_no, std::string_view line, std::size_t marker_begin,
+                                std::size_t marker_end) {
+    std::format_to(std::back_inserter(buf), " {:6} | {}\n", line_no + 1, line);
+    std::format_to(std::back_inserter(buf), " {:6} | ", "");
+    for (std::size_t i = 0; i < line.size(); ++i) {
+      char ch = ' ';
+      if (marker_begin == marker_end) {
+        if (i == marker_begin) {
+          ch = '^';
+        }
+      } else if (i >= marker_begin && i < marker_end && !std::isspace(line[i])) {
+        ch = '~';
+      }
+      buf += ch;
     }
-    return false;
+    buf += '\n';
+  };
+
+  if (loc_begin.line == loc_end.line) {
+    const auto line = sf->ast.lines.RangeOf(loc_begin.line).String(sf->src);
+
+    append_source_line(loc_begin.line, line, loc_begin.column, std::max(loc_begin.column + 1, loc_end.column));
+
+    return;
   }
-  if (!sf->semantic_errors.empty()) {
-    for (const auto& err : sf->semantic_errors) {
-      std::println(" {}:{} :: {}", err.range.begin, err.range.end, magic_enum::enum_name(err.type));
+
+  for (std::size_t line_no = loc_begin.line; line_no <= loc_end.line; ++line_no) {
+    const auto line = sf->ast.lines.RangeOf(line_no).String(sf->src);
+
+    std::size_t begin = 0;
+    std::size_t end = line.size();
+
+    if (line_no == loc_begin.line) {
+      begin = loc_begin.column;
     }
-    return false;
-  }
-  if (!sf->type_errors.empty()) {
-    for (const auto& err : sf->type_errors) {
-      std::println(" {}:{} :: {}", err.range.begin, err.range.end, err.message);
+
+    if (line_no == loc_end.line) {
+      end = loc_end.column;
     }
-    return false;
+
+    append_source_line(line_no, line, begin, end);
   }
-  return true;
+}
+
+std::size_t CheckErrors(const tooling::Solution& solution) {
+  std::string errbuf;
+  const auto print_err = [&](const core::SourceFile& sf, const ast::Range& range, std::string_view message) {
+    FormatError(errbuf, solution.Directory(), &sf, range, message);
+    std::cerr << errbuf;
+    errbuf.clear();
+  };
+
+  std::size_t errors = 0;
+  for (const auto& project : solution.Projects()) {
+    for (const auto& sf : project.program.Files() | std::views::values) {
+      for (const auto& err : sf.ast.errors) {
+        print_err(sf, err.range, err.description);
+      }
+      for (const auto& err : sf.semantic_errors) {
+        print_err(sf, err.range, magic_enum::enum_name(err.type));
+      }
+      for (const auto& err : sf.type_errors) {
+        print_err(sf, err.range, err.message);
+      }
+      errors += sf.ast.errors.size() + sf.semantic_errors.size() + sf.type_errors.size();
+    }
+  }
+
+  return errors;
 }
 
 int main(int argc, char* argv[]) {
-  argparse::ArgumentParser ap("vanadiumc", vanadium::bin::kVersion);
+  std::uint32_t jobs{std::clamp(std::thread::hardware_concurrency(), 1U, 4U)};
+  bool use_debug;
+
+  argparse::ArgumentParser ap("vanadiumc", bin::kVersion);
   ap.add_description("TTCN-3 Compiler");
   //
-  std::string filepath;
-  ap.add_argument("path").store_into(filepath).help("file path");
-  //
-  bool use_debug;
+  ap.add_argument("-j", "--parallel", "").store_into(jobs).help("maximum number of worker threads");
   ap.add_argument("-g").store_into(use_debug).flag().help("emit debug symbols");
+  //
+  std::string path;
+  ap.add_argument("path").store_into(path).help("project path");
 
   //
   PARSE_CLI_ARGS_OR_EXIT(ap, argc, argv, 1);
   //
 
-  vanadium::core::Program program;
-  program.Commit([&](auto& modify) {
-    const auto read_file = [](const std::string& path, std::string& buf) {
-      if (auto f = std::ifstream(path)) {
-        std::stringstream ss;
-        ss << f.rdbuf();
-        buf = ss.str();
-      } else {
-        assert(false);
-      }
-    };
-    modify.update(filepath, read_file);
-  });
+  lib::concurrency::TaskArena task_arena(jobs);
 
-  const auto* sf = program.GetFile(filepath);
-  if (!CheckErrors(sf)) {
+  auto solution = task_arena.Execute([&] {
+    if (path.ends_with(".ttcn")) {
+      // TODO: better CLI interface for this, drop Solution::WrapSingular hack
+      tooling::Project project(
+          tooling::fs::Root<tooling::fs::SystemFS>(std::filesystem::path(path).parent_path().string()), "",
+          {.root = true});
+      auto sol = tooling::Solution::WrapSingular(project);
+      const auto read_file = [&path](const std::string&, std::string& buf) {
+        if (auto f = std::ifstream(path)) {
+          std::stringstream ss;
+          ss << f.rdbuf();
+          buf = ss.str();
+        } else {
+          assert(false);
+        }
+      };
+      sol.Projects().front().program.Commit([&](auto& modify) {
+        modify.update(std::filesystem::path(path).filename(), read_file);
+      });
+      return std::expected<tooling::Solution, Error>{std::move(sol)};
+    }
+    return tooling::Solution::Load(tooling::fs::Root<tooling::fs::SystemFS>(path));
+  });
+  if (!solution) {
+    std::println("error: {}", solution.error().String());
+    return 2;
+  }
+  if (CheckErrors(*solution) != 0) {
     return 1;
   }
 
-  vanadium::compiler::Compile(program, {.debug = use_debug},
-                              [&](const vanadium::core::SourceFile& sf, llvm::Module& mod) {
-                                std::println("Compiled '{}'", sf.path);
-                                std::error_code ec;
-                                llvm::raw_fd_ostream dest(std::format("{}.ll", sf.path), ec);
-                                mod.print(dest, nullptr);
-                              });
+  for (const auto& project : solution->Projects()) {
+    task_arena.Execute([&] {
+      compiler::Compile(project.program, {.debug = use_debug}, [&](const core::SourceFile& sf, llvm::Module& mod) {
+        auto full_path = solution->Directory().Join(sf.path);
+        std::println("Compiled '{}'", full_path);
+        std::error_code ec;
+        llvm::raw_fd_ostream dest(std::format("{}.ll", full_path), ec);
+        mod.print(dest, nullptr);
+      });
+    });
+  }
 
   return 0;
 }

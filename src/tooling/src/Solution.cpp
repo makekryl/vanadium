@@ -204,4 +204,10 @@ const SolutionProject* Solution::ProjectOf(std::string_view path) const {
   return nullptr;
 }
 
+Solution Solution::WrapSingular(Project project) {
+  Solution solution(std::move(project));
+  solution.projects_.emplace("<root>", Project(solution.root_project_));
+  return solution;
+}
+
 }  // namespace vanadium::tooling

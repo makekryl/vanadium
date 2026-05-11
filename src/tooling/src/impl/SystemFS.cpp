@@ -24,6 +24,9 @@ Error GetSystemError(std::string_view text) {
 namespace vanadium::tooling::fs {
 
 std::string SystemFS::Join(std::string_view base_path, std::string_view path) const {
+  if (base_path.ends_with(std::filesystem::path::preferred_separator)) {
+    base_path.remove_suffix(1);
+  }
   return std::format("{}{}{}", base_path, std::filesystem::path::preferred_separator, path);
 }
 

@@ -51,6 +51,8 @@ class Solution {
   static std::expected<Solution, Error> Load(Project&& root_project, lib::Consumer<Solution&> precommit = [](auto&) {});
   static std::expected<Solution, Error> Load(const fs::Path&, lib::Consumer<Solution&> precommit = [](auto&) {});
 
+  static Solution WrapSingular(Project);
+
  private:
   Solution(Project&& root_project);
 

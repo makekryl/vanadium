@@ -11,5 +11,6 @@ target_link_libraries(vanadiumc PRIVATE
   vanadium_bin_boostrap
   vanadium_core
   vanadium_compiler
+  vanadium_tooling
   argparse::argparse
 )

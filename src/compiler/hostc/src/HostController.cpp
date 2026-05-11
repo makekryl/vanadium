@@ -18,7 +18,7 @@ int main(int argc, char* argv[]) {
   const auto& modules = hostc::GetModules();
   for (const auto& mod : modules) {
     for (const auto& tc : std::span{mod->testcases, mod->testcases_count}) {
-      std::println("Test case {} started.", tc.name);
+      std::println("Test case {}.{} started.", mod->name, tc.name);
       vrt_clearverdict();
       try {
         tc.fn();
@@ -27,7 +27,8 @@ int main(int argc, char* argv[]) {
         auto errverdict = vrt_integer_wrap(std::to_underlying(vrt_verdicttype::error));
         vrt_setverdict(&errverdict, nullptr);
       }
-      std::println("Test case {} finished. Verdict: {}", tc.name, magic_enum::enum_name(vrt_getverdict()));
+      std::println("Test case {}.{} finished. Verdict: {}", mod->name, tc.name,
+                   magic_enum::enum_name(vrt_getverdict()));
     }
   }
 
