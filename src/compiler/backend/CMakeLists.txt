@@ -4,7 +4,7 @@ add_library(vanadium_compiler STATIC
   src/CodegenUnit.cpp
   src/IRHelpers.cpp
   src/LiteralsParser.cpp
-  src/TypeCodegen.cpp
+  src/StructCodegen.cpp
   src/FunctionCodegen.cpp
   src/RuntimeBindings.cpp
   src/ModuleRegistrar.cpp

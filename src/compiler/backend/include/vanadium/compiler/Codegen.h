@@ -130,7 +130,8 @@ std::string TplValCtor(TypeSymbol);
 
 namespace values {}
 
-void CodegenType(CodegenUnit&, const core::semantic::Symbol*);
+void CodegenStruct(CodegenUnit&, const core::semantic::Symbol*, const ast::nodes::StructTypeDecl*);
+void CodegenStruct(CodegenUnit&, const core::semantic::Symbol*, const ast::nodes::StructSpec*);
 void CodegenFunction(CodegenUnit&, const core::semantic::Symbol*);
 
 void GenerateModuleRegistrationCode(CodegenUnit&);
