@@ -97,10 +97,12 @@ class ScopeManager {
     auto frame = std::move(frame_stack_.back());
     frame_stack_.pop_back();
 
-    if (!u_.builder.GetInsertBlock()->getTerminator()) {
+    {
+      llvm::IRBuilder<>::InsertPointGuard b_guard(u_.builder);
+      if (auto* term = u_.builder.GetInsertBlock()->getTerminator()) {
+        u_.builder.SetInsertPoint(term);
+      }
       EmitDestructorCalls(frame);
-    } else {
-      assert(false);
     }
   }
 
