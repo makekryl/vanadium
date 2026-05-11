@@ -14,19 +14,19 @@
 #include <llvm/IR/Module.h>
 #include <llvm/Support/raw_ostream.h>
 
+#include <vanadium/ast/ASTTypes.h>
 #include <vanadium/bin/Bootstrap.h>
 #include <vanadium/compiler/Compiler.h>
 #include <vanadium/core/Program.h>
+#include <vanadium/lib/ColoredFmt.h>
+#include <vanadium/lib/Error.h>
+#include <vanadium/lib/FunctionRef.h>
 #include <vanadium/lib/concurrency/TaskArena.h>
 #include <vanadium/tooling/Filesystem.h>
+#include <vanadium/tooling/Project.h>
 #include <vanadium/tooling/Solution.h>
 #include <vanadium/tooling/impl/SystemFS.h>
 #include <vanadium/version.h>
-
-#include "vanadium/ast/ASTTypes.h"
-#include "vanadium/lib/Error.h"
-#include "vanadium/lib/FunctionRef.h"
-#include "vanadium/tooling/Project.h"
 
 namespace {
 using namespace vanadium;
@@ -36,13 +36,20 @@ void FormatError(std::string& buf, const tooling::fs::Path& base_path, const cor
   const auto loc_begin = sf->ast.lines.Translate(range.begin);
   const auto loc_end = sf->ast.lines.Translate(range.end);
 
-  std::format_to(std::back_inserter(buf), "{}:{}:{}: error: {}\n", base_path.Join(sf->path), loc_begin.line + 1,
-                 loc_begin.column + 1, message);
+  cfmt::format_to(std::back_inserter(buf), cfmt::emphasis::bold, "{}:{}:{}: ", base_path.Join(sf->path),
+                  loc_begin.line + 1, loc_begin.column + 1);
+  cfmt::format_to(std::back_inserter(buf), cfmt::emphasis::bold | cfmt::fg(cfmt::terminal_color::red), "error: ");
+  buf += message;
+  buf += '\n';
 
-  auto append_source_line = [&](std::size_t line_no, std::string_view line, std::size_t marker_begin,
-                                std::size_t marker_end) {
-    std::format_to(std::back_inserter(buf), " {:6} | {}\n", line_no + 1, line);
-    std::format_to(std::back_inserter(buf), " {:6} | ", "");
+  const auto append_source_line = [&](std::size_t line_no, std::string_view line, std::size_t marker_begin,
+                                      std::size_t marker_end) {
+    cfmt::format_to(std::back_inserter(buf), cfmt::emphasis::faint, " {:6} | ", line_no + 1);
+    buf += line;
+    buf += '\n';
+
+    cfmt::format_to(std::back_inserter(buf), cfmt::emphasis::faint, " {:6} | ", "");
+    buf += cfmt::detail::make_foreground_color<char>(cfmt::terminal_color::cyan);
     for (std::size_t i = 0; i < line.size(); ++i) {
       char ch = ' ';
       if (marker_begin == marker_end) {
@@ -54,31 +61,20 @@ void FormatError(std::string& buf, const tooling::fs::Path& base_path, const cor
       }
       buf += ch;
     }
+    cfmt::detail::reset_color(std::back_inserter(buf));
     buf += '\n';
   };
 
   if (loc_begin.line == loc_end.line) {
     const auto line = sf->ast.lines.RangeOf(loc_begin.line).String(sf->src);
-
     append_source_line(loc_begin.line, line, loc_begin.column, std::max(loc_begin.column + 1, loc_end.column));
-
     return;
   }
 
   for (std::size_t line_no = loc_begin.line; line_no <= loc_end.line; ++line_no) {
     const auto line = sf->ast.lines.RangeOf(line_no).String(sf->src);
-
-    std::size_t begin = 0;
-    std::size_t end = line.size();
-
-    if (line_no == loc_begin.line) {
-      begin = loc_begin.column;
-    }
-
-    if (line_no == loc_end.line) {
-      end = loc_end.column;
-    }
-
+    const auto begin = line_no == loc_begin.line ? loc_begin.column : 0;
+    const auto end = line_no == loc_end.line ? loc_end.column : line.size();
     append_source_line(line_no, line, begin, end);
   }
 }

@@ -492,8 +492,8 @@ constexpr auto make_emphasis(emphasis em) noexcept -> ansi_color_escape<Char> {
 }
 
 template <typename OutputIt>
-inline void reset_color(OutputIt out) {
-  std::ranges::copy("\x1b[0m", out);
+inline auto reset_color(OutputIt out) -> OutputIt {
+  return std::ranges::copy("\x1b[0m", out).out;
 }
 
 template <typename T>
@@ -504,23 +504,24 @@ struct styled_arg {
 };
 
 template <typename OutputIt, typename Char>
-void vformat_to(OutputIt out, text_style ts, std::basic_string_view<Char> fmt, std::format_args args) {
+auto vformat_to(OutputIt out, text_style ts, std::basic_string_view<Char> fmt, std::format_args args) -> OutputIt {
   if (ts.has_emphasis()) {
     auto emphasis = make_emphasis<Char>(ts.get_emphasis());
-    std::ranges::copy(emphasis, out);
+    out = std::ranges::copy(emphasis, out).out;
   }
   if (ts.has_foreground()) {
     auto foreground = make_foreground_color<Char>(ts.get_foreground());
-    std::ranges::copy(foreground, out);
+    out = std::ranges::copy(foreground, out).out;
   }
   if (ts.has_background()) {
     auto background = make_background_color<Char>(ts.get_background());
-    std::ranges::copy(background, out);
+    out = std::ranges::copy(background, out).out;
   }
-  std::vformat_to(out, fmt, args);
+  out = std::vformat_to(out, fmt, args);
   if (ts != text_style()) {
-    reset_color(out);
+    out = reset_color(out);
   }
+  return out;
 }
 }  // namespace detail
 
@@ -647,8 +648,7 @@ struct std::formatter<cfmt::detail::styled_arg<T>, Char> : formatter<T, Char> {
     }
     out = formatter<T, Char>::format(arg.value, ctx);
     if (has_style) {
-      auto reset_color = std::string_view("\x1b[0m");
-      out = std::copy(reset_color.begin(), reset_color.end(), out);
+      out = detail::reset_color(out);
     }
     return out;
   }
