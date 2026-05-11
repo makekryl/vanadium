@@ -100,10 +100,13 @@ std::size_t CheckErrors(const tooling::Solution& solution) {
       for (const auto& err : sf.semantic_errors) {
         print_err(sf, err.range, magic_enum::enum_name(err.type));
       }
+      for (const auto& ident : sf.module->unresolved) {
+        print_err(sf, ident->nrange, std::format("unknown symbol '{}'", sf.Text(ident)));
+      }
       for (const auto& err : sf.type_errors) {
         print_err(sf, err.range, err.message);
       }
-      errors += sf.ast.errors.size() + sf.semantic_errors.size() + sf.type_errors.size();
+      errors += sf.ast.errors.size() + sf.semantic_errors.size() + sf.module->unresolved.size() + sf.type_errors.size();
     }
   }
 

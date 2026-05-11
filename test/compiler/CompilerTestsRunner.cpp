@@ -90,6 +90,14 @@ void VerdictTest::TestBody() {
     }
     return errbuf;
   }();
+  ASSERT_TRUE(sf->semantic_errors.empty()) << [&] -> std::string {
+    std::string errbuf = "Unresolved symbols:\n";
+    for (const auto& ident : sf->module->unresolved) {
+      std::format_to(std::back_inserter(errbuf), " {}:{} :: {}\n", ident->nrange.begin, ident->nrange.end,
+                     sf->Text(ident));
+    }
+    return errbuf;
+  }();
   ASSERT_TRUE(sf->type_errors.empty()) << [&] -> std::string {
     std::string errbuf = "Type errors:\n";
     for (const auto& err : sf->type_errors) {
