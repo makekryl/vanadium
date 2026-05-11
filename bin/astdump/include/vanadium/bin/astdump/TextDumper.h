@@ -14,18 +14,18 @@
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/ASTTypes.h>
 #include <vanadium/ast/defs/magic_enum_defs.h>
-#include <vanadium/lib/AsciiColors.h>
+#include <vanadium/lib/AnsiColors.h>
 
 class TextASTDumper {
  private:
   TextASTDumper(vanadium::ast::AST& ast, std::ostream& out) : ast_(ast), out_(out) {}
 
   void WriteIndent() {
-    out_ << asciicolors::kWhite;
+    out_ << ansicolors::kWhite;
     for (std::size_t i = 0; i < indent_; i++) {
       out_ << "·  ";
     }
-    out_ << asciicolors::kReset;
+    out_ << ansicolors::kReset;
   }
 
   void WriteName(std::string_view name, std::optional<vanadium::ast::Range> range = std::nullopt) {
@@ -47,15 +47,15 @@ class TextASTDumper {
     }
 
     WriteIndent();
-    out_ << asciicolors::kBrightGray << name << ": " << asciicolors::kReset;
+    out_ << ansicolors::kBrightGray << name << ": " << ansicolors::kReset;
   }
 
   void WriteValue(std::string_view value) {
     if (value.length() > 8192) {
-      out_ << asciicolors::kRed << value << asciicolors::kReset;
+      out_ << ansicolors::kRed << value << ansicolors::kReset;
       return;
     }
-    out_ << asciicolors::kBrightCyan << value << asciicolors::kReset;
+    out_ << ansicolors::kBrightCyan << value << ansicolors::kReset;
   }
 
   template <typename F>

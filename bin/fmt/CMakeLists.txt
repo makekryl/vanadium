@@ -13,5 +13,4 @@ target_link_libraries(vanadium_fmt PRIVATE
   vanadium_format
   argparse::argparse
   reflectcpp
-  fmt::fmt
 )

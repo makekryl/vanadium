@@ -1,6 +1,6 @@
 #pragma once
 
-namespace asciicolors {
+namespace ansicolors {
 
 inline constexpr const char* const kReset = "\e[0m";
 
@@ -12,4 +12,4 @@ inline constexpr const char* const kBrightGray = "\e[1;90m";
 inline constexpr const char* const kBrightCyan = "\e[0;96m";
 inline constexpr const char* const kRed = "\e[31m";
 
-}  // namespace asciicolors
+}  // namespace ansicolors

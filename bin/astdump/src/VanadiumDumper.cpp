@@ -11,8 +11,8 @@
 #include <vanadium/ast/AST.h>
 #include <vanadium/ast/Parser.h>
 #include <vanadium/bin/Bootstrap.h>
+#include <vanadium/lib/AnsiColors.h>
 #include <vanadium/lib/Arena.h>
-#include <vanadium/lib/AsciiColors.h>
 #include <vanadium/version.h>
 
 #include "vanadium/bin/astdump/TextDumper.h"
@@ -89,13 +89,13 @@ int main(int argc, char* argv[]) {
   std::cin.tie(nullptr);
 
   if (!ast->errors.empty()) {
-    std::println(stderr, "{}{}{}{}", asciicolors::kRed, asciicolors::kBold,
+    std::println(stderr, "{}{}{}{}", ansicolors::kRed, ansicolors::kBold,
                  std::format(" (!) {} syntax{} errors", ast->errors.size(), is_asn ? " and/or semantic" : ""),
-                 asciicolors::kReset);
+                 ansicolors::kReset);
     for (const auto& err : ast->errors) {
-      std::println(stderr, "{}{}{}{}{}{} - {}{}", asciicolors::kDim, asciicolors::kRed, asciicolors::kBold,
-                   std::format("{}:{}", err.range.begin, err.range.end), asciicolors::kReset, asciicolors::kRed,
-                   err.description, asciicolors::kReset);
+      std::println(stderr, "{}{}{}{}{}{} - {}{}", ansicolors::kDim, ansicolors::kRed, ansicolors::kBold,
+                   std::format("{}:{}", err.range.begin, err.range.end), ansicolors::kReset, ansicolors::kRed,
+                   err.description, ansicolors::kReset);
     }
   }
 
@@ -103,9 +103,9 @@ int main(int argc, char* argv[]) {
     d.Dump();
   });
 
-  std::println(std::cout, "\n{}{}  * Parsing took {} ms ({} KB) {}", asciicolors::kDim, asciicolors::kBold,
+  std::println(std::cout, "\n{}{}  * Parsing took {} ms ({} KB) {}", ansicolors::kDim, ansicolors::kBold,
                std::chrono::duration_cast<std::chrono::milliseconds>(ts_end - ts_begin).count(),
-               arena.SpaceUsed() / 1024, asciicolors::kReset);
+               arena.SpaceUsed() / 1024, ansicolors::kReset);
 
   return 0;
 }

@@ -7,7 +7,7 @@
   do {                                                                     \
     std::println(stderr, __FILE__ ":{} :: " msg, __LINE__, ##__VA_ARGS__); \
     std::fflush(stderr);                                                   \
-    std::exit(42);                                                         \
+    std::abort();                                                          \
   } while (0)
 
 #define VANADIUM_DEBUG_ASSERT(cond, msg, ...)   \

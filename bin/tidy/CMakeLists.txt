@@ -11,5 +11,4 @@ target_link_libraries(vanadium_tidy PRIVATE
   vanadium_lint
   vanadium_tooling
   argparse::argparse
-  fmt::fmt
 )

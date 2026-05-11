@@ -5,11 +5,10 @@
 #include <thread>
 
 #include <argparse/argparse.hpp>
-#include <fmt/color.h>
-#include <fmt/core.h>
 
 #include <vanadium/bin/Bootstrap.h>
 #include <vanadium/core/Program.h>
+#include <vanadium/lib/ColoredFmt.h>
 #include <vanadium/lib/concurrency/TaskArena.h>
 #include <vanadium/lint/Context.h>
 #include <vanadium/lint/Linter.h>
@@ -59,7 +58,7 @@ int main(int argc, char* argv[]) {
   });
 
   if (!solution) {
-    fmt::println("{} {}", fmt::format(fmt::fg(fmt::color::red) | fmt::emphasis::bold, "error:"),
+    std::println("{} {}", cfmt::format(cfmt::fg(cfmt::color::red) | cfmt::emphasis::bold, "error:"),
                  solution.error().String());
     return 2;
   }
@@ -84,9 +83,9 @@ int main(int argc, char* argv[]) {
         continue;
       }
 
-      fmt::print(fmt::emphasis::underline | fmt::emphasis::bold, "{}\n", dir.Join(sf.path));
+      cfmt::print(cfmt::emphasis::underline | cfmt::emphasis::bold, "{}\n", dir.Join(sf.path));
       if (!sf.ast.errors.empty()) {
-        fmt::println("\tFile has syntax errors");
+        std::println("\tFile has syntax errors");
         continue;
       }
 
@@ -96,9 +95,9 @@ int main(int argc, char* argv[]) {
         const auto&& [fixed_source, refined_problems] = linter.Fix(sf, std::move(problems));
         if (fixed_source) {
           if (const auto& err = dir.WriteFile(sf.path, *fixed_source); err) {
-            fmt::println(
+            std::println(
                 "{} {}",
-                fmt::format(fmt::fg(fmt::color::red) | fmt::emphasis::bold, "failed to write to file {}:", sf.path),
+                cfmt::format(cfmt::fg(cfmt::color::red) | cfmt::emphasis::bold, "failed to write to file {}:", sf.path),
                 err->String());
             return 2;
           }
@@ -110,29 +109,30 @@ int main(int argc, char* argv[]) {
       }
       for (const auto& problem : problems) {
         const auto&& loc = sf.ast.lines.Translate(problem.range.begin);
-        fmt::print(" {}   {}   {}  {}\n",
-                   fmt::format(fmt::fg(fmt::color::black), "{:5}:{:<3}", loc.line + 1, loc.column + 1),
-                   fmt::format(fmt::fg(fmt::color::tomato), "error"), fmt::format("{:<60}", problem.description),
-                   fmt::format(fmt::fg(fmt::color::black), problem.reporter));
+        std::print(" {}   {}   {}  {}\n",
+                   cfmt::format(cfmt::fg(cfmt::color::black), "{:5}:{:<3}", loc.line + 1, loc.column + 1),
+                   cfmt::format(cfmt::fg(cfmt::color::tomato), "error"), std::format("{:<60}", problem.description),
+                   cfmt::format(cfmt::fg(cfmt::color::black), "{}", problem.reporter));
       }
       total_problems += problems.size();
     }
   }
 
   if (fixed_problems > 0) {
-    fmt::print(fmt::emphasis::bold | fmt::fg(fmt::color::cornflower_blue), "\n ● Fixed {} problems\n", fixed_problems);
+    cfmt::print(cfmt::emphasis::bold | cfmt::fg(cfmt::color::cornflower_blue), "\n ● Fixed {} problems\n",
+                fixed_problems);
   }
 
   const bool has_problems = total_problems > 0;
-  fmt::print(fmt::emphasis::bold | fmt::fg(has_problems ? fmt::color::tomato : fmt::color::green), "\n {}  {}\n",
-             has_problems ? "✘" : "✔",
-             has_problems ? fmt::format("{} errors detected", total_problems) : "no problems found");
+  cfmt::print(cfmt::emphasis::bold | cfmt::fg(has_problems ? cfmt::color::tomato : cfmt::color::green), "\n {}  {}\n",
+              has_problems ? "✘" : "✔",
+              has_problems ? std::format("{} errors detected", total_problems) : "no problems found");
 
-  fmt::print(fmt::fg(fmt::color::cyan), "\n * Project loaded in {} ms with {} jobs\n\n",
-             std::chrono::duration_cast<std::chrono::milliseconds>(t_load_end - t_load_begin).count(), jobs);
+  cfmt::print(cfmt::fg(cfmt::color::cyan), "\n * Project loaded in {} ms with {} jobs\n\n",
+              std::chrono::duration_cast<std::chrono::milliseconds>(t_load_end - t_load_begin).count(), jobs);
   const auto t_lint_end = std::chrono::steady_clock::now();
-  fmt::print(fmt::fg(fmt::color::cyan), "\n                         ({} ms)\n",
-             std::chrono::duration_cast<std::chrono::milliseconds>(t_lint_end - t_lint_begin).count());
+  cfmt::print(cfmt::fg(cfmt::color::cyan), "\n                         ({} ms)\n",
+              std::chrono::duration_cast<std::chrono::milliseconds>(t_lint_end - t_lint_begin).count());
 
   return has_problems ? 1 : 0;
 }

@@ -7,8 +7,8 @@
 
 #include <magic_enum/magic_enum.hpp>
 
+#include <vanadium/lib/AnsiColors.h>
 #include <vanadium/lib/Arena.h>
-#include <vanadium/lib/AsciiColors.h>
 #include <vanadium/lib/Metaprogramming.h>
 
 #include "../include/vanadium/format/AstSerializer.h"  // TODO(?): move to the interface
@@ -32,15 +32,15 @@ class SerializedTreeDumper {
   void WriteKey(std::string_view name) {
     out_ << "\n";
 
-    out_ << asciicolors::kWhite;
+    out_ << ansicolors::kWhite;
     for (std::size_t i = 0; i < indent_; i++) {
       out_ << "·  ";
     }
-    out_ << asciicolors::kReset;
-    out_ << asciicolors::kBrightGray << name << ": " << asciicolors::kReset;
+    out_ << ansicolors::kReset;
+    out_ << ansicolors::kBrightGray << name << ": " << ansicolors::kReset;
   }
   void WriteValue(std::string_view value) {
-    out_ << asciicolors::kBrightCyan << value << asciicolors::kReset;
+    out_ << ansicolors::kBrightCyan << value << ansicolors::kReset;
   }
 
   void DumpUnit(const format::Unit& u) {
