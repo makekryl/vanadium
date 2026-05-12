@@ -14,6 +14,29 @@ testcase assign() {
 }
 
 testcase eq() {
+  if (true == true) {
+  } else {
+    setverdict(fail);
+  }
+  if (false == false) {
+  } else {
+    setverdict(fail);
+  }
+
+  var boolean b_true := true;
+  var boolean b_false := false;
+  if (b_true == b_true) {
+  } else {
+    setverdict(fail);
+  }
+  if (b_false == b_false) {
+  } else {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+testcase eq_contradiction() {
   if (true == false) {
     setverdict(fail);
   }
@@ -34,6 +57,29 @@ testcase eq() {
 }
 
 testcase ne() {
+  if (true != false) {
+  } else {
+    setverdict(fail);
+  }
+  if (false != true) {
+  } else {
+    setverdict(fail);
+  }
+
+  var boolean b_true := true;
+  var boolean b_false := false;
+  if (b_true != b_false) {
+  } else {
+    setverdict(fail);
+  }
+  if (b_false != b_true) {
+  } else {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+testcase ne_contradiction() {
   if (true != true) {
     setverdict(fail);
   }

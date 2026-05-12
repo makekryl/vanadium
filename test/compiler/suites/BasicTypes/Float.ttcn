@@ -1,16 +1,14 @@
-module Integer {
-
-// TODO: register function like expect(boolean, msg) for compiler e2e
+module Float {
 
 testcase eq() {
-  if (5 == 5) {
+  if (5.0 == 5.0) {
   } else {
     setverdict(fail);
   }
 
-  var integer i1 := 5;
-  var integer i2 := 5;
-  if (i1 == i2) {
+  var float f1 := 5.0;
+  var float f2 := 5.0;
+  if (f1 == f2) {
   } else {
     setverdict(fail);
   }
@@ -18,13 +16,13 @@ testcase eq() {
   setverdict(pass);
 }
 testcase eq_contradiction() {
-  if (5 == 6) {
+  if (5.0 == 6.0) {
     setverdict(fail);
   }
 
-  var integer i1 := 5;
-  var integer i2 := 6;
-  if (i1 == i2) {
+  var float f1 := 5.0;
+  var float f2 := 6.0;
+  if (f1 == f2) {
     setverdict(fail);
   }
 
@@ -32,14 +30,14 @@ testcase eq_contradiction() {
 }
 
 testcase ne() {
-  if (5 != 6) {
+  if (5.0 != 6.0) {
   } else {
     setverdict(fail);
   }
 
-  var integer i1 := 5;
-  var integer i2 := 6;
-  if (i1 != i2) {
+  var float f1 := 5.0;
+  var float f2 := 6.0;
+  if (f1 != f2) {
   } else {
     setverdict(fail);
   }
@@ -47,13 +45,13 @@ testcase ne() {
   setverdict(pass);
 }
 testcase ne_contradiction() {
-  if (5 != 5) {
+  if (5.0 != 5.0) {
     setverdict(fail);
   }
 
-  var integer i1 := 5;
-  var integer i2 := 5;
-  if (i1 != i2) {
+  var float f1 := 5.0;
+  var float f2 := 5.0;
+  if (f1 != f2) {
     setverdict(fail);
   }
 
@@ -61,13 +59,13 @@ testcase ne_contradiction() {
 }
 
 testcase add() {
-  if ((2 + 3) != 5) {
+  if ((2.0 + 3.0) != 5.0) {
     setverdict(fail);
   }
 
-  var integer i1 := 2;
-  var integer i2 := 3;
-  if ((i1 + i2) != 5) {
+  var float f1 := 2.0;
+  var float f2 := 3.0;
+  if ((f1 + f2) != 5.0) {
     setverdict(fail);
   }
 
@@ -75,26 +73,26 @@ testcase add() {
 }
 
 testcase sub() {
-  if ((10 - 3) != 7) {
+  if ((10.0 - 3.0) != 7.0) {
     setverdict(fail);
   }
 
-  var integer i1 := 10;
-  var integer i2 := 3;
-  if ((i1 - i2) != 15) {
+  var float f1 := 10.0;
+  var float f2 := 3.0;
+  if ((f1 - f2) != 15.0) {
     setverdict(fail);
   }
 
   setverdict(pass);
 }
 testcase sub_neg() {
-  if ((3 - 10) != -7) {
+  if ((3.0 - 10.0) != -7.0) {
     setverdict(fail);
   }
 
-  var integer i1 := 3;
-  var integer i2 := 10;
-  if ((i1 - i2) != -7) {
+  var float f1 := 3.0;
+  var float f2 := 10.0;
+  if ((f1 - f2) != -7.0) {
     setverdict(fail);
   }
 
@@ -102,13 +100,13 @@ testcase sub_neg() {
 }
 
 testcase mul() {
-  if ((4 * 5) != 20) {
+  if ((4.0 * 5.0) != 20.0) {
     setverdict(fail);
   }
 
-  var integer i1 := 4;
-  var integer i2 := 5;
-  if ((i1 * i2) != 42) {
+  var float f1 := 4.0;
+  var float f2 := 5.0;
+  if ((f1 * f2) != 42.0) {
     setverdict(fail);
   }
 
@@ -116,13 +114,13 @@ testcase mul() {
 }
 
 testcase div() {
-  if ((20 / 5) != 4) {
+  if ((20.0 / 5.0) != 4.0) {
     setverdict(fail);
   }
 
-  var integer i1 := 20;
-  var integer i2 := 5;
-  if ((i1 / i2) != 4) {
+  var float f1 := 20.0;
+  var float f2 := 5.0;
+  if ((f1 / f2) != 4.0) {
     setverdict(fail);
   }
 

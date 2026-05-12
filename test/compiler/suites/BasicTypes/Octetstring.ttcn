@@ -1,6 +1,21 @@
 module Octetstring {
 
 testcase eq() {
+  if ('44B0BA'O == '44B0BA'O) {
+  } else {
+    setverdict(fail);
+  }
+
+  var octetstring os1 := '44B0BA'O;
+  var octetstring os2 := '44B0BA'O;
+  if (os1 == os2) {
+  } else {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+testcase eq_contradiction() {
   if ('44B0BA'O == '00B0BA'O) {
     setverdict(fail);
   }
@@ -14,7 +29,26 @@ testcase eq() {
   setverdict(pass);
 }
 
-testcase neq() {
+testcase ne() {
+  if ('44B0BA'O != '00B0BA'O) {
+  } else {
+    setverdict(fail);
+  }
+
+  var octetstring os1 := '44B0BA'O;
+  var octetstring os2 := '00B0BA'O;
+  if (os1 != os2) {
+  } else {
+    setverdict(fail);
+  }
+  if (os1 != os1) {
+  } else {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+testcase ne_contradiction() {
   if ('44B0BA'O != '44B0BA'O) {
     setverdict(fail);
   }

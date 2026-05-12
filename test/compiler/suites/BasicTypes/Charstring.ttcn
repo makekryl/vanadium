@@ -1,6 +1,21 @@
 module Charstring {
 
 testcase eq() {
+  if ("Hello" == "Hello") {
+  } else {
+    setverdict(fail);
+  }
+
+  var charstring cs1 := "Hello";
+  var charstring cs2 := "Hello";
+  if (cs1 == cs2) {
+  } else {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+testcase eq_contradiction() {
   if ("Hello" == "Hallo") {
     setverdict(fail);
   }
@@ -14,7 +29,26 @@ testcase eq() {
   setverdict(pass);
 }
 
-testcase neq() {
+testcase ne() {
+  if ("Hello" != "Hallo") {
+  } else {
+    setverdict(fail);
+  }
+
+  var charstring cs1 := "Hello";
+  var charstring cs2 := "Hallo";
+  if (cs1 != cs2) {
+  } else {
+    setverdict(fail);
+  }
+  if (cs1 != cs1) {
+  } else {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+testcase ne_contradiction() {
   if ("Hello" != "Hello") {
     setverdict(fail);
   }

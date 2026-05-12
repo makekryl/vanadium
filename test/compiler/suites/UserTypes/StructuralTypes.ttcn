@@ -1,0 +1,59 @@
+module StructuralTypes {
+
+type record SimpleRecord {
+  integer i,
+  float f,
+  boolean b,
+  charstring cs
+}
+
+testcase tc_simple_init() {
+  var SimpleRecord v := {
+    i := 1,
+    f := 2.0,
+    b := true,
+    cs := "AAAAAAAAAAAAAAAAAA"
+  };
+
+  if (v.i != 1) { setverdict(fail); }
+  if (v.f != 2.0) { setverdict(fail); }
+  if (v.b != true) { setverdict(fail); }
+  if (v.cs != "AAAAAAAAAAAAAAAAAA") { setverdict(fail); }
+
+  setverdict(pass);
+}
+
+testcase tc_simple_fill() {
+  var SimpleRecord v;
+  v.i := 1;
+  v.f := 2.0;
+  v.b := true;
+  v.cs := "AAAAAAAAAAAAAAAAAA";
+
+  if (v.i != 1) { setverdict(fail); }
+  if (v.f != 2.0) { setverdict(fail); }
+  if (v.b != true) { setverdict(fail); }
+  if (v.cs != "AAAAAAAAAAAAAAAAAA") { setverdict(fail); }
+
+  setverdict(pass);
+}
+
+// testcase tc_simple_bulkfill() {
+//   var SimpleRecord v := {
+//     b := true,
+//     cs := "AAAAAAAAAAAAAAAAAA"
+//   };
+//   v := {
+//     i := 1,
+//     f := 2.0
+//   }
+
+//   if (v.i != 1) { setverdict(fail); }
+//   if (v.f != 2.0) { setverdict(fail); }
+//   if (v.b != true) { setverdict(fail); }
+//   if (v.cs != "AAAAAAAAAAAAAAAAAA") { setverdict(fail); }
+
+//   setverdict(pass);
+// }
+
+}

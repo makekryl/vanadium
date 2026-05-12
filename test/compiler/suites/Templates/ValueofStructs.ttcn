@@ -11,14 +11,14 @@ testcase tc_simple() {
     i := 1,
     f := 2.0,
     b := true,
-    cs := "Hello"
+    cs := "AAAAAAAAAAAAAAAAAA"
   };
   var SimpleRecord v := valueof(t);
 
   if (v.i != 1) { setverdict(fail); }
   if (v.f != 2.0) { setverdict(fail); }
   if (v.b != true) { setverdict(fail); }
-  if (v.cs != "Hello") { setverdict(fail); }
+  if (v.cs != "AAAAAAAAAAAAAAAAAA") { setverdict(fail); }
 
   setverdict(pass);
 }
@@ -35,7 +35,7 @@ testcase tc_composite() {
       i := 1,
       f := 2.0,
       b := true,
-      cs := "Hello"
+      cs := "AAAAAAAAAAAAAAAAAA"
     },
     e := 999
   };
@@ -47,7 +47,7 @@ testcase tc_composite() {
   if (v.inner.i != 1) { setverdict(fail); }
   if (v.inner.f != 2.0) { setverdict(fail); }
   if (v.inner.b != true) { setverdict(fail); }
-  if (v.inner.cs != "Hello") { setverdict(fail); }
+  if (v.inner.cs != "AAAAAAAAAAAAAAAAAA") { setverdict(fail); }
 
   setverdict(pass);
 }
