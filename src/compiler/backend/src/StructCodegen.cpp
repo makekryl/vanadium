@@ -34,7 +34,7 @@ namespace {
 
 struct IntermediateStructDescriptor {
   std::size_t size;
-  std::vector<llvm::Constant*>& member_descriptors;  // TODO: span
+  const std::vector<llvm::Constant*>& member_descriptors;
   llvm::Constant* ctor_fn;
   llvm::Constant* dtor_fn;
   llvm::Constant* copy_fn;
@@ -49,20 +49,20 @@ void EmitTypeDescriptor(CodegenUnit& u, TypeSymbol sym, const IntermediateStruct
                                member_descriptors_array, std::format("{}_members", names::Type(sym)));
 
   u.getOrDeclareExternalConst(names::TInfo(sym), u.rt.typeinfo_ty)
-      ->setInitializer(
-          llvm::ConstantStruct::get(u.rt.typeinfo_ty,
-                                    {
-                                        u.builder.CreateGlobalStringPtr(sym->GetName()),             // name
-                                        u.builder.getInt8(std::to_underlying(RtTypeKind::kRecord)),  // kind
-                                        u.rt.GetSizeI(d.size),                                       // size
-                                        members_gv,                                                  // *members
-                                        u.rt.GetSizeI(d.member_descriptors.size()),                  // members_count
-                                        d.ctor_fn,                                                   // ctor
-                                        d.dtor_fn,                                                   // dtor
-                                        d.copy_fn,                                                   // copy
-                                        u.GetTypeInfo({sym, !sym.is_template}),                      // counterpart
-                                        d.tplval_ctor_fn,  // tpl_construct_value
-                                    }));
+      ->setInitializer(llvm::ConstantStruct::get(  //
+          u.rt.typeinfo_ty,
+          {
+              u.builder.CreateGlobalStringPtr(sym->GetName()),             // name
+              u.builder.getInt8(std::to_underlying(RtTypeKind::kRecord)),  // kind
+              u.rt.GetSizeI(d.size),                                       // size
+              members_gv,                                                  // *members
+              u.rt.GetSizeI(d.member_descriptors.size()),                  // members_count
+              d.ctor_fn,                                                   // ctor
+              d.dtor_fn,                                                   // dtor
+              d.copy_fn,                                                   // copy
+              u.GetTypeInfo({sym, !sym.is_template}),                      // counterpart
+              d.tplval_ctor_fn,                                            // tpl_construct_value
+          }));
 }
 
 llvm::Function* GenerateSingleArgumentFunction(CodegenUnit& u, std::string_view name, llvm::FunctionType* fty,
