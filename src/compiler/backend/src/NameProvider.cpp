@@ -8,6 +8,8 @@
 
 namespace vanadium::compiler::names {
 
+// TODO: optimize like Binder::ShadowMemberKey
+
 namespace {
 std::string SymName(const core::semantic::Symbol* sym, bool is_template = false) {
   if (sym->Flags() & core::semantic::SymbolFlags::kBuiltin) {

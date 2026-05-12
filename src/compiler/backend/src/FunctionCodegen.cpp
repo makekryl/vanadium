@@ -353,6 +353,9 @@ class FunctionCodegen {
   RtSlot TypedSlot(llvm::Value* val, TypeSymbol ts) {
     return {&u_, val, ts};
   }
+  RtSlot TypedSlot(const AllocatedVar* var) {
+    return {&u_, var->value, var->ts};
+  }
 
   void CodegenStmt(const ast::nodes::Stmt*);
   void CodegenDecl(const ast::nodes::Decl*);
@@ -995,25 +998,30 @@ RtSlot FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, RtSlot dest) {
           const auto* var = scope_->Lookup(Lit(m->property));
           if (var->immutable) {
             auto* owned_var_copy = scope_->Alloc(var->value->getName(), var->ts);
-            CodegenExpr(m->value, owned_var_copy);
+            CodegenExpr(m->value, TypedSlot(owned_var_copy, var->ts));
           } else {
             if (u_.IsTrivial(var->ty)) {
               // no dtor call needed
-              CodegenExpr(m->value, var->value);
+              CodegenExpr(m->value, TypedSlot(var));
             } else {
               if (var->ty->isPointerTy()) {
                 auto* old_val = u_.builder.CreateLoad(var->ty, var->value);
-                CodegenExpr(m->value, var->value);
-                EmitDestructorCall(u_, var->ts, old_val);
+                if (m->value->nkind != ast::NodeKind::CompositeLiteral) {
+                  CodegenExpr(m->value, TypedSlot(var));
+                  EmitDestructorCall(u_, var->ts, old_val);
+                } else {
+                  CodegenExpr(m->value, TypedSlot(old_val, var->ts));
+                }
               } else {
                 // charstring, ...
+                // TODO: call old object dtor?
                 auto* tmp_alloca = scope_->createEntryBlockAlloca(var->ty, "tmpref");
                 u_.builder.CreateLifetimeStart(tmp_alloca);
                 const auto& align = tmp_alloca->getAlign();
                 u_.builder.CreateMemCpy(tmp_alloca, align, var->value, align,
                                         u_.mod.getDataLayout().getTypeAllocSize(var->ty));
                 //
-                CodegenExpr(m->value, var->value);
+                CodegenExpr(m->value, TypedSlot(var));
                 EmitDestructorCall(u_, var->ts, tmp_alloca);
                 //
                 u_.builder.CreateLifetimeEnd(tmp_alloca);

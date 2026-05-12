@@ -38,22 +38,22 @@ testcase tc_simple_fill() {
   setverdict(pass);
 }
 
-// testcase tc_simple_bulkfill() {
-//   var SimpleRecord v := {
-//     b := true,
-//     cs := "AAAAAAAAAAAAAAAAAA"
-//   };
-//   v := {
-//     i := 1,
-//     f := 2.0
-//   }
+testcase tc_simple_bulkfill() {
+  var SimpleRecord v := {
+    b := true,
+    cs := "AAAAAAAAAAAAAAAAAA"
+  };
+  v := {
+    i := 1,
+    f := 2.0
+  }
 
-//   if (v.i != 1) { setverdict(fail); }
-//   if (v.f != 2.0) { setverdict(fail); }
-//   if (v.b != true) { setverdict(fail); }
-//   if (v.cs != "AAAAAAAAAAAAAAAAAA") { setverdict(fail); }
+  if (v.i != 1) { setverdict(fail); }
+  if (v.f != 2.0) { setverdict(fail); }
+  if (v.b != true) { setverdict(fail); }
+  if (v.cs != "AAAAAAAAAAAAAAAAAA") { setverdict(fail); }
 
-//   setverdict(pass);
-// }
+  setverdict(pass);
+}
 
 }
