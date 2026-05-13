@@ -42,7 +42,8 @@ void GenerateModuleRegistrationCode(CodegenUnit& u) {
   auto* module_ty = llvm::StructType::create(u.ctx, "vrt_module_t");
   module_ty->setBody({
       u.builder.getPtrTy(),   // const char* name
-      u.builder.getPtrTy(),   // vrt_testcase_t**
+      u.builder.getPtrTy(),   // vrt_testcase_t[]
+      u.rt.sizet_ty,          // size_t testcases_count
       u.builder.getInt1Ty(),  // bool has_control
   });
 
@@ -69,7 +70,8 @@ void GenerateModuleRegistrationCode(CodegenUnit& u) {
                   new llvm::GlobalVariable(u.mod, testcases_array->getType(), true, llvm::GlobalValue::PrivateLinkage,
                                            testcases_array, "__vrt_testcases"),
                   u.builder.getPtrTy()),
-              llvm::ConstantInt::get(u.builder.getInt1Ty(), 1),
+              u.rt.GetSizeI(testcase_descriptors.size()),
+              u.builder.getFalse(),
           }),
       "__vrt_module");
 
