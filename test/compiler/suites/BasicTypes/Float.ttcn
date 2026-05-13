@@ -79,7 +79,7 @@ testcase sub() {
 
   var float f1 := 10.0;
   var float f2 := 3.0;
-  if ((f1 - f2) != 15.0) {
+  if ((f1 - f2) != 7.0) {
     setverdict(fail);
   }
 
@@ -106,7 +106,7 @@ testcase mul() {
 
   var float f1 := 4.0;
   var float f2 := 5.0;
-  if ((f1 * f2) != 42.0) {
+  if ((f1 * f2) != 20.0) {
     setverdict(fail);
   }
 

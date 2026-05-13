@@ -41,7 +41,7 @@ testcase ne() {
   } else {
     setverdict(fail);
   }
-  if (hs1 != hs1) {
+  if (hs2 != hs1) {
   } else {
     setverdict(fail);
   }
@@ -83,36 +83,36 @@ testcase concat() {
 ///
 
 testcase rotl_1() {
-  if (('ABCDEF'H @> 1) != 'EFABCD'H) { setverdict(fail); }
+  if (('ABCDEF'H @> 1) != 'FABCDE'H) { setverdict(fail); }
   setverdict(pass);
 }
 testcase rotl_2() {
-  if (('ABCDEF'H @> 2) != 'CDEFAB'H) { setverdict(fail); }
+  if (('ABCDEF'H @> 2) != 'EFABCD'H) { setverdict(fail); }
   setverdict(pass);
 }
 testcase rotl_3() {
-  if (('ABCDEF'H @> 3) != 'ABCDEF'H) { setverdict(fail); }
+  if (('ABCDEF'H @> 3) != 'DEFABC'H) { setverdict(fail); }
   setverdict(pass);
 }
 testcase rotl_13() {
-  if (('ABCDEF'H @> 13) != 'EFABCD'H) { setverdict(fail); }
+  if (('ABCDEF'H @> 13) != 'FABCDE'H) { setverdict(fail); }
   setverdict(pass);
 }
 //
 testcase rotl_neg_1() {
-  if (('ABCDEF'H @> -1) != 'CDEFAB'H) { setverdict(fail); }
+  if (('ABCDEF'H @> -1) != 'BCDEFA'H) { setverdict(fail); }
   setverdict(pass);
 }
 testcase rotl_neg_2() {
-  if (('ABCDEF'H @> -2) != 'EFABCD'H) { setverdict(fail); }
+  if (('ABCDEF'H @> -2) != 'CDEFAB'H) { setverdict(fail); }
   setverdict(pass);
 }
 testcase rotl_neg_3() {
-  if (('ABCDEF'H @> -3) != 'ABCDEF'H) { setverdict(fail); }
+  if (('ABCDEF'H @> -3) != 'DEFABC'H) { setverdict(fail); }
   setverdict(pass);
 }
 testcase rotl_neg_13() {
-  if (('ABCDEF'H @> -13) != 'CDEFAB'H) { setverdict(fail); }
+  if (('ABCDEF'H @> -13) != 'BCDEFA'H) { setverdict(fail); }
   setverdict(pass);
 }
 //
@@ -124,36 +124,36 @@ testcase rotl_empty() {
 ///
 
 testcase rotr_1() {
-  if (('ABCDEF'H <@ 1) != 'CDEFAB'H) { setverdict(fail); }
+  if (('ABCDEF'H <@ 1) != 'BCDEFA'H) { setverdict(fail); }
   setverdict(pass);
 }
 testcase rotr_2() {
-  if (('ABCDEF'H <@ 2) != 'EFABCD'H) { setverdict(fail); }
+  if (('ABCDEF'H <@ 2) != 'CDEFAB'H) { setverdict(fail); }
   setverdict(pass);
 }
 testcase rotr_3() {
-  if (('ABCDEF'H <@ 3) != 'ABCDEF'H) { setverdict(fail); }
+  if (('ABCDEF'H <@ 3) != 'DEFABC'H) { setverdict(fail); }
   setverdict(pass);
 }
 testcase rotr_13() {
-  if (('ABCDEF'H <@ 13) != 'CDEFAB'H) { setverdict(fail); }
+  if (('ABCDEF'H <@ 13) != 'BCDEFA'H) { setverdict(fail); }
   setverdict(pass);
 }
 //
 testcase rotr_neg_1() {
-  if (('ABCDEF'H <@ -1) != 'EFABCD'H) { setverdict(fail); }
+  if (('ABCDEF'H <@ -1) != 'FABCDE'H) { setverdict(fail); }
   setverdict(pass);
 }
 testcase rotr_neg_2() {
-  if (('ABCDEF'H <@ -2) != 'CDEFAB'H) { setverdict(fail); }
+  if (('ABCDEF'H <@ -2) != 'EFABCD'H) { setverdict(fail); }
   setverdict(pass);
 }
 testcase rotr_neg_3() {
-  if (('ABCDEF'H <@ -3) != 'ABCDEF'H) { setverdict(fail); }
+  if (('ABCDEF'H <@ -3) != 'DEFABC'H) { setverdict(fail); }
   setverdict(pass);
 }
 testcase rotr_neg_13() {
-  if (('ABCDEF'H <@ -13) != 'EFABCD'H) { setverdict(fail); }
+  if (('ABCDEF'H <@ -13) != 'FABCDE'H) { setverdict(fail); }
   setverdict(pass);
 }
 //

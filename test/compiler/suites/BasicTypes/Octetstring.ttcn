@@ -41,7 +41,7 @@ testcase ne() {
   } else {
     setverdict(fail);
   }
-  if (os1 != os1) {
+  if (os2 != os1) {
   } else {
     setverdict(fail);
   }

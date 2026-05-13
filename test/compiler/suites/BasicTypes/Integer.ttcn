@@ -81,7 +81,7 @@ testcase sub() {
 
   var integer i1 := 10;
   var integer i2 := 3;
-  if ((i1 - i2) != 15) {
+  if ((i1 - i2) != 7) {
     setverdict(fail);
   }
 
@@ -108,7 +108,7 @@ testcase mul() {
 
   var integer i1 := 4;
   var integer i2 := 5;
-  if ((i1 * i2) != 42) {
+  if ((i1 * i2) != 20) {
     setverdict(fail);
   }
 
