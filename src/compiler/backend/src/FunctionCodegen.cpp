@@ -1056,7 +1056,7 @@ RtSlot FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, RtSlot dest) {
                   root_val = pthis->scope_->Alloc(root_var->value->getName(), root_var->ts);
                   // TODO: deep copy
                 }
-                return root_val;
+                return pthis->u_.builder.CreateLoad(pthis->u_.builder.getPtrTy(), root_val);
               }
               default:
                 // CallExpr?
