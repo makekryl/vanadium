@@ -1,4 +1,5 @@
-FROM mcr.microsoft.com/devcontainers/base:noble
+FROM mcr.microsoft.com/devcontainers/base@sha256:7ee7da33a68d997971660d91ecc8372e55a38a777c3c6bd6808daf91928052db
+# mcr.microsoft.com/devcontainers/base:noble, 04/20/2026
 
 ARG REINSTALL_CMAKE_VERSION_FROM_SOURCE="3.31.6"
 COPY ./reinstall-cmake.sh /tmp/
