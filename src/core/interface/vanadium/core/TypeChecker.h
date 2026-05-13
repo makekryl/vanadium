@@ -82,7 +82,8 @@ InstantiatedType ResolveCallableReturnType(const SourceFile*, const ast::nodes::
 InstantiatedType ResolveExprType(const SourceFile*, const semantic::Scope*, const ast::nodes::Expr*);
 
 const semantic::Symbol* ResolveListElementType(const semantic::Symbol*);
-const semantic::Symbol* ResolveTypeSpecSymbol(const SourceFile*, const ast::nodes::TypeSpec*);
+const semantic::Symbol* ResolveTypeSpecSymbol(const SourceFile*, const ast::nodes::TypeSpec*,
+                                              const semantic::Symbol* container_hint = nullptr);
 
 const semantic::Symbol* ResolveTerminalType(const semantic::Symbol*);
 

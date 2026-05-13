@@ -51,6 +51,8 @@ enum class RtTypeKind : std::uint8_t {
   kBitstring,
   kHexstring,
 
+  kEnum,
+  kUnion,
   kRecord,
   kSet,
 

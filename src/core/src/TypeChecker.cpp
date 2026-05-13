@@ -924,7 +924,8 @@ const semantic::Symbol* DeduceValueLiteralType(const ast::nodes::ValueLiteral* n
 }
 }  // namespace
 
-const semantic::Symbol* ResolveTypeSpecSymbol(const SourceFile* file, const ast::nodes::TypeSpec* spec) {
+const semantic::Symbol* ResolveTypeSpecSymbol(const SourceFile* file, const ast::nodes::TypeSpec* spec,
+                                              const semantic::Symbol* container_hint) {
   switch (spec->nkind) {
     case ast::NodeKind::StructTypeDecl: {
       return ResolveStructTypeDeclSymbol(file, spec->As<ast::nodes::StructTypeDecl>());
@@ -939,7 +940,8 @@ const semantic::Symbol* ResolveTypeSpecSymbol(const SourceFile* file, const ast:
       const auto* parent = spec->parent;
       switch (parent->nkind) {
         case ast::NodeKind::ListSpec: {
-          const auto* ls_sym = ResolveTypeSpecSymbol(file, parent->As<ast::nodes::ListSpec>());
+          const auto* ls_sym =
+              container_hint ? container_hint : ResolveTypeSpecSymbol(file, parent->As<ast::nodes::ListSpec>());
           if (!ls_sym) {
             return nullptr;
           }
@@ -955,7 +957,8 @@ const semantic::Symbol* ResolveTypeSpecSymbol(const SourceFile* file, const ast:
             return file->module->scope->ResolveDirect(file->Text(*owner->name));
           }
 
-          const auto* containing_sym = ResolveTypeSpecSymbol(file, owner->parent->As<ast::nodes::TypeSpec>());
+          const auto* containing_sym =
+              container_hint ? container_hint : ResolveTypeSpecSymbol(file, owner->parent->As<ast::nodes::TypeSpec>());
           if (!containing_sym || !(containing_sym->Flags() & core::semantic::SymbolFlags::kStructural)) {
             return nullptr;
           }

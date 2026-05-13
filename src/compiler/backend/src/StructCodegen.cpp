@@ -291,9 +291,11 @@ void CodegenStruct(CodegenUnit& u, const core::semantic::Symbol* sym,
   std::vector<const core::semantic::Symbol*> members;
   members.reserve(fields.size());
   for (const auto& [idx, f] : fields | std::views::enumerate) {
-    // TODO: use checker::ResolveTypeSymbol, support for anonymous TypeSpec/ types
-    const auto* fsym = u.sf.module->scope->Resolve(u.sf.Text(f->type));
+    const auto* fsym = core::checker::ResolveTypeSpecSymbol(&u.sf, f->type, sym);
     assert(fsym);
+    if (fsym->Flags() & core::semantic::SymbolFlags::kAnonymous) {
+      CodegenStruct(u, fsym, fsym->Declaration()->As<ast::nodes::StructSpec>()->fields);
+    }
     members.emplace_back(fsym);
   }
 

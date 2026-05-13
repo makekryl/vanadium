@@ -14,6 +14,8 @@ enum class vrt_typekind_e : std::uint8_t {
   kBitstring,
   kHexstring,
 
+  kEnum,
+  kUnion,
   kRecord,
   kSet,
 
