@@ -1,0 +1,37 @@
+module AnonymousStructuralTypes {
+
+type record MyRecord {
+  record {
+    integer i,
+    record {
+      integer j
+    } nested2
+  } nested
+}
+
+testcase tc_fill() {
+  var MyRecord r;
+  r.nested.nested2.j := 1;
+
+  if (r.nested.nested2.j != 1) { setverdict(fail); }
+
+  log(r);
+  setverdict(pass);
+}
+
+testcase tc_bulkfill() {
+  var MyRecord r := {
+    nested := {
+      nested2 := {
+        j := 1
+      }
+    }
+  };
+
+  if (r.nested.nested2.j != 1) { setverdict(fail); }
+
+  log(r);
+  setverdict(pass);
+}
+
+}
