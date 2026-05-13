@@ -124,6 +124,8 @@ void VerdictTest::TestBody() {
 
   cantFail(jit->initialize(dylib));
   ASSERT_TRUE(vmodule);
+  //
+  std::size_t failed_testcases = 0;
   for (const auto& tc : std::span{vmodule->testcases, vmodule->testcases_count}) {
     vrt_clearverdict();
     logged_lines.clear();
@@ -133,7 +135,7 @@ void VerdictTest::TestBody() {
     try {
       tc.fn();
     } catch (const std::runtime_error& err) {
-      ADD_FAILURE() << "Testcase '" << tc.name << "' raised an error: '" << err.what() << "'";
+      std::println(stderr, "Testcase '{}' raised an error: {}", tc.name, err.what());
       auto errverdict = vrt_integer_wrap(std::to_underlying(vrt_verdicttype::error));
       vrt_setverdict(&errverdict, nullptr);
     }
@@ -143,12 +145,16 @@ void VerdictTest::TestBody() {
       continue;
     }
 
-    ADD_FAILURE() << "Testcase '" << tc.name << "' failed with verdict: " << magic_enum::enum_name(verdict);
+    std::println(stderr, "Testcase '{}' verdict: {}", tc.name, magic_enum::enum_name(verdict));
     std::println(stderr, "Testcase '{}' log:", tc.name);
     for (const auto& line : logged_lines) {
       std::println(stderr, " | {}", line);
     }
+    std::println();
+    ++failed_testcases;
   }
+  EXPECT_TRUE(failed_testcases == 0) << failed_testcases << " failed out of " << vmodule->testcases_count;
+
   cantFail(jit->deinitialize(dylib));
 }
 
