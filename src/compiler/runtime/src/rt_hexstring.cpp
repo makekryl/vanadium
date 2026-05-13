@@ -58,6 +58,7 @@ const vrt_typeinfo_t hexstring_typeinfo{
 
     .construct = rt::helpers::void_erased_v<hexstring_ctor>,
     .destruct = rt::helpers::void_erased_v<hexstring_dtor>,
+    .copy = rt::helpers::void_erased_v<copy_hexstring>,
 
     .counterpart = &hexstring_template_typeinfo,
     .tpl_construct_value = nullptr,
@@ -314,7 +315,6 @@ const vrt_typeinfo_t hexstring_template_typeinfo{
 
     .construct = rt::helpers::void_erased_v<hexstring_template_ctor>,
     .destruct = rt::helpers::void_erased_v<hexstring_template_dtor>,
-    .copy = rt::helpers::void_erased_v<copy_hexstring>,
 
     .counterpart = &hexstring_typeinfo,
     .tpl_construct_value = rt::helpers::void_erased_v<hexstring_template_ctor>,

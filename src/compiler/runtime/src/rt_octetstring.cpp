@@ -28,6 +28,7 @@ const vrt_typeinfo_t octetstring_typeinfo{
 
     .construct = rt::helpers::void_erased_v<octetstring_ctor>,
     .destruct = rt::helpers::void_erased_v<octetstring_dtor>,
+    .copy = rt::helpers::void_erased_v<copy_octetstring>,
 
     .counterpart = &octetstring_template_typeinfo,
     .tpl_construct_value = nullptr,
@@ -214,7 +215,6 @@ const vrt_typeinfo_t octetstring_template_typeinfo{
 
     .construct = rt::helpers::void_erased_v<octetstring_template_ctor>,
     .destruct = rt::helpers::void_erased_v<octetstring_template_dtor>,
-    .copy = rt::helpers::void_erased_v<copy_octetstring>,
 
     .counterpart = &octetstring_typeinfo,
     .tpl_construct_value = rt::helpers::void_erased_v<octetstring_template_ctor>,
