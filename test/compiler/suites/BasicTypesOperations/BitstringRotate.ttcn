@@ -1,0 +1,314 @@
+module BitstringRotate {
+
+testcase rotl_empty() {
+  if ((''B <@ 42) != ''B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_empty() {
+  if ((''B @> 42) != ''B) { setverdict(fail); }
+  setverdict(pass);
+}
+
+//
+
+testcase rotl_0() {
+  if (('01010100101110'B <@ 0) != '01010100101110'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_1() {
+  if (('01010100101110'B <@ 1) != '10101001011100'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_2() {
+  if (('01010100101110'B <@ 2) != '01010010111001'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_3() {
+  if (('01010100101110'B <@ 3) != '10100101110010'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_4() {
+  if (('01010100101110'B <@ 4) != '01001011100101'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_5() {
+  if (('01010100101110'B <@ 5) != '10010111001010'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_7() {
+  if (('01010100101110'B <@ 7) != '01011100101010'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_13() {
+  if (('01010100101110'B <@ 13) != '00101010010111'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_17() {
+  if (('01010100101110'B <@ 17) != '10100101110010'B) { setverdict(fail); }
+  setverdict(pass);
+}
+//
+testcase rotl_neg_0() {
+  if (('01010100101110'B <@ 0) != '01010100101110'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_neg_1() {
+  if (('01010100101110'B <@ -1) != '00101010010111'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_neg_2() {
+  if (('01010100101110'B <@ -2) != '10010101001011'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_neg_3() {
+  if (('01010100101110'B <@ -3) != '11001010100101'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_neg_4() {
+  if (('01010100101110'B <@ -4) != '11100101010010'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_neg_5() {
+  if (('01010100101110'B <@ -5) != '01110010101001'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_neg_7() {
+  if (('01010100101110'B <@ -7) != '01011100101010'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_neg_13() {
+  if (('01010100101110'B <@ -13) != '10101001011100'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_neg_17() {
+  if (('01010100101110'B <@ -17) != '11001010100101'B) { setverdict(fail); }
+  setverdict(pass);
+}
+
+//
+
+testcase rotr_0() {
+  if (('01010100101110'B @> 0) != '01010100101110'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_1() {
+  if (('01010100101110'B @> 1) != '00101010010111'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_2() {
+  if (('01010100101110'B @> 2) != '10010101001011'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_3() {
+  if (('01010100101110'B @> 3) != '11001010100101'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_4() {
+  if (('01010100101110'B @> 4) != '11100101010010'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_5() {
+  if (('01010100101110'B @> 5) != '01110010101001'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_7() {
+  if (('01010100101110'B @> 7) != '01011100101010'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_13() {
+  if (('01010100101110'B @> 13) != '10101001011100'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_17() {
+  if (('01010100101110'B @> 17) != '11001010100101'B) { setverdict(fail); }
+  setverdict(pass);
+}
+//
+testcase rotr_neg_0() {
+  if (('01010100101110'B @> 0) != '01010100101110'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_neg_1() {
+  if (('01010100101110'B @> -1) != '10101001011100'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_neg_2() {
+  if (('01010100101110'B @> -2) != '01010010111001'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_neg_3() {
+  if (('01010100101110'B @> -3) != '10100101110010'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_neg_4() {
+  if (('01010100101110'B @> -4) != '01001011100101'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_neg_5() {
+  if (('01010100101110'B @> -5) != '10010111001010'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_neg_7() {
+  if (('01010100101110'B @> -7) != '01011100101010'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_neg_13() {
+  if (('01010100101110'B @> -13) != '00101010010111'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_neg_17() {
+  if (('01010100101110'B @> -17) != '10100101110010'B) { setverdict(fail); }
+  setverdict(pass);
+}
+
+//
+
+testcase rotl_0_uneven() {
+  if (('010101001011101'B <@ 0) != '010101001011101'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_1_uneven() {
+  if (('010101001011101'B <@ 1) != '101010010111010'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_2_uneven() {
+  if (('010101001011101'B <@ 2) != '010100101110101'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_3_uneven() {
+  if (('010101001011101'B <@ 3) != '101001011101010'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_4_uneven() {
+  if (('010101001011101'B <@ 4) != '010010111010101'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_5_uneven() {
+  if (('010101001011101'B <@ 5) != '100101110101010'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_7_uneven() {
+  if (('010101001011101'B <@ 7) != '010111010101010'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_13_uneven() {
+  if (('010101001011101'B <@ 13) != '010101010010111'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_17_uneven() {
+  if (('010101001011101'B <@ 17) != '010100101110101'B) { setverdict(fail); }
+  setverdict(pass);
+}
+//
+testcase rotl_neg_0_uneven() {
+  if (('010101001011101'B <@ 0) != '010101001011101'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_neg_1_uneven() {
+  if (('010101001011101'B <@ -1) != '101010100101110'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_neg_2_uneven() {
+  if (('010101001011101'B <@ -2) != '010101010010111'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_neg_3_uneven() {
+  if (('010101001011101'B <@ -3) != '101010101001011'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_neg_4_uneven() {
+  if (('010101001011101'B <@ -4) != '110101010100101'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_neg_5_uneven() {
+  if (('010101001011101'B <@ -5) != '111010101010010'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_neg_7_uneven() {
+  if (('010101001011101'B <@ -7) != '101110101010100'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_neg_13_uneven() {
+  if (('010101001011101'B <@ -13) != '010100101110101'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_neg_17_uneven() {
+  if (('010101001011101'B <@ -17) != '010101010010111'B) { setverdict(fail); }
+  setverdict(pass);
+}
+//
+testcase rotr_0_uneven() {
+  if (('010101001011101'B @> 0) != '010101001011101'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_1_uneven() {
+  if (('010101001011101'B @> 1) != '101010100101110'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_2_uneven() {
+  if (('010101001011101'B @> 2) != '010101010010111'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_3_uneven() {
+  if (('010101001011101'B @> 3) != '101010101001011'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_4_uneven() {
+  if (('010101001011101'B @> 4) != '110101010100101'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_5_uneven() {
+  if (('010101001011101'B @> 5) != '111010101010010'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_7_uneven() {
+  if (('010101001011101'B @> 7) != '101110101010100'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_13_uneven() {
+  if (('010101001011101'B @> 13) != '010100101110101'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_17_uneven() {
+  if (('010101001011101'B @> 17) != '010101010010111'B) { setverdict(fail); }
+  setverdict(pass);
+}
+//
+testcase rotr_neg_0_uneven() {
+  if (('010101001011101'B @> 0) != '010101001011101'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_neg_1_uneven() {
+  if (('010101001011101'B @> -1) != '101010010111010'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_neg_2_uneven() {
+  if (('010101001011101'B @> -2) != '010100101110101'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_neg_3_uneven() {
+  if (('010101001011101'B @> -3) != '101001011101010'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_neg_4_uneven() {
+  if (('010101001011101'B @> -4) != '010010111010101'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_neg_5_uneven() {
+  if (('010101001011101'B @> -5) != '100101110101010'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_neg_7_uneven() {
+  if (('010101001011101'B @> -7) != '010111010101010'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_neg_13_uneven() {
+  if (('010101001011101'B @> -13) != '010101010010111'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_neg_17_uneven() {
+  if (('010101001011101'B @> -17) != '010100101110101'B) { setverdict(fail); }
+  setverdict(pass);
+}
+
+}

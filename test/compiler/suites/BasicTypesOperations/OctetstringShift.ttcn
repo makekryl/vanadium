@@ -1,0 +1,164 @@
+module OctetstringShift {
+
+testcase shl_empty() {
+  if ((''O << 42) != ''O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_empty() {
+  if ((''O >> 42) != ''O) { setverdict(fail); }
+  setverdict(pass);
+}
+
+//
+
+testcase shl_0() {
+  if (('ABCDEF1234'O << 0) != 'ABCDEF1234'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_1() {
+  if (('ABCDEF1234'O << 1) != 'CDEF123400'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_2() {
+  if (('ABCDEF1234'O << 2) != 'EF12340000'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_3() {
+  if (('ABCDEF1234'O << 3) != '1234000000'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_4() {
+  if (('ABCDEF1234'O << 4) != '3400000000'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_5() {
+  if (('ABCDEF1234'O << 5) != '0000000000'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_8() {
+  if (('ABCDEF1234'O << 8) != '0000000000'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_9() {
+  if (('ABCDEF1234'O << 9) != '0000000000'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_13() {
+  if (('ABCDEF1234'O << 13) != '0000000000'O) { setverdict(fail); }
+  setverdict(pass);
+}
+//
+testcase shl_neg_0() {
+  if (('ABCDEF1234'O << 0) != 'ABCDEF1234'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_neg_1() {
+  if (('ABCDEF1234'O << -1) != '00ABCDEF12'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_neg_2() {
+  if (('ABCDEF1234'O << -2) != '0000ABCDEF'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_neg_3() {
+  if (('ABCDEF1234'O << -3) != '000000ABCD'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_neg_4() {
+  if (('ABCDEF1234'O << -4) != '00000000AB'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_neg_5() {
+  if (('ABCDEF1234'O << -5) != '0000000000'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_neg_8() {
+  if (('ABCDEF1234'O << -8) != '0000000000'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_neg_9() {
+  if (('ABCDEF1234'O << -9) != '0000000000'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_neg_13() {
+  if (('ABCDEF1234'O << -13) != '0000000000'O) { setverdict(fail); }
+  setverdict(pass);
+}
+
+//
+
+testcase shr_0() {
+  if (('ABCDEF1234'O >> 0) != 'ABCDEF1234'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_1() {
+  if (('ABCDEF1234'O >> 1) != '00ABCDEF12'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_2() {
+  if (('ABCDEF1234'O >> 2) != '0000ABCDEF'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_3() {
+  if (('ABCDEF1234'O >> 3) != '000000ABCD'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_4() {
+  if (('ABCDEF1234'O >> 4) != '00000000AB'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_5() {
+  if (('ABCDEF1234'O >> 5) != '0000000000'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_8() {
+  if (('ABCDEF1234'O >> 8) != '0000000000'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_9() {
+  if (('ABCDEF1234'O >> 9) != '0000000000'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_13() {
+  if (('ABCDEF1234'O >> 13) != '0000000000'O) { setverdict(fail); }
+  setverdict(pass);
+}
+//
+testcase shr_neg_0() {
+  if (('ABCDEF1234'O >> 0) != 'ABCDEF1234'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_neg_1() {
+  if (('ABCDEF1234'O >> -1) != 'CDEF123400'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_neg_2() {
+  if (('ABCDEF1234'O >> -2) != 'EF12340000'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_neg_3() {
+  if (('ABCDEF1234'O >> -3) != '1234000000'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_neg_4() {
+  if (('ABCDEF1234'O >> -4) != '3400000000'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_neg_5() {
+  if (('ABCDEF1234'O >> -5) != '0000000000'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_neg_8() {
+  if (('ABCDEF1234'O >> -8) != '0000000000'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_neg_9() {
+  if (('ABCDEF1234'O >> -9) != '0000000000'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_neg_13() {
+  if (('ABCDEF1234'O >> -13) != '0000000000'O) { setverdict(fail); }
+  setverdict(pass);
+}
+
+}

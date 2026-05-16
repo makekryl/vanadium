@@ -1,0 +1,323 @@
+module Bitstring {
+
+testcase eq() {
+  if ('101001'B == '101001'B) {
+  } else {
+    setverdict(fail);
+  }
+
+  var bitstring bs1 := '101001'B;
+  var bitstring bs2 := '101001'B;
+  if (bs1 == bs2) {
+  } else {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+testcase eq_contradiction() {
+  if ('101001'B == '000011'B) {
+    setverdict(fail);
+  }
+
+  var bitstring bs1 := '101001'B;
+  var bitstring bs2 := '000011'B;
+  if (bs1 == bs2) {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+
+testcase ne() {
+  if ('101001'B != '000011'B) {
+  } else {
+    setverdict(fail);
+  }
+
+  var bitstring bs1 := '101001'B;
+  var bitstring bs2 := '000011'B;
+  if (bs1 != bs2) {
+  } else {
+    setverdict(fail);
+  }
+  if (bs2 != bs1) {
+  } else {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+testcase ne_contradiction() {
+  if ('101001'B != '101001'B) {
+    setverdict(fail);
+  }
+
+  var bitstring bs1 := '101001'B;
+  var bitstring bs2 := '101001'B;
+  if (bs1 != bs2) {
+    setverdict(fail);
+  }
+  if (bs1 != bs1) {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+
+testcase concat() {
+  var bitstring bs := '101001'B;
+  bs := bs & '000011'B;
+  if (bs != '101001000011'B) {
+    setverdict(fail);
+  }
+
+  bs := bs & '11'B & bs;
+  if (bs != '10100100001111101001000011'B) {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+
+testcase eq_uneven() {
+  if ('1010011'B == '1010011'B) {
+  } else {
+    setverdict(fail);
+  }
+
+  var bitstring bs1 := '1010011'B;
+  var bitstring bs2 := '1010011'B;
+  if (bs1 == bs2) {
+  } else {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+
+testcase eq_contradiction_uneven() {
+  if ('1010011'B == '0000111'B) {
+    setverdict(fail);
+  }
+
+  var bitstring bs1 := '1010011'B;
+  var bitstring bs2 := '0000111'B;
+  if (bs1 == bs2) {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+
+testcase ne_uneven() {
+  if ('1010011'B != '0000111'B) {
+  } else {
+    setverdict(fail);
+  }
+
+  var bitstring bs1 := '1010011'B;
+  var bitstring bs2 := '0000111'B;
+  if (bs1 != bs2) {
+  } else {
+    setverdict(fail);
+  }
+  if (bs2 != bs1) {
+  } else {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+
+testcase ne_contradiction_uneven() {
+  if ('1010011'B != '1010011'B) {
+    setverdict(fail);
+  }
+
+  var bitstring bs1 := '1010011'B;
+  var bitstring bs2 := '1010011'B;
+  if (bs1 != bs2) {
+    setverdict(fail);
+  }
+  if (bs1 != bs1) {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+
+testcase concat_uneven() {
+  var bitstring bs := '1010011'B;
+  bs := bs & '0000111'B;
+  if (bs != '10100110000111'B) {
+    setverdict(fail);
+  }
+
+  bs := bs & '1'B & bs;
+  if (bs != '10100110000111110100110000111'B) {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+
+testcase eq_uneven_even() {
+  if ('1010011'B == '101001'B) {
+    setverdict(fail);
+  }
+
+  var bitstring bs1 := '1010011'B;
+  var bitstring bs2 := '101001'B;
+  if (bs1 == bs2) {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+
+testcase ne_uneven_even() {
+  if ('1010011'B != '101001'B) {
+  } else {
+    setverdict(fail);
+  }
+
+  var bitstring bs1 := '1010011'B;
+  var bitstring bs2 := '101001'B;
+  if (bs1 != bs2) {
+  } else {
+    setverdict(fail);
+  }
+  if (bs2 != bs1) {
+  } else {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+
+testcase concat_uneven_even() {
+  var bitstring bs := '1010011'B;
+  bs := bs & '000011'B;
+  if (bs != '1010011000011'B) {
+    setverdict(fail);
+  }
+
+  bs := bs & '11'B & bs;
+  if (bs != '1010011000011111010011000011'B) {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+
+testcase concat_even_uneven() {
+  var bitstring bs := '101001'B;
+  bs := bs & '0000111'B;
+  if (bs != '1010010000111'B) {
+    setverdict(fail);
+  }
+
+  bs := bs & '1'B & bs;
+  if (bs != '101001000011111010010000111'B) {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+
+testcase eq_even_uneven() {
+  if ('101001'B == '1010011'B) {
+    setverdict(fail);
+  }
+
+  var bitstring bs1 := '101001'B;
+  var bitstring bs2 := '1010011'B;
+  if (bs1 == bs2) {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+
+testcase ne_even_uneven() {
+  if ('101001'B != '1010011'B) {
+  } else {
+    setverdict(fail);
+  }
+
+  var bitstring bs1 := '101001'B;
+  var bitstring bs2 := '1010011'B;
+  if (bs1 != bs2) {
+  } else {
+    setverdict(fail);
+  }
+  if (bs2 != bs1) {
+  } else {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+
+///
+
+testcase concat_large() {
+  var bitstring bs := ''B;
+  bs := bs & '11'B;
+  bs := bs & '00'B;
+  bs := bs & '01'B;
+  bs := bs & '10'B;
+  bs := bs & '00'B;
+  bs := bs & '00'B;
+  bs := bs & '01'B;
+  bs := bs & '10'B;
+  bs := bs & '10'B;
+  bs := bs & '00'B;
+  bs := bs & '10'B;
+  bs := bs & '11'B;
+  bs := bs & '11'B;
+  bs := bs & '00'B;
+  bs := bs & '01'B;
+  bs := bs & '11'B;
+  bs := bs & '11'B;
+  bs := bs & '00'B;
+  bs := bs & '01'B;
+
+  if (bs != '11000110000001101000101111000111110001'B) {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+
+testcase concat_large_uneven() {
+  var bitstring bs := ''B;
+  bs := bs & '1'B;
+  bs := bs & '0'B;
+  bs := bs & '0'B;
+  bs := bs & '1'B;
+  bs := bs & '0'B;
+  bs := bs & '0'B;
+  bs := bs & '0'B;
+  bs := bs & '1'B;
+  bs := bs & '1'B;
+  bs := bs & '0'B;
+  bs := bs & '1'B;
+  bs := bs & '1'B;
+  bs := bs & '1'B;
+  bs := bs & '0'B;
+  bs := bs & '0'B;
+  bs := bs & '1'B;
+  bs := bs & '1'B;
+  bs := bs & '0'B;
+  bs := bs & '0'B;
+
+  if (bs != '1001000110111001100'B) {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+
+}

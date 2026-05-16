@@ -1,0 +1,164 @@
+module OctetstringRotate {
+
+testcase rotl_empty() {
+  if ((''O <@ 42) != ''O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_empty() {
+  if ((''O @> 42) != ''O) { setverdict(fail); }
+  setverdict(pass);
+}
+
+//
+
+testcase rotl_0() {
+  if (('ABCDEF1234'O <@ 0) != 'ABCDEF1234'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_1() {
+  if (('ABCDEF1234'O <@ 1) != 'CDEF1234AB'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_2() {
+  if (('ABCDEF1234'O <@ 2) != 'EF1234ABCD'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_3() {
+  if (('ABCDEF1234'O <@ 3) != '1234ABCDEF'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_4() {
+  if (('ABCDEF1234'O <@ 4) != '34ABCDEF12'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_5() {
+  if (('ABCDEF1234'O <@ 5) != 'ABCDEF1234'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_7() {
+  if (('ABCDEF1234'O <@ 7) != 'EF1234ABCD'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_13() {
+  if (('ABCDEF1234'O <@ 13) != '1234ABCDEF'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_17() {
+  if (('ABCDEF1234'O <@ 17) != 'EF1234ABCD'O) { setverdict(fail); }
+  setverdict(pass);
+}
+//
+testcase rotl_neg_0() {
+  if (('ABCDEF1234'O <@ 0) != 'ABCDEF1234'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_neg_1() {
+  if (('ABCDEF1234'O <@ -1) != '34ABCDEF12'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_neg_2() {
+  if (('ABCDEF1234'O <@ -2) != '1234ABCDEF'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_neg_3() {
+  if (('ABCDEF1234'O <@ -3) != 'EF1234ABCD'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_neg_4() {
+  if (('ABCDEF1234'O <@ -4) != 'CDEF1234AB'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_neg_5() {
+  if (('ABCDEF1234'O <@ -5) != 'ABCDEF1234'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_neg_7() {
+  if (('ABCDEF1234'O <@ -7) != '1234ABCDEF'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_neg_13() {
+  if (('ABCDEF1234'O <@ -13) != 'EF1234ABCD'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_neg_17() {
+  if (('ABCDEF1234'O <@ -17) != '1234ABCDEF'O) { setverdict(fail); }
+  setverdict(pass);
+}
+
+//
+
+testcase rotr_0() {
+  if (('ABCDEF1234'O @> 0) != 'ABCDEF1234'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_1() {
+  if (('ABCDEF1234'O @> 1) != '34ABCDEF12'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_2() {
+  if (('ABCDEF1234'O @> 2) != '1234ABCDEF'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_3() {
+  if (('ABCDEF1234'O @> 3) != 'EF1234ABCD'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_4() {
+  if (('ABCDEF1234'O @> 4) != 'CDEF1234AB'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_5() {
+  if (('ABCDEF1234'O @> 5) != 'ABCDEF1234'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_7() {
+  if (('ABCDEF1234'O @> 7) != '1234ABCDEF'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_13() {
+  if (('ABCDEF1234'O @> 13) != 'EF1234ABCD'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_17() {
+  if (('ABCDEF1234'O @> 17) != '1234ABCDEF'O) { setverdict(fail); }
+  setverdict(pass);
+}
+//
+testcase rotr_neg_0() {
+  if (('ABCDEF1234'O @> 0) != 'ABCDEF1234'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_neg_1() {
+  if (('ABCDEF1234'O @> -1) != 'CDEF1234AB'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_neg_2() {
+  if (('ABCDEF1234'O @> -2) != 'EF1234ABCD'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_neg_3() {
+  if (('ABCDEF1234'O @> -3) != '1234ABCDEF'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_neg_4() {
+  if (('ABCDEF1234'O @> -4) != '34ABCDEF12'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_neg_5() {
+  if (('ABCDEF1234'O @> -5) != 'ABCDEF1234'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_neg_7() {
+  if (('ABCDEF1234'O @> -7) != 'EF1234ABCD'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_neg_13() {
+  if (('ABCDEF1234'O @> -13) != '1234ABCDEF'O) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_neg_17() {
+  if (('ABCDEF1234'O @> -17) != 'EF1234ABCD'O) { setverdict(fail); }
+  setverdict(pass);
+}
+
+}

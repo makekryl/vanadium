@@ -1,0 +1,312 @@
+module HexstringShift {
+
+testcase shl_empty() {
+  if ((''H << 42) != ''H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_empty() {
+  if ((''H >> 42) != ''H) { setverdict(fail); }
+  setverdict(pass);
+}
+
+//
+
+testcase shl_0() {
+  if (('ABC123456DEF'H << 0) != 'ABC123456DEF'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_1() {
+  if (('ABC123456DEF'H << 1) != 'BC123456DEF0'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_2() {
+  if (('ABC123456DEF'H << 2) != 'C123456DEF00'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_3() {
+  if (('ABC123456DEF'H << 3) != '123456DEF000'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_4() {
+  if (('ABC123456DEF'H << 4) != '23456DEF0000'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_5() {
+  if (('ABC123456DEF'H << 5) != '3456DEF00000'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_8() {
+  if (('ABC123456DEF'H << 8) != '6DEF00000000'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_9() {
+  if (('ABC123456DEF'H << 9) != 'DEF000000000'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_13() {
+  if (('ABC123456DEF'H << 13) != '000000000000'H) { setverdict(fail); }
+  setverdict(pass);
+}
+//
+testcase shl_neg_0() {
+  if (('ABC123456DEF'H << 0) != 'ABC123456DEF'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_neg_1() {
+  if (('ABC123456DEF'H << -1) != '0ABC123456DE'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_neg_2() {
+  if (('ABC123456DEF'H << -2) != '00ABC123456D'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_neg_3() {
+  if (('ABC123456DEF'H << -3) != '000ABC123456'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_neg_4() {
+  if (('ABC123456DEF'H << -4) != '0000ABC12345'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_neg_5() {
+  if (('ABC123456DEF'H << -5) != '00000ABC1234'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_neg_8() {
+  if (('ABC123456DEF'H << -8) != '00000000ABC1'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_neg_9() {
+  if (('ABC123456DEF'H << -9) != '000000000ABC'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_neg_13() {
+  if (('ABC123456DEF'H << -13) != '000000000000'H) { setverdict(fail); }
+  setverdict(pass);
+}
+//
+testcase shr_0() {
+  if (('ABC123456DEF'H >> 0) != 'ABC123456DEF'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_1() {
+  if (('ABC123456DEF'H >> 1) != '0ABC123456DE'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_2() {
+  if (('ABC123456DEF'H >> 2) != '00ABC123456D'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_3() {
+  if (('ABC123456DEF'H >> 3) != '000ABC123456'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_4() {
+  if (('ABC123456DEF'H >> 4) != '0000ABC12345'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_5() {
+  if (('ABC123456DEF'H >> 5) != '00000ABC1234'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_8() {
+  if (('ABC123456DEF'H >> 8) != '00000000ABC1'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_9() {
+  if (('ABC123456DEF'H >> 9) != '000000000ABC'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_13() {
+  if (('ABC123456DEF'H >> 13) != '000000000000'H) { setverdict(fail); }
+  setverdict(pass);
+}
+//
+testcase shr_neg_0() {
+  if (('ABC123456DEF'H >> 0) != 'ABC123456DEF'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_neg_1() {
+  if (('ABC123456DEF'H >> -1) != 'BC123456DEF0'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_neg_2() {
+  if (('ABC123456DEF'H >> -2) != 'C123456DEF00'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_neg_3() {
+  if (('ABC123456DEF'H >> -3) != '123456DEF000'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_neg_4() {
+  if (('ABC123456DEF'H >> -4) != '23456DEF0000'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_neg_5() {
+  if (('ABC123456DEF'H >> -5) != '3456DEF00000'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_neg_8() {
+  if (('ABC123456DEF'H >> -8) != '6DEF00000000'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_neg_9() {
+  if (('ABC123456DEF'H >> -9) != 'DEF000000000'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_neg_13() {
+  if (('ABC123456DEF'H >> -13) != '000000000000'H) { setverdict(fail); }
+  setverdict(pass);
+}
+
+//
+
+testcase shl_0_uneven() {
+  if (('ABC123456DEF7'H << 0) != 'ABC123456DEF7'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_1_uneven() {
+  if (('ABC123456DEF7'H << 1) != 'BC123456DEF70'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_2_uneven() {
+  if (('ABC123456DEF7'H << 2) != 'C123456DEF700'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_3_uneven() {
+  if (('ABC123456DEF7'H << 3) != '123456DEF7000'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_4_uneven() {
+  if (('ABC123456DEF7'H << 4) != '23456DEF70000'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_5_uneven() {
+  if (('ABC123456DEF7'H << 5) != '3456DEF700000'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_8_uneven() {
+  if (('ABC123456DEF7'H << 8) != '6DEF700000000'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_9_uneven() {
+  if (('ABC123456DEF7'H << 9) != 'DEF7000000000'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_13_uneven() {
+  if (('ABC123456DEF7'H << 13) != '0000000000000'H) { setverdict(fail); }
+  setverdict(pass);
+}
+//
+testcase shl_neg_0_uneven() {
+  if (('ABC123456DEF7'H << 0) != 'ABC123456DEF7'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_neg_1_uneven() {
+  if (('ABC123456DEF7'H << -1) != '0ABC123456DEF'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_neg_2_uneven() {
+  if (('ABC123456DEF7'H << -2) != '00ABC123456DE'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_neg_3_uneven() {
+  if (('ABC123456DEF7'H << -3) != '000ABC123456D'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_neg_4_uneven() {
+  if (('ABC123456DEF7'H << -4) != '0000ABC123456'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_neg_5_uneven() {
+  if (('ABC123456DEF7'H << -5) != '00000ABC12345'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_neg_8_uneven() {
+  if (('ABC123456DEF7'H << -8) != '00000000ABC12'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_neg_9_uneven() {
+  if (('ABC123456DEF7'H << -9) != '000000000ABC1'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_neg_13_uneven() {
+  if (('ABC123456DEF7'H << -13) != '0000000000000'H) { setverdict(fail); }
+  setverdict(pass);
+}
+//
+testcase shr_0_uneven() {
+  if (('ABC123456DEF7'H >> 0) != 'ABC123456DEF7'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_1_uneven() {
+  if (('ABC123456DEF7'H >> 1) != '0ABC123456DEF'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_2_uneven() {
+  if (('ABC123456DEF7'H >> 2) != '00ABC123456DE'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_3_uneven() {
+  if (('ABC123456DEF7'H >> 3) != '000ABC123456D'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_4_uneven() {
+  if (('ABC123456DEF7'H >> 4) != '0000ABC123456'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_5_uneven() {
+  if (('ABC123456DEF7'H >> 5) != '00000ABC12345'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_8_uneven() {
+  if (('ABC123456DEF7'H >> 8) != '00000000ABC12'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_9_uneven() {
+  if (('ABC123456DEF7'H >> 9) != '000000000ABC1'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_13_uneven() {
+  if (('ABC123456DEF7'H >> 13) != '0000000000000'H) { setverdict(fail); }
+  setverdict(pass);
+}
+//
+testcase shr_neg_0_uneven() {
+  if (('ABC123456DEF7'H >> 0) != 'ABC123456DEF7'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_neg_1_uneven() {
+  if (('ABC123456DEF7'H >> -1) != 'BC123456DEF70'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_neg_2_uneven() {
+  if (('ABC123456DEF7'H >> -2) != 'C123456DEF700'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_neg_3_uneven() {
+  if (('ABC123456DEF7'H >> -3) != '123456DEF7000'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_neg_4_uneven() {
+  if (('ABC123456DEF7'H >> -4) != '23456DEF70000'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_neg_5_uneven() {
+  if (('ABC123456DEF7'H >> -5) != '3456DEF700000'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_neg_8_uneven() {
+  if (('ABC123456DEF7'H >> -8) != '6DEF700000000'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_neg_9_uneven() {
+  if (('ABC123456DEF7'H >> -9) != 'DEF7000000000'H) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_neg_13_uneven() {
+  if (('ABC123456DEF7'H >> -13) != '0000000000000'H) { setverdict(fail); }
+  setverdict(pass);
+}
+
+}

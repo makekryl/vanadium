@@ -1,0 +1,314 @@
+module BitstringShift {
+
+testcase shl_empty() {
+  if ((''B << 42) != ''B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_empty() {
+  if ((''B >> 42) != ''B) { setverdict(fail); }
+  setverdict(pass);
+}
+
+//
+
+testcase shl_0() {
+  if (('01010100101110'B << 0) != '01010100101110'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_1() {
+  if (('01010100101110'B << 1) != '10101001011100'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_2() {
+  if (('01010100101110'B << 2) != '01010010111000'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_3() {
+  if (('01010100101110'B << 3) != '10100101110000'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_4() {
+  if (('01010100101110'B << 4) != '01001011100000'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_5() {
+  if (('01010100101110'B << 5) != '10010111000000'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_8() {
+  if (('01010100101110'B << 8) != '10111000000000'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_9() {
+  if (('01010100101110'B << 9) != '01110000000000'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_13() {
+  if (('01010100101110'B << 13) != '00000000000000'B) { setverdict(fail); }
+  setverdict(pass);
+}
+//
+testcase shl_neg_0() {
+  if (('01010100101110'B << 0) != '01010100101110'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_neg_1() {
+  if (('01010100101110'B << -1) != '00101010010111'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_neg_2() {
+  if (('01010100101110'B << -2) != '00010101001011'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_neg_3() {
+  if (('01010100101110'B << -3) != '00001010100101'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_neg_4() {
+  if (('01010100101110'B << -4) != '00000101010010'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_neg_5() {
+  if (('01010100101110'B << -5) != '00000010101001'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_neg_8() {
+  if (('01010100101110'B << -8) != '00000000010101'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_neg_9() {
+  if (('01010100101110'B << -9) != '00000000001010'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_neg_13() {
+  if (('01010100101110'B << -13) != '00000000000000'B) { setverdict(fail); }
+  setverdict(pass);
+}
+
+//
+
+testcase shr_0() {
+  if (('01010100101110'B >> 0) != '01010100101110'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_1() {
+  if (('01010100101110'B >> 1) != '00101010010111'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_2() {
+  if (('01010100101110'B >> 2) != '00010101001011'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_3() {
+  if (('01010100101110'B >> 3) != '00001010100101'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_4() {
+  if (('01010100101110'B >> 4) != '00000101010010'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_5() {
+  if (('01010100101110'B >> 5) != '00000010101001'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_8() {
+  if (('01010100101110'B >> 8) != '00000000010101'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_9() {
+  if (('01010100101110'B >> 9) != '00000000001010'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_13() {
+  if (('01010100101110'B >> 13) != '00000000000000'B) { setverdict(fail); }
+  setverdict(pass);
+}
+//
+testcase shr_neg_0() {
+  if (('01010100101110'B >> 0) != '01010100101110'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_neg_1() {
+  if (('01010100101110'B >> -1) != '10101001011100'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_neg_2() {
+  if (('01010100101110'B >> -2) != '01010010111000'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_neg_3() {
+  if (('01010100101110'B >> -3) != '10100101110000'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_neg_4() {
+  if (('01010100101110'B >> -4) != '01001011100000'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_neg_5() {
+  if (('01010100101110'B >> -5) != '10010111000000'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_neg_8() {
+  if (('01010100101110'B >> -8) != '10111000000000'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_neg_9() {
+  if (('01010100101110'B >> -9) != '01110000000000'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_neg_13() {
+  if (('01010100101110'B >> -13) != '00000000000000'B) { setverdict(fail); }
+  setverdict(pass);
+}
+
+//
+
+testcase shl_0_uneven() {
+  if (('010101001011101'B << 0) != '010101001011101'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_1_uneven() {
+  if (('010101001011101'B << 1) != '101010010111010'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_2_uneven() {
+  if (('010101001011101'B << 2) != '010100101110100'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_3_uneven() {
+  if (('010101001011101'B << 3) != '101001011101000'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_4_uneven() {
+  if (('010101001011101'B << 4) != '010010111010000'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_5_uneven() {
+  if (('010101001011101'B << 5) != '100101110100000'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_8_uneven() {
+  if (('010101001011101'B << 8) != '101110100000000'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_9_uneven() {
+  if (('010101001011101'B << 9) != '011101000000000'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_13_uneven() {
+  if (('010101001011101'B << 13) != '010000000000000'B) { setverdict(fail); }
+  setverdict(pass);
+}
+//
+testcase shl_neg_0_uneven() {
+  if (('010101001011101'B << 0) != '010101001011101'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_neg_1_uneven() {
+  if (('010101001011101'B << -1) != '001010100101110'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_neg_2_uneven() {
+  if (('010101001011101'B << -2) != '000101010010111'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_neg_3_uneven() {
+  if (('010101001011101'B << -3) != '000010101001011'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_neg_4_uneven() {
+  if (('010101001011101'B << -4) != '000001010100101'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_neg_5_uneven() {
+  if (('010101001011101'B << -5) != '000000101010010'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_neg_8_uneven() {
+  if (('010101001011101'B << -8) != '000000000101010'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_neg_9_uneven() {
+  if (('010101001011101'B << -9) != '000000000010101'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shl_neg_13_uneven() {
+  if (('010101001011101'B << -13) != '000000000000001'B) { setverdict(fail); }
+  setverdict(pass);
+}
+//
+testcase shr_0_uneven() {
+  if (('010101001011101'B >> 0) != '010101001011101'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_1_uneven() {
+  if (('010101001011101'B >> 1) != '001010100101110'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_2_uneven() {
+  if (('010101001011101'B >> 2) != '000101010010111'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_3_uneven() {
+  if (('010101001011101'B >> 3) != '000010101001011'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_4_uneven() {
+  if (('010101001011101'B >> 4) != '000001010100101'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_5_uneven() {
+  if (('010101001011101'B >> 5) != '000000101010010'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_8_uneven() {
+  if (('010101001011101'B >> 8) != '000000000101010'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_9_uneven() {
+  if (('010101001011101'B >> 9) != '000000000010101'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_13_uneven() {
+  if (('010101001011101'B >> 13) != '000000000000001'B) { setverdict(fail); }
+  setverdict(pass);
+}
+//
+testcase shr_neg_0_uneven() {
+  if (('010101001011101'B >> 0) != '010101001011101'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_neg_1_uneven() {
+  if (('010101001011101'B >> -1) != '101010010111010'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_neg_2_uneven() {
+  if (('010101001011101'B >> -2) != '010100101110100'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_neg_3_uneven() {
+  if (('010101001011101'B >> -3) != '101001011101000'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_neg_4_uneven() {
+  if (('010101001011101'B >> -4) != '010010111010000'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_neg_5_uneven() {
+  if (('010101001011101'B >> -5) != '100101110100000'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_neg_8_uneven() {
+  if (('010101001011101'B >> -8) != '101110100000000'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_neg_9_uneven() {
+  if (('010101001011101'B >> -9) != '011101000000000'B) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase shr_neg_13_uneven() {
+  if (('010101001011101'B >> -13) != '010000000000000'B) { setverdict(fail); }
+  setverdict(pass);
+}
+
+}

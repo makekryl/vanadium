@@ -122,13 +122,12 @@ void vrt_bitstring_concat(vrt_bitstring_t* dst, const vrt_bitstring_t* a, const 
     std::copy_n(b_buf, b_bytes, dst_buf + a_bytes);
   } else {
     const auto total_bytes = Bits2Bytes(total_bits);
-    for (bitstring_size_t i = a_bytes; i < total_bytes; ++i) {
-      const std::uint32_t b_byte = b_buf[i - a_bytes];
-      dst_buf[i - 1] |= b_byte >> a_dangling_bits;
-      dst_buf[i] = b_byte << (8 - a_dangling_bits);
-    }
-    if ((a_bytes + b_bytes) > total_bytes) {
-      dst_buf[total_bytes - 1] |= b_buf[b_bytes - 1] << a_dangling_bits;
+    for (bitstring_size_t i = 0; i < b_bytes; ++i) {
+      const std::uint32_t b_byte = b_buf[i];
+      dst_buf[a_bytes - 1 + i] |= static_cast<std::uint8_t>(b_byte >> a_dangling_bits);
+      if ((a_bytes + i) < total_bytes) {
+        dst_buf[a_bytes + i] = static_cast<std::uint8_t>(b_byte << (8 - a_dangling_bits));
+      }
     }
   }
 
@@ -187,13 +186,13 @@ void vrt_bitstring_shift_left_impl(const std::uint8_t* srcbuf, std::uint8_t* buf
 
   if (n_bits == 0) {
     std::copy_n(srcbuf + n_bytes, len_bytes - n_bytes, buf);
-    std::fill_n(buf + len_bytes - n_bytes, n_bytes, 0);
   } else {
     for (bitstring_size_t i = 0; i < len_bytes - n_bytes - 1; i++) {
-      buf[i] = (srcbuf[i + n_bytes] >> n_bits) | (srcbuf[i + n_bytes + 1] << (8 - n_bits));
+      buf[i] = (srcbuf[i + n_bytes] << n_bits) | (srcbuf[i + n_bytes + 1] >> (8 - n_bits));
     }
-    buf[len_bytes - n_bytes - 1] = srcbuf[len_bytes - 1] >> n_bits;
+    buf[len_bytes - n_bytes - 1] = srcbuf[len_bytes - 1] << n_bits;
   }
+  std::fill_n(buf + len_bytes - n_bytes, n_bytes, 0);
 }
 void vrt_bitstring_shift_right_impl(const std::uint8_t* srcbuf, std::uint8_t* buf, bitstring_size_t len,
                                     std::int64_t n) {
@@ -202,13 +201,13 @@ void vrt_bitstring_shift_right_impl(const std::uint8_t* srcbuf, std::uint8_t* bu
   const auto n_bytes = n / 8;
   const auto n_bits = n % 8;
 
+  std::fill_n(buf, n_bytes, 0);
   if (n_bits == 0) {
-    std::fill_n(buf, n_bytes, 0);
     std::copy_n(srcbuf, len_bytes - n_bytes, buf + n_bytes);
   } else {
-    buf[n_bytes] = srcbuf[0] << n_bits;
+    buf[n_bytes] = srcbuf[0] >> n_bits;
     for (bitstring_size_t i = n_bytes + 1; i < len_bytes; i++) {
-      buf[i] = (srcbuf[i - n_bytes - 1] >> (8 - n_bits)) | (srcbuf[i - n_bytes] << n_bits);
+      buf[i] = (srcbuf[i - n_bytes - 1] << (8 - n_bits)) | (srcbuf[i - n_bytes] >> n_bits);
     }
   }
 }
@@ -229,6 +228,7 @@ void vrt_bitstring_shift_right(vrt_bitstring_t* dst, const vrt_bitstring_t* s, s
 namespace {
 void vrt_bitstring_rotate_left_impl(const std::uint8_t* srcbuf, std::uint8_t* buf, bitstring_size_t len,
                                     std::int64_t n) {
+  std::fill_n(buf, Bits2Bytes(len), 0);
   for (bitstring_size_t i = 0; i < len; ++i) {
     const auto si = (i + n) % len;
     const auto byte = srcbuf[si / 8];
@@ -238,8 +238,10 @@ void vrt_bitstring_rotate_left_impl(const std::uint8_t* srcbuf, std::uint8_t* bu
     }
   }
 }
+
 void vrt_bitstring_rotate_right_impl(const std::uint8_t* srcbuf, std::uint8_t* buf, bitstring_size_t len,
                                      std::int64_t n) {
+  std::fill_n(buf, Bits2Bytes(len), 0);
   for (bitstring_size_t i = 0; i < len; ++i) {
     auto si = (i - n) % len;
     if (si < 0) {

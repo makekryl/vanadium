@@ -24,14 +24,14 @@ constexpr hexstring_size_t Nibbles2Bytes(hexstring_size_t bits) {
 
 std::uint8_t GetNibble(const std::uint8_t* buf, hexstring_size_t i) {
   const auto octet = buf[i / 2];
-  return (i % 2) ? (octet >> 4) : (octet & 0x0F);
+  return (i % 2) ? (octet & 0x0F) : (octet >> 4);
 }
 void SetNibble(std::uint8_t* buf, hexstring_size_t i, std::uint8_t val) {
   auto& octet = buf[i / 2];
   if (i % 2) {
-    octet = (octet % 0x0F) | (val << 4);
+    octet = (octet & 0xF0) | (val & 0x0F);
   } else {
-    octet = (octet % 0xF0) | (val & 0x0F);
+    octet = (octet & 0x0F) | (val << 4);
   }
 }
 
@@ -114,15 +114,13 @@ void vrt_hexstring_concat(vrt_hexstring_t* dst, const vrt_hexstring_t* a, const 
     std::copy_n(b_buf, b_bytes, dst_buf + a_bytes);
     ClearUnusedNibbles(&tmp);
   } else {
-    const auto total_bytes = Nibbles2Bytes(total_nibbles);
-    for (hexstring_size_t i = a_bytes; i < total_bytes; ++i) {
-      const std::uint32_t b_byte = b_buf[i - a_bytes];
-      dst_buf[i - 1] |= b_byte >> 4;
-      dst_buf[i] = b_byte << 4;
+    for (hexstring_size_t i = 0; i < b_bytes; ++i) {
+      const std::uint8_t b_byte = b_buf[i];
+      dst_buf[a_bytes - 1 + i] |= (b_byte >> 4);
+      dst_buf[a_bytes + i] = static_cast<std::uint8_t>(b_byte << 4);
     }
-    if (b_bytes % 2) {
-      dst_buf[total_bytes - 1] |= b_buf[b_bytes - 1] >> 4;
-    }
+
+    ClearUnusedNibbles(&tmp);
   }
 
   //
@@ -175,30 +173,29 @@ void vrt_hexstring_shift_left_impl(const std::uint8_t* srcbuf, std::uint8_t* buf
   const auto len_bytes = Nibbles2Bytes(len);
   const auto n_bytes = n / 2;
 
-  std::println("n={} nbytes={} lenbytes={}", n, n_bytes, len_bytes);
-
   if ((n % 2) == 0) {
     std::copy_n(srcbuf + n_bytes, len_bytes - n_bytes, buf);
-    std::fill_n(buf + len_bytes - n_bytes, n_bytes, 0);
   } else {
     for (hexstring_size_t i = 0; i < len_bytes - n_bytes - 1; i++) {
-      buf[i] = (srcbuf[i + n_bytes] >> 4) | (srcbuf[i + n_bytes + 1] << 4);
+      buf[i] = (srcbuf[i + n_bytes] << 4) | (srcbuf[i + n_bytes + 1] >> 4);
     }
-    buf[len_bytes - n_bytes - 1] = srcbuf[len_bytes - 1] >> 4;
+    buf[len_bytes - n_bytes - 1] = srcbuf[len_bytes - 1] << 4;
   }
+  std::fill_n(buf + len_bytes - n_bytes, n_bytes, 0);
 }
+
 void vrt_hexstring_shift_right_impl(const std::uint8_t* srcbuf, std::uint8_t* buf, hexstring_size_t len,
                                     std::int64_t n) {
   const auto len_bytes = Nibbles2Bytes(len);
   const auto n_bytes = n / 2;
 
+  std::fill_n(buf, n_bytes, 0);
   if ((n % 2) == 0) {
-    std::fill_n(buf, n_bytes, 0);
     std::copy_n(srcbuf, len_bytes - n_bytes, buf + n_bytes);
   } else {
-    buf[n_bytes] = srcbuf[0] << 4;
+    buf[n_bytes] = srcbuf[0] >> 4;
     for (hexstring_size_t i = n_bytes + 1; i < len_bytes; i++) {
-      buf[i] = (srcbuf[i - n_bytes - 1] >> 4) | (srcbuf[i - n_bytes] << 4);
+      buf[i] = (srcbuf[i - n_bytes - 1] << 4) | (srcbuf[i - n_bytes] >> 4);
     }
   }
 }
@@ -222,9 +219,7 @@ void vrt_hexstring_rotate_left_impl(const std::uint8_t* srcbuf, std::uint8_t* bu
   for (hexstring_size_t i = 0; i < len; ++i) {
     const auto si = (i + n) % len;
     const auto nib = GetNibble(srcbuf, si);
-    if (nib) {
-      SetNibble(buf, i, nib);
-    }
+    SetNibble(buf, i, nib);
   }
 }
 void vrt_hexstring_rotate_right_impl(const std::uint8_t* srcbuf, std::uint8_t* buf, hexstring_size_t len,
@@ -236,9 +231,7 @@ void vrt_hexstring_rotate_right_impl(const std::uint8_t* srcbuf, std::uint8_t* b
     }
 
     const auto nib = GetNibble(srcbuf, si);
-    if (nib) {
-      SetNibble(buf, i, nib);
-    }
+    SetNibble(buf, i, nib);
   }
 }
 }  // namespace

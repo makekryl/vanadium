@@ -1,0 +1,329 @@
+module Hexstring {
+
+testcase eq() {
+  if ('44B0BA'H == '44B0BA'H) {
+  } else {
+    setverdict(fail);
+  }
+
+  var hexstring hs1 := '44B0BA'H;
+  var hexstring hs2 := '44B0BA'H;
+  if (hs1 == hs2) {
+  } else {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+testcase eq_contradiction() {
+  if ('44B0BA'H == '00B0BA'H) {
+    setverdict(fail);
+  }
+
+  var hexstring hs1 := '44B0BA'H;
+  var hexstring hs2 := '00B0BA'H;
+  if (hs1 == hs2) {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+
+testcase ne() {
+  if ('44B0BA'H != '00B0BA'H) {
+  } else {
+    setverdict(fail);
+  }
+
+  var hexstring hs1 := '44B0BA'H;
+  var hexstring hs2 := '00B0BA'H;
+  if (hs1 != hs2) {
+  } else {
+    setverdict(fail);
+  }
+  if (hs2 != hs1) {
+  } else {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+testcase ne_contradiction() {
+  if ('44B0BA'H != '44B0BA'H) {
+    setverdict(fail);
+  }
+
+  var hexstring hs1 := '44B0BA'H;
+  var hexstring hs2 := '44B0BA'H;
+  if (hs1 != hs2) {
+    setverdict(fail);
+  }
+  if (hs1 != hs1) {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+
+testcase concat() {
+  var hexstring hs := '44B0BA'H;
+  hs := hs & '00B0BA'H;
+  if (hs != '44B0BA00B0BA'H) {
+    setverdict(fail);
+  }
+
+  hs := hs & '55'H & hs;
+  if (hs != '44B0BA00B0BA5544B0BA00B0BA'H) {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+
+testcase eq_uneven() {
+  if ('44B0BAB'H == '44B0BAB'H) {
+  } else {
+    setverdict(fail);
+  }
+
+  var hexstring hs1 := '44B0BAB'H;
+  var hexstring hs2 := '44B0BAB'H;
+  if (hs1 == hs2) {
+  } else {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+
+testcase eq_contradiction_uneven() {
+  if ('44B0BAB'H == '00B0BAB'H) {
+    setverdict(fail);
+  }
+
+  var hexstring hs1 := '44B0BAB'H;
+  var hexstring hs2 := '00B0BAB'H;
+  if (hs1 == hs2) {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+
+testcase ne_uneven() {
+  if ('44B0BAB'H != '00B0BAB'H) {
+  } else {
+    setverdict(fail);
+  }
+
+  var hexstring hs1 := '44B0BAB'H;
+  var hexstring hs2 := '00B0BAB'H;
+  if (hs1 != hs2) {
+  } else {
+    setverdict(fail);
+  }
+  if (hs2 != hs1) {
+  } else {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+
+testcase ne_contradiction_uneven() {
+  if ('44B0BAB'H != '44B0BAB'H) {
+    setverdict(fail);
+  }
+
+  var hexstring hs1 := '44B0BAB'H;
+  var hexstring hs2 := '44B0BAB'H;
+  if (hs1 != hs2) {
+    setverdict(fail);
+  }
+  if (hs1 != hs1) {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+
+testcase concat_uneven() {
+  var hexstring hs := '44B0BAB'H;
+  hs := hs & '00B0BAB'H;
+  if (hs != '44B0BAB00B0BAB'H) {
+    setverdict(fail);
+  }
+
+  hs := hs & '5'H & hs;
+  if (hs != '44B0BAB00B0BAB544B0BAB00B0BAB'H) {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+
+testcase eq_uneven_even() {
+  if ('44B0BAB'H == '44B0BA'H) {
+    setverdict(fail);
+  }
+
+  var hexstring hs1 := '44B0BAB'H;
+  var hexstring hs2 := '44B0BA'H;
+  if (hs1 == hs2) {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+
+testcase ne_uneven_even() {
+  if ('44B0BAB'H != '44B0BA'H) {
+  } else {
+    setverdict(fail);
+  }
+
+  var hexstring hs1 := '44B0BAB'H;
+  var hexstring hs2 := '44B0BA'H;
+  if (hs1 != hs2) {
+  } else {
+    setverdict(fail);
+  }
+  if (hs2 != hs1) {
+  } else {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+
+testcase concat_uneven_even() {
+  var hexstring hs := '44B0BAB'H;
+  hs := hs & '00B0BA'H;
+  if (hs != '44B0BAB00B0BA'H) {
+    setverdict(fail);
+  }
+
+  hs := hs & '55'H & hs;
+  if (hs != '44B0BAB00B0BA5544B0BAB00B0BA'H) {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+
+testcase concat_even_uneven() {
+  var hexstring hs := '44B0BA'H;
+  hs := hs & '00B0BAB'H;
+  if (hs != '44B0BA00B0BAB'H) {
+    setverdict(fail);
+  }
+
+  hs := hs & '5'H & hs;
+  if (hs != '44B0BA00B0BAB544B0BA00B0BAB'H) {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+
+testcase eq_even_uneven() {
+  if ('44B0BA'H == '44B0BAB'H) {
+    setverdict(fail);
+  }
+
+  var hexstring hs1 := '44B0BA'H;
+  var hexstring hs2 := '44B0BAB'H;
+  if (hs1 == hs2) {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+
+testcase ne_even_uneven() {
+  if ('44B0BA'H != '44B0BAB'H) {
+  } else {
+    setverdict(fail);
+  }
+
+  var hexstring hs1 := '44B0BA'H;
+  var hexstring hs2 := '44B0BAB'H;
+  if (hs1 != hs2) {
+  } else {
+    setverdict(fail);
+  }
+  if (hs2 != hs1) {
+  } else {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+
+///
+
+testcase concat_large() {
+  var hexstring hs := ''H;
+  hs := hs & '55'H;
+  hs := hs & 'AB'H;
+  hs := hs & 'AB'H;
+  hs := hs & '12'H;
+  hs := hs & '34'H;
+  hs := hs & 'AB'H;
+  hs := hs & 'AB'H;
+  hs := hs & 'AB'H;
+  hs := hs & 'AB'H;
+  hs := hs & 'AB'H;
+  hs := hs & 'AB'H;
+  hs := hs & 'AB'H;
+  hs := hs & 'AB'H;
+  hs := hs & 'AB'H;
+  hs := hs & 'AB'H;
+  hs := hs & 'AB'H;
+  hs := hs & 'AB'H;
+  hs := hs & '12'H;
+  hs := hs & '34'H;
+  hs := hs & 'AB'H;
+  hs := hs & 'AB'H;
+  hs := hs & '55'H;
+
+  if (hs != '55ABAB1234ABABABABABABABABABABABAB1234ABAB55'H) {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+
+testcase concat_large_uneven() {
+  var hexstring hs := ''H;
+  hs := hs & '5'H;
+  hs := hs & 'A'H;
+  hs := hs & 'A'H;
+  hs := hs & '1'H;
+  hs := hs & '3'H;
+  hs := hs & 'A'H;
+  hs := hs & 'A'H;
+  hs := hs & 'A'H;
+  hs := hs & 'A'H;
+  hs := hs & 'A'H;
+  hs := hs & 'A'H;
+  hs := hs & 'A'H;
+  hs := hs & 'A'H;
+  hs := hs & 'A'H;
+  hs := hs & 'A'H;
+  hs := hs & 'A'H;
+  hs := hs & 'A'H;
+  hs := hs & '1'H;
+  hs := hs & '3'H;
+  hs := hs & 'A'H;
+  hs := hs & 'A'H;
+  hs := hs & '5'H;
+
+  if (hs != '5AA13AAAAAAAAAAAA13AA5'H) {
+    setverdict(fail);
+  }
+
+  setverdict(pass);
+}
+
+}

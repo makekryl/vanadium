@@ -153,7 +153,7 @@ void PerformGenericShiftOperation(S* dst, const S* s, std::int64_t n, auto f) {
   const auto len = s->length;
 
   if (len == 0 || n == 0) {
-    S tmp;
+    S tmp{.is_ext = false};
     Copy(&tmp, s);
     *dst = tmp;
     return;

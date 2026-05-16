@@ -1,0 +1,162 @@
+module CharstringOperations {
+
+testcase rotl_empty() {
+  if (("" <@ 42) != "") { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_empty() {
+  if (("" @> 42) != "") { setverdict(fail); }
+  setverdict(pass);
+}
+
+//
+
+testcase rotl_0() {
+  if (("charstrtext" <@ 0) != "charstrtext") { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_1() {
+  if (("charstrtext" <@ 1) != "harstrtextc") { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_2() {
+  if (("charstrtext" <@ 2) != "arstrtextch") { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_3() {
+  if (("charstrtext" <@ 3) != "rstrtextcha") { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_4() {
+  if (("charstrtext" <@ 4) != "strtextchar") { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_5() {
+  if (("charstrtext" <@ 5) != "trtextchars") { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_7() {
+  if (("charstrtext" <@ 7) != "textcharstr") { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_13() {
+  if (("charstrtext" <@ 13) != "arstrtextch") { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_17() {
+  if (("charstrtext" <@ 17) != "rtextcharst") { setverdict(fail); }
+  setverdict(pass);
+}
+//
+testcase rotl_neg_0() {
+  if (("charstrtext" <@ 0) != "charstrtext") { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_neg_1() {
+  if (("charstrtext" <@ -1) != "tcharstrtex") { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_neg_2() {
+  if (("charstrtext" <@ -2) != "xtcharstrte") { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_neg_3() {
+  if (("charstrtext" <@ -3) != "extcharstrt") { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_neg_4() {
+  if (("charstrtext" <@ -4) != "textcharstr") { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_neg_5() {
+  if (("charstrtext" <@ -5) != "rtextcharst") { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_neg_7() {
+  if (("charstrtext" <@ -7) != "strtextchar") { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_neg_13() {
+  if (("charstrtext" <@ -13) != "xtcharstrte") { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotl_neg_17() {
+  if (("charstrtext" <@ -17) != "trtextchars") { setverdict(fail); }
+  setverdict(pass);
+}
+//
+testcase rotr_0() {
+  if (("charstrtext" @> 0) != "charstrtext") { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_1() {
+  if (("charstrtext" @> 1) != "tcharstrtex") { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_2() {
+  if (("charstrtext" @> 2) != "xtcharstrte") { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_3() {
+  if (("charstrtext" @> 3) != "extcharstrt") { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_4() {
+  if (("charstrtext" @> 4) != "textcharstr") { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_5() {
+  if (("charstrtext" @> 5) != "rtextcharst") { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_7() {
+  if (("charstrtext" @> 7) != "strtextchar") { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_13() {
+  if (("charstrtext" @> 13) != "xtcharstrte") { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_17() {
+  if (("charstrtext" @> 17) != "trtextchars") { setverdict(fail); }
+  setverdict(pass);
+}
+//
+testcase rotr_neg_0() {
+  if (("charstrtext" @> 0) != "charstrtext") { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_neg_1() {
+  if (("charstrtext" @> -1) != "harstrtextc") { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_neg_2() {
+  if (("charstrtext" @> -2) != "arstrtextch") { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_neg_3() {
+  if (("charstrtext" @> -3) != "rstrtextcha") { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_neg_4() {
+  if (("charstrtext" @> -4) != "strtextchar") { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_neg_5() {
+  if (("charstrtext" @> -5) != "trtextchars") { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_neg_7() {
+  if (("charstrtext" @> -7) != "textcharstr") { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_neg_13() {
+  if (("charstrtext" @> -13) != "arstrtextch") { setverdict(fail); }
+  setverdict(pass);
+}
+testcase rotr_neg_17() {
+  if (("charstrtext" @> -17) != "rtextcharst") { setverdict(fail); }
+  setverdict(pass);
+}
+
+}
