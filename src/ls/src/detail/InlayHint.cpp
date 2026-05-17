@@ -77,9 +77,11 @@ constexpr auto kNonCachingInlayHintTargetLocatorOptions = InlayHintTargetLocator
         },
 };
 
+// TODO: refactor, get rid of pair
 template <typename Options>
-[[nodiscard]] const ast::Node* LocateInlayHintTarget(const core::SourceFile& file, const core::semantic::Scope* scope,
-                                                     const ast::Node* n, Options options) {
+[[nodiscard]] std::pair<const ast::Node*, bool> LocateInlayHintTarget(const core::SourceFile& file,
+                                                                      const core::semantic::Scope* scope,
+                                                                      const ast::Node* n, Options options) {
   switch (n->nkind) {
     case ast::NodeKind::CallExpr: {
       const auto* m = n->As<ast::nodes::CallExpr>();
@@ -88,27 +90,28 @@ template <typename Options>
       // return core::checker::utils::ResolveCallableParams(file, scope, m->args);  // -> FormalPars
 
       const auto fun_sym = core::checker::ResolveExprType(&file, scope, m->fun);
-      if (!fun_sym || (fun_sym->Flags() & core::semantic::SymbolFlags::kBuiltin) ||
+      if (!fun_sym ||
           !(fun_sym->Flags() & (core::semantic::SymbolFlags::kFunction | core::semantic::SymbolFlags::kTemplate))) {
-        return nullptr;
+        return {nullptr, false};
       }
 
-      return ast::utils::GetCallableDeclParams(fun_sym->Declaration()->As<ast::nodes::Decl>());  // -> FormalPars
+      return {ast::utils::GetCallableDeclParams(fun_sym->Declaration()->As<ast::nodes::Decl>()),
+              bool(fun_sym->Flags() & core::semantic::SymbolFlags::kBuiltin)};  // -> FormalPars
     }
     case ast::NodeKind::CompositeLiteral: {
       const auto* m = n->As<ast::nodes::CompositeLiteral>();
       const auto sym = options.deduceCompositeLiteralType(&file, scope, m);
-      if (!sym || (sym->Flags() & core::semantic::SymbolFlags::kBuiltin)) {
-        return nullptr;
+      if (!sym) {
+        return {nullptr, false};
       }
 
       if ((sym.depth != 0) || !(sym->Flags() & core::semantic::SymbolFlags::kStructural)) {
-        return nullptr;
+        return {nullptr, false};
       }
-      return sym->Declaration();
+      return {sym->Declaration(), false};
     }
     default:
-      return nullptr;
+      return {nullptr, false};
   }
 }
 
@@ -116,7 +119,7 @@ template <typename InlayHintTargetLocatorOptions>
 void ComputeInlayHint(const core::SourceFile& file, const core::semantic::Scope* scope, const ast::Node* n,
                       lib::Arena& arena, std::vector<lsp::InlayHint>& out,
                       InlayHintTargetLocatorOptions inlayHintTargetLocatorOptions) {
-  const ast::Node* tgt = LocateInlayHintTarget(file, scope, n, inlayHintTargetLocatorOptions);
+  const auto [tgt, is_builtin] = LocateInlayHintTarget(file, scope, n, inlayHintTargetLocatorOptions);
   if (!tgt) {
     return;
   }
@@ -138,7 +141,7 @@ void ComputeInlayHint(const core::SourceFile& file, const core::semantic::Scope*
     case ast::NodeKind::CallExpr: {
       const auto* m = n->As<ast::nodes::CallExpr>();
 
-      const auto* params = tgt->As<ast::nodes::FormalPars>();
+      const auto* params = tgt->template As<ast::nodes::FormalPars>();
       const auto* params_file = ast::utils::SourceFileOf(params);
 
       for (const auto& [idx, arg] : m->args->list | std::views::enumerate) {
@@ -163,7 +166,7 @@ void ComputeInlayHint(const core::SourceFile& file, const core::semantic::Scope*
             break;
         }
 
-        if (arg->nkind != ast::NodeKind::AssignmentExpr) {
+        if (!is_builtin && arg->nkind != ast::NodeKind::AssignmentExpr) {
           const auto& param_name_opt = param->name;
           if (!param_name_opt) [[unlikely]] {
             break;
@@ -304,8 +307,9 @@ std::optional<lsp::InlayHint> ResolveInlayHint(const lsp::InlayHint& original_hi
     }
   }
 
-  const auto* tgt = LocateInlayHintTarget(*file, core::semantic::utils::FindScope(file->module->scope, container_node),
-                                          container_node, kNonCachingInlayHintTargetLocatorOptions);
+  const auto [tgt, _] =
+      LocateInlayHintTarget(*file, core::semantic::utils::FindScope(file->module->scope, container_node),
+                            container_node, kNonCachingInlayHintTargetLocatorOptions);
   if (!tgt) {
     return std::nullopt;
   }
