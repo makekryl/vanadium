@@ -195,6 +195,9 @@ class ScopeManager {
  private:
   llvm::Value* EmitConstructorCall(llvm::AllocaInst* alloca, TypeSymbol ts) {
     if (!u_.IsOpaque(ts)) {
+      u_.builder.CreateMemSet(alloca, u_.builder.getInt8(0),
+                              u_.builder.getInt64(u_.mod.getDataLayout().getTypeAllocSize(alloca->getAllocatedType())),
+                              alloca->getAlign());
       return alloca;
     }
     auto* pv = u_.builder.CreateCall(u_.rt.type_new_f, {u_.GetTypeInfo(ts)});
