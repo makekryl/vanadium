@@ -842,20 +842,31 @@ InstantiatedType DeduceExpectedType(const SourceFile* file, const semantic::Scop
 }  // namespace ext
 
 namespace {
-const semantic::Symbol* TryResolveExprSymbolViaHierarchy(const SourceFile* file, const semantic::Scope*,
+const semantic::Symbol* TryResolveExprSymbolViaHierarchy(const SourceFile* file, const semantic::Scope* scope,
                                                          const ast::nodes::Expr* expr) {
+  const auto lookup_imported_module_sym = [&] -> const semantic::Symbol* {
+    // TODO: instead of having a kImportedModule, enrich modules with an unique per-module symbol with flag kModule,
+    //       and return it instead - it will also save up on storing a symbol for each import statement
+    if (auto it = file->module->imports.find(file->Text(expr)); it != file->module->imports.end()) {
+      // Adding to the comment above: now we even have duplicate symbols, while we need only one...
+      return &it->second.sym;
+    }
+    return nullptr;
+  };
   switch (expr->parent->nkind) {
     case ast::NodeKind::SelectorExpr: {
       const auto* parent_se = expr->parent->As<ast::nodes::SelectorExpr>();
       // SomeImportedModule.x.y.z.w := ...;
       // ^^^^^^^^^^^^^^^^^^
       if (expr->nkind == ast::NodeKind::Ident && expr == parent_se->x) {
-        // TODO: instead of having a kImportedModule, enrich modules with an unique per-module symbol with flag kModule,
-        //       and return it instead - it will also save up on storing a symbol for each import statement
-        if (auto it = file->module->imports.find(file->Text(expr)); it != file->module->imports.end()) {
-          // Adding to the comment above: now we even have duplicate symbols, while we need only one...
-          return &it->second.sym;
-        }
+        return lookup_imported_module_sym();
+      }
+      return nullptr;
+    }
+    case ast::NodeKind::ImportDecl: {
+      // described in the comment above
+      if (expr->nkind == ast::NodeKind::Ident) {
+        return lookup_imported_module_sym();
       }
       return nullptr;
     }
@@ -863,7 +874,6 @@ const semantic::Symbol* TryResolveExprSymbolViaHierarchy(const SourceFile* file,
       const auto* m = expr->parent->As<ast::nodes::CaseClause>();
       const auto* ss = m->parent->As<ast::nodes::SelectStmt>();
 
-      const core::semantic::Scope* scope = semantic::utils::FindScope(file->module->scope, expr);
       const auto tag_sym = ResolveExprType(file, scope, ss->tag);
       if (!tag_sym) {
         return nullptr;
