@@ -1,0 +1,25 @@
+./InvocableTemplates.ttcn:
+  14:30: arguments required to reference parametrized definition `tpar_i'
+      var template integer t4 := tpar_i;  // EXPECT_ERROR
+                                 ~~~~~~                  
+  17:30: arguments required to reference parametrized definition `tparpar_i'
+      var template integer t7 := tparpar_i;  // EXPECT_ERROR
+                                 ~~~~~~~~~                  
+  21:23: arguments required to reference parametrized definition `tpar_i'
+      takeIntegerTemplate(tpar_i);  // EXPECT_ERROR
+                          ~~~~~~                   
+  24:23: arguments required to reference parametrized definition `tparpar_i'
+      takeIntegerTemplate(tparpar_i);  // EXPECT_ERROR
+                          ~~~~~~~~~                   
+  32:29: arguments required to reference parametrized definition `tpar_i'
+      var integer v4 := valueof(tpar_i);  // EXPECT_ERROR
+                                ~~~~~~                   
+  35:29: arguments required to reference parametrized definition `tparpar_i'
+      var integer v7 := valueof(tparpar_i);  // EXPECT_ERROR
+                                ~~~~~~~~~                   
+  39:28: arguments required to reference parametrized definition `tpar_i'
+      takeIntegerValue(valueof(tpar_i));  // EXPECT_ERROR
+                               ~~~~~~                    
+  42:28: arguments required to reference parametrized definition `tparpar_i'
+      takeIntegerValue(valueof(tparpar_i));  // EXPECT_ERROR
+                               ~~~~~~~~~                    

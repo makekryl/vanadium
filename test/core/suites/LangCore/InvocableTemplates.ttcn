@@ -1,0 +1,45 @@
+module InvocableTemplates {
+
+function takeIntegerTemplate(template integer tt) {}
+function takeIntegerValue(integer vv) {}
+
+template integer t_i := 1;
+template integer tpar_i(integer arg) := arg;
+template integer tparpar_i(integer arg1, integer arg2) := arg1 + arg2;
+
+function f() {
+  var template integer t1 := t_i;
+  var template integer t2 := tpar_i(1);
+  var template integer t3 := tpar_i(arg := 1);
+  var template integer t4 := tpar_i;  // EXPECT_ERROR
+  var template integer t5 := tparpar_i(1, 2);
+  var template integer t6 := tparpar_i(arg1 := 1, arg2 := 2);
+  var template integer t7 := tparpar_i;  // EXPECT_ERROR
+  takeIntegerTemplate(t_i);
+  takeIntegerTemplate(tpar_i(1));
+  takeIntegerTemplate(tpar_i(arg := 1));
+  takeIntegerTemplate(tpar_i);  // EXPECT_ERROR
+  takeIntegerTemplate(tparpar_i(1, 2));
+  takeIntegerTemplate(tparpar_i(arg1 := 1, arg2 := 2));
+  takeIntegerTemplate(tparpar_i);  // EXPECT_ERROR
+
+
+  // to test valueof argument type inferrence specifically:
+
+  var integer v1 := valueof(t_i);
+  var integer v2 := valueof(tpar_i(1));
+  var integer v3 := valueof(tpar_i(arg := 1));
+  var integer v4 := valueof(tpar_i);  // EXPECT_ERROR
+  var integer v5 := valueof(tparpar_i(1, 2));
+  var integer v6 := valueof(tparpar_i(arg1 := 1, arg2 := 2));
+  var integer v7 := valueof(tparpar_i);  // EXPECT_ERROR
+  takeIntegerValue(valueof(t_i));
+  takeIntegerValue(valueof(tpar_i(1)));
+  takeIntegerValue(valueof(tpar_i(arg := 1)));
+  takeIntegerValue(valueof(tpar_i));  // EXPECT_ERROR
+  takeIntegerValue(valueof(tparpar_i(1, 2)));
+  takeIntegerValue(valueof(tparpar_i(arg1 := 1, arg2 := 2)));
+  takeIntegerValue(valueof(tparpar_i));  // EXPECT_ERROR
+}
+
+}

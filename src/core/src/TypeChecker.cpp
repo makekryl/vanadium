@@ -1157,6 +1157,14 @@ InstantiatedType ResolveCallableReturnType(const SourceFile* file, const ast::no
   }
 }
 
+namespace {
+inline bool IsTerminalDeclType(const ast::nodes::Expr* expr, const InstantiatedType& decl_type) {
+  return bool(decl_type->Flags() & (semantic::SymbolFlags::kType | semantic::SymbolFlags::kImportedModule |
+                                    semantic::SymbolFlags::kEnumMember)) ||
+         (expr->nkind != ast::NodeKind::CallExpr && bool(decl_type->Flags() & semantic::SymbolFlags::kFunction));
+}
+}  // namespace
+
 // Expression -> (Declaration) -> Effective Type
 InstantiatedType ResolveExprType(const SourceFile* file, const semantic::Scope* scope, const ast::nodes::Expr* expr) {
   const auto decl_type = ResolveExprSymbol(file, scope, expr);
@@ -1164,9 +1172,7 @@ InstantiatedType ResolveExprType(const SourceFile* file, const semantic::Scope* 
     return InstantiatedType::None();
   }
 
-  if ((decl_type->Flags() &
-       (semantic::SymbolFlags::kType | semantic::SymbolFlags::kImportedModule | semantic::SymbolFlags::kEnumMember)) ||
-      (expr->nkind != ast::NodeKind::CallExpr && (decl_type->Flags() & semantic::SymbolFlags::kFunction))) {
+  if (IsTerminalDeclType(expr, decl_type)) {
     return decl_type;
   }
 
@@ -1190,6 +1196,12 @@ InstantiatedType ResolveExprType(const SourceFile* file, const semantic::Scope* 
   if (decl_type.restriction != TemplateRestrictionKind::kNone) {
     // TODO: change to .restriction > .restriction
     decl_sym.restriction = decl_type.restriction;
+  }
+  // for the validation, see CheckType case Ident
+  if (decl_sym && (expr->parent->nkind != ast::NodeKind::CallExpr /* fun */) &&
+      (decl_sym->Flags() & semantic::SymbolFlags::kTemplate)) {
+    const auto* tdecl_node = decl_sym->Declaration()->As<ast::nodes::TemplateDecl>();
+    decl_sym.sym = ResolveCallableReturnType(ast::utils::SourceFileOf(tdecl_node), tdecl_node).sym;
   }
   return decl_sym;
 }
@@ -1288,10 +1300,6 @@ void BasicTypeChecker::MatchTypes(const ast::Range& range, InstantiatedType actu
     return;
   }
 
-  if (actual && actual->Flags() & semantic::SymbolFlags::kTemplate) {
-    const auto* file = ast::utils::SourceFileOf(actual->Declaration());
-    actual.sym = ResolveCallableReturnType(file, actual->Declaration()->As<ast::nodes::Decl>()).sym;
-  }
   if (!actual) {
     // Seems like that is is too much as right side types that cannot be resolved
     // will be reported by the semantic analyzeer
@@ -2076,7 +2084,40 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, InstantiatedTyp
         break;
       }
 
-      resulting_type = ResolveExprType(&sf_, scope_, m);
+      resulting_type = [&] {
+        // excerpt from ResolveExprType
+        const auto decl_sym = ResolveExprSymbol(&sf_, scope_, m);
+        if (!decl_sym) {
+          return InstantiatedType::None();
+        }
+        if (IsTerminalDeclType(m, decl_sym)) {
+          return decl_sym;
+        }
+        const auto* decl = decl_sym->Declaration()->As<ast::nodes::Decl>();
+
+        auto rtype = ResolveDeclarationType(ast::utils::SourceFileOf(decl), decl);
+        if (decl_sym.restriction != TemplateRestrictionKind::kNone) {
+          // TODO: change to .restriction > .restriction instead of comparing to kNone ^
+          rtype.restriction = decl_sym.restriction;
+        }
+        return rtype;
+      }();
+
+      if (resulting_type && (m->parent->nkind != ast::NodeKind::CallExpr /* fun */) &&
+          (resulting_type->Flags() & semantic::SymbolFlags::kTemplate)) {
+        // we need to check if's OK to use this template without providing arguments
+        const auto* tdecl_node = resulting_type->Declaration()->As<ast::nodes::TemplateDecl>();
+        if (tdecl_node->params && std::ranges::any_of(tdecl_node->params->list, [](const ast::nodes::FormalPar* param) {
+              return param->value == nullptr;
+            })) {
+          EmitError(TypeError{
+              .range = m->nrange,
+              .message = std::format("arguments required to reference parametrized definition `{}'", sf_.Text(m)),
+          });
+        }
+        resulting_type.sym = ResolveCallableReturnType(ast::utils::SourceFileOf(tdecl_node), tdecl_node).sym;
+      }
+
       break;
     }
 
