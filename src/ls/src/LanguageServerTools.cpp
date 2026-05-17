@@ -49,6 +49,9 @@ void SetupTools(LsContext& ctx) {
     COPY_OPT_IF_PRESENT(max_empty_newlines);
     //
 #undef COPY_OPT_IF_PRESENT
+
+    VLS_INFO("Formatter options: tab_width={}, print_width={}, max_empty_newlines={}",  //
+             opts.tab_width, opts.print_width, opts.max_empty_newlines);
   }
 }
 
