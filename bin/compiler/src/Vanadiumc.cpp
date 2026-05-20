@@ -56,7 +56,7 @@ void FormatError(std::string& buf, const tooling::fs::Path& base_path, const cor
         if (i == marker_begin) {
           ch = '^';
         }
-      } else if (i >= marker_begin && i < marker_end && !std::isspace(line[i])) {
+      } else if (i >= marker_begin && i < marker_end) {
         ch = '~';
       }
       buf += ch;
