@@ -493,7 +493,7 @@ constexpr auto make_emphasis(emphasis em) noexcept -> ansi_color_escape<Char> {
 
 template <typename OutputIt>
 inline auto reset_color(OutputIt out) -> OutputIt {
-  return std::ranges::copy("\x1b[0m", out).out;
+  return std::ranges::copy(std::string_view{"\x1b[0m"}, out).out;
 }
 
 template <typename T>
