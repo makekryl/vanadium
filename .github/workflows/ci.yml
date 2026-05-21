@@ -47,6 +47,7 @@ jobs:
     strategy:
       matrix:
         toolchain: [clang, gcc]
+        sanitizers: [sanitizers, no-sanitizers]
     steps:
       - uses: actions/checkout@v5
 
@@ -58,8 +59,8 @@ jobs:
         uses: ./.github/workflows/composite/run-in-devcontainer
         with:
           run: |
-            uv run inv test --sanitizers \
-              --toolchain ${{ matrix.toolchain }} \
+            uv run inv test \
+              --toolchain ${{ matrix.toolchain }} --${{ matrix.sanitizers }} \
               --jobs $(nproc) --cmake-jobs $(nproc) --no-run
 
       - name: Run tests
@@ -67,8 +68,8 @@ jobs:
         timeout-minutes: 5  # TODO: check why it's hanging occasionally
         with:
           run: |
-            uv run inv test --sanitizers \
-              --toolchain ${{ matrix.toolchain }} \
+            uv run inv test \
+              --toolchain ${{ matrix.toolchain }} --${{ matrix.sanitizers }} \
               --jobs $(nproc) --skip-build
 
   test-coverage:
