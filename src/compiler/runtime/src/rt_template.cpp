@@ -143,8 +143,10 @@ void vrt_valueof_internal(void* result, const vrt_val_t& obj) {
       SetValueUnionSelection(result, active_idx);
       void* rv = static_cast<std::byte*>(result) + v_member.offset;
       if (IsIndirect(v_member.type)) {
-        *(void**)(rv) = vrt_new(v_member.type);
+        *(void**)rv = vrt_new(v_member.type);
         rv = *(void**)rv;
+      } else {
+        v_member.type->construct(rv);
       }
       //
       vrt_valueof_internal(rv, {.p = GetMemberPtr(t_member, obj.p), .ty = t_member.type});
