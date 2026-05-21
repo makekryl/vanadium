@@ -41,6 +41,13 @@ def get_build_dir(c: Context):
   return build_dir
 
 
+def _symlink_build_dir(build_dir: Path):
+  force_create_symlink(
+    src=build_dir,
+    dst=OUTPUT_DIR / "build",
+  )
+
+
 @task
 @with_build_params
 def configure(
@@ -70,10 +77,7 @@ def configure(
     },
   )
 
-  force_create_symlink(
-    src=build_dir,
-    dst=OUTPUT_DIR / "build",
-  )
+  _symlink_build_dir(build_dir)
 
   if use_compile_commands:
     compile_commands_filename = "compile_commands.json"
@@ -93,6 +97,8 @@ def build(
 
   if build_opts(c).reconfigure or not build_dir.exists():
     configure(c)
+  else:
+    _symlink_build_dir(build_dir)
 
   args = []
   if target:
