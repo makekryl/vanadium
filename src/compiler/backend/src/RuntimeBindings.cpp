@@ -39,30 +39,42 @@ using SpecificUnaryOperationGenerator = llvm::Value* (*)(llvm::IRBuilder<>&, llv
     return create(builder, ty, builder.op(va, vb));                                                   \
   })
 
-void GenerateAssertIsBound(RuntimeBindings& rt, llvm::LLVMContext& ctx, llvm::Function* fn, std::string_view tpname,
-                           std::uint32_t flag_idx) {
+void GenerateAssertFunction(RuntimeBindings& rt, llvm::LLVMContext& ctx, llvm::Module& mod, llvm::Function* fn) {
   llvm::IRBuilder<> builder(ctx);
 
   auto* bb_entry = llvm::BasicBlock::Create(ctx, "", fn);
-  auto* bb_unbound = llvm::BasicBlock::Create(ctx, "trap", fn);
-  auto* bb_proceed = llvm::BasicBlock::Create(ctx, "ok", fn);
+  auto* bb_trap = llvm::BasicBlock::Create(ctx, "trap", fn);
+  auto* bb_ok = llvm::BasicBlock::Create(ctx, "ok", fn);
 
   llvm::Value* pv = fn->arg_begin();
+  llvm::Value* pmsg = fn->arg_begin() + 1;
 
   //=== ENTRY ===//
   builder.SetInsertPoint(bb_entry);
-  //
-  llvm::Value* pv_bound = builder.CreateExtractValue(pv, flag_idx);
-  //
-  builder.CreateCondBr(pv_bound, bb_proceed, bb_unbound);
+  auto* expect_f = llvm::Intrinsic::getDeclaration(&mod, llvm::Intrinsic::expect, pv->getType());
+  auto* pv_likely = builder.CreateCall(expect_f, {pv, llvm::ConstantInt::getTrue(ctx)});
+  builder.CreateCondBr(pv_likely, bb_ok, bb_trap);
 
   //=== TRAP ===//
-  builder.SetInsertPoint(bb_unbound);
-  builder.CreateCall(rt.panic, builder.CreateGlobalStringPtr(std::format("accessing an unbound {} value", tpname)));
+  builder.SetInsertPoint(bb_trap);
+  builder.CreateCall(rt.panic, pmsg);
   builder.CreateUnreachable();
 
-  //=== PROCEED ===//
-  builder.SetInsertPoint(bb_proceed);
+  //=== OK ===//
+  builder.SetInsertPoint(bb_ok);
+  builder.CreateRetVoid();
+}
+
+void GenerateAssertIsBound(RuntimeBindings& rt, llvm::LLVMContext& ctx, llvm::Function* fn, std::string_view tpname,
+                           std::uint32_t flag_idx) {
+  llvm::IRBuilder<> builder(ctx);
+  llvm::Value* pv = fn->arg_begin();
+  builder.SetInsertPoint(llvm::BasicBlock::Create(ctx, "", fn));
+  builder.CreateCall(rt.assert_f,
+                     {
+                         builder.CreateExtractValue(pv, flag_idx),
+                         builder.CreateGlobalStringPtr(std::format("accessing an unbound {} value", tpname)),
+                     });
   builder.CreateRetVoid();
 }
 
@@ -171,6 +183,18 @@ RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ct
 
   panic = llvm::Function::Create(llvm::FunctionType::get(builder.getVoidTy(), {builder.getPtrTy()}, false),
                                  llvm::GlobalValue::ExternalLinkage, "vrt_panic", mod);
+  panic->addFnAttr(llvm::Attribute::NoReturn);
+
+  assert_f = llvm::Function::Create(llvm::FunctionType::get(builder.getVoidTy(),
+                                                            {
+                                                                nbool_ty,            // bool cond
+                                                                builder.getPtrTy(),  // const char* msg
+                                                            },
+                                                            false),
+                                    llvm::GlobalValue::InternalLinkage, "__vrt_assert", mod);
+  GenerateAssertFunction(*this, ctx, mod, assert_f);
+  assert_f->addFnAttr(llvm::Attribute::AlwaysInline);
+  assert_f->addFnAttr(llvm::Attribute::Hot);
 
   generic_getter_fn_ty = llvm::FunctionType::get(builder.getPtrTy(), {builder.getPtrTy()}, false);
 
@@ -179,6 +203,7 @@ RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ct
       builder.getPtrTy(),   // const char* name
       builder.getInt8Ty(),  // vrt_typekind_e
       sizet_ty,             // size_t size
+      sizet_ty,             // size_t alignment
       builder.getPtrTy(),   // *members
       sizet_ty,             // size_t members_count
       builder.getPtrTy(),   // construct(*)(void*)
@@ -487,6 +512,11 @@ RuntimeBindings::RuntimeBindings(llvm::LLVMContext& ctx, llvm::Module& mod) : ct
 
   //
 
+  uniont.active_member_idx_ty = builder.getInt64Ty();
+  uniont.unbound_am_idx = llvm::ConstantInt::get(uniont.active_member_idx_ty, -1);
+
+  //
+
   tpl.tsel_ty = builder.getInt8Ty();
   tpl.listsize_ty = builder.getInt32Ty();
   //
@@ -601,20 +631,15 @@ llvm::Value* RuntimeBindings::GetBool(bool v) const {
 }
 
 llvm::Type* RuntimeBindings::MakeUnion(llvm::ArrayRef<llvm::Type*> members) const {
+  auto& ctx = mod_.getContext();
   const auto& dl = mod_.getDataLayout();
 
   std::uint64_t max_size = 0;
-  llvm::Type* largest_ty = nullptr;
-
   for (auto* ty : members) {
-    const std::uint64_t size = dl.getTypeAllocSize(ty);
-    if (size > max_size) {
-      max_size = size;
-      largest_ty = ty;
-    }
+    max_size = std::max<std::uint64_t>(max_size, dl.getTypeAllocSize(ty));
   }
 
-  return largest_ty;
+  return llvm::ArrayType::get(llvm::Type::getInt8Ty(ctx), max_size);
 }
 
 std::vector<llvm::Type*> RuntimeBindings::WrapTemplateStruct(llvm::StructType* specific_sty) const {

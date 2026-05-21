@@ -22,7 +22,9 @@ inline void AssertIsBound(const vrt_octetstring_t* s) {
 const vrt_typeinfo_t octetstring_typeinfo{
     .name = "octetstring",
     .kind = vrt_typekind_e::kOctetstring,
+
     .size = sizeof(vrt_octetstring_t),
+    .alignment = alignof(vrt_octetstring_t),
 
     .members = nullptr,
 
@@ -209,7 +211,9 @@ void octetstring_template_dtor(vrt_octetstring_template_t*);
 const vrt_typeinfo_t octetstring_template_typeinfo{
     .name = octetstring_typeinfo.name,
     .kind = octetstring_typeinfo.kind,
+
     .size = sizeof(vrt_octetstring_template_t),
+    .alignment = alignof(vrt_octetstring_template_t),
 
     .members = nullptr,
 

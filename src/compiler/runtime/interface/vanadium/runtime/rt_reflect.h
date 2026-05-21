@@ -30,7 +30,9 @@ struct vrt_struct_member_t;
 struct vrt_typeinfo_t {
   const char* name;
   vrt_typekind_e kind;
+
   std::size_t size;
+  std::size_t alignment;
 
   const vrt_struct_member_t* members;
   std::size_t members_count;
@@ -44,6 +46,7 @@ struct vrt_typeinfo_t {
 };
 
 using vrt_valuelist_size_t = std::uint32_t;
+using vrt_union_active_idx_t = std::uint64_t;
 
 struct vrt_val_t {
   void* p;

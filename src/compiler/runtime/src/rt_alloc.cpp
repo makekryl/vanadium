@@ -24,8 +24,7 @@ void vrt_unifree(void* p) {
 }
 
 void* vrt_new(const vrt_typeinfo_t* td) {
-  // TODO: write alignment to typeinfo, use it below
-  auto* p = vrt_alloc(td->size, 4);
+  auto* p = vrt_alloc(td->size, td->alignment);
   // printf("vrt_new(td=%s, tpl=%d, size=%zu) -> %p\n", td->name, vanadium::rt::tpl::IsTemplateType(td), td->size, p);
   td->construct(p);
   return p;

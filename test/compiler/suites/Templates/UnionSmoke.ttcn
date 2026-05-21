@@ -1,0 +1,52 @@
+module UnionSmoke {
+
+type union MyUnion {
+  integer i,
+  charstring cs
+}
+
+testcase specific() {
+  var template MyUnion t := {
+    i := (5, 10)
+  };
+  log(t);
+  setverdict(pass);
+}
+
+testcase specific_accessors() {
+  var template MyUnion t;
+  t.i := (5, 10);
+  log(t);
+  setverdict(pass);
+}
+
+testcase specific_change() {
+  var template MyUnion t := {
+    i := (5, 10)
+  };
+  log(t);
+
+  t.cs := "cs value"
+  log(t);
+
+  setverdict(pass);
+}
+
+testcase valuelist() {
+  var template MyUnion t := (
+    {
+      i := (5, 10)
+    },
+    {
+      i := 1,
+      cs := "second cs value"
+    },
+    {
+      i := (7, 8)
+    }
+  );
+  log(t);
+  setverdict(pass);
+}
+
+}

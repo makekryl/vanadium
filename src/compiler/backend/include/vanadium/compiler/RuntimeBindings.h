@@ -119,6 +119,7 @@ class RuntimeBindings {
   llvm::IntegerType* sizet_ty;
 
   llvm::Function* panic;
+  llvm::Function* assert_f;
 
   llvm::FunctionType* generic_getter_fn_ty;
 
@@ -171,6 +172,12 @@ class RuntimeBindings {
   StringTypeBindings octetstring;
   StringTypeBindings bitstring;
   StringTypeBindings hexstring;
+
+  struct {
+    llvm::IntegerType* active_member_idx_ty;
+    llvm::ConstantInt* unbound_am_idx;
+    llvm::Function* assert_active_f;
+  } uniont;
 
   struct {
     llvm::Type* tsel_ty;

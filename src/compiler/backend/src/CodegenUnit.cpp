@@ -230,19 +230,31 @@ llvm::Value* CodegenUnit::UnwrapBoolOrBoxedBoolPtr(llvm::Value* v) {
   return UnwrapValue(v);
 }
 
-void CodegenUnit::EmitDestructorInvocation(TypeSymbol ts, llvm::Value* val) {
+void CodegenUnit::ConstructAt(TypeSymbol ts, llvm::Value* slot) {
+  if (IsOpaque(ts)) {
+    auto* allocated_ptr = builder.CreateCall(rt.type_new_f, {GetTypeInfo(ts), slot});
+    builder.CreateStore(allocated_ptr, slot);
+  } else {
+    // TODO: to speed up runtime, this could be put under if (!IsTrivial(ts)); otherwise memset(0)
+    //       on the other hand, we are going to inline trivials constructors anyway
+    builder.CreateCall(getOrDeclareExternalFunc(names::Ctor(ts), rt.obj_ctor_fn_ty), {slot});
+  }
+}
+
+void CodegenUnit::DestructAt(TypeSymbol ts, llvm::Value* val) {
   if (IsOpaque(ts)) {
     builder.CreateCall(rt.type_del_f, {
-                                          mod.getGlobalVariable(names::TInfo(ts)),
+                                          GetTypeInfo(ts),
                                           builder.CreateLoad(builder.getPtrTy(), val),
                                       });
-  } else {
+  } else if (!IsTrivial(ts)) {
     auto* dtor_f = [&] -> llvm::Function* {
       if (const auto* strb = GetStringTypeBindings(ts)) {
         return strb->dtor_f;
       }
       return nullptr;
     }();
+    assert(dtor_f);
     if (dtor_f) {
       // TODO: partial inline (is_bound && is_ext) in RuntimeBindings
       builder.CreateCall(dtor_f, {val});

@@ -6,52 +6,49 @@
 #include "vanadium/runtime/BuiltinsTemplates.h"
 #include "vanadium/runtime/TemplateMatching.h"
 #include "vanadium/runtime/TypeHelper.h"
+#include "vanadium/runtime/UnionLayout.h"
 #include "vanadium/runtime/rt_alloc.h"
 #include "vanadium/runtime/rt_integer.h"
 #include "vanadium/runtime/rt_reflect.h"
 #include "vanadium/runtime/runtime.h"
 #include "vanadium/runtime/runtime.hpp"
 
-using namespace vanadium;
+using namespace vanadium::rt;
 
 namespace {
-rt::tpl::GenericTemplateType* AsGenericTemplateType(void* p) {
-  return static_cast<rt::tpl::GenericTemplateType*>(p);
-}
-
 void* ResetTemplate(const vrt_typeinfo_t* td, void* p, vrt_template_sel_e new_tsel) {
   // printf("ResetTemplate(td->name=%s)\n", td->name);
-  assert(rt::tpl::IsTemplateType(td));
+  assert(tpl::IsTemplateType(td));
 
   td->destruct(p);
   // assuming ctor is trivial (sets tsel to kSpecificValue, vrt_tpl_generic_ctor), we won't call it
 
-  AsGenericTemplateType(p)->tsel = new_tsel;
-  return AsGenericTemplateType(p)->GetPayload();
+  tpl::AsGenericTemplateType(p)->tsel = new_tsel;
+  return tpl::AsGenericTemplateType(p)->GetPayload();
 }
 }  // namespace
 
 void vrt_tpl_generic_ctor(void* p) {
-  static_cast<rt::tpl::GenericTemplateType*>(p)->tsel = vrt_template_sel_e::kUninitialized;
+  static_cast<tpl::GenericTemplateType*>(p)->tsel = vrt_template_sel_e::kUninitialized;
 }
 void vrt_tpl_generic_dtor(void (*destruct_tpl)(void*), void* p) {
-  auto* t = static_cast<rt::tpl::GenericTemplateType*>(p);
+  auto* t = static_cast<tpl::GenericTemplateType*>(p);
   switch (t->tsel) {
     case vrt_template_sel_e::kSpecificValue:
       assert(false);
       break;
     default:
-      rt::tpl::Destruct(destruct_tpl, t);
+      tpl::Destruct(destruct_tpl, t);
       break;
   }
 }
 
 void* vrt_tpl_get_value(void* p) {
-  if (AsGenericTemplateType(p)->tsel != vrt_template_sel_e::kSpecificValue) {
+  if (tpl::AsGenericTemplateType(p)->tsel != vrt_template_sel_e::kSpecificValue) {
     vrt_panic("Accessing field a of a non-specific template");
     return nullptr;
   }
-  return AsGenericTemplateType(p)->GetPayload();
+  return tpl::AsGenericTemplateType(p)->GetPayload();
 }
 
 void* vrt_tpl_value(const vrt_typeinfo_t* td, void* p) {
@@ -75,7 +72,7 @@ void* vrt_tpl_list(const vrt_typeinfo_t* td, void* p, vrt_valuelist_size_t n, st
 
   const auto esize = td->size;
 
-  auto* vlist = static_cast<rt::tpl::ValueList<void>*>(ResetTemplate(td, p, lkind));
+  auto* vlist = static_cast<tpl::ValueList<void>*>(ResetTemplate(td, p, lkind));
   vlist->data = vrt_alloc(n * esize, 8);  // TODO: take alignment from typeinfo
   vlist->length = n;
   vlist->esize = esize;
@@ -111,8 +108,8 @@ void vrt_dynmatcher_free(const vrt_dynmatcher_t* p) {
 
 namespace {
 void vrt_valueof_internal(void* result, const vrt_val_t& obj) {
-  if (AsGenericTemplateType(obj.p)->tsel != vrt_template_sel_e::kSpecificValue) {
-    rt::Panic("Performing valueof operation on a non-specific template of type {}", obj.ty->name);
+  if (tpl::AsGenericTemplateType(obj.p)->tsel != vrt_template_sel_e::kSpecificValue) {
+    Panic("Performing valueof operation on a non-specific template of type {}", obj.ty->name);
     return;
   }
   switch (obj.ty->kind) {
@@ -123,8 +120,8 @@ void vrt_valueof_internal(void* result, const vrt_val_t& obj) {
     case vrt_typekind_e::kOctetstring:
     case vrt_typekind_e::kBitstring:
     case vrt_typekind_e::kHexstring: {
-      // printf(" valueof copy %s %p -> %p\n", obj.ty->name, AsGenericTemplateType(obj.p)->GetPayload(), result);
-      obj.ty->counterpart->copy(result, AsGenericTemplateType(obj.p)->GetPayload());
+      // printf(" valueof copy %s %p -> %p\n", obj.ty->name, tpl::AsGenericTemplateType(obj.p)->GetPayload(), result);
+      obj.ty->counterpart->copy(result, tpl::AsGenericTemplateType(obj.p)->GetPayload());
       break;
     }
     case vrt_typekind_e::kRecord:
@@ -133,9 +130,24 @@ void vrt_valueof_internal(void* result, const vrt_val_t& obj) {
       for (std::size_t i = 0; i < obj.ty->members_count; ++i) {
         const auto& t_member = obj.ty->members[i];
         const auto& v_member = obj.ty->counterpart->members[i];
-        vrt_valueof_internal(rt::GetMemberPtr(v_member, result),
-                             {.p = rt::GetMemberPtr(t_member, obj.p), .ty = t_member.type});
+        vrt_valueof_internal(GetMemberPtr(v_member, result), {.p = GetMemberPtr(t_member, obj.p), .ty = t_member.type});
       }
+      break;
+    }
+    case vrt_typekind_e::kUnion: {
+      assert(obj.ty->members_count == obj.ty->counterpart->members_count);
+      const auto active_idx = GetUnionSelection(obj);
+      const auto& t_member = obj.ty->members[active_idx];
+      const auto& v_member = obj.ty->counterpart->members[active_idx];
+      //
+      SetValueUnionSelection(result, active_idx);
+      void* rv = static_cast<std::byte*>(result) + v_member.offset;
+      if (IsIndirect(v_member.type)) {
+        *(void**)(rv) = vrt_new(v_member.type);
+        rv = *(void**)rv;
+      }
+      //
+      vrt_valueof_internal(rv, {.p = GetMemberPtr(t_member, obj.p), .ty = t_member.type});
       break;
     }
     default:
@@ -146,7 +158,7 @@ void vrt_valueof_internal(void* result, const vrt_val_t& obj) {
 }  // namespace
 
 void vrt_valueof(void* result, const vrt_val_t* obj) {
-  if (!rt::tpl::IsTemplateType(obj->ty)) {
+  if (!tpl::IsTemplateType(obj->ty)) {
     // TODO: can be optimized (?), check whether it's worth it
     obj->ty->copy(result, obj->p);
     return;
@@ -156,10 +168,10 @@ void vrt_valueof(void* result, const vrt_val_t* obj) {
 
 namespace {
 bool vrt_match_internal(const vrt_typeinfo_t* ty, const vrt_val_t* obj, const vrt_val_t* tobj) {
-#define X(name)                                                                                  \
-  if (ty == &name##_typeinfo) {                                                                  \
-    return rt::tpl::Match<vrt_##name##_template_match>((const vrt_##name##_t*)obj->p,            \
-                                                       (const vrt_##name##_template_t*)tobj->p); \
+#define X(name)                                                                              \
+  if (ty == &name##_typeinfo) {                                                              \
+    return tpl::Match<vrt_##name##_template_match>((const vrt_##name##_t*)obj->p,            \
+                                                   (const vrt_##name##_template_t*)tobj->p); \
   }
 #include "vanadium/runtime/BuiltinTypes.inc"
 #undef X

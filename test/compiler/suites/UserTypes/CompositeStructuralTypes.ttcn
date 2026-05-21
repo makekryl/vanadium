@@ -1,0 +1,65 @@
+module CompositeStructuralTypes {
+
+type record IntegerWrapper { integer iv }
+type record FloatWrapper { float fv }
+type record BooleanWrapper { boolean bv }
+type record CharstringWrapper { charstring csv }
+
+type record CompositeRecord {
+  IntegerWrapper i,
+  FloatWrapper f,
+  BooleanWrapper b,
+  CharstringWrapper cs
+}
+
+testcase tc_composite_init() {
+  var CompositeRecord v := {
+    i := { iv := 1 },
+    f := { fv := 2.0 },
+    b := { bv := true },
+    cs := { csv := "AAAAAAAAAAAAAAAAAA" }
+  };
+  log(v);
+
+  if (v.i.iv != 1) { setverdict(fail); }
+  if (v.f.fv != 2.0) { setverdict(fail); }
+  if (v.b.bv != true) { setverdict(fail); }
+  if (v.cs.csv != "AAAAAAAAAAAAAAAAAA") { setverdict(fail); }
+
+  setverdict(pass);
+}
+
+testcase tc_composite_fill() {
+  var CompositeRecord v;
+  v.i.iv := 1;
+  v.f.fv := 2.0;
+  v.b.bv := true;
+  v.cs.csv := "AAAAAAAAAAAAAAAAAA";
+
+  if (v.i.iv != 1) { setverdict(fail); }
+  if (v.f.fv != 2.0) { setverdict(fail); }
+  if (v.b.bv != true) { setverdict(fail); }
+  if (v.cs.csv != "AAAAAAAAAAAAAAAAAA") { setverdict(fail); }
+
+  setverdict(pass);
+}
+
+testcase tc_composite_bulkfill() {
+  var CompositeRecord v := {
+    b := { bv := true },
+    cs := { csv := "AAAAAAAAAAAAAAAAAA" }
+  };
+  v := {
+    i := { iv := 1 },
+    f := { fv := 2.0 }
+  }
+
+  if (v.i.iv != 1) { setverdict(fail); }
+  if (v.f.fv != 2.0) { setverdict(fail); }
+  if (v.b.bv != true) { setverdict(fail); }
+  if (v.cs.csv != "AAAAAAAAAAAAAAAAAA") { setverdict(fail); }
+
+  setverdict(pass);
+}
+
+}

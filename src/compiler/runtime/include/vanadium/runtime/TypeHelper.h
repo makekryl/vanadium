@@ -5,6 +5,8 @@
 
 namespace vanadium::rt {
 
+// TODO: store indirection flag inside member descriptor,
+//       inline non-foreign members to avoid extra allocations
 inline bool IsIndirect(const vrt_typeinfo_t* type) {
   if (tpl::IsTemplateType(type)) {
     return true;
@@ -13,6 +15,7 @@ inline bool IsIndirect(const vrt_typeinfo_t* type) {
   switch (type->kind) {
     case vrt_typekind_e::kRecord:
     case vrt_typekind_e::kSet:
+    case vrt_typekind_e::kUnion:
       return true;
     default:
       return false;

@@ -167,6 +167,10 @@ struct GenericTemplateType {
   }
 };
 
+inline GenericTemplateType* AsGenericTemplateType(void* p) {
+  return static_cast<rt::tpl::GenericTemplateType*>(p);
+}
+
 inline bool IsTemplateType(const vrt_typeinfo_t* td) {
   return td->tpl_construct_value != nullptr;
 }

@@ -17,7 +17,9 @@ inline void AssertIsBound(vrt_boolean_t b) {
 const vrt_typeinfo_t boolean_typeinfo{
     .name = "boolean",
     .kind = vrt_typekind_e::kBoolean,
+
     .size = sizeof(vrt_boolean_t),
+    .alignment = alignof(vrt_boolean_t),
 
     .members = nullptr,
 
@@ -63,7 +65,9 @@ void boolean_template_dtor(vrt_boolean_template_t*);
 const vrt_typeinfo_t boolean_template_typeinfo{
     .name = boolean_typeinfo.name,
     .kind = boolean_typeinfo.kind,
+
     .size = sizeof(vrt_boolean_template_t),
+    .alignment = alignof(vrt_boolean_template_t),
 
     .members = nullptr,
 

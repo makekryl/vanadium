@@ -18,7 +18,9 @@ inline void AssertIsBound(vrt_float_t& i) {
 const vrt_typeinfo_t float_typeinfo{
     .name = "float",
     .kind = vrt_typekind_e::kFloat,
+
     .size = sizeof(vrt_float_t),
+    .alignment = alignof(vrt_float_t),
 
     .members = nullptr,
 
@@ -83,7 +85,9 @@ void float_template_dtor(vrt_float_template_t*);
 const vrt_typeinfo_t float_template_typeinfo{
     .name = float_typeinfo.name,
     .kind = float_typeinfo.kind,
+
     .size = sizeof(vrt_float_template_t),
+    .alignment = alignof(vrt_float_template_t),
 
     .members = nullptr,
 

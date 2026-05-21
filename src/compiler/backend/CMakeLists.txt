@@ -1,5 +1,6 @@
 add_library(vanadium_compiler STATIC
   src/Compiler.cpp
+  src/ErrorFormatter.cpp
   src/ABIHelper.cpp
   src/CodegenUnit.cpp
   src/IRHelpers.cpp

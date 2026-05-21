@@ -59,7 +59,9 @@ RtStringSize_t GetByteLength<vrt_bitstring_t>(RtStringSize_t len) {
 const vrt_typeinfo_t bitstring_typeinfo{
     .name = "bitstring",
     .kind = vrt_typekind_e::kBitstring,
+
     .size = sizeof(vrt_bitstring_t),
+    .alignment = alignof(vrt_bitstring_t),
 
     .members = nullptr,
 
@@ -323,7 +325,9 @@ void bitstring_template_dtor(vrt_bitstring_template_t*);
 const vrt_typeinfo_t bitstring_template_typeinfo{
     .name = bitstring_typeinfo.name,
     .kind = bitstring_typeinfo.kind,
+
     .size = sizeof(vrt_bitstring_template_t),
+    .alignment = alignof(vrt_bitstring_template_t),
 
     .members = nullptr,
 

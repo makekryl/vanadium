@@ -10,6 +10,8 @@
 
 #include "vanadium/runtime/Stringifier.h"
 #include "vanadium/runtime/TemplateMatching.h"
+#include "vanadium/runtime/TypeHelper.h"
+#include "vanadium/runtime/UnionLayout.h"
 #include "vanadium/runtime/rt_bitstring.h"
 #include "vanadium/runtime/rt_boolean.h"
 #include "vanadium/runtime/rt_charstring.h"
@@ -38,14 +40,25 @@ bool vrt_is_bound(const vrt_val_t* v) {
 #include "vanadium/runtime/BuiltinTypes.inc"
 #undef X
 
-  return true;  // TODOOOOOOO
-
-  assert(false);
-  return false;
+  switch (v->ty->kind) {
+    case vrt_typekind_e::kRecord:
+    case vrt_typekind_e::kSet:
+      return std::ranges::any_of(std::span{v->ty->members, v->ty->members_count}, [&](const auto& m) {
+        const vrt_val_t mv{.p = rt::GetMemberPtr(m, v->p), .ty = m.type};
+        return vrt_is_bound(&mv);
+      });
+    case vrt_typekind_e::kUnion:
+      return reinterpret_cast<const rt::GenericUnion*>(v->p)->active_idx != rt::GenericUnion::kUnboundActiveIdx;
+    default:
+      assert(false);
+      return false;
+  }
 }
 
 void vrt_log(const vrt_val_t* args, std::uint32_t n) {
-  std::string buf;
+  static thread_local std::string buf;
+  buf.clear();
+
   std::for_each_n(args, n, [&](const auto& arg) {
     rt::StringifyObject(buf, arg);
     buf += " ";

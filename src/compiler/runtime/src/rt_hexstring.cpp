@@ -52,7 +52,9 @@ RtStringSize_t GetByteLength<vrt_hexstring_t>(RtStringSize_t len) {
 const vrt_typeinfo_t hexstring_typeinfo{
     .name = "hexstring",
     .kind = vrt_typekind_e::kHexstring,
+
     .size = sizeof(vrt_hexstring_t),
+    .alignment = alignof(vrt_hexstring_t),
 
     .members = nullptr,
 
@@ -302,7 +304,9 @@ void hexstring_template_dtor(vrt_hexstring_template_t*);
 const vrt_typeinfo_t hexstring_template_typeinfo{
     .name = hexstring_typeinfo.name,
     .kind = hexstring_typeinfo.kind,
+
     .size = sizeof(vrt_hexstring_template_t),
+    .alignment = alignof(vrt_hexstring_template_t),
 
     .members = nullptr,
 

@@ -23,7 +23,9 @@ inline void AssertIsBound(const vrt_charstring_t* s) {
 const vrt_typeinfo_t charstring_typeinfo{
     .name = "charstring",
     .kind = vrt_typekind_e::kCharstring,
+
     .size = sizeof(vrt_charstring_t),
+    .alignment = alignof(vrt_charstring_t),
 
     .members = nullptr,
 
@@ -161,7 +163,9 @@ void charstring_template_dtor(vrt_charstring_template_t*);
 const vrt_typeinfo_t charstring_template_typeinfo{
     .name = charstring_typeinfo.name,
     .kind = charstring_typeinfo.kind,
+
     .size = sizeof(vrt_charstring_template_t),
+    .alignment = alignof(vrt_charstring_template_t),
 
     .members = nullptr,
 

@@ -8,6 +8,7 @@
 #include "vanadium/runtime/Stringifier.h"
 #include "vanadium/runtime/TemplateMatching.h"
 #include "vanadium/runtime/TypeHelper.h"
+#include "vanadium/runtime/UnionLayout.h"
 #include "vanadium/runtime/rt_bitstring.h"
 #include "vanadium/runtime/rt_boolean.h"
 #include "vanadium/runtime/rt_charstring.h"
@@ -192,7 +193,23 @@ void StringifyTemplateGeneric(std::string& buf, const tpl::RtTemplate auto& t) {
   }
 }
 
+void StringifyUnionReflect(std::string& buf, const vrt_val_t& v) {
+  const auto active_idx = GetUnionSelection(v);
+  const auto& m = v.ty->members[active_idx];
+
+  buf += "{ ";
+  buf += m.name;
+  buf += " := ";
+  StringifyObject(buf, {.p = GetMemberPtr(m, v.p), .ty = m.type});
+  buf += " }";
+}
+
 void StringifyStructReflect(std::string& buf, const vrt_val_t& v) {
+  if (v.ty->kind == vrt_typekind_e::kUnion) {
+    StringifyUnionReflect(buf, v);
+    return;
+  }
+
   buf += "{ ";
   const std::span msp{v.ty->members, v.ty->members_count};
   for (const auto& m : msp) {
@@ -212,7 +229,8 @@ void StringifyStructReflect(std::string& buf, const vrt_val_t& v) {
 void StringifyReflect(std::string& buf, const vrt_val_t& v) {
   switch (v.ty->kind) {
     case vrt_typekind_e::kRecord:
-    case vrt_typekind_e::kSet: {
+    case vrt_typekind_e::kSet:
+    case vrt_typekind_e::kUnion: {
       if (tpl::IsTemplateType(v.ty)) {
         auto* t = static_cast<tpl::GenericTemplateType*>(v.p);
         const auto stringify_value_list = [&] {

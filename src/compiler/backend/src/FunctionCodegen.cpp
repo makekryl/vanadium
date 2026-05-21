@@ -56,7 +56,7 @@ struct AllocatedVar {
 
 void EmitDestructorCall(CodegenUnit& u, TypeSymbol ts, llvm::Value* val) {
   if (ts) {
-    u.EmitDestructorInvocation(ts, val);
+    u.DestructAt(ts, val);
   }
   u.builder.CreateLifetimeEnd(val);
 }
@@ -1047,7 +1047,7 @@ RtSlot FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, RtSlot dest) {
                 const auto& xsym = core::checker::ResolveExprType(
                     &pthis->u_.sf, core::semantic::utils::FindScope(pthis->u_.sf.module->scope, m), se->x);
                 return pthis->u_.builder.CreateCall(
-                    pthis->u_.getOrDeclareExternalFunc(names::Getter(xsym, pthis->Lit(se->sel)),
+                    pthis->u_.getOrDeclareExternalFunc(names::Muttor(xsym, pthis->Lit(se->sel)),
                                                        pthis->u_.rt.generic_getter_fn_ty),
                     {xval});
               }
@@ -1072,9 +1072,15 @@ RtSlot FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, RtSlot dest) {
           // TODO: optimize xsym chain resolution
           const auto& pxsym =
               core::checker::ResolveExprType(&u_.sf, core::semantic::utils::FindScope(u_.sf.module->scope, m), pse->x);
-          auto* pxval_ptr = u_.builder.CreateCall(
-              u_.getOrDeclareExternalFunc(names::Muttor(pxsym, Lit(pse->sel)), u_.rt.generic_getter_fn_ty), {pxval});
-          CodegenExpr(m->value, TypedSlot(pxval_ptr, pxsym));
+
+          auto* psel_ptr = u_.builder.CreateCall(
+              u_.getOrDeclareExternalFunc(names::Muttor(pxsym, Lit(pse->sel)), u_.rt.generic_getter_fn_ty),
+              {TypedSlot(pxval, pxsym).PromoteValue()});
+          // TODO: optimize xsym chain resolution
+          const auto& pselsym =
+              core::checker::ResolveExprType(&u_.sf, core::semantic::utils::FindScope(u_.sf.module->scope, m), pse);
+
+          CodegenExpr(m->value, TypedSlot(psel_ptr, pselsym));
 
           return nullptr;
         }
@@ -1098,8 +1104,6 @@ RtSlot FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, RtSlot dest) {
         // todo: positionals
         assert(attr->nkind == ast::NodeKind::AssignmentExpr);
         const auto* ae = attr->As<ast::nodes::AssignmentExpr>();
-        const auto& get_accessor =
-            (ae->value->nkind == ast::NodeKind::CompositeLiteral) ? names::Getter : names::Muttor;
 
         const auto& attr_sym = dest.ts.Derive([&] {
           const auto& property_name = Lit(ae->property);
@@ -1113,7 +1117,7 @@ RtSlot FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, RtSlot dest) {
         }());
 
         auto* pxval_ptr = u_.builder.CreateCall(
-            u_.getOrDeclareExternalFunc(get_accessor(dest.ts, Lit(ae->property)), u_.rt.generic_getter_fn_ty),
+            u_.getOrDeclareExternalFunc(names::Muttor(dest.ts, Lit(ae->property)), u_.rt.generic_getter_fn_ty),
             {dest_val});
         CodegenExpr(ae->value, TypedSlot(pxval_ptr, attr_sym));
       }

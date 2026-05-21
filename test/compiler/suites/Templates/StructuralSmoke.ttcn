@@ -14,6 +14,14 @@ testcase specific() {
   setverdict(pass);
 }
 
+testcase specific_accessors() {
+  var template MyRecord t;
+  t.i := (5, 10);
+  t.cs := "cs value";
+  log(t);
+  setverdict(pass);
+}
+
 testcase valuelist() {
   var template MyRecord t := (
     {

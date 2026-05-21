@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <filesystem>
 #include <format>
-#include <iterator>
 #include <memory>
 #include <print>
 #include <vector>
@@ -20,6 +19,7 @@
 
 #include <vanadium/ast/ASTTypes.h>
 #include <vanadium/compiler/Compiler.h>
+#include <vanadium/compiler/ErrorFormatter.h>
 #include <vanadium/core/Program.h>
 #include <vanadium/runtime/rt_reflect.h>
 #include <vanadium/runtime/rt_verdict.h>
@@ -74,37 +74,13 @@ void VerdictTest::TestBody() {
   });
 
   const auto* sf = program.GetFile(sf_name);
-  ASSERT_TRUE(sf);
-  ASSERT_TRUE(sf->ast.errors.empty()) << [&] -> std::string {
-    std::string errbuf = "Syntax errors:\n";
-    for (const auto& err : sf->ast.errors) {
-      std::format_to(std::back_inserter(errbuf), " {}:{} :: {}\n", err.range.begin, err.range.end, err.description);
-    }
-    return errbuf;
+  const auto error_count = [&] {
+    std::string errbuf;
+    return compiler::PrintErrors(errbuf, *sf, file_.string(), [](const std::string& errmsg) {
+      std::fputs(errmsg.c_str(), stderr);
+    });
   }();
-  ASSERT_TRUE(sf->semantic_errors.empty()) << [&] -> std::string {
-    std::string errbuf = "Semantic errors:\n";
-    for (const auto& err : sf->semantic_errors) {
-      std::format_to(std::back_inserter(errbuf), " {}:{} :: {}\n", err.range.begin, err.range.end,
-                     magic_enum::enum_name(err.type));
-    }
-    return errbuf;
-  }();
-  ASSERT_TRUE(sf->semantic_errors.empty()) << [&] -> std::string {
-    std::string errbuf = "Unresolved symbols:\n";
-    for (const auto& ident : sf->module->unresolved) {
-      std::format_to(std::back_inserter(errbuf), " {}:{} :: {}\n", ident->nrange.begin, ident->nrange.end,
-                     sf->Text(ident));
-    }
-    return errbuf;
-  }();
-  ASSERT_TRUE(sf->type_errors.empty()) << [&] -> std::string {
-    std::string errbuf = "Type errors:\n";
-    for (const auto& err : sf->type_errors) {
-      std::format_to(std::back_inserter(errbuf), " {}:{} :: {}\n", err.range.begin, err.range.end, err.message);
-    }
-    return errbuf;
-  }();
+  ASSERT_EQ(error_count, 0);
 
   // unique_ptr is required for ThreadSafeModule ownership transfer
   auto ctx = std::make_unique<llvm::LLVMContext>();

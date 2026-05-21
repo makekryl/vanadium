@@ -87,12 +87,20 @@ std::string Getter(TypeSymbol holder, std::string_view member) {
 }
 
 std::string Muttor(TypeSymbol holder, std::string_view member) {
+  if (!(holder->Flags() & core::semantic::SymbolFlags::kUnion)) {
+    return Getter(holder, member);
+  }
   return std::format("{}_mut_{}", TypeSymName(holder), member);
 }
 
 std::string TplValCtor(TypeSymbol ts) {
   assert(ts.is_template);
   return std::format("{}_tplval_ctor", TypeSymName(ts));
+}
+
+std::string TplValDtor(TypeSymbol ts) {
+  assert(ts.is_template);
+  return std::format("{}_tplval_dtor", TypeSymName(ts));
 }
 
 }  // namespace vanadium::compiler::names

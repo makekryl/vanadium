@@ -21,7 +21,9 @@ inline void AssertIsBound(vrt_integer_t& i) {
 const vrt_typeinfo_t integer_typeinfo{
     .name = "integer",
     .kind = vrt_typekind_e::kInteger,
+
     .size = sizeof(vrt_integer_t),
+    .alignment = alignof(vrt_integer_t),
 
     .members = nullptr,
 
@@ -95,7 +97,9 @@ void integer_template_dtor(vrt_integer_template_t*);
 const vrt_typeinfo_t integer_template_typeinfo{
     .name = integer_typeinfo.name,
     .kind = integer_typeinfo.kind,
+
     .size = sizeof(vrt_integer_template_t),
+    .alignment = alignof(vrt_integer_template_t),
 
     .members = integer_typeinfo.members,
 

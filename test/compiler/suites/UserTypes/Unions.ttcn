@@ -1,0 +1,46 @@
+module Unions {
+
+type union SimpleUnion {
+  integer i,
+  float f,
+  boolean b,
+  charstring cs
+}
+
+testcase tc_simple() {
+  var SimpleUnion v;
+
+  v.i := 1;
+  if (v.i != 1) { setverdict(fail); }
+
+  v.f := 2.0;
+  if (v.f != 2.0) { setverdict(fail); }
+
+  v.b := true;
+  if (v.b != true) { setverdict(fail); }
+
+  v.cs := "AAAAAAAAAAAAAAAAAA";
+  if (v.cs != "AAAAAAAAAAAAAAAAAA") { setverdict(fail); }
+
+  setverdict(pass);
+}
+
+testcase tc_simple_cl() {
+  var SimpleUnion v;
+
+  v := { i := 1 } ;
+  if (v.i != 1) { setverdict(fail); }
+
+  v := { f := 2.0 } ;
+  if (v.f != 2.0) { setverdict(fail); }
+
+  v := { b := true } ;
+  if (v.b != true) { setverdict(fail); }
+
+  v := { cs := "AAAAAAAAAAAAAAAAAA" };
+  if (v.cs != "AAAAAAAAAAAAAAAAAA") { setverdict(fail); }
+
+  setverdict(pass);
+}
+
+}

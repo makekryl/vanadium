@@ -110,7 +110,8 @@ struct CodegenUnit {
 
   //
 
-  void EmitDestructorInvocation(TypeSymbol ts, llvm::Value* val);
+  void ConstructAt(TypeSymbol ts, llvm::Value* slot);
+  void DestructAt(TypeSymbol ts, llvm::Value* val);
 };
 
 inline constexpr std::string_view kVarargsAttr = "vrt-varargs";
@@ -126,12 +127,13 @@ std::string TInfo(TypeSymbol);
 std::string Getter(TypeSymbol holder, std::string_view member);
 std::string Muttor(TypeSymbol holder, std::string_view member);
 std::string TplValCtor(TypeSymbol);
+std::string TplValDtor(TypeSymbol);
 }  // namespace names
 
 namespace values {}
 
-void CodegenStruct(CodegenUnit&, const core::semantic::Symbol*, const ast::nodes::StructTypeDecl*);
-void CodegenStruct(CodegenUnit&, const core::semantic::Symbol*, const ast::nodes::StructSpec*);
+void CodegenStructural(CodegenUnit&, const core::semantic::Symbol*, const ast::nodes::StructTypeDecl*);
+void CodegenStructural(CodegenUnit&, const core::semantic::Symbol*, const ast::nodes::StructSpec*);
 void CodegenFunction(CodegenUnit&, const core::semantic::Symbol*);
 
 void GenerateModuleRegistrationCode(CodegenUnit&);

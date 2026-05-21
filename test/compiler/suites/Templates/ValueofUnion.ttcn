@@ -1,0 +1,50 @@
+module ValueofUnion {
+
+type union SimpleUnion {
+  integer i,
+  float f,
+  boolean b,
+  charstring cs
+}
+testcase tc_simple_i() {
+  var template SimpleUnion t := { i := 1 };
+  var SimpleUnion v := valueof(t);
+  if (v.i != 1) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase tc_simple_f() {
+  var template SimpleUnion t := { f := 2.0 };
+  var SimpleUnion v := valueof(t);
+  if (v.f != 2.0) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase tc_simple_b() {
+  var template SimpleUnion t := { b := true };
+  var SimpleUnion v := valueof(t);
+  if (v.b != true) { setverdict(fail); }
+  setverdict(pass);
+}
+testcase tc_simple_cs() {
+  var template SimpleUnion t := { cs := "AAAAAAAAAAAAAAAAAA" };
+  var SimpleUnion v := valueof(t);
+  if (v.cs != "AAAAAAAAAAAAAAAAAA") { setverdict(fail); }
+  setverdict(pass);
+}
+
+type union CompositeUnion {
+  integer b,
+  SimpleUnion inner,
+  integer e
+}
+testcase tc_composite() {
+  var template CompositeUnion t := {
+    inner := {
+      cs := "AAAAAAAAAAAAAAAAAA"
+    }
+  };
+  var CompositeUnion v := valueof(t);
+  if (v.inner.cs != "AAAAAAAAAAAAAAAAAA") { setverdict(fail); }
+  setverdict(pass);
+}
+
+}

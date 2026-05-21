@@ -1,0 +1,51 @@
+module CompositeUnions {
+
+type record IntegerWrapper { integer iv }
+type record FloatWrapper { float fv }
+type record BooleanWrapper { boolean bv }
+type record CharstringWrapper { charstring csv }
+
+type record CompositeUnion {
+  IntegerWrapper i,
+  FloatWrapper f,
+  BooleanWrapper b,
+  CharstringWrapper cs
+}
+
+testcase tc_composite_fill() {
+  var CompositeUnion v;
+
+  v.i.iv := 1;
+  if (v.i.iv != 1) { setverdict(fail); }
+
+  v.f.fv := 2.0;
+  if (v.f.fv != 2.0) { setverdict(fail); }
+
+  v.b.bv := true;
+  if (v.b.bv != true) { setverdict(fail); }
+
+  v.cs.csv := "AAAAAAAAAAAAAAAAAA";
+  if (v.cs.csv != "AAAAAAAAAAAAAAAAAA") { setverdict(fail); }
+
+  setverdict(pass);
+}
+
+testcase tc_composite_cl() {
+  var CompositeUnion v;
+
+  v := { i := { iv := 1 } } ;
+  if (v.i.iv != 1) { setverdict(fail); }
+
+  v := { f := { fv := 2.0 } } ;
+  if (v.f.fv != 2.0) { setverdict(fail); }
+
+  v := { b := { bv := true } } ;
+  if (v.b.bv != true) { setverdict(fail); }
+
+  v := { cs := { csv := "AAAAAAAAAAAAAAAAAA" } };
+  if (v.cs.csv != "AAAAAAAAAAAAAAAAAA") { setverdict(fail); }
+
+  setverdict(pass);
+}
+
+}

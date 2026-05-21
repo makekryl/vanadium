@@ -30,7 +30,7 @@ void CompileUnit(CodegenUnit& u) {
       const auto* n = sym.Declaration();
       switch (n->nkind) {
         case ast::NodeKind::StructTypeDecl:
-          CodegenStruct(u, &sym, n->As<ast::nodes::StructTypeDecl>());
+          CodegenStructural(u, &sym, n->As<ast::nodes::StructTypeDecl>());
           break;
         default:
           VANADIUM_DEBUG_ERROR("Unhandled type node: {}", magic_enum::enum_name(n->nkind));
