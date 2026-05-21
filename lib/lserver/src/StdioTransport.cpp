@@ -16,7 +16,7 @@ void StdioTransport::ReadLine(std::span<char> chunk) {
 }
 
 void StdioTransport::Write(std::string_view buf) {
-  std::print(stdout, "{}", buf);
+  std::fwrite(buf.data(), 1, buf.length(), stdout);
 }
 
 void StdioTransport::Flush() {
