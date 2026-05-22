@@ -2,13 +2,16 @@
 
 Vanadium is a modern free & open-source TTCN-3 toolset built around a _very_ fast compiler frontend written from scratch, with performance kept in mind.
 
+<img width="80px" align="right" src="https://raw.githubusercontent.com/makekryl/vanadium/refs/heads/master/extension/icon.png"/>
+
 It provides:
 
 - A feature-complete **language server** for VS Code and other editors, supporting auto-import, ASN.1 and more
 - An easy-to-integrate **static code analyzer** that identifies and reports problematic code patterns
 - An opinionated **formatter** to keep code stylish and avoid code style discussions and related merge conflicts
+- A work-in-progress efficient **compiler**, which produce very lightweight translation units, and fast reflective **runtime** oriented for running heavy load tests
 
-Currently, Vanadium does not _replace_ existing solutions but instead _complements_ them. There is a rough concept for a compiler and a runtime, which may be worked on after the compiler frontend - currently under active development - has stabilized.
+Currently, until the compiler is production-ready, Vanadium does not _replace_ existing solutions but instead _complements_ them.
 
 ## Getting started
 
@@ -207,8 +210,11 @@ Below are some core design principles intended to keep Vanadium fast:
 - If dynamic memory allocation is unavoidable, memory should be allocated in bulk and reused as much as possible
 - Lambdas are useful: prefer consuming results via callbacks rather than returning dynamically allocated collections, especially when not all results are needed
 - Caching is not always beneficial, especially when it increases memory usage
+
+And as general coding guidelines:
+
 - Inline small functions by placing them in headers, but keep larger ones in source files to avoid slowing down build times
-- Parameterize functions at hot paths at compile time using `if constexpr` and pass configuration via compile-time structs injected as template arguments
+- Parameterize functions at hot paths at compile time by passing configuration via compile-time structs injected as template arguments - passing structs with designated field initializers is much more readable than passing as regular positional template arguments
 
 ## Acknowledgements
 
@@ -220,7 +226,7 @@ It would have been impossible to build this project without these wonderful open
 
 - **[stephenberry/glaze](https://github.com/stephenberry/glaze)** - _glaze_ is an efficient, modern C++ JSON and reflection library that made building the language server straightforward and painless
 
-- & more: **[fmtlib/fmt](https://github.com/fmtlib/fmt)**, **[Neargye/magic_enum](https://github.com/Neargye/magic_enum)**, **[p-ranav/argparse](https://github.com/p-ranav/argparse)**, **[getml/reflect-cpp](https://github.com/getml/reflect-cpp)**, **[uxlfoundation/oneTBB](https://github.com/uxlfoundation/oneTBB)**
+- & more: **[Neargye/magic_enum](https://github.com/Neargye/magic_enum)**, **[p-ranav/argparse](https://github.com/p-ranav/argparse)**
 
 ---
 
