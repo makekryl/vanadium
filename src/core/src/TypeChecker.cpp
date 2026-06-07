@@ -1335,10 +1335,10 @@ void BasicTypeChecker::MatchTypes(const ast::Range& range, InstantiatedType actu
   if (is_template_spec_providen) {
     if (actual.sym == &symbols::kTemplateOmitType) {
       actual_template_restriction = TemplateRestrictionKind::kOmit;
+    } else if (actual.sym == &symbols::kTemplateOptionalType) {
+      actual_template_restriction = TemplateRestrictionKind::kPresent;
     } else if (actual.sym == &symbols::kTemplateWildcardType) {
       actual_template_restriction = TemplateRestrictionKind::kPresent;
-    } else if (actual.sym == &symbols::kTemplateOptionalType) {
-      actual_template_restriction = TemplateRestrictionKind::kRegular;
     } else {
       assert(false && "Unhandled template spec");
       actual_template_restriction = TemplateRestrictionKind::kRegular;
