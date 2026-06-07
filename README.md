@@ -227,7 +227,3 @@ It would have been impossible to build this project without these wonderful open
 - **[stephenberry/glaze](https://github.com/stephenberry/glaze)** - _glaze_ is an efficient, modern C++ JSON and reflection library that made building the language server straightforward and painless
 
 - & more: **[Neargye/magic_enum](https://github.com/Neargye/magic_enum)**, **[p-ranav/argparse](https://github.com/p-ranav/argparse)**
-
----
-
-*Made with ❤️ without AI*
