@@ -1,0 +1,19 @@
+module Mod 
+{
+
+/**
+ * @desc Unique identifier assigned by the AMF to the UE for NGAP signaling purposes
+ * @see EETSI TS 138 413 V16.12.0 (2023-05)TSI
+ */
+modulepar AMF_UE_NGAP_ID PX_AMF_UE_NGAP_ID := 102;
+
+
+
+/**
+ * @desc Unique identifier assigned by the AMF to the UE for NGAP signaling purposes
+ * @see EETSI TS 138 413 V16.12.0 (2023-05)TSI
+ */
+
+modulepar AMF_UE_NGAP_ID PX_AMF_UE_NGAP_ID := 102;
+
+}

@@ -135,22 +135,22 @@ class AstSerializer {
     while ((comment_tok = tokens_->Peek()).kind == ast::TokenKind::COMMENT) {
       const auto ctok = tokens_->Current();
       const ast::pos_t prev_line = ast_.lines.LineOf(ctok.range.end);
-      const ast::pos_t comment_line = ast_.lines.LineOf(comment_tok.range.begin);
+      const ast::pos_t first_comment_line = ast_.lines.LineOf(comment_tok.range.begin);
 
       if constexpr (TrailingOnly) {
-        if (prev_line != comment_line) {
+        if (prev_line != first_comment_line) {
           return;
         }
       }
       tokens_->Advance();  // consume comment_tok
 
-      if (comment_line != prev_line) {
+      if (first_comment_line != prev_line) {
         const ast::pos_t dy = ctok.kind == ast::TokenKind::COMMENT ? 0 : 1;
-        for (ast::pos_t i = 0; i < (comment_line - prev_line - dy); ++i) {
+        for (ast::pos_t i = 0; i < (first_comment_line - prev_line - dy); ++i) {
           tgt.units.emplace_back(PrintDirective::kHardLine);
         }
       }
-      last_comment_line_ = comment_line;
+      last_comment_line_ = ast_.lines.LineOf(comment_tok.range.end);
 
       tgt.units.emplace_back(Comment{comment_tok.On(ast_.src)});
     }
