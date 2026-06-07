@@ -1116,9 +1116,18 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
         A(seq, "group");
         A(seq, PrintDirective::kSpace);
         A(seq, S(m->name));
-        A(seq, NewSequence(Sequence::Attribute::kIndented, [&](auto& fseq) {
-            Join(fseq, m->defs, {PrintDirective::kSemicolon, PrintDirective::kHardLine});
-          }));
+        A(seq, PrintDirective::kSpace);
+        A(seq, "{");
+        A(seq, PrintDirective::kHardLine);
+        if (!m->defs.empty()) {
+          A(seq, NewSequence(Sequence::Attribute::kIndented, [&](auto& iseq) {
+              Join(iseq, m->defs, PrintDirective::kHardLine);
+              A(iseq, PrintDirective::kHardLine);
+              A(iseq, PrintDirective::kHardLine);
+            }));
+        }
+        A(seq, PrintDirective::kHardLine);
+        A(seq, "}");
         if (m->with) {
           A(seq, PrintDirective::kSpace);
           A(seq, S(m->with));
