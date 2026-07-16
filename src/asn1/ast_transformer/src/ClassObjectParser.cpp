@@ -112,6 +112,7 @@ bool ParseClassObject(const ClassObjectConsumer& consumer, const char* buf, cons
         const bool should_continue = consumer.accept_row({
             .name = chunk->content.token,
             .value = std::string_view{buf, value_end},
+            .range = consumer.range,
         });
         if (!should_continue) {
           *newpos = bend;

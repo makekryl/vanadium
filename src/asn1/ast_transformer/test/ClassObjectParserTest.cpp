@@ -21,6 +21,15 @@ using namespace vanadium::asn1::ast;
 
 // TODO: add error cases
 
+inline bool operator==(const asn1p_src_range_t& lhs, const asn1p_src_range_t& rhs) noexcept {
+  return lhs.begin == rhs.begin && lhs.end == rhs.end;
+}
+namespace vanadium::asn1::ast {
+inline bool operator==(const ClassObjectRow& lhs, const ClassObjectRow& rhs) noexcept {
+  return lhs.name == rhs.name && lhs.value == rhs.value && lhs.range == rhs.range;
+}  // namespace
+}  // namespace vanadium::asn1::ast
+
 struct ClassObjectParserTest : public ::testing::Test {
  protected:
   lib::Arena arena_;

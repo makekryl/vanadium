@@ -34,7 +34,6 @@ asn1p_module_free(asn1p_module_t *mod) {
 		asn1p_xports_t *xports;
 
 		asn1p_mem_free(mod->ModuleName);
-		asn1p_mem_free(mod->source_file_name);
 
 		asn1p_oid_free(mod->module_oid);
 

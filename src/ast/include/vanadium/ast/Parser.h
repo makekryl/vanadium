@@ -210,6 +210,7 @@ inline AST Parse(lib::Arena& arena, std::string_view src) {
       .root = root,
       .lines = parser.ExtractLineMapping(),
       .errors = parser.GetErrors(),
+      .language = SourceLanguage::kTTCN,
   };
 }
 

@@ -379,10 +379,33 @@ lsp::HoverResult ProvideHover(const lsp::HoverParams& params, const core::Source
         return provider_file->ast.Text(*m->name);
       }());
       builder.WithWriter([&](auto w) {
-        std::format_to(w, "Type: `{}`", provider_file->ast.Text(m->type));
+        // it might be anonymous stuff from ASN?
+        if (const auto tname = provider_file->ast.Text(m->type); !tname.empty()) {
+          std::format_to(w, "Type: `{}`", provider_file->ast.Text(m->type));
+        }
       });
       builder.WriteSeparator();
-      builder.WriteCodeBlock(provider_file->ast.Text(m));
+      if (const auto& provenance = provider_file->ast.GetProvenance(m); provenance) {
+        const auto last_idx = std::ssize(*provenance) - 1;
+        for (const auto& [idx, ep] : *provenance | std::views::reverse | std::views::enumerate) {
+          const auto* ep_file = ep.SourceFile();
+          const auto ep_loc = conv::ToLSPPosition(ep_file->ast.lines.Translate(ep.range.begin));
+          builder.WithWriter([&](auto w) {
+            std::format_to(w, "_Expanded from [{}:{}]({}#L{}C{})_", ep_file->module->name, ep_loc.line,
+                           PathToFileUri(d.solution, ep_file->path), ep_loc.line + 1, ep_loc.character);
+            if (idx != last_idx) [[likely]] {
+              std::format_to(w, "\\");
+            }
+          });
+        }
+        //
+        builder.WriteSeparator();
+        //
+        const auto& terminal_ep = provenance->front();
+        builder.WriteCodeBlock(terminal_ep.range.String(terminal_ep.SourceFile()->src));
+      } else {
+        builder.WriteCodeBlock(provider_file->ast.Text(m));
+      }
       break;
     }
     case ast::NodeKind::ImportDecl: {

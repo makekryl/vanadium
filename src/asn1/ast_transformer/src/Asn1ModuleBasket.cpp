@@ -8,6 +8,7 @@
 #include <asn1c/libasn1parser/asn1parser_cxx.h>
 
 #include <vanadium/asn1/ast/Asn1cAstWrapper.h>
+#include <vanadium/ast/AST.h>
 #include <vanadium/ast/ASTTypes.h>
 #include <vanadium/lib/Arena.h>
 #include <vanadium/lib/FunctionRef.h>
@@ -49,6 +50,7 @@ void Asn1ModuleBasket::UpdateImpl(OpaqueKey* key, std::string_view src) {
     }
   }
 
+  item.opaque_key = key;
   item.src = src;
   item.lines = ttcn_ast::LineMapping(CollectLineStarts(src));
   if (auto result = Parse(item.arena, src)) {
@@ -62,7 +64,8 @@ void Asn1ModuleBasket::UpdateImpl(OpaqueKey* key, std::string_view src) {
 }
 
 void Asn1ModuleBasket::RegisterModule(Asn1ModuleBasketItem& item) {
-  if (const asn1p_module_t* mod = TQ_FIRST(&(item.ast->Raw()->modules)); mod) {
+  if (asn1p_module_t* mod = TQ_FIRST(&(item.ast->Raw()->modules)); mod) {
+    mod->_vanadium_handle = item.opaque_key;
     item.module_name = mod->ModuleName;
 
     {
@@ -94,7 +97,7 @@ Asn1ModuleBasketItem* Asn1ModuleBasket::FindModuleProvider(std::string_view name
 }
 
 ttcn_ast::AST Asn1ModuleBasket::TransformImpl(OpaqueKey* key, lib::Arena& arena) {
-  const auto& item = items_.at(key);
+  auto& item = items_.at(key);
 
   std::vector<ttcn_ast::SyntaxError> errors;
   errors.reserve(item.errors.size());
@@ -138,11 +141,15 @@ ttcn_ast::AST Asn1ModuleBasket::TransformImpl(OpaqueKey* key, lib::Arena& arena)
     });
   }
 
+  item.origins = std::move(transformed_ast.origins);
+
   return {
       .src = transformed_ast.adjusted_src,
       .root = transformed_ast.root,
-      .lines = item.lines,
+      .lines = std::move(item.lines),
       .errors = std::move(errors),
+      .language = ttcn_ast::SourceLanguage::kASN,
+      .origins = &item.origins,
   };
 }
 

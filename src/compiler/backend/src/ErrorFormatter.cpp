@@ -1,6 +1,8 @@
 #include "vanadium/compiler/ErrorFormatter.h"
 
+#include <cstddef>
 #include <string_view>
+#include <vector>
 
 #include <magic_enum/magic_enum.hpp>
 
@@ -66,6 +68,27 @@ std::size_t PrintErrors(std::string& buf, const core::SourceFile& sf, std::strin
     flush(buf);
   };
 
+  const auto push_err_with_origin = [&](const ast::Node* node, std::string_view message) {
+    if (sf.ast.origins) {
+      if (const auto provenance = sf.ast.origins->Lookup(node); provenance && !provenance->empty()) {
+        const auto& terminal_ep = (*provenance)[0];
+        buf.clear();
+        FormatError(buf, *terminal_ep.SourceFile(), sf.src, terminal_ep.range, message);
+        if (provenance->size() > 1) {
+          for (std::size_t i = 1; i < provenance->size(); ++i) {
+            const auto& ep = (*provenance)[i];
+            const auto ctx_loc = ep.SourceFile()->ast.lines.Translate(ep.range.begin);
+            cfmt::format_to(std::back_inserter(buf), cfmt::emphasis::faint, "  expanded from {}:{}:{}\n",
+                            ep.SourceFile()->path, ctx_loc.line + 1, ctx_loc.column + 1);
+          }
+        }
+        flush(buf);
+        return;
+      }
+    }
+    push_err(node->nrange, message);
+  };
+
   std::size_t count = 0;
   //
   for (const auto& err : sf.ast.errors) {
@@ -80,7 +103,7 @@ std::size_t PrintErrors(std::string& buf, const core::SourceFile& sf, std::strin
   //
   for (const auto& ident : sf.module->unresolved) {
     // TODO: format to pre-allocated buffer
-    push_err(ident->nrange, std::format("unknown symbol '{}'", sf.Text(ident)));
+    push_err_with_origin(ident, std::format("unknown symbol '{}'", sf.Text(ident)));
   }
   count += sf.module->unresolved.size();
   //

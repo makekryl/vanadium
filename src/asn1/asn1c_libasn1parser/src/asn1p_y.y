@@ -864,6 +864,9 @@ DefinedType:
 		$$->reference = $1;
 		$$->expr_type = A1TC_REFERENCE;
 		$$->meta_type = AMT_TYPEREF;
+		if ($1->comp_count > 0) {
+			$$->_Identifier_Range = $1->components[0]._name_range;
+		}
 	}
 	/*
 	 * A parameterized assignment.
@@ -875,6 +878,9 @@ DefinedType:
 		$$->rhs_pspecs = $3;
 		$$->expr_type = A1TC_REFERENCE;
 		$$->meta_type = AMT_TYPEREF;
+		if ($1->comp_count > 0) {
+			$$->_Identifier_Range = $1->components[0]._name_range;
+		}
 	}
 	;
 
@@ -1404,7 +1410,7 @@ ConcreteTypeDeclaration:
 		$$->constraints = $2;
 		$$->expr_type = ASN_CONSTR_SEQUENCE_OF;
 		$$->meta_type = AMT_TYPE;
-		$6->Identifier = $4; $6->_Identifier_Range = @4;
+		if ($4) { $6->Identifier = $4; $6->_Identifier_Range = @4; }
 		$6->tag = $5;
 		asn1p_expr_add($$, $6);
 	}
@@ -1414,7 +1420,7 @@ ConcreteTypeDeclaration:
 		$$->constraints = $2;
 		$$->expr_type = ASN_CONSTR_SET_OF;
 		$$->meta_type = AMT_TYPE;
-		$6->Identifier = $4; $6->_Identifier_Range = @4;
+		if ($4) { $6->Identifier = $4; $6->_Identifier_Range = @4; }
 		$6->tag = $5;
 		asn1p_expr_add($$, $6);
 	}

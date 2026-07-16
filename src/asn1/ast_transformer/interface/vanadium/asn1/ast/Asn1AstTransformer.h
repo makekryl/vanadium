@@ -3,6 +3,7 @@
 #include <vector>
 
 #include <vanadium/ast/AST.h>
+#include <vanadium/ast/OriginMap.h>
 #include <vanadium/lib/Arena.h>
 #include <vanadium/lib/FunctionRef.h>
 
@@ -23,6 +24,7 @@ struct TransformedAsn1Ast {
   std::string_view adjusted_src;
   ttcn_ast::RootNode* root;
   std::vector<TransformationError> errors;
+  ttcn_ast::OriginMap origins;
 };
 
 using Asn1pModuleProvider = lib::FunctionRef<const asn1p_module_t*(const char*)>;

@@ -2,24 +2,25 @@
 
 #include <string_view>
 
+#include <asn1c/libasn1common/asn1p_src_range.h>
+
 #include <vanadium/lib/FunctionRef.h>
 
 using asn1p_wsyntx_t = struct asn1p_wsyntx_s;
-using asn1p_src_range_t = struct asn1p_src_range_s;
 
 namespace vanadium::asn1::ast {
 
 struct ClassObjectRow {
   std::string_view name;
   std::string_view value;
-
-  bool operator<=>(const ClassObjectRow&) const noexcept = default;
+  asn1p_src_range_t range{};
 };
 
 // TODO: emit errors
 struct ClassObjectConsumer {
   lib::Predicate<ClassObjectRow> accept_row;
   lib::Consumer<const asn1p_src_range_t&, std::string> emit_error;
+  asn1p_src_range_t range{};
 };
 
 void ParseClassObject(std::string_view buf, const asn1p_wsyntx_t* syntax, const ClassObjectConsumer&);

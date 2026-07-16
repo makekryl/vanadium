@@ -16,16 +16,19 @@ namespace {
 constexpr bool kShouldContinue = true;
 constexpr bool kShouldNOTContinue = false;
 
-bool ResolveClassValue(const asn1p_value_t* value, const asn1p_expr_t* cls_expr,
+bool ResolveClassValue(const asn1p_value_t* value, const asn1p_constraint_t* constr, const asn1p_expr_t* cls_expr,
                        const ClassSetElementConsumer& consumer) {
   switch (value->type) {
     case asn1p_value_s::ATV_UNPARSED: {
       if (!cls_expr->with_syntax) {
         break;
       }
+      const auto& co_range = constr->_src_range;
       const bool should_continue = consumer.accept_class([&](const ClassObjectConsumer& co_consumer) {
+        ClassObjectConsumer mod_consumer = co_consumer;
+        mod_consumer.range = co_range;
         ParseClassObject(std::string_view{(char*)value->value.string.buf, (size_t)value->value.string.size},
-                         cls_expr->with_syntax, co_consumer);
+                         cls_expr->with_syntax, mod_consumer);
       });
       if (!should_continue) {
         return kShouldNOTContinue;
@@ -39,7 +42,7 @@ bool ResolveClassValue(const asn1p_value_t* value, const asn1p_expr_t* cls_expr,
         return kShouldContinue;
       }
 
-      return ResolveClassValue(referenced_expr->value, cls_expr, consumer);
+      return ResolveClassValue(referenced_expr->value, constr, cls_expr, consumer);
     }
 
     default: {
@@ -77,7 +80,7 @@ bool ResolveClassSetConstraint(const asn1p_constraint_t* constr, const asn1p_exp
 
     case ACT_EL_VALUE: {  // inline class value or reference to it
       assert(constr->value);
-      return ResolveClassValue(constr->value, cls_expr, consumer);
+      return ResolveClassValue(constr->value, constr, cls_expr, consumer);
     }
 
     case ACT_EL_TYPE: {  // reference to another set

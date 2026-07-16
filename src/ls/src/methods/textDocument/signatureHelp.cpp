@@ -130,14 +130,16 @@ lsp::SignatureHelpResult ProvideSignatureHelp(const lsp::SignatureHelpParams& pa
 
       label += "(";
       //
-      SignatureInformationBuilder builder{label};
-      builder.Estimate(callable_params->list.size());
-      for (const auto* param : callable_params->list) {
-        builder.Push([&](std::string& buf) {
-          buf += callable_file->Text(param);
-        });
-      }
-      const auto parameters = builder.Build();
+      const auto parameters = [&] {
+        SignatureInformationBuilder builder{label};
+        builder.Estimate(callable_params->list.size());
+        for (const auto* param : callable_params->list) {
+          builder.Push([&](std::string& buf) {
+            buf += callable_file->Text(param);
+          });
+        }
+        return builder.Build();
+      }();
       //
       label += ")";
 
@@ -191,7 +193,11 @@ lsp::SignatureHelpResult ProvideSignatureHelp(const lsp::SignatureHelpParams& pa
       builder.Estimate(stfields.size());
       for (const auto* field : stfields) {
         builder.Push([&](std::string& buf) {
-          buf += stdecl_file->Text(field);
+          if (const auto& text = stdecl_file->Text(field); !text.empty()) {
+            buf += text;
+          } else {
+            buf += stdecl_file->Text(*field->name);
+          }
         });
       }
       const auto parameters = builder.Build();

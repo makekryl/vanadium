@@ -1,6 +1,3 @@
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <assert.h>
@@ -12,7 +9,7 @@
 #include "asn1p_y.h"
 #include "asn1p_l.h"
 
-static int _asn1p_fix_modules(asn1p_t *a, const char *fname);
+static int _asn1p_fix_modules(asn1p_t *a);
 
 /*
  * Parse the given buffer.
@@ -52,7 +49,7 @@ asn1p_parse_buffer(const char *buffer, int size, asn1p_errs_t *errs) {
   }
 
   assert(a);
-  if (_asn1p_fix_modules(a, "-")) {
+  if (_asn1p_fix_modules(a)) {
     asn1p_delete(a);
     return NULL;	/* FIXME: destroy (a) */
   }
@@ -66,12 +63,9 @@ extern int asn1p_lexer_constructs_year;
 extern int asn1p_lexer_extended_values;
 
 static int
-_asn1p_fix_modules(asn1p_t *a, const char *fname) {
+_asn1p_fix_modules(asn1p_t *a) {
 	asn1p_module_t *mod;
 	TQ_FOR(mod, &(a->modules), mod_next) {
-		mod->source_file_name = asn1p_mem_strdup(fname);
-		if(mod->source_file_name == NULL)
-			return -1;
 		mod->asn1p = a;
 	}
 	return 0;

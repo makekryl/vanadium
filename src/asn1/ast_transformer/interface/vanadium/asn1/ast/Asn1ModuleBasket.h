@@ -9,6 +9,7 @@
 #include <vanadium/asn1/ast/Asn1cAstWrapper.h>
 #include <vanadium/ast/AST.h>
 #include <vanadium/ast/ASTTypes.h>
+#include <vanadium/ast/OriginMap.h>
 #include <vanadium/lib/Arena.h>
 #include <vanadium/lib/FunctionRef.h>
 
@@ -18,6 +19,8 @@ namespace vanadium::asn1::ast {
 namespace ttcn_ast = vanadium::ast;
 
 struct Asn1ModuleBasketItem {
+  void* opaque_key;
+
   std::string_view src;
   ttcn_ast::LineMapping lines;
 
@@ -26,6 +29,8 @@ struct Asn1ModuleBasketItem {
   std::vector<Asn1cSyntaxError> errors;
 
   std::optional<std::string_view> module_name;
+
+  ttcn_ast::OriginMap origins;
 };
 
 class Asn1ModuleBasket {
@@ -57,8 +62,6 @@ class Asn1ModuleBasket {
 
   void RegisterModule(Asn1ModuleBasketItem&);
   Asn1ModuleBasketItem* FindModuleProvider(std::string_view name);
-
-  ttcn_ast::AST TransformAST(Asn1ModuleBasketItem& item, lib::Arena& arena);
 
   std::unordered_map<OpaqueKey*, Asn1ModuleBasketItem> items_;
   std::mutex items_mutex_;

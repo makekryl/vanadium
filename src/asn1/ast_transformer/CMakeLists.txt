@@ -3,6 +3,7 @@ add_library(vanadium_asn1_ast_transformer STATIC
   src/Asn1ModuleBasket.cpp
   src/ClassObjectParser.cpp
   src/ClassSetResolver.cpp
+  src/Asn1TypeIdentifierParser.cpp
 )
 
 target_include_directories(vanadium_asn1_ast_transformer PRIVATE

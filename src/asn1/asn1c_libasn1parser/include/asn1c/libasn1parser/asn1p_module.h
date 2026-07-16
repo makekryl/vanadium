@@ -43,6 +43,10 @@ typedef enum asn1p_module_flags {
  * === EOF ===
  */
 typedef struct asn1p_module_s {
+	/*
+	 * Opaque handle to the Vanadium owning structure
+	 */
+	const void* _vanadium_handle;
 
 	/*
 	 * Human-readable module reference.
@@ -50,11 +54,6 @@ typedef struct asn1p_module_s {
 	char *ModuleName;   /* Must be the first field */
 
   asn1p_src_range_t _ModuleName_Range;
-
-	/*
-	 * Name of the source file.
-	 */
-	char *source_file_name;
 
 	/*
 	 * Unique module identifier, OID.

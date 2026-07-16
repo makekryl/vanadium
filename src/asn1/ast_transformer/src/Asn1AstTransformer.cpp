@@ -4,6 +4,7 @@
 #include <cctype>
 #include <cstring>
 #include <format>
+#include <memory>
 #include <optional>
 #include <string_view>
 #include <unordered_set>
@@ -17,13 +18,18 @@
 #include <vanadium/ast/AST.h>
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/ASTTypes.h>
+#include <vanadium/ast/OriginMap.h>
 #include <vanadium/ast/Scanner.h>
 #include <vanadium/lib/Arena.h>
 #include <vanadium/lib/FunctionRef.h>
 #include <vanadium/lib/ScopedValue.h>
 #include <vanadium/lib/StaticMap.h>
 
+#include "vanadium/asn1/ast/Asn1TypeIdentifierParser.h"
 #include "vanadium/asn1/ast/ClassSetResolver.h"
+
+// TODO: this class needs to be split up into independent files that handle origins, transform nodes,
+// do complex semantic passes, and do parametrization
 
 // For readability reasons, it is preferable NOT to use auto type detection for variables of asn1p types
 
@@ -53,8 +59,8 @@ constexpr auto kBuiltinTypeMapping = lib::MakeStaticMap<asn1p_expr_type_e, std::
     {ASN_BASIC_OCTET_STRING, "octetstring"},
     {ASN_BASIC_CHARACTER_STRING, "charstring"},
     //
-    {ASN_BASIC_OBJECT_IDENTIFIER, "objid"},
-    {ASN_BASIC_RELATIVE_OID, "objid"},
+    {ASN_BASIC_OBJECT_IDENTIFIER, "anytype"},
+    {ASN_BASIC_RELATIVE_OID, "anytype"},
     {ASN_BASIC_EXTERNAL, "todo_external"},     // TODO
     {ASN_BASIC_EMBEDDED_PDV, "embedded_pdv"},  // TODO
     //
@@ -87,6 +93,15 @@ void NormalizeToken(ttcn_ast::Range& range, std::string& s) {
     }
     ++range.end;
   }
+}
+
+std::optional<std::string_view> UnparsedAsnTypeToTtcnTypename(std::string_view unparsed_asn_type) {
+  if (const auto postparsed_asn_type = ParseAsnTypeIdentifier(unparsed_asn_type); postparsed_asn_type) {
+    if (const auto& ttcn_typename = kBuiltinTypeMapping.get(*postparsed_asn_type); ttcn_typename) {
+      return *ttcn_typename;
+    }
+  }
+  return std::nullopt;
 }
 
 template <ttcn_ast::IsNode T>
@@ -123,6 +138,9 @@ const asn1p_expr_t* ResolveExprMember(const asn1p_expr_t* expr, const char* memb
   return nullptr;
 }
 const asn1p_constraint_t* FindConstraint(const asn1p_expr_t* expr, asn1p_constraint_type_e type) {
+  if (!expr->constraints) {
+    return nullptr;
+  }
   for (unsigned int i = 0; i < expr->constraints->el_count; ++i) {
     if (expr->constraints->elements[i]->type == type) {
       return expr->constraints->elements[i];
@@ -139,6 +157,7 @@ void DebugDumpExpr(std::string_view prefix, const asn1p_expr_t* expr) {
 }
 }  // namespace
 
+namespace {
 class AstTransformer {
  public:
   AstTransformer(const asn1p_t* ast, std::string_view src, lib::Arena& arena, Asn1pModuleProvider module_provider)
@@ -153,6 +172,7 @@ class AstTransformer {
         .adjusted_src = *arena_.Alloc<std::string>(std::move(adjusted_src_)),
         .root = root,
         .errors = std::move(errors_),
+        .origins = std::move(origins_),
     };
   }
 
@@ -265,7 +285,9 @@ class AstTransformer {
             // TODO(range): maybe better take range from the expr, but it may break binsearch
             f.type = EmbedNodeXIntoNodeY(n, &m)->As<ttcn_ast::nodes::TypeSpec>();
             EmplaceIdent(f.name, ConsumeRange(expr));
+            RecordOrigin(&f, expr);
           });
+          RecordOrigin(&m, expr);
         });
       }
 
@@ -276,6 +298,7 @@ class AstTransformer {
 
           m.kind = sspec->kind;
           EmplaceIdent(m.name, ConsumeRange(expr));
+          RecordOrigin(&m, expr);
 
           m.fields = std::move(sspec->fields);
           for (auto* f : m.fields) {
@@ -330,12 +353,14 @@ class AstTransformer {
       return nullptr;
     }
     if (ttcn_ast::nodes::TypeSpec::IsTypeSpec(n)) {
+      RecordOrigin(n, expr);
       return n->As<ttcn_ast::nodes::TypeSpec>();
     }
 
     return NewNode<ttcn_ast::nodes::RefSpec>([&](ttcn_ast::nodes::RefSpec& m) {
       // TODO(range): maybe better take range from the expr, but it may break binsearch
       m.x = EmbedNodeXIntoNodeY(n, &m)->As<ttcn_ast::nodes::Expr>();
+      RecordOrigin(&m, expr);
     });
   }
 
@@ -361,8 +386,16 @@ class AstTransformer {
           return TransformExpr(memexpr);
         });
       }
+
+      if (const auto* resolved = TryResolveReferenceViaParameters(ref, active_parametrization_ctx_); resolved) {
+        if (auto* n = TransformExpr(resolved)) {
+          return n;
+        }
+      }
+
       return NewNode<ttcn_ast::nodes::Ident>([&](ttcn_ast::nodes::Ident& ident) {
         ident.nrange = ConsumeRange(ref->components[0], ref->module);
+        RecordOrigin(&ident, expr);
       });
     }
 
@@ -458,11 +491,12 @@ class AstTransformer {
               return true;  // continue search
             }
 
-            // todo: e.g. 'OCTET STRING' is translated to { name = 'oCTET STRING', type = 'OCTET STRING' },
-            //       while it is expected to be { name = 'oCTET_STRING', type = 'octetstring' }
-            // todo: parse the value like asn1c does and validate it
+            // "OCTET STRING" -> "octetstring"
+            const auto ftyperange = [&] -> ttcn_ast::Range {
+              const auto& ttcn_typename = UnparsedAsnTypeToTtcnTypename(row.value);
+              return AppendSource(ttcn_typename ? std::string(*ttcn_typename) : std::string(row.value));
+            }();
 
-            auto ftyperange = AppendSource(std::string(row.value));  // TODO: oh shi...
             if (std::ranges::any_of(m.fields, [&](const ttcn_ast::nodes::Field* fld) -> bool {
                   // comparing against ftyperange.String(range) because AppendSource also does token normalization
                   return fld->type->As<ttcn_ast::nodes::RefSpec>()->x->On(adjusted_src_) ==
@@ -474,6 +508,7 @@ class AstTransformer {
             auto* ftypenode = NewNode<ttcn_ast::nodes::RefSpec>([&](ttcn_ast::nodes::RefSpec& rs) {
               rs.x = NewNode<ttcn_ast::nodes::Ident>([&](ttcn_ast::nodes::Ident& ident) {
                 ident.nrange = ftyperange;
+                origins_.Put(&ident, MakeOriginExpansionPoint(clsvals_expr->module, row.range));
               });
             });
             m.fields.emplace_back(NewNode<ttcn_ast::nodes::Field>([&](ttcn_ast::nodes::Field& f) {
@@ -484,9 +519,9 @@ class AstTransformer {
               // god we have to keep two versions: one with 1st letter in lowercase and one not...
               m.fields.emplace_back(NewNode<ttcn_ast::nodes::Field>([&](ttcn_ast::nodes::Field& f) {
                 EmplaceIdent(f.name, AppendSource([&] -> std::string {
-                               std::string ptypecpy(row.value);
-                               ptypecpy[0] = std::tolower(ptypecpy[0]);
-                               return ptypecpy;
+                               std::string lc_name(row.value);
+                               lc_name[0] = std::tolower(lc_name[0]);
+                               return lc_name;
                              }()));
                 f.type = ftypenode;
               }));
@@ -532,7 +567,10 @@ class AstTransformer {
   ttcn_ast::nodes::Expr* TransformBuiltinTypeExpr(const asn1p_expr_t* expr) {
     if (const auto& ttcn_typename = kBuiltinTypeMapping.get(expr->expr_type); ttcn_typename) {
       return NewNode<ttcn_ast::nodes::Ident>([&](ttcn_ast::nodes::Ident& ident) {
-        ident.nrange = AppendSource(std::string(*ttcn_typename));  // TODO: oh shi...
+        auto begin = static_cast<ttcn_ast::pos_t>(adjusted_src_.length());
+        adjusted_src_.append(*ttcn_typename);
+        ident.nrange = {.begin = begin, .end = begin + static_cast<ttcn_ast::pos_t>(ttcn_typename->length())};
+        RecordOrigin(&ident, expr);
       });
     }
     return nullptr;
@@ -595,6 +633,7 @@ class AstTransformer {
      */
 
     const asn1p_expr_t* se = TQ_FIRST(&(expr->members));
+    ttcn_ast::pos_t se_right_scan_pos{0};  // scan for eag close token ]]
     const auto transform_version = [&, pthis = this /* gcc bug WA */](
                                        this auto&& self, std::uint16_t current_level,
                                        std::vector<ttcn_ast::nodes::Field*>& current_fields) -> void {
@@ -607,12 +646,24 @@ class AstTransformer {
         if (se->eag_level.value > current_level) {
           ++current_ver;
           current_fields.push_back(pthis->template NewNode<ttcn_ast::nodes::Field>([&](ttcn_ast::nodes::Field& f) {
+            auto begin_pos = se->_Identifier_Range.begin;
+            while (original_src_[begin_pos] != '[' && original_src_[begin_pos - 1] != '[') {
+              --begin_pos;
+            }
+            begin_pos -= 2;
+            //
             pthis->EmplaceIdent(f.name, pthis->AppendSource(std::format("ver{}", current_ver)));
             f.optional = true;
             f.type = pthis->template NewNode<ttcn_ast::nodes::StructSpec>([&](ttcn_ast::nodes::StructSpec& m) {
               m.kind = Tok(ttcn_ast::TokenKind::RECORD);
               self(se->eag_level.value, m.fields);  // <--
             });
+            //
+            while (original_src_[se_right_scan_pos] != ']' && original_src_[se_right_scan_pos + 1] != ']') {
+              ++se_right_scan_pos;
+            }
+            se_right_scan_pos += 3;
+            RecordOrigin(&f, {.begin = begin_pos, .end = se_right_scan_pos});
           }));
           continue;
         }
@@ -624,6 +675,7 @@ class AstTransformer {
           current_fields.push_back(dn);
         }
 
+        se_right_scan_pos = se->_Identifier_Range.end;
         se = TQ_NEXT(se, next);
       }
     };
@@ -637,6 +689,7 @@ class AstTransformer {
 
       EmplaceIdent(m.name, ConsumeRange(expr));
       TransformStructFields(expr, m.fields);
+      RecordOrigin(&m, expr);
     });
   }
 
@@ -645,6 +698,7 @@ class AstTransformer {
     return NewNode<ttcn_ast::nodes::StructSpec>([&](ttcn_ast::nodes::StructSpec& m) {
       m.kind = Tok(kind);
       TransformStructFields(expr, m.fields);
+      RecordOrigin(&m, expr);
     });
   }
 
@@ -659,8 +713,10 @@ class AstTransformer {
         }
         m.values.push_back(NewNode<ttcn_ast::nodes::Ident>([&](ttcn_ast::nodes::Ident& iv) {
           iv.nrange = ConsumeRange(member);
+          RecordOrigin(&iv, member);
         }));
       }
+      RecordOrigin(&m, expr);
     });
   }
 
@@ -673,8 +729,10 @@ class AstTransformer {
         }
         m.values.push_back(NewNode<ttcn_ast::nodes::Ident>([&](ttcn_ast::nodes::Ident& iv) {
           iv.nrange = ConsumeRange(member);
+          RecordOrigin(&iv, member);
         }));
       }
+      RecordOrigin(&m, expr);
     });
   }
 
@@ -683,6 +741,7 @@ class AstTransformer {
       m.kind = Tok(kind);
 
       m.elemtype = TransformExpr(TQ_FIRST(&(expr->members)))->As<ttcn_ast::nodes::TypeSpec>();
+      RecordOrigin(&m, expr);
     });
   }
 
@@ -691,7 +750,9 @@ class AstTransformer {
       m.field = NewNode<ttcn_ast::nodes::Field>([&](ttcn_ast::nodes::Field& f) {
         f.type = TransformListSpec(kind, expr);
         EmplaceIdent(f.name, ConsumeRange(expr));
+        RecordOrigin(&f, expr);
       });
+      RecordOrigin(&m, expr);
     });
   }
 
@@ -704,6 +765,7 @@ class AstTransformer {
 
     return NewNode<ttcn_ast::nodes::Field>([&](ttcn_ast::nodes::Field& m) {
       EmplaceIdent(m.name, ConsumeRange(se));
+      RecordOrigin(&m, se);
 
       if ((se->marker.flags & asn1p_expr_s::asn1p_expr_marker_s::EM_DEFAULT) ==
           asn1p_expr_s::asn1p_expr_marker_s::EM_DEFAULT) {
@@ -743,6 +805,46 @@ class AstTransformer {
         .range = std::move(range),
         .message = std::move(message),
     });
+  }
+
+  void RecordOrigin(const ttcn_ast::Node* n, const asn1p_expr_t* expr, asn1p_src_range_t range = {}) {
+    if (!n || !expr) {
+      return;
+    }
+    if (range.begin == 0 && range.end == 0) {
+      // _Identifier_Range changes by DataTypeReference to the assignment
+      // name, but for type references the component's _name_range is correct
+      // if (expr->reference && expr->reference->comp_count > 0 && expr->meta_type == AMT_TYPEREF) {
+      //   range = expr->reference->components[0]._name_range;
+      // } else {
+      range = expr->_Identifier_Range;
+      // }
+    }
+
+    std::vector<ttcn_ast::ExpansionPoint> stack;
+    stack.push_back(MakeOriginExpansionPoint(expr->module, range, expr));
+    //
+    for (const auto* ctx = active_parametrization_ctx_; ctx; ctx = ctx->parent) {
+      if (!ctx->provider) {
+        continue;
+      }
+      stack.push_back(MakeOriginExpansionPoint(ctx->provider->module, ctx->provider->_Identifier_Range, ctx->provider));
+    }
+
+    origins_.Put(n, std::move(stack));
+  }
+
+  void RecordOrigin(const ttcn_ast::Node* n, asn1p_src_range_t range) {
+    origins_.Put(n, MakeOriginExpansionPoint(TQ_FIRST(&(ast_->modules)), range));
+  }
+
+  static ttcn_ast::ExpansionPoint MakeOriginExpansionPoint(const asn1p_module_t* mod, asn1p_src_range_t range,
+                                                           const void* asn_node = nullptr) {
+    return {
+        .range = {.begin = range.begin, .end = range.end},
+        .source_node = asn_node,
+        .filekey = mod->_vanadium_handle,
+    };
   }
 
   // for ranges that are guaranteed to be from the module being transformed
@@ -989,6 +1091,7 @@ class AstTransformer {
   std::string adjusted_src_;
   std::string_view original_src_;
   std::vector<TransformedAsn1Ast::TransformationError> errors_;
+  ttcn_ast::OriginMap origins_;
   lib::Arena& arena_;
   Asn1pModuleProvider get_module_;
 
@@ -998,6 +1101,7 @@ class AstTransformer {
     return {.kind = kind, .range = {}};
   }
 };
+}  // namespace
 
 TransformedAsn1Ast TransformAsn1Ast(const asn1p_t* ast, std::string_view src, lib::Arena& arena,
                                     Asn1pModuleProvider module_provider) {
