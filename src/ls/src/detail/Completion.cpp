@@ -172,12 +172,24 @@ lsp::CompletionList CollectCompletions(const lsp::CompletionParams& params, cons
   const auto mask = file.Text(n);
   VLS_WARN("    compl:: mask: '{}'", mask);
 
-  if (n->nkind == ast::NodeKind::Ident && n->parent->nkind == ast::NodeKind::SelectorExpr) {
+  bool is_dangling_selexpr{true};
+  if (n->nkind == ast::NodeKind::BinaryExpr) {
+    const auto* be = n->As<ast::nodes::BinaryExpr>();
+    // op RANGE is gets in the way while trying to complete in the middle of selector expr
+    // example: a.b.c..d.e.f
+    //               ~~
+    if (be->op.kind == ast::TokenKind::RANGE && be->x->nkind == ast::NodeKind::SelectorExpr) {
+      n = be->x;
+      is_dangling_selexpr = false;
+    }
+  } else if (n->nkind == ast::NodeKind::Ident && n->parent->nkind == ast::NodeKind::SelectorExpr) {
     n = n->parent;
   }
 
   if (n->nkind == ast::NodeKind::SelectorExpr) {
-    n = n->As<ast::nodes::SelectorExpr>()->x;
+    if (is_dangling_selexpr) {
+      n = n->As<ast::nodes::SelectorExpr>()->x;
+    }
     // todo: rename sym -> type
     auto sym = core::checker::ResolveExprType(&file, scope, n->As<ast::nodes::Expr>());
     if (!sym) {
