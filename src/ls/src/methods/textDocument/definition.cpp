@@ -41,17 +41,16 @@ lsp::DefinitionResult ProvideDefinition(const lsp::DefinitionParams& params, con
   const auto* decl = sym->Declaration();
   const auto* provider_file = ast::utils::SourceFileOf(decl);
 
-  const auto& uri = *d.arena.Alloc<std::string>(PathToFileUri(d.solution, provider_file->path));
-
   VLS_DEBUG("provenance DECL = {}", (int)decl->nkind);
   if (const auto& provenance = provider_file->ast.GetProvenance(decl); provenance) {
     const auto& terminal_ep = provenance->front();
     return lsp::Location{
-        .uri = uri,
+        .uri = *d.arena.Alloc<std::string>(PathToFileUri(d.solution, terminal_ep.SourceFile()->path)),
         .range = conv::ToLSPRange(terminal_ep.range, terminal_ep.SourceFile()->ast),
     };
   }
 
+  const auto& uri = *d.arena.Alloc<std::string>(PathToFileUri(d.solution, provider_file->path));
   return lsp::Location{
       .uri = uri,
       .range = conv::ToLSPRange(detail::GetReadableDefinition(decl)->nrange, provider_file->ast),
