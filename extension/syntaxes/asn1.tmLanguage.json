@@ -1,0 +1,134 @@
+{
+  "name": "ASN.1",
+  "scopeName": "source.asn1",
+  "fileTypes": [
+    "asn",
+    "asn1"
+  ],
+  "patterns": [
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#keywords"
+    },
+    {
+      "include": "#builtin-types"
+    },
+    {
+      "include": "#operators"
+    },
+    {
+      "include": "#constants"
+    },
+    {
+      "include": "#strings"
+    },
+    {
+      "include": "#definitions"
+    }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.block.asn1",
+          "begin": "/\\*/",
+          "end": "/\\*/"
+        },
+        {
+          "name": "comment.line.double-dash.asn1",
+          "match": "(--).*$\\n?",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.comment.asn1"
+            }
+          }
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.asn1",
+          "match": "\\b(BEGIN|END|DEFINITIONS|IMPORTS|EXPORTS|FROM|WITH|COMPONENTS|CONTAINING|ENCODED|BY)\\b"
+        },
+        {
+          "name": "keyword.other.asn1",
+          "match": "\\b(DEFAULT|OPTIONAL|UNIQUE|UNIVERSAL|APPLICATION|PRIVATE|CONTEXT-SPECIFIC|TAGS|IMPLICIT|EXPLICIT|AUTOMATIC|EXTENSIBILITY|IMPLIED)\\b"
+        }
+      ]
+    },
+    "builtin-types": {
+      "patterns": [
+        {
+          "name": "storage.type.asn1",
+          "match": "\\b(INTEGER|BOOLEAN|OCTET\\s+STRING|BIT\\s+STRING|NULL|OBJECT\\s+IDENTIFIER|SEQUENCE|SET|CHOICE|ENUMERATED|OF|ANY|CHARACTER\\s+STRING|GraphicString|IA5String|NumericString|PrintableString|TeletexString|T61String|UniversalString|UTF8String|VisibleString|GeneralString|BMPString|GeneralizedTime|UTCTime|REAL)\\b"
+        }
+      ]
+    },
+    "constants": {
+      "patterns": [
+        {
+          "name": "constant.language.boolean.asn1",
+          "match": "\\b(TRUE|FALSE)\\b"
+        },
+        {
+          "name": "constant.numeric.integer.asn1",
+          "match": "\\b[0-9]+\\b"
+        },
+        {
+          "name": "constant.numeric.hex.asn1",
+          "match": "[0-9a-fA-F]+[hH]\\b"
+        },
+        {
+          "name": "constant.numeric.binary.asn1",
+          "match": "'[01]+'[bB]\b"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.asn1",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.asn1",
+              "match": "\"\""
+            }
+          ]
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.assignment.asn1",
+          "match": "::="
+        },
+        {
+          "name": "punctuation.separator.asn1",
+          "match": "[,|;:.]"
+        },
+        {
+          "name": "punctuation.section.brackets.asn1",
+          "match": "[\\[\\](){}]"
+        }
+      ]
+    },
+    "definitions": {
+      "patterns": [
+        {
+          "name": "entity.name.type.asn1",
+          "match": "\\b[A-Z][A-Za-z0-9-]*\\b"
+        },
+        {
+          "name": "variable.other.member.asn1",
+          "match": "\\b[a-z][A-Za-z0-9-]*\\b"
+        }
+      ]
+    }
+  }
+}

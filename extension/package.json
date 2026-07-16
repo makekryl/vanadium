@@ -40,6 +40,18 @@
           "light": "./icons/ttcn3.png",
           "dark": "./icons/ttcn3.png"
         }
+      },
+      {
+        "id": "asn1",
+        "aliases": [
+          "ASN.1",
+          "asn1",
+          "asn"
+        ],
+        "extensions": [
+          ".asn",
+          ".asn1"
+        ]
       }
     ],
     "grammars": [
@@ -47,6 +59,11 @@
         "language": "ttcn3",
         "scopeName": "source.ttcn3",
         "path": "./syntaxes/ttcn3.tmLanguage.json"
+      },
+      {
+        "language": "asn1",
+        "scopeName": "source.asn1",
+        "path": "./syntaxes/asn1.tmLanguage.json"
       }
     ],
     "snippets": [
@@ -86,12 +103,13 @@
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
-    "precompile": "npm run grammar:build",
+    "precompile": "npm run grammar:build && npm run grammar:asn1:build",
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
     "test": "vscode-test",
-    "grammar:build": "js-yaml syntaxes/src/ttcn3.tmLanguage.yml > syntaxes/ttcn3.tmLanguage.json"
+    "grammar:build": "js-yaml syntaxes/src/ttcn3.tmLanguage.yml > syntaxes/ttcn3.tmLanguage.json",
+    "grammar:asn1:build": "js-yaml syntaxes/src/asn1.tmLanguage.yml > syntaxes/asn1.tmLanguage.json"
   },
   "dependencies": {
     "vscode-languageclient": "^9.0.1"
