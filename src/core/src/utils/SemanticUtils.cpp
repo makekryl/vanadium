@@ -2,6 +2,7 @@
 
 #include <string_view>
 
+#include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/ASTTypes.h>
 #include <vanadium/ast/utils/ASTUtils.h>
 
@@ -13,10 +14,7 @@ std::string_view GetReadableTypeName(const SourceFile* sf, const semantic::Symbo
     if (range.end >= range.begin) {
       return sf->Text(range);
     }
-    return sf->Text(ast::Range{
-        .begin = range.end,
-        .end = range.begin,
-    });
+    return sym->GetName();
   };
 
   const auto* decl = sym->Declaration();
@@ -52,10 +50,20 @@ std::string_view GetReadableTypeName(const SourceFile* sf, const semantic::Symbo
     }
     case ast::NodeKind::SubTypeDecl: {
       const auto* m = decl->As<ast::nodes::SubTypeDecl>();
-      return lit(ast::Range{
+      const auto rlit = [&](const ast::Range& range) -> std::string_view {
+        return sf->Text(range.end >= range.begin ? range
+                                                 : ast::Range{
+                                                       .begin = range.end,
+                                                       .end = range.begin,
+                                                   });
+      };
+      return rlit(ast::Range{
           .begin = m->field->nrange.begin,
           .end = m->nrange.end,
       });
+    }
+    case ast::NodeKind::ListSpec: {
+      return sf->Text(sym->Declaration());
     }
     case ast::NodeKind::ClassTypeDecl: {
       const auto* m = decl->As<ast::nodes::ClassTypeDecl>();
@@ -75,7 +83,7 @@ std::string_view GetReadableTypeName(const SourceFile* sf, const semantic::Symbo
       return "class constructor";
     }
     default:
-      return sf->Text(sym->Declaration());
+      return sym->GetName();
   }
 }
 std::string_view GetReadableTypeName(const semantic::Symbol* sym) {
