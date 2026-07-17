@@ -508,12 +508,14 @@ class AstTransformer {
             auto* ftypenode = NewNode<ttcn_ast::nodes::RefSpec>([&](ttcn_ast::nodes::RefSpec& rs) {
               rs.x = NewNode<ttcn_ast::nodes::Ident>([&](ttcn_ast::nodes::Ident& ident) {
                 ident.nrange = ftyperange;
-                origins_.Put(&ident, MakeOriginExpansionPoint(clsvals_expr->module, row.range));
               });
             });
+            //
+            const auto field_expansion_point = MakeOriginExpansionPoint(clsvals_expr->module, row.range);
             m.fields.emplace_back(NewNode<ttcn_ast::nodes::Field>([&](ttcn_ast::nodes::Field& f) {
               EmplaceIdent(f.name, ftyperange);
               f.type = ftypenode;
+              origins_.Put(&f, field_expansion_point);
             }));
             if (!std::islower(row.value[0])) {
               // god we have to keep two versions: one with 1st letter in lowercase and one not...
@@ -524,6 +526,7 @@ class AstTransformer {
                                return lc_name;
                              }()));
                 f.type = ftypenode;
+                origins_.Put(&f, field_expansion_point);
               }));
             }
 
