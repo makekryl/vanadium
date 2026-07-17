@@ -28,4 +28,10 @@ namespace lsp {
 using ShowMessageRequestResult = std::variant<MessageActionItem, std::nullptr_t>;
 }
 
+namespace lsp {
+struct TextDocumentIdentifierContainer {
+  TextDocumentIdentifier textDocument{};
+};
+}  // namespace lsp
+
 // NOLINTEND(readability-identifier-naming)

@@ -77,6 +77,11 @@
         "command": "vanadiumd.restart",
         "title": "Restart language server",
         "category": "vanadiumd"
+      },
+      {
+        "command": "vanadiumd.showImportTree",
+        "title": "Show import tree for the currently open module",
+        "category": "vanadiumd"
       }
     ],
     "configuration": {

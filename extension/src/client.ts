@@ -25,6 +25,13 @@ export class LsClient {
     };
   }
 
+  public get languageClient(): LanguageClient {
+    if (!this.client) {
+      throw new Error('Language client is not started.');
+    }
+    return this.client;
+  }
+
   private launchOptions!: LaunchOptions;
   private getLaunchOptions(ctx: vscode.ExtensionContext): LaunchOptions {
     return {

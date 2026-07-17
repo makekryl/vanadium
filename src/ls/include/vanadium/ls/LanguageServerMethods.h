@@ -83,6 +83,9 @@ DECL_REQUEST_1(completionItem, resolve, lsp::CompletionItem, lsp::CompletionItem
 // inlayHint
 DECL_REQUEST_1(inlayHint, resolve, lsp::InlayHint, lsp::InlayHint);
 
+// vanadiumd
+DECL_REQUEST_1(vanadiumd, buildImportTree, lsp::TextDocumentIdentifierContainer, std::string);
+
 }  // namespace methods
 
 #undef DECL_NOTIFIC_2

@@ -55,8 +55,10 @@ using ServerMethods = mp::Typelist<methods::initialize,   //
                                    //
                                    methods::completionItem::resolve,  //
                                    //
-                                   methods::inlayHint::resolve  //
-                                   >;                           //
+                                   methods::inlayHint::resolve,  //
+                                   //
+                                   methods::vanadiumd::buildImportTree  //
+                                   >;                                   //
 
 void Serve(lserver::Transport& transport, std::size_t concurrency, std::size_t jobs) {
   VLS_INFO("Starting language server... (jobs={}, concurrency={})", jobs, concurrency);

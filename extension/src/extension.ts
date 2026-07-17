@@ -4,8 +4,9 @@ import { LsClient } from './client';
 
 import { LazyOutputChannel, logger } from './logger';
 import { config } from './config';
+import { showImportTree } from './sidechannel';
 
-let lsClient: LsClient | undefined;
+export let lsClient: LsClient | undefined;
 
 export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
@@ -123,5 +124,9 @@ async function initializeLanguageServer(context: vscode.ExtensionContext) {
           }
         });
     })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('vanadiumd.showImportTree', showImportTree)
   );
 }
