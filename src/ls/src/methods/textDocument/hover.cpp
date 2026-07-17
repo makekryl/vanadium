@@ -18,6 +18,7 @@
 #include "vanadium/ls/LanguageServerConv.h"
 #include "vanadium/ls/LanguageServerMethods.h"
 #include "vanadium/ls/LanguageServerSession.h"
+#include "vanadium/ls/aux/ImportInspector.h"
 #include "vanadium/ls/detail/Definition.h"
 
 namespace vanadium::ls {
@@ -423,14 +424,23 @@ lsp::HoverResult ProvideHover(const lsp::HoverParams& params, const core::Source
       builder.WriteHeader("module", provider_file->ast.Text(*m->module));
       builder.WithWriter([&](auto w) {
         std::format_to(w, "`{}`", module->sf->path);
+        std::format_to(w, "\n");
+        //
+        builder.WriteSeparator();
+        //
         if (!m->list.empty() && m->list[0]->kind.kind == ast::TokenKind::IMPORT) {
-          std::format_to(w, "\n");
-          builder.WriteSeparator();
-
           std::format_to(w, "Transitively imports modules:\n");
           for (const auto& [import, descriptor] : module->imports) {
             if (descriptor.transit) {
               std::format_to(w, "- `{}`\n", import);
+            }
+          }
+        } else {
+          const auto& contributions = aux::FindImportContributions(&*provider_file->module, module);
+          if (!contributions.empty()) {
+            std::format_to(w, "Provides ({}):\n", contributions.size());
+            for (const auto* contributed_sym : contributions) {
+              std::format_to(w, "- `{}`\n", contributed_sym->GetName());
             }
           }
         }

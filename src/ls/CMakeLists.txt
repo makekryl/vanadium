@@ -8,6 +8,9 @@ add_library(vanadium_ls STATIC
   src/LanguageServerTools.cpp
   src/LanguageServerToolsOptions.cpp
   src/LanguageServerClientMessaging.cpp
+  #
+  src/aux/ImportInspector.cpp
+  #
   ${DETAIL_SOURCE_FILES}
   ${METHODS_SOURCE_FILES}
 )
