@@ -6,6 +6,7 @@
 #include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 #include <vanadium/ast/AST.h>
@@ -839,8 +840,16 @@ bool Binder::Inspect(const ast::Node* n) {
         });
 
         if (!hoisted_inner_names_.contains("create")) {
-          auto* pseudoctor = sf_.arena.Alloc<ast::nodes::ConstructorDecl>();
-          pseudoctor->parent = const_cast<ast::nodes::ClassTypeDecl*>(m);
+          // TODO: refactor this mess
+          auto* pseudoctor = [&] {
+            auto* pseudowrapper = sf_.arena.Alloc<ast::nodes::Definition>();
+            pseudowrapper->parent = const_cast<ast::nodes::ClassTypeDecl*>(m);
+            pseudowrapper->nrange = {};
+            auto* pseudoctor_node = sf_.arena.Alloc<ast::nodes::ConstructorDecl>();
+            pseudoctor_node->parent = pseudowrapper;
+            pseudowrapper->def = pseudoctor_node;
+            return pseudoctor_node;
+          }();
           pseudoctor->nrange = m->nrange;
           pseudoctor->params = [&] {
             auto* pseudoparams = sf_.arena.Alloc<ast::nodes::FormalPars>();
