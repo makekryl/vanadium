@@ -19,8 +19,7 @@ class Linter {
   template <class Rule>
   void RegisterRule();
 
-  void Lint(const core::Program& program,
-            const lib::FunctionRef<void(const core::SourceFile&, ProblemSet)>& report) const;
+  void Lint(const core::Program& program, lib::FunctionRef<void(const core::SourceFile&, ProblemSet)> report) const;
   [[nodiscard]] ProblemSet Lint(const core::SourceFile& sf) const;
 
   std::pair<std::optional<std::string>, ProblemSet> Fix(const core::SourceFile& sf, ProblemSet&& problems) const;

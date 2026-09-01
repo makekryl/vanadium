@@ -139,7 +139,7 @@ class Program {
   Program() = default;
 
  private:
-  void UpdateFile(const std::string& path, const FileReadFn& read);
+  void UpdateFile(const std::string& path, FileReadFn read);
   void DropFile(const std::string& path);
 
  public:
@@ -157,7 +157,7 @@ class Program {
   }
 
   struct ProgramModifier {
-    lib::Consumer<const std::string& /* path */, const FileReadFn&> update;
+    lib::Consumer<const std::string& /* path */, FileReadFn> update;
     lib::Consumer<const std::string& /* path */> drop;
   };
 

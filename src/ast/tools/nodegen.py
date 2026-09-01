@@ -233,7 +233,7 @@ def generate_nodes_descriptors(nodes: AstNodesDict) -> str:
       inspector_obj = "inspector"
       generate_node_inspecting_code(node, inspector_obj, inspecting_code_buf)
       buf.write(
-        f"void Accept(const NodeInspector&{'' if inspecting_code_buf.empty() else f' {inspector_obj}'}) const {{"
+        f"void Accept(NodeInspector{'' if inspecting_code_buf.empty() else f' {inspector_obj}'}) const {{"
       )
       with buf.indented():
         buf += inspecting_code_buf

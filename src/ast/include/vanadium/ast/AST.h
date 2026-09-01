@@ -21,7 +21,7 @@ struct RootNode : Node {
   core::SourceFile* file{nullptr};
   std::vector<Node*> nodes;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     for (auto* node : nodes) {
       Inspect(node, inspector);
     }

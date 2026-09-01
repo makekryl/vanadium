@@ -17,7 +17,7 @@ void Linter::BindRule(Rule& rule) {
 }
 
 void Linter::Lint(const core::Program& program,
-                  const lib::FunctionRef<void(const core::SourceFile&, ProblemSet)>& report) const {
+                  lib::FunctionRef<void(const core::SourceFile&, ProblemSet)> report) const {
   for (const auto& [filename, sf] : program.Files()) {
     report(sf, Lint(sf));
   }

@@ -107,6 +107,6 @@ struct SyntaxError {
 struct Node;
 
 using NodeInspector = lib::Predicate<const Node*>;
-void Inspect(const Node*, const NodeInspector&);
+void Inspect(const Node*, NodeInspector);
 
 };  // namespace vanadium::ast

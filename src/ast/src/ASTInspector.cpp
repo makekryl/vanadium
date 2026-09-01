@@ -6,7 +6,7 @@
 
 namespace vanadium::ast {
 
-void Node::Accept(const NodeInspector& inspector) const {
+void Node::Accept(NodeInspector inspector) const {
 #define FORWARD_ACCEPT(type)       \
   case NodeKind::type:             \
     As<type>()->Accept(inspector); \

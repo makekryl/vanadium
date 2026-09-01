@@ -9,7 +9,7 @@ struct LanguageSpec : TypeSpec {
 
   std::vector<Token> list;
 
-  void Accept(const NodeInspector&) const {
+  void Accept(NodeInspector) const {
   }
 };
 
@@ -21,7 +21,7 @@ struct Definition : Node {
   Token* visibility{nullptr};
   Node* def{nullptr};
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     if (def != nullptr) {
       Inspect(def, inspector);
     }
@@ -35,7 +35,7 @@ struct ArrayExpr : Expr {
 
   std::vector<Expr*> list;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     for (const auto* n : list) {
       Inspect(n, inspector);
     }
@@ -49,7 +49,7 @@ struct ParenExpr : Expr {
 
   std::vector<Expr*> list;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     for (const auto* n : list) {
       Inspect(n, inspector);
     }
@@ -63,7 +63,7 @@ struct RefSpec : TypeSpec {
 
   Expr* x;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     Inspect(x, inspector);
   }
 };
@@ -76,7 +76,7 @@ struct MapSpec : TypeSpec {
   TypeSpec* from;
   TypeSpec* to;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     Inspect(from, inspector);
     Inspect(to, inspector);
   }
@@ -89,7 +89,7 @@ struct EnumSpec : TypeSpec {
 
   std::vector<Expr*> values;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     for (const auto* n : values) {
       Inspect(n, inspector);
     }
@@ -103,7 +103,7 @@ struct RunsOnSpec : TypeSpec {
 
   Ident* comp;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     Inspect(comp, inspector);
   }
 };
@@ -115,7 +115,7 @@ struct SystemSpec : TypeSpec {
 
   Ident* comp;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     Inspect(comp, inspector);
   }
 };
@@ -127,7 +127,7 @@ struct RestrictionSpec : TypeSpec {
 
   std::optional<Token> type;
 
-  void Accept(const NodeInspector&) const {
+  void Accept(NodeInspector) const {
   }
 };
 
@@ -138,7 +138,7 @@ struct MtcSpec : TypeSpec {
 
   Ident* comp;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     Inspect(comp, inspector);
   }
 };
@@ -150,7 +150,7 @@ struct BlockStmt : Stmt {
 
   std::vector<Stmt*> stmts;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     for (const auto* n : stmts) {
       Inspect(n, inspector);
     }
@@ -165,7 +165,7 @@ struct BranchStmt : Stmt {
   Token kind;
   Ident* label{nullptr};
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     if (label != nullptr) {
       Inspect(label, inspector);
     }
@@ -179,7 +179,7 @@ struct ReturnStmt : Stmt {
 
   Expr* result{nullptr};
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     if (result != nullptr) {
       Inspect(result, inspector);
     }
@@ -196,7 +196,7 @@ struct WithStmt : Stmt {
   std::vector<Expr*> list;
   Expr* value;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     for (const auto* n : list) {
       Inspect(n, inspector);
     }
@@ -211,7 +211,7 @@ struct ValueLiteral : Expr {
 
   Token tok;
 
-  void Accept(const NodeInspector&) const {
+  void Accept(NodeInspector) const {
   }
 };
 
@@ -223,7 +223,7 @@ struct SelectorExpr : Expr {
   Expr* x;
   Ident* sel{nullptr};
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     Inspect(x, inspector);
     if (sel != nullptr) {
       Inspect(sel, inspector);
@@ -239,7 +239,7 @@ struct DefKindExpr : Expr {
   Token kind;
   std::vector<Expr*> list;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     for (const auto* n : list) {
       Inspect(n, inspector);
     }
@@ -254,7 +254,7 @@ struct ExceptExpr : Expr {
   Expr* x;
   std::vector<Expr*> list;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     Inspect(x, inspector);
     for (const auto* n : list) {
       Inspect(n, inspector);
@@ -271,7 +271,7 @@ struct FromExpr : Expr {
   Token from;
   Expr* x;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     Inspect(x, inspector);
   }
 };
@@ -284,7 +284,7 @@ struct ModifiesExpr : Expr {
   Expr* x;
   Expr* y;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     Inspect(x, inspector);
     Inspect(y, inspector);
   }
@@ -298,7 +298,7 @@ struct PostExpr : Expr {
   Expr* x;
   Token op;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     Inspect(x, inspector);
   }
 };
@@ -312,7 +312,7 @@ struct BinaryExpr : Expr {
   Token op;
   Expr* y;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     Inspect(x, inspector);
     Inspect(y, inspector);
   }
@@ -326,7 +326,7 @@ struct UnaryExpr : Expr {
   Token op;
   Expr* x;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     Inspect(x, inspector);
   }
 };
@@ -339,7 +339,7 @@ struct ValueExpr : Expr {
   Expr* x;
   Expr* y;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     Inspect(x, inspector);
     Inspect(y, inspector);
   }
@@ -353,7 +353,7 @@ struct ParamExpr : Expr {
   Expr* x;
   Expr* y;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     Inspect(x, inspector);
     Inspect(y, inspector);
   }
@@ -367,7 +367,7 @@ struct PortAttribute : Node {
   Token kind;
   std::vector<Expr*> types;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     for (const auto* n : types) {
       Inspect(n, inspector);
     }
@@ -383,7 +383,7 @@ struct TypePar : Node {
   Expr* type;
   Expr* value{nullptr};
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     Inspect(type, inspector);
     if (value != nullptr) {
       Inspect(value, inspector);
@@ -399,7 +399,7 @@ struct IndexExpr : Expr {
   Expr* x{nullptr};
   Expr* index;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     if (x != nullptr) {
       Inspect(x, inspector);
     }
@@ -415,7 +415,7 @@ struct RedirectToIndex : Node {
   bool value{false};
   Expr* index;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     Inspect(index, inspector);
   }
 };
@@ -427,7 +427,7 @@ struct CompositeLiteral : Expr {
 
   std::vector<Expr*> list;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     for (const auto* n : list) {
       Inspect(n, inspector);
     }
@@ -442,7 +442,7 @@ struct RegexpExpr : Expr {
   Token* nocase{nullptr};
   Expr* x;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     Inspect(x, inspector);
   }
 };
@@ -455,7 +455,7 @@ struct PatternExpr : Expr {
   Token* nocase{nullptr};
   Expr* x;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     Inspect(x, inspector);
   }
 };
@@ -468,7 +468,7 @@ struct DecodedExpr : Expr {
   Expr* params{nullptr};
   Expr* x;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     if (params != nullptr) [[likely]] {
       Inspect(params, inspector);
     }
@@ -483,7 +483,7 @@ struct DynamicExpr : Expr {
 
   Stmt* body;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     Inspect(body, inspector);
   }
 };
@@ -496,7 +496,7 @@ struct DecmatchExpr : Expr {
   Expr* params{nullptr};
   Expr* x;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     if (params != nullptr) [[likely]] {
       Inspect(params, inspector);
     }
@@ -512,7 +512,7 @@ struct AssignmentExpr : Expr {
   Expr* property;
   Expr* value;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     Inspect(property, inspector);
     Inspect(value, inspector);
   }
@@ -527,7 +527,7 @@ struct Declarator : Node {
   ArrayExpr* arraydef{nullptr};
   Expr* value{nullptr};
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     if (name.has_value()) {
       Inspect(std::addressof(*name), inspector);
     }
@@ -548,7 +548,7 @@ struct LengthExpr : Expr {
   Expr* x{nullptr};
   ParenExpr* size;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     if (x != nullptr) {
       Inspect(x, inspector);
     }
@@ -564,7 +564,7 @@ struct CallExpr : Expr {
   Expr* fun;
   ParenExpr* args;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     Inspect(fun, inspector);
     Inspect(args, inspector);
   }
@@ -578,7 +578,7 @@ struct ParametrizedIdent : Ident {
   Ident* ident;
   ParenExpr* params;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     Inspect(ident, inspector);
     Inspect(params, inspector);
   }
@@ -597,7 +597,7 @@ struct FormalPar : Node {
   ArrayExpr* arraydef{nullptr};
   Expr* value{nullptr};
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     if (restriction != nullptr) {
       Inspect(restriction, inspector);
     }
@@ -623,7 +623,7 @@ struct ReturnSpec : TypeSpec {
   Token* modif{nullptr};
   Expr* type;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     if (restriction != nullptr) {
       Inspect(restriction, inspector);
     }
@@ -640,7 +640,7 @@ struct AltStmt : Stmt {
   Token* no_default{nullptr};
   BlockStmt* body;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     Inspect(body, inspector);
   }
 };
@@ -653,7 +653,7 @@ struct CallStmt : Stmt {
   Stmt* stmt;
   BlockStmt* body;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     Inspect(stmt, inspector);
     Inspect(body, inspector);
   }
@@ -669,7 +669,7 @@ struct ForStmt : Stmt {
   ExprStmt* post;
   BlockStmt* body;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     Inspect(init, inspector);
     Inspect(cond, inspector);
     Inspect(post, inspector);
@@ -686,7 +686,7 @@ struct ForRangeStmt : Stmt {
   Expr* range;
   BlockStmt* body;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     Inspect(init, inspector);
     Inspect(range, inspector);
     Inspect(body, inspector);
@@ -701,7 +701,7 @@ struct WhileStmt : Stmt {
   Expr* cond{nullptr};
   BlockStmt* body{nullptr};
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     if (cond != nullptr) {
       Inspect(cond, inspector);
     }
@@ -719,7 +719,7 @@ struct DoWhileStmt : Stmt {
   BlockStmt* body{nullptr};
   Expr* cond{nullptr};
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     if (body != nullptr) [[likely]] {
       Inspect(body, inspector);
     }
@@ -738,7 +738,7 @@ struct IfStmt : Stmt {
   BlockStmt* consequent;
   Stmt* alternate{nullptr};
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     Inspect(cond, inspector);
     Inspect(consequent, inspector);
     if (alternate != nullptr) {
@@ -755,7 +755,7 @@ struct CaseClause : Node {
   std::vector<Expr*> cond;
   BlockStmt* body;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     for (const auto* n : cond) {
       Inspect(n, inspector);
     }
@@ -773,7 +773,7 @@ struct CommClause : Stmt {
   ExprStmt* comm{nullptr};
   BlockStmt* body{nullptr};
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     if (x != nullptr) {
       Inspect(x, inspector);
     }
@@ -793,7 +793,7 @@ struct WithSpec : TypeSpec {
 
   std::vector<WithStmt*> list;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     for (const auto* n : list) {
       Inspect(n, inspector);
     }
@@ -807,7 +807,7 @@ struct TypePars : Node {
 
   std::vector<TypePar*> list;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     for (const auto* n : list) {
       Inspect(n, inspector);
     }
@@ -826,7 +826,7 @@ struct RedirectExpr : Expr {
   RedirectToIndex* to_index{nullptr};
   Expr* timestamp{nullptr};
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     if (x != nullptr) {
       Inspect(x, inspector);
     }
@@ -861,7 +861,7 @@ struct ListSpec : TypeSpec {
   LengthExpr* length{nullptr};
   TypeSpec* elemtype;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     if (length != nullptr) {
       Inspect(length, inspector);
     }
@@ -876,7 +876,7 @@ struct FormalPars : Node {
 
   std::vector<FormalPar*> list;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     for (const auto* n : list) {
       Inspect(n, inspector);
     }
@@ -892,7 +892,7 @@ struct SelectStmt : Stmt {
   Expr* tag;
   std::vector<CaseClause*> clauses;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     Inspect(tag, inspector);
     for (const auto* n : clauses) {
       Inspect(n, inspector);
@@ -910,7 +910,7 @@ struct Module : Node {
   std::vector<Definition*> defs;
   WithSpec* with{nullptr};
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     if (name.has_value()) {
       Inspect(std::addressof(*name), inspector);
     }
@@ -938,7 +938,7 @@ struct ValueDecl : Decl {
   std::vector<Declarator*> decls;
   WithSpec* with{nullptr};
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     if (restriction != nullptr) {
       Inspect(restriction, inspector);
     }
@@ -962,7 +962,7 @@ struct ImportDecl : Decl {
   std::vector<DefKindExpr*> list;
   WithSpec* with{nullptr};
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     if (module.has_value()) {
       Inspect(std::addressof(*module), inspector);
     }
@@ -987,7 +987,7 @@ struct GroupDecl : Decl {
   std::vector<Definition*> defs;
   WithSpec* with{nullptr};
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     if (name.has_value()) {
       Inspect(std::addressof(*name), inspector);
     }
@@ -1008,7 +1008,7 @@ struct FriendDecl : Decl {
   std::optional<Ident> module;
   WithSpec* with{nullptr};
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     if (module.has_value()) {
       Inspect(std::addressof(*module), inspector);
     }
@@ -1034,7 +1034,7 @@ struct ClassTypeDecl : Decl {
   std::vector<Definition*> defs;
   WithSpec* with{nullptr};
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     if (name.has_value()) {
       Inspect(std::addressof(*name), inspector);
     }
@@ -1069,7 +1069,7 @@ struct ControlPart : Node {
   BlockStmt* body;
   WithSpec* with{nullptr};
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     Inspect(body, inspector);
     if (with != nullptr) {
       Inspect(with, inspector);
@@ -1091,7 +1091,7 @@ struct Field : Node {
   ParenExpr* value_constraint{nullptr};
   bool optional{false};
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     Inspect(type, inspector);
     if (name.has_value()) {
       Inspect(std::addressof(*name), inspector);
@@ -1121,7 +1121,7 @@ struct MapTypeDecl : Decl {
   TypePars* pars{nullptr};
   WithSpec* with{nullptr};
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     Inspect(spec, inspector);
     if (name.has_value()) {
       Inspect(std::addressof(*name), inspector);
@@ -1145,7 +1145,7 @@ struct EnumTypeDecl : Decl {
   std::vector<Expr*> values;
   WithSpec* with{nullptr};
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     if (name.has_value()) {
       Inspect(std::addressof(*name), inspector);
     }
@@ -1173,7 +1173,7 @@ struct PortTypeDecl : Decl {
   std::vector<Node*> attrs;
   WithSpec* with{nullptr};
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     if (name.has_value()) {
       Inspect(std::addressof(*name), inspector);
     }
@@ -1200,7 +1200,7 @@ struct ComponentTypeDecl : Decl {
   BlockStmt* body;
   WithSpec* with{nullptr};
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     if (name.has_value()) {
       Inspect(std::addressof(*name), inspector);
     }
@@ -1230,7 +1230,7 @@ struct BehaviourSpec : TypeSpec {
   SystemSpec* system{nullptr};
   ReturnSpec* ret{nullptr};
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     Inspect(params, inspector);
     if (runs_on != nullptr) {
       Inspect(runs_on, inspector);
@@ -1259,7 +1259,7 @@ struct TemplateDecl : Decl {
   Expr* value;
   WithSpec* with{nullptr};
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     Inspect(restriction, inspector);
     Inspect(type, inspector);
     if (name.has_value()) {
@@ -1299,7 +1299,7 @@ struct FuncDecl : Decl {
   BlockStmt* body{nullptr};
   WithSpec* with{nullptr};
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     if (name.has_value()) {
       Inspect(std::addressof(*name), inspector);
     }
@@ -1338,7 +1338,7 @@ struct ConstructorDecl : Decl {
   FormalPars* params{nullptr};
   BlockStmt* body{nullptr};
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     if (params != nullptr) [[likely]] {
       Inspect(params, inspector);
     }
@@ -1361,7 +1361,7 @@ struct SignatureDecl : Decl {
   ParenExpr* exception{nullptr};
   WithSpec* with{nullptr};
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     if (name.has_value()) {
       Inspect(std::addressof(*name), inspector);
     }
@@ -1395,7 +1395,7 @@ struct BehaviourTypeDecl : Decl {
   ReturnSpec* ret{nullptr};
   WithSpec* with{nullptr};
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     if (name.has_value()) {
       Inspect(std::addressof(*name), inspector);
     }
@@ -1426,7 +1426,7 @@ struct PortMapAttribute : Node {
   Token kind;
   FormalPars* params;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     Inspect(params, inspector);
   }
 };
@@ -1439,7 +1439,7 @@ struct ModuleParameterGroup : Decl {
   std::vector<ValueDecl*> decls;
   WithSpec* with{nullptr};
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     for (const auto* n : decls) {
       Inspect(n, inspector);
     }
@@ -1457,7 +1457,7 @@ struct StructSpec : TypeSpec {
   Token kind;
   std::vector<Field*> fields;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     for (const auto* n : fields) {
       Inspect(n, inspector);
     }
@@ -1472,7 +1472,7 @@ struct SubTypeDecl : Decl {
   Field* field;
   WithSpec* with{nullptr};
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     Inspect(field, inspector);
     if (with != nullptr) {
       Inspect(with, inspector);
@@ -1491,7 +1491,7 @@ struct StructTypeDecl : Decl {
   TypePars* pars{nullptr};
   WithSpec* with{nullptr};
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     for (const auto* n : fields) {
       Inspect(n, inspector);
     }

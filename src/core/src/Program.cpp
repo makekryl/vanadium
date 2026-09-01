@@ -61,7 +61,7 @@ void Program::Commit(const lib::Consumer<const ProgramModifier&>& modify) {
   Analyze();
 }
 
-void Program::UpdateFile(const std::string& path, const FileReadFn& read) {
+void Program::UpdateFile(const std::string& path, FileReadFn read) {
   decltype(files_)::iterator it;
   bool inserted;
   {

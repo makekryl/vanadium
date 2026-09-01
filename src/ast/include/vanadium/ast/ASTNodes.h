@@ -330,7 +330,7 @@ struct Node {
   Range nrange;
   const NodeKind nkind;
 
-  void Accept(const NodeInspector& inspector) const;
+  void Accept(NodeInspector inspector) const;
 
   [[nodiscard]] bool Contains(const Node* other) const {
     return nrange.Contains(other->nrange);
@@ -385,7 +385,7 @@ struct DeclStmt : Stmt {
 
   Decl* decl;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     Inspect(decl, inspector);
   }
 };
@@ -396,7 +396,7 @@ struct ExprStmt : Stmt {
 
   Expr* expr;
 
-  void Accept(const NodeInspector& inspector) const {
+  void Accept(NodeInspector inspector) const {
     Inspect(expr, inspector);
   }
 };
@@ -410,7 +410,7 @@ struct Ident : Expr {
     return nkind == NodeKind::CompositeIdent;
   }
 
-  void Accept(const NodeInspector&) const {};
+  void Accept(NodeInspector) const {};
 
  protected:
   Ident(NodeKind nkind) : Expr(nkind) {}
@@ -428,7 +428,7 @@ struct CompositeIdent : Ident {
 
 }  // namespace nodes
 
-inline void Inspect(const Node* node, const NodeInspector& inspector) {
+inline void Inspect(const Node* node, NodeInspector inspector) {
   if (inspector(node)) {
     node->Accept(inspector);
   }
