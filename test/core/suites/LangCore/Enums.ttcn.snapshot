@@ -1,7 +1,4 @@
 ./Enums.ttcn:
-  91:16: unresolved symbol 'Invalid'
-      MyEnum e2 := Invalid,  // EXPECT_ERROR
-                   ~~~~~~~                  
   23:20: unresolved symbol 'Invalid'
       var MyEnum e2 := Invalid;  // EXPECT_ERROR
                        ~~~~~~~                  
@@ -35,6 +32,9 @@
   83:7: unresolved symbol 'Invalid'
           Invalid,  // EXPECT_ERROR
           ~~~~~~~                  
+  91:16: unresolved symbol 'Invalid'
+      MyEnum e2 := Invalid,  // EXPECT_ERROR
+                   ~~~~~~~                  
   108:6: unresolved symbol 'Invalid'
     ) := Invalid  // EXPECT_ERROR
          ~~~~~~~                 

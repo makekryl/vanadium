@@ -1,0 +1,15 @@
+module DefaultParameterValuesFromComponent {
+
+type component Comp {
+  var integer componentField;
+}
+
+function f(
+  integer x := componentField0,  // EXPECT_ERROR
+  integer y := componentField,
+  integer z := componentField2  // EXPECT_ERROR
+) runs on Comp { }
+
+// TODO: crossbind-level test for this
+
+}

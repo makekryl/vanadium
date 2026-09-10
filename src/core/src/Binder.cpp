@@ -630,9 +630,7 @@ bool Binder::Inspect(const ast::Node* n) {
 
       auto* originated_scope = Scoped(m, [&] {
         const auto bindf = [&] {
-          externals_.With(externals_.Primary(), [&] {
-            MaybeVisit(m->params);
-          });
+          MaybeVisit(m->params);
           MaybeVisit(m->body);
         };
         if (m->runs_on) {

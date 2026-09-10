@@ -1,0 +1,7 @@
+./DefaultParameterValuesFromComponent.ttcn:
+  8:16: unresolved symbol 'componentField0'
+      integer x := componentField0,  // EXPECT_ERROR
+                   ~~~~~~~~~~~~~~~                  
+  10:16: unresolved symbol 'componentField2'
+      integer z := componentField2  // EXPECT_ERROR
+                   ~~~~~~~~~~~~~~~                 
