@@ -227,7 +227,10 @@ class SelectorExprResolver {
         return x_sym->Members()->Lookup(property_name);
       }
       if (x_sym->Flags() & semantic::SymbolFlags::kClass) [[likely]] {
-        return x_sym->OriginatedScope()->ResolveHorizontally(property_name);
+        if (const auto* rsym = x_sym->OriginatedScope()->ResolveHorizontally(property_name)) {
+          return rsym;
+        }
+        return builtins::kObject.OriginatedScope()->ResolveHorizontally(property_name);
       }
       if (x_sym->Flags() & semantic::SymbolFlags::kImportedModule) {
         const auto* tgt_module = sf_->program->GetModule(x_sym->GetName());

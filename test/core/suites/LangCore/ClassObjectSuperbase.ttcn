@@ -1,0 +1,11 @@
+module ClassObjectSuperbase {
+
+type class MyClass { }
+
+function f() {
+  var MyClass clz;
+  clz.func();  // EXPECT_ERROR
+  clz.toString();
+}
+
+}

@@ -1,0 +1,4 @@
+./ClassObjectSuperbase.ttcn:
+  7:7: property 'func' does not exist on type 'class MyClass'
+      clz.func();  // EXPECT_ERROR
+          ~~~~                    

@@ -25,6 +25,7 @@ const semantic::Symbol kCharstring{"charstring", nullptr, semantic::SymbolFlags:
 const semantic::Symbol kOctetstring{"octetstring", nullptr, semantic::SymbolFlags::kBuiltinStringType};
 const semantic::Symbol kHexstring{"hexstring", nullptr, semantic::SymbolFlags::kBuiltinStringType};
 const semantic::Symbol kUniversalCharstring{"universal charstring", nullptr, semantic::SymbolFlags::kBuiltinStringType};
+semantic::Symbol kObject{"object", nullptr, semantic::SymbolFlags::kClassType};
 
 Superbases superbases{};
 
@@ -41,7 +42,7 @@ const semantic::Symbol* ResolveBuiltinType(std::string_view name) {
       {"hexstring", &kHexstring},
       {"universal charstring", &kCharstring},  // TODO: investigate &kUniversalCharstring
 
-      {"object", &kAnytype},  // TODO
+      {"object", &kObject},
 
       // SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED! (c)
       {"__infer_arg_t", &checker::symbols::kInferType},
@@ -188,6 +189,9 @@ const semantic::Scope* const kBuiltinsScope = [] {
             superbases.kPort = sym;
           } else if (name == "ComponentSuperbase") {
             superbases.kComponent = sym;
+          } else if (name == "object") {
+            // the copy should be ok
+            kObject = *sym;
           } else {
             std::println(stderr, "Builtin definitions module has unknown class: {}", name);
             std::fflush(stderr);

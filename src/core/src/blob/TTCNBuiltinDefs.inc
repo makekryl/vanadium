@@ -31,6 +31,11 @@ type class Timer {
   const __operation timeout;
 }
 
+type class @abstract object {
+  public external function toString() return universal charstring;
+  public external function equals(object obj) return boolean;
+}
+
 type class PortSuperbase {
   // The __send__ operation is used to place a message on an outgoing message port.
   external function send(in anytype msg);
