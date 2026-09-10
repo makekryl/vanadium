@@ -6,6 +6,7 @@
 
 #include "vanadium/ls/LanguageServerContext.h"
 #include "vanadium/ls/LanguageServerConv.h"
+#include "vanadium/ls/LanguageServerLogger.h"
 #include "vanadium/ls/LanguageServerMethods.h"
 #include "vanadium/ls/LanguageServerSession.h"
 
@@ -40,6 +41,11 @@ lsp::TextEdit MinimalEdit(const core::SourceFile& file, std::string_view string1
 
 lsp::DocumentFormattingResult Format(const lsp::DocumentFormattingParams& params, const core::SourceFile& file,
                                      LsSessionRef d) {
+  if (!file.ast.errors.empty()) {
+    VLS_WARN("Cannot format '{}' as it contains syntax errors", file.path);
+    return std::vector<lsp::TextEdit>{};
+  }
+
   format::PrintOptions opts;
   if (d.tools.fmt_opts) {
     opts = *d.tools.fmt_opts;
