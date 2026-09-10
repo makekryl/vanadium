@@ -650,7 +650,7 @@ class AstTransformer {
           ++current_ver;
           current_fields.push_back(pthis->template NewNode<ttcn_ast::nodes::Field>([&](ttcn_ast::nodes::Field& f) {
             auto begin_pos = se->_Identifier_Range.begin;
-            while (original_src_[begin_pos] != '[' && original_src_[begin_pos - 1] != '[') {
+            while (pthis->original_src_[begin_pos] != '[' && pthis->original_src_[begin_pos - 1] != '[') {
               --begin_pos;
             }
             begin_pos -= 2;
@@ -662,11 +662,12 @@ class AstTransformer {
               self(se->eag_level.value, m.fields);  // <--
             });
             //
-            while (original_src_[se_right_scan_pos] != ']' && original_src_[se_right_scan_pos + 1] != ']') {
+            while (pthis->original_src_[se_right_scan_pos] != ']' &&
+                   pthis->original_src_[se_right_scan_pos + 1] != ']') {
               ++se_right_scan_pos;
             }
             se_right_scan_pos += 3;
-            RecordOrigin(&f, {.begin = begin_pos, .end = se_right_scan_pos});
+            pthis->RecordOrigin(&f, {.begin = begin_pos, .end = se_right_scan_pos});
           }));
           continue;
         }
