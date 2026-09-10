@@ -48,7 +48,7 @@ std::string BuildImportTree(const lsp::TextDocumentIdentifierContainer&, const c
       buf += "| ";
     }
   };
-  // std::unordered_set<std::string_view> seen;
+  std::unordered_set<std::string_view> seen;
 
   [&](this auto&& self, const core::ModuleDescriptor& module) -> void {
     for (const auto& [import, descriptor] : module.imports) {
@@ -63,10 +63,10 @@ std::string BuildImportTree(const lsp::TextDocumentIdentifierContainer&, const c
       buf += import;
       buf += "\n";
 
-      // auto [_, inserted] = seen.insert(import);
-      // if (!inserted) {
-      //   return;
-      // }
+      auto [_, inserted] = seen.insert(import);
+      if (!inserted) {
+        return;
+      }
 
       ++depth;
       auto* imported_module = module.sf->program->GetModule(import);
