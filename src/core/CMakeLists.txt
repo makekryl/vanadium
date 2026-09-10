@@ -20,6 +20,7 @@ target_link_libraries(vanadium_core PUBLIC
   vanadium_lib_common
   vanadium_lib_arena
   vanadium_lib_concurrency
+  vanadium_lib_trace
 )
 target_link_libraries(vanadium_core PRIVATE
   magic_enum

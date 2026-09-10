@@ -5,6 +5,7 @@
 
 #include <vanadium/core/Program.h>
 #include <vanadium/lib/Error.h>
+#include <vanadium/lib/trace/GlobalTracer.h>
 
 #include "vanadium/tooling/CompilerExtensions.h"
 #include "vanadium/tooling/Filesystem.h"
@@ -21,6 +22,7 @@ Solution::Solution(Project&& root_project) : root_project_(std::move(root_projec
 
 namespace {
 void InitSubproject(const Solution& solution, SolutionProject& subproject) {
+  const auto tracing_scope = trace::global.Supervising().Scope(subproject.project.Name());
   const auto& project_dir = subproject.project.Directory();
   if (!project_dir.Exists()) {
     // TODO
@@ -70,6 +72,8 @@ void InitSubproject(const Solution& solution, SolutionProject& subproject) {
 }  // namespace
 
 std::expected<Solution, Error> Solution::Load(Project&& root_project, lib::Consumer<Solution&> precommit) {
+  const auto root_tracing_scope = trace::global.Supervising().Scope("Solution");
+
   Solution solution(std::move(root_project));
   const auto& path = solution.Directory();
 
@@ -94,9 +98,12 @@ std::expected<Solution, Error> Solution::Load(Project&& root_project, lib::Consu
   }
 
   if (root_desc.external) {
+    auto tracing_scope = trace::global.Supervising().Scope("External projects");
     for (const auto& [ext_name, ext_desc] : *root_desc.external) {
+      auto ext_path = path.Resolve(ext_desc.path);
+      auto f_tracing_scope = trace::global.Supervising().Scope(ext_path.base_path);
       auto [it, inserted] =
-          solution.projects_.try_emplace(ext_name, Project(path.Resolve(ext_desc.path), "",
+          solution.projects_.try_emplace(ext_name, Project(std::move(ext_path), "",
                                                            ProjectManifest{
                                                                .root = false,
                                                                .project =
@@ -120,7 +127,9 @@ std::expected<Solution, Error> Solution::Load(Project&& root_project, lib::Consu
 
   if (root_desc.project.subprojects) {
     for (const auto& subpath : *root_desc.project.subprojects) {
-      auto result = tooling::Project::Load(path.Resolve(subpath));
+      auto project_path = path.Resolve(subpath);
+      auto tracing_scope = trace::global.Supervising().Scope(project_path.base_path);
+      auto result = tooling::Project::Load(project_path);
       if (!result) {
         return std::unexpected{
             Error{std::format("Failed to load project at '{}'", subpath), std::move(result.error())}};
@@ -139,6 +148,7 @@ std::expected<Solution, Error> Solution::Load(Project&& root_project, lib::Consu
       InitSubproject(solution, sol_project);
     }
   } else {
+    auto tracing_scope = trace::global.Supervising().Scope("<root>");
     auto [it, _] = solution.projects_.try_emplace("<root>", Project(solution.root_project_));
     auto& sol_project = it->second;
     sol_project.managed = true;
@@ -170,6 +180,7 @@ std::expected<Solution, Error> Solution::Load(Project&& root_project, lib::Consu
 
   precommit(solution);
 
+  const auto tracing_scope = trace::global.Supervising().Scope("Initial analysis");
   core::do_reanalyse_program_deps = false;
   for (const auto* proj : *sorted_projs) {
     const_cast<SolutionProject*>(proj)->program.Commit([](auto&) {});

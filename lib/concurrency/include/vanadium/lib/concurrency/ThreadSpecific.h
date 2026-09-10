@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <mutex>
+#include <span>
 #include <vector>
 
 namespace vanadium::lib::concurrency {
@@ -21,6 +22,8 @@ class GenericThreadSpecific {
   GenericThreadSpecific& operator=(GenericThreadSpecific&&) = delete;
 
   [[nodiscard]] void* Local() const;
+  [[nodiscard]] std::span<void* const> All();
+  [[nodiscard]] std::span<const void* const> All() const;
 
  private:
   std::uint32_t key_;
@@ -46,6 +49,15 @@ class ThreadSpecific : private GenericThreadSpecific {
 
   [[nodiscard]] T& Local() const {
     return *reinterpret_cast<T*>(GenericThreadSpecific::Local());
+  }
+
+  [[nodiscard]] std::span<T* const> All() {
+    auto type_erased_span = GenericThreadSpecific::All();
+    return {reinterpret_cast<T* const*>(type_erased_span.data()), type_erased_span.size()};
+  }
+  [[nodiscard]] std::span<const T* const> All() const {
+    auto type_erased_span = GenericThreadSpecific::All();
+    return {reinterpret_cast<const T* const*>(type_erased_span.data()), type_erased_span.size()};
   }
 };
 

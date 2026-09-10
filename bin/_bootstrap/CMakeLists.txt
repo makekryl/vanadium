@@ -8,6 +8,7 @@ target_include_directories(vanadium_bin_boostrap PUBLIC
 
 target_link_libraries(vanadium_bin_boostrap PUBLIC
   vanadium_bin_version
+  vanadium_lib_trace
 )
 
 target_link_libraries(vanadium_bin_boostrap PRIVATE

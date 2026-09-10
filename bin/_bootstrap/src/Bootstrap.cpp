@@ -1,8 +1,11 @@
 #include "vanadium/bin/Bootstrap.h"
 
 #include <csignal>
+#include <fstream>
 #include <print>
 #include <stacktrace>
+
+#include <vanadium/lib/trace/GlobalTracer.h>
 
 #if (defined(__has_feature) && __has_feature(address_sanitizer)) || defined(__SANITIZE_ADDRESS__)
 #define VANADIUM_BOOTSTRAP__ASAN_ENABLED 1
@@ -28,6 +31,20 @@ void HandleSignal(int signum) {
                "\n",
                signum, trace);
   std::fflush(stderr);
+
+  if (vanadium::trace::global.Active()) {
+    std::println(stderr, "Dumping diagnostics trace...");
+    std::fflush(stderr);
+
+    std::ofstream of(vanadium::trace::global_save_path);
+    vanadium::trace::global.Unwrap()->Serialize([&](auto sv) {
+      of << sv;
+    });
+    of << "\n";
+
+    std::println(stderr, "Diagnostics trace has been written to '{}'", vanadium::trace::global_save_path);
+    std::fflush(stderr);
+  }
 
   std::signal(signum, SIG_DFL);
   std::raise(signum);

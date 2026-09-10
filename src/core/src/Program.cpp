@@ -20,10 +20,12 @@
 #include <vanadium/lib/Bitset.h>
 #include <vanadium/lib/concurrency/Algorithm.h>
 #include <vanadium/lib/concurrency/TaskGroup.h>
+#include <vanadium/lib/trace/GlobalTracer.h>
 
 #include "vanadium/core/Semantic.h"
 #include "vanadium/core/TypeChecker.h"
 #include "vanadium/core/utils/ImportVisitor.h"
+#include "vanadium/lib/trace/Tracer.h"
 
 namespace vanadium::core {
 
@@ -38,6 +40,7 @@ bool IsAsnModule(const SourceFile& sf) {
 }  // namespace
 
 void Program::Update(const lib::Consumer<const ProgramModifier&>& modify) {
+  const auto tracing_scope = trace::global.Supervising().Scope("Program update");
   lib::concurrency::TaskGroup wg;
   modify({
       .update =
@@ -62,6 +65,8 @@ void Program::Commit(const lib::Consumer<const ProgramModifier&>& modify) {
 }
 
 void Program::UpdateFile(const std::string& path, FileReadFn read) {
+  const auto tracing_scope = trace::global->Scope(path);
+
   decltype(files_)::iterator it;
   bool inserted;
   {
@@ -417,6 +422,9 @@ extern thread_local bool do_reanalyse_program_deps;
 thread_local bool do_reanalyse_program_deps = true;
 
 void Program::Analyze() {
+  const auto root_tracing_scope = trace::global.Supervising().Scope("Program analysis");
+
+  auto tracing_scope = trace::global.Supervising().Scope("ASN transformation");
   lib::concurrency::ParallelFor(asn_modules_.Keys<SourceFile>(), [&](SourceFile* sf) {
     if (sf->analysis_state != AnalysisState::kDirty) {
       // Hereby, incrementalized ASN.1 modules analysis resides here, in Program
@@ -427,6 +435,7 @@ void Program::Analyze() {
       // 2) Dirtyness propagation is powered by the crossbind's dependency detector
       return;
     }
+    const auto local_tracing_scope = trace::global->Scope(sf->path);
 
     // todo: this is a copypaste from Program::UpdateFile
     DetachFile(*sf);
@@ -439,7 +448,11 @@ void Program::Analyze() {
     AttachFile(*sf);
   });
 
+  lib::trace::ThreadTracer::ScopeGuard::Transit(tracing_scope, [] {
+    return trace::global.Supervising().Scope("Semantic");
+  });
   lib::concurrency::ParallelFor(files_ | std::views::values, [&](SourceFile& sf) {
+    const auto local_tracing_scope = trace::global->Scope(sf.path);
     auto& module = *sf.module;
 
     if (sf.analysis_state == AnalysisState::kDirty) {
@@ -463,8 +476,12 @@ void Program::Analyze() {
       sf.analysis_state |= AnalysisState::kFullCrossbind;
     }
   });
+  lib::trace::ThreadTracer::ScopeGuard::Transit(tracing_scope, [] {
+    return trace::global.Supervising().Scope("Type check");
+  });
   lib::concurrency::ParallelFor(files_ | std::views::values, [&](SourceFile& sf) {
     if (!sf.skip_analysis && !(sf.analysis_state & AnalysisState::kTypecheck)) {
+      const auto local_tracing_scope = trace::global->Scope(sf.path);
       checker::PerformTypeCheck(sf);
 
       sf.analysis_state |= AnalysisState::kTypecheck;
@@ -472,6 +489,9 @@ void Program::Analyze() {
   });
 
   if (do_reanalyse_program_deps) [[likely]] {
+    lib::trace::ThreadTracer::ScopeGuard::Transit(tracing_scope, [] {
+      return trace::global.Supervising().Scope("Dependent programs");
+    });
     for (auto* program : direct_dependents_) {
       program->Analyze();
     }

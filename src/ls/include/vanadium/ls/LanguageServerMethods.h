@@ -85,6 +85,7 @@ DECL_REQUEST_1(inlayHint, resolve, lsp::InlayHint, lsp::InlayHint);
 
 // vanadiumd
 DECL_REQUEST_1(vanadiumd, buildImportTree, lsp::TextDocumentIdentifierContainer, std::string);
+DECL_REQUEST_1(vanadiumd, dumpTrace, lib::jsonrpc::Empty, std::string);
 
 }  // namespace methods
 

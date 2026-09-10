@@ -51,4 +51,12 @@ void* GenericThreadSpecific::Local() const {
   return p;
 }
 
+std::span<void* const> GenericThreadSpecific::All() {
+  return allocated_;
+}
+
+std::span<const void* const> GenericThreadSpecific::All() const {
+  return allocated_;
+}
+
 }  // namespace vanadium::lib::concurrency

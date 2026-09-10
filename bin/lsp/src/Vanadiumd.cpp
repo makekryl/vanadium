@@ -10,10 +10,12 @@
 
 #include <vanadium/bin/Bootstrap.h>
 #include <vanadium/lib/lserver/Transport.h>
+#include <vanadium/lib/trace/GlobalTracer.h>
 #include <vanadium/ls/LanguageServer.h>
 #include <vanadium/ls/LanguageServerTestFlags.h>
 #include <vanadium/version.h>
 
+namespace {
 class OutputCapturingTransport : public vanadium::lserver::Transport {
  public:
   OutputCapturingTransport(const char* filename, vanadium::lserver::Transport& base) : base_(base) {
@@ -43,7 +45,6 @@ class OutputCapturingTransport : public vanadium::lserver::Transport {
   vanadium::lserver::Transport& base_;
 };
 
-namespace {
 int main(int argc, char* argv[]) {
   argparse::ArgumentParser ap("vanadiumd", vanadium::bin::kVersion);
   ap.add_description("TTCN-3 language server");
@@ -58,9 +59,14 @@ int main(int argc, char* argv[]) {
     transport_group.add_argument("--stdio").help("run LSP over standard IO").flag();
   }
   //
-  ap.add_argument("--wait-dbg").flag();
-  ap.add_argument("--capture-output").flag();
-  ap.add_argument("--full-analysis").flag();
+  bool wait_dbg{false};
+  ap.add_argument("--wait-dbg").flag().store_into(wait_dbg);
+  bool capture_output{false};
+  ap.add_argument("--capture-output").flag().store_into(capture_output);
+  bool full_analysis{false};
+  ap.add_argument("--full-analysis").flag().store_into(full_analysis);
+  bool enable_trace{false};
+  ap.add_argument("--trace").flag().store_into(enable_trace);
 
   //
   PARSE_CLI_ARGS_OR_EXIT(ap, argc, argv, 1);
@@ -69,13 +75,17 @@ int main(int argc, char* argv[]) {
   std::println(stderr, "vanadiumd version {}", vanadium::bin::kVersion);
   vanadium::ls::testflags::version_name = vanadium::bin::kVersion;
 
-  if (ap.get<bool>("--wait-dbg")) {
+  if (wait_dbg) {
     constexpr auto kSecondsToWait{12};
     std::println(stderr, "\nWaiting {} seconds for debugger to attach...\n", kSecondsToWait);
     std::this_thread::sleep_for(std::chrono::seconds(kSecondsToWait));
   }
 
-  if (ap.get<bool>("--full-analysis")) {
+  if (enable_trace) {
+    vanadium::trace::global.Setup();
+  }
+
+  if (full_analysis) {
     std::println(stderr, "\nWARN: Full analysis mode is enabled\n");
     vanadium::ls::testflags::do_not_skip_full_analysis = true;
   }
@@ -88,7 +98,7 @@ int main(int argc, char* argv[]) {
   vanadium::lserver::Transport* transport{&stdio_transport};
 
   std::optional<OutputCapturingTransport> capturing_transport;
-  if (ap.get<bool>("--capture-output")) {
+  if (capture_output) {
     transport = &capturing_transport.emplace("vanadiumd.stdout.log", *transport);
   }
 

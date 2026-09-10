@@ -1,6 +1,13 @@
 import * as vscode from 'vscode';
 import { lsClient } from './extension';
 
+export const dumpTrace = async () => {
+  const result = await lsClient?.languageClient.sendRequest<string>('vanadiumd/dumpTrace');
+  if (result) {
+    vscode.window.showInformationMessage(`Vanadium trace has been dumped into '${result}'`);
+  }
+};
+
 export const showImportTree = async () => {
   const editor = vscode.window.activeTextEditor;
   if (!editor) {

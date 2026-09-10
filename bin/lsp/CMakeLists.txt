@@ -9,6 +9,7 @@ target_include_directories(vanadiumd PRIVATE
 target_link_libraries(vanadiumd PRIVATE
   vanadium_bin_boostrap
   vanadium_lib_lserver
+  vanadium_lib_trace
   vanadium_ls
   argparse::argparse
 )

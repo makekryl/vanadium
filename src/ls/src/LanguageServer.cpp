@@ -11,6 +11,7 @@
 #include <vanadium/lib/concurrency/TaskArena.h>
 #include <vanadium/lib/jsonrpc/Server.h>
 #include <vanadium/lib/lserver/Connection.h>
+#include <vanadium/lib/trace/GlobalTracer.h>
 #include <vanadium/lint/rules/NoEmpty.h>
 #include <vanadium/lint/rules/NoUnnecessaryValueof.h>
 #include <vanadium/lint/rules/NoUnusedImports.h>
@@ -57,8 +58,9 @@ using ServerMethods = mp::Typelist<methods::initialize,   //
                                    //
                                    methods::inlayHint::resolve,  //
                                    //
-                                   methods::vanadiumd::buildImportTree  //
-                                   >;                                   //
+                                   methods::vanadiumd::buildImportTree,  //
+                                   methods::vanadiumd::dumpTrace         //
+                                   >;                                    //
 
 void Serve(lserver::Transport& transport, std::size_t concurrency, std::size_t jobs) {
   VLS_INFO("Starting language server... (jobs={}, concurrency={})", jobs, concurrency);
@@ -92,6 +94,7 @@ void Serve(lserver::Transport& transport, std::size_t concurrency, std::size_t j
     }
 
     VLS_INFO("  |---> {}", *method);
+    auto trace_scope = trace::global.Supervising()->Scope(*method);
     const auto begin_ts = std::chrono::steady_clock::now();
 
     auto res_token = conn.AcquireToken();
