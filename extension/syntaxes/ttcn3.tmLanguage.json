@@ -2,7 +2,8 @@
   "name": "TTCN-3",
   "scopeName": "source.ttcn3",
   "fileTypes": [
-    "ttcn"
+    "ttcn",
+    "ttcn3"
   ],
   "patterns": [
     {
