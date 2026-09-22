@@ -480,7 +480,11 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
             }));
           A(seq, PrintDirective::kHardLine);
         } else {
-          A(seq, PrintDirective::kSpace);
+          if (tokens_->Peek().kind == ast::TokenKind::COMMENT) {
+            A(seq, PrintDirective::kHardLine);
+          } else {
+            A(seq, PrintDirective::kSpace);
+          }
         }
         A(seq, "}");
 
