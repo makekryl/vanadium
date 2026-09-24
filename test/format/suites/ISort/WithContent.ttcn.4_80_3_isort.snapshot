@@ -2,7 +2,9 @@ module WithContent
 {
 import from A all;
 import from B all;
-import from C all;function f()
+import from C all;
+
+function f()
 {
     stmt;
 }

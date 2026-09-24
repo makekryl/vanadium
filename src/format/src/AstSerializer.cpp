@@ -157,7 +157,7 @@ class AstSerializer {
       }
       tokens_->Advance();  // consume comment_tok
 
-      if (first_comment_line != prev_line) {
+      if (first_comment_line != prev_line && ctok.kind != ast::TokenKind::LBRACE) {
         tgt.units.emplace_back(PreferredNewlines{first_comment_line - prev_line});
       }
       last_comment_line_ = ast_.lines.LineOf(comment_tok.range.end);
@@ -275,9 +275,13 @@ class AstSerializer {
 
     seq->units.emplace_back(imports_prep_->front().second);
     for (std::size_t i = 1; i < imports_prep_->size(); ++i) {
-      const auto* iseq = (*imports_prep_)[i].second;
       seq->units.emplace_back(PrintDirective::kHardLine);
-      seq->units.emplace_back(iseq);
+      seq->units.emplace_back((*imports_prep_)[i].second);
+    }
+
+    if (module_defs_count > imports_prep_->size()) {
+      seq->units.emplace_back(PrintDirective::kHardLine);
+      seq->units.emplace_back(PrintDirective::kHardLine);
     }
   }
 
@@ -286,6 +290,7 @@ class AstSerializer {
   const ast::AST& ast_;
   std::optional<TokenWindow> tokens_;
   ast::pos_t last_comment_line_{0};
+  std::size_t module_defs_count{0};
   std::optional<std::vector<std::pair<const ast::nodes::ImportDecl*, Sequence*>>> imports_prep_;
   lib::Arena& arena_;
 };
@@ -354,9 +359,13 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
         A(seq, "{");
         A(seq, PrintDirective::kHardLine);
         //
-        auto* impseq = NewSequence([](auto&) {});
+        auto* const impseq = NewSequence([](auto&) {});
         A(seq, impseq);
         if (!m->defs.empty()) {
+          module_defs_count = m->defs.size();
+          if (m->defs.front()->def->nkind != ast::NodeKind::ImportDecl) {
+            A(seq, PrintDirective::kHardLine);
+          }
           Join(seq, m->defs, PrintDirective::kHardLine);
           A(seq, PrintDirective::kHardLine);
           A(seq, PrintDirective::kHardLine);
