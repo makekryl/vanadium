@@ -40,7 +40,7 @@ struct PreferredNewlines {
 
 struct Sequence;
 
-using EmptyUnit = std::monostate;
+struct EmptyUnit {};
 using Unit = std::variant<const Sequence*, PrintDirective, std::string_view, Comment, PreferredNewlines, EmptyUnit>;
 
 struct Sequence {
@@ -54,7 +54,11 @@ struct Sequence {
 };
 ENUM_FLAGS_TRAITS(Sequence::Attribute);
 
-Unit SerializeAst(const ast::AST& ast, const ast::Node* n, lib::Arena& arena);
+struct SerializationOptions {
+  bool sort_imports{false};
+};
+
+Unit SerializeAst(const ast::AST& ast, const ast::Node* n, lib::Arena& arena, SerializationOptions);
 
 }  // namespace format
 

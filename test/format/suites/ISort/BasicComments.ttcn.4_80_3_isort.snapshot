@@ -1,0 +1,11 @@
+module BasicWithComments 
+{
+/* A */ import from A all;
+// B
+import from B all;
+import from C all;  // C
+// D
+import from D all;  // D
+/* E */ import from E all;
+
+}

@@ -2,6 +2,7 @@ module HelloWorld
 {
 
 //====================== Port Types ======================
+
 type port MYPORT message {
     inout charstring;
 } with {
@@ -9,20 +10,24 @@ type port MYPORT message {
 }
 
 //====================== Component Types ======================
+
 type component MYCOMP {
     port MYPORT myport;
 }
 
 //====================== Constants ======================
+
 const charstring ws0 := "(\n| )#(0,)";
 
 //====================== Templates ======================
+
 // Strings containing the words "hello" and "world", in all small, or
 // all capital letters, or small letters with first letter capital;
 // exclamation mark is optional; whitespaces allowed
 template charstring t_expected := pattern "{ws0}(((h|H)ello {ws0}(w|W)orld)|HELLO {ws0}WORLD){ws0}!#(0,1){ws0}";
 
 //====================== Functions ======================
+
 function f_PTC() runs on MYCOMP
 {
     alt {
@@ -36,6 +41,7 @@ function f_PTC() runs on MYCOMP
 }
 
 //====================== Testcases ======================
+
 testcase TC(charstring pl_toSend) runs on MYCOMP
 {
     var MYCOMP vl_PTC := MYCOMP.create;
@@ -46,8 +52,11 @@ testcase TC(charstring pl_toSend) runs on MYCOMP
 }
 
 //=========================================================================
+
 // Control Part
+
 //=========================================================================
+
 control {
     var charstring vl_inputs[6] := {
         "HELLO WORLD!",

@@ -1,11 +1,14 @@
 #include "vanadium/format/AstSerializer.h"
 
+#include <algorithm>
+#include <cctype>
 #include <cstddef>
 #include <initializer_list>
 #include <iterator>
 #include <optional>
 #include <string_view>
 #include <type_traits>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -58,7 +61,11 @@ class TokenWindow {
 
 class AstSerializer {
  public:
-  AstSerializer(const ast::AST& ast, lib::Arena& arena) : ast_(ast), arena_(arena) {}
+  AstSerializer(const ast::AST& ast, lib::Arena& arena, SerializationOptions opts) : ast_(ast), arena_(arena) {
+    if (opts.sort_imports) {
+      imports_prep_.emplace();
+    }
+  }
 
   Unit Serialize(const ast::Node* n) {
     tokens_.emplace(ast_.src, n->nrange.begin);
@@ -97,28 +104,34 @@ class AstSerializer {
             Serializer f_serialize = nullptr) {
     const auto serialize = [&](const T& item) {
       if constexpr (std::is_same_v<Serializer, std::nullptr_t>) {
-        A(target, S(item));
+        auto u = S(item);
+        const bool was_empty = std::holds_alternative<EmptyUnit>(u);
+        A(target, std::move(u));
+        return !was_empty;
       } else {
         f_serialize(item);
+        return true;
       }
     };
     if (!items.empty()) {
-      serialize(items.front());
+      bool should_write_separators = serialize(items.front());
       for (std::size_t i = 1; i < items.size(); ++i) {
-        for (const auto& su : separators) {
-          A(target, su);
-        }
+        if (should_write_separators) [[likely]] {
+          for (const auto& su : separators) {
+            A(target, su);
+          }
 
-        // if there's a leading comment, PreferredNewlines would be inserted by the comment scanner
-        if (tokens_->Peek().kind != ast::TokenKind::COMMENT) {
-          const ast::pos_t prev_line = std::max(ast_.lines.LineOf(RangeOf(items[i - 1]).end), last_comment_line_);
-          const ast::pos_t current_line = ast_.lines.LineOf(RangeOf(items[i]).begin);
-          if (current_line != prev_line) {
-            A(target, PreferredNewlines{current_line - prev_line});
+          // if there's a leading comment, PreferredNewlines would be inserted by the comment scanner
+          if (tokens_->Peek().kind != ast::TokenKind::COMMENT) {
+            const ast::pos_t prev_line = std::max(ast_.lines.LineOf(RangeOf(items[i - 1]).end), last_comment_line_);
+            const ast::pos_t current_line = ast_.lines.LineOf(RangeOf(items[i]).begin);
+            if (current_line != prev_line) {
+              A(target, PreferredNewlines{current_line - prev_line});
+            }
           }
         }
 
-        serialize(items[i]);
+        should_write_separators = serialize(items[i]);
       }
     }
   }
@@ -145,14 +158,20 @@ class AstSerializer {
       tokens_->Advance();  // consume comment_tok
 
       if (first_comment_line != prev_line) {
-        const ast::pos_t dy = ctok.kind == ast::TokenKind::COMMENT ? 0 : 1;
-        for (ast::pos_t i = 0; i < (first_comment_line - prev_line - dy); ++i) {
-          tgt.units.emplace_back(PrintDirective::kHardLine);
-        }
+        tgt.units.emplace_back(PreferredNewlines{first_comment_line - prev_line});
       }
       last_comment_line_ = ast_.lines.LineOf(comment_tok.range.end);
 
-      tgt.units.emplace_back(Comment{comment_tok.On(ast_.src)});
+      const auto& comment_text = comment_tok.On(ast_.src);
+      tgt.units.emplace_back(Comment{comment_text});
+      if (comment_text.ends_with("*/")) {
+        if (const auto next_pos = comment_tok.range.end; next_pos < ast_.src.size()) {
+          const char next_char = ast_.src[next_pos];
+          if (next_char != '\n' && next_char != '\r') {
+            tgt.units.emplace_back(PrintDirective{PrintDirective::kSpace});
+          }
+        }
+      }
     }
   }
 
@@ -216,9 +235,58 @@ class AstSerializer {
 
   //
 
+  void FlushImports(Sequence* seq) {
+    if (!imports_prep_ || imports_prep_->empty()) {
+      return;
+    }
+    std::stable_sort(imports_prep_->begin(), imports_prep_->end(), [&](const auto& lhs, const auto& rhs) {
+      const ast::nodes::ImportDecl* lhs_idecl = lhs.first;
+      const ast::nodes::ImportDecl* rhs_idecl = rhs.first;
+
+      if (lhs_idecl->parent->nkind == ast::NodeKind::Definition &&
+          rhs_idecl->parent->nkind == ast::NodeKind::Definition) {
+        const auto* lhs_def = lhs_idecl->parent->As<ast::nodes::Definition>();
+        const auto* rhs_def = rhs_idecl->parent->As<ast::nodes::Definition>();
+        if ((lhs_def->visibility == nullptr) != (rhs_def->visibility == nullptr)) {
+          return lhs_def->visibility != nullptr;
+        }
+        if (lhs_def->visibility && lhs_def->visibility->kind != rhs_def->visibility->kind) {
+          return lhs_def->visibility->kind > rhs_def->visibility->kind;
+        }
+      }
+
+      auto lhs_name = lhs_idecl->nrange.String(ast_.src);
+      auto rhs_name = rhs_idecl->nrange.String(ast_.src);
+      if (lhs_name != rhs_name) {
+        return lhs_name < rhs_name;
+      }
+
+      const auto is_import_all = [](const auto* idecl) {
+        return idecl->list.size() == 1 && idecl->list[0]->kind.range.Length() == 0;
+      };
+      const bool lhs_all = is_import_all(lhs_idecl);
+      const bool rhs_all = is_import_all(rhs_idecl);
+      if (lhs_all != rhs_all) {
+        return lhs_all;
+      }
+
+      return false;
+    });
+
+    seq->units.emplace_back(imports_prep_->front().second);
+    for (std::size_t i = 1; i < imports_prep_->size(); ++i) {
+      const auto* iseq = (*imports_prep_)[i].second;
+      seq->units.emplace_back(PrintDirective::kHardLine);
+      seq->units.emplace_back(iseq);
+    }
+  }
+
+  //
+
   const ast::AST& ast_;
   std::optional<TokenWindow> tokens_;
   ast::pos_t last_comment_line_{0};
+  std::optional<std::vector<std::pair<const ast::nodes::ImportDecl*, Sequence*>>> imports_prep_;
   lib::Arena& arena_;
 };
 
@@ -285,22 +353,28 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
         A(seq, PrintDirective::kHardLine);
         A(seq, "{");
         A(seq, PrintDirective::kHardLine);
+        //
+        auto* impseq = NewSequence([](auto&) {});
+        A(seq, impseq);
         if (!m->defs.empty()) {
           Join(seq, m->defs, PrintDirective::kHardLine);
           A(seq, PrintDirective::kHardLine);
           A(seq, PrintDirective::kHardLine);
         }
+        //
         A(seq, "}");
         if (m->with) {
           A(seq, PrintDirective::kSpace);
           A(seq, S(m->with));
         }
+
+        FlushImports(impseq);
       });
     }
 
     case ast::NodeKind::Definition: {
       const auto* m = n->As<ast::nodes::Definition>();
-      return NewSequence([&](auto& seq) {
+      auto* def_seq = NewSequence([&](auto& seq) {
         if (m->visibility) {
           A(seq, S(m->visibility));
           A(seq, PrintDirective::kSpace);
@@ -322,6 +396,11 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
             break;
         }
       });
+      if (m->def->nkind == ast::NodeKind::ImportDecl && imports_prep_) {
+        imports_prep_->emplace_back(m->def->As<ast::nodes::ImportDecl>(), def_seq);
+        return EmptyUnit{};
+      }
+      return def_seq;
     }
 
     case ast::NodeKind::StructTypeDecl: {
@@ -1730,8 +1809,8 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
 
 }  // namespace
 
-Unit SerializeAst(const ast::AST& ast, const ast::Node* n, lib::Arena& arena) {
-  return AstSerializer(ast, arena).Serialize(n);
+Unit SerializeAst(const ast::AST& ast, const ast::Node* n, lib::Arena& arena, SerializationOptions opts) {
+  return AstSerializer(ast, arena, opts).Serialize(n);
 }
 
 }  // namespace vanadium::format

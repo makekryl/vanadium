@@ -21,6 +21,8 @@ struct PrintOptions {
   std::size_t print_width{80};
 
   std::size_t max_empty_newlines{2};
+
+  bool sort_imports{false};
 };
 
 std::string PrintAst(const ast::AST& ast, const ast::Node*, lib::Arena&, PrintOptions);

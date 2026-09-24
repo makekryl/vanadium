@@ -34,24 +34,11 @@ void SetupTools(LsContext& ctx) {
   }
 
   const auto& tc = pmanifest->tools;
-  if (const auto& c = tc->fmt; c) {
-    ctx.fmt_opts = std::make_unique<format::PrintOptions>();
-    auto& opts = *ctx.fmt_opts;
-#define COPY_OPT_IF_PRESENT(OPT)         \
-  do {                                   \
-    if (const auto& opt = c->OPT; opt) { \
-      opts.OPT = *opt;                   \
-    }                                    \
-  } while (0)
-    //
-    COPY_OPT_IF_PRESENT(tab_width);
-    COPY_OPT_IF_PRESENT(print_width);
-    COPY_OPT_IF_PRESENT(max_empty_newlines);
-    //
-#undef COPY_OPT_IF_PRESENT
-
-    VLS_INFO("Formatter options: tab_width={}, print_width={}, max_empty_newlines={}",  //
-             opts.tab_width, opts.print_width, opts.max_empty_newlines);
+  if (const auto& c = tc->fmt) {
+    ctx.fmt_opts = std::make_unique<format::PrintOptions>(*c);
+    VLS_INFO("Formatter options: tab_width={}, print_width={}, max_empty_newlines={}, sort_imports={}",  //
+             ctx.fmt_opts->tab_width, ctx.fmt_opts->print_width, ctx.fmt_opts->max_empty_newlines,
+             ctx.fmt_opts->sort_imports);
   }
 }
 

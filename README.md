@@ -73,6 +73,7 @@ Default values are specified in the list of all supported values below.
 tab_width = 4
 print_width = 80
 max_empty_newlines = 2
+sort_imports = true
 ```
 
 ## Comparison to other projects

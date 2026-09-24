@@ -24,7 +24,7 @@ class SerializedTreeDumper {
     indent_ = 0;
 
     lib::Arena arena;
-    DumpUnit(format::SerializeAst(ast, n, arena));
+    DumpUnit(format::SerializeAst(ast, n, arena, format::SerializationOptions{}));
     out_ << "\n";
   }
 

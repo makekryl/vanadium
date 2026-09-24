@@ -23,33 +23,44 @@ const auto kTestablePrintOptions = std::array{
         .tab_width = 4,
         .print_width = 80,
         .max_empty_newlines = 2,
+        .sort_imports = false,
     },
     format::PrintOptions{
         .tab_width = 4,
         .print_width = 80,
         .max_empty_newlines = 1,  // <--
+        .sort_imports = false,
     },
     format::PrintOptions{
         .tab_width = 4,
         .print_width = 80,
         .max_empty_newlines = 3,  // <--
+        .sort_imports = false,
+    },
+    format::PrintOptions{
+        .tab_width = 4,
+        .print_width = 80,
+        .max_empty_newlines = 3,
+        .sort_imports = true,  // <--
     },
 
     format::PrintOptions{
         .tab_width = 2,  // <--
         .print_width = 80,
         .max_empty_newlines = 2,
+        .sort_imports = false,
     },
 
     format::PrintOptions{
         .tab_width = 4,
         .print_width = 120,  // <--
         .max_empty_newlines = 2,
+        .sort_imports = false,
     },
 };
 
 std::string GetPrintOptionsTag(const format::PrintOptions& p) {
-  return std::format("{}_{}_{}", p.tab_width, p.print_width, p.max_empty_newlines);
+  return std::format("{}_{}_{}{}", p.tab_width, p.print_width, p.max_empty_newlines, p.sort_imports ? "_isort" : "");
 }
 
 std::optional<std::string> RunFormatter(std::string_view src, const format::PrintOptions& popts) {

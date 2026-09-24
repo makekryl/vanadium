@@ -1,10 +1,11 @@
 #pragma once
 
-#include <cstddef>
 #include <expected>
 #include <optional>
 
 #include <vanadium/lib/Error.h>
+
+#include "vanadium/format/AstPrinter.h"
 
 namespace vanadium {
 
@@ -14,15 +15,8 @@ class Project;
 
 namespace ls::tools {
 
-struct PartialPrintOptions {
-  std::optional<std::size_t> tab_width;
-  std::optional<std::size_t> print_width;
-
-  std::optional<std::size_t> max_empty_newlines;
-};
-
 struct PartialToolsSection {
-  std::optional<PartialPrintOptions> fmt;
+  std::optional<format::PrintOptions> fmt;
 };
 
 struct PartialManifest {

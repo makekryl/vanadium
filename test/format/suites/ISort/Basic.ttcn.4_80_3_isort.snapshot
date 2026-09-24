@@ -1,0 +1,7 @@
+module Basic 
+{
+import from A all;
+import from B all;
+import from C all;
+
+}

@@ -213,9 +213,12 @@ void SerialAstPrinter::AppendUnit(const Unit& cu, Wrap wrap) {
 }  // namespace
 
 std::string PrintAst(const ast::AST& ast, const ast::Node* n, lib::Arena& arena, PrintOptions options) {
-  auto unit = SerializeAst(ast, n, arena);
+  const SerializationOptions serialization_options{
+      .sort_imports = options.sort_imports,
+  };
+  auto unit = SerializeAst(ast, n, arena, serialization_options);
 
-  return SerialAstPrinter(ast.src, std::move(options)).Print(unit);
+  return SerialAstPrinter(ast.src, std::move(options)).Print(std::move(unit));
 }
 
 }  // namespace vanadium::format
