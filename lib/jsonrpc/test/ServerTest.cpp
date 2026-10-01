@@ -1,5 +1,8 @@
 #include <gtest/gtest.h>
 
+#include <utility>
+
+#include "vanadium/lib/jsonrpc/Common.h"
 #include "vanadium/lib/jsonrpc/Server.h"
 
 using namespace vanadium::lib::jsonrpc;
@@ -18,8 +21,8 @@ struct Result {
 }  // namespace stubs
 
 TEST(ServerTest, RequestRegistration) {
-  const auto handler = [](stubs::Context&, const stubs::Params&) -> stubs::Result {
-    return {};
+  const auto handler = [](stubs::Context&, const stubs::Params&) -> ExpectedResult<stubs::Result> {
+    return stubs::Result{};
   };
 
   Server<stubs::Context> srv;
@@ -46,9 +49,9 @@ TEST(ServerTest, NotificationRegistration) {
 }
 
 TEST(ServerTest, RequestInvocation) {
-  const auto handler = [](stubs::Context& ctx, const stubs::Params& params) -> stubs::Result {
+  const auto handler = [](stubs::Context& ctx, const stubs::Params& params) -> ExpectedResult<stubs::Result> {
     ctx.x = 42;
-    return {.p = params, .x = 3, .y = 2, .z = 1};
+    return stubs::Result{.p = params, .x = 3, .y = 2, .z = 1};
   };
 
   stubs::Context ctx{.x = 0};
@@ -97,4 +100,50 @@ TEST(ServerTest, NotificationInvocation) {
   EXPECT_EQ(ctx.x, 6);
 }
 
-// TODO: add tests for error cases
+TEST(ServerTest, RequestParsingError) {
+  const auto handler = [](stubs::Context&, const stubs::Params&) -> ExpectedResult<stubs::Result> {
+    return stubs::Result{};
+  };
+
+  stubs::Context ctx{};
+  std::string buf;
+
+  Server<stubs::Context> srv;
+  srv.Bind<+handler>("example");
+  ASSERT_TRUE(srv.IsBound("example"));
+
+  const auto res = srv.Call(ctx, buf, "this won't be parsed");
+  EXPECT_EQ(
+      res,
+      R"({"jsonrpc":"2.0","error":{"code":-32700,"message":"Parse error","data":"1:2: syntax_error\n   this won't be parsed\n    ^"},"id":-1})");
+  // ^note: the expectation is dependent on the glaze behaviour
+}
+
+TEST(ServerTest, RequestInvocationError) {
+  const auto handler = [](stubs::Context&, const stubs::Params&) -> ExpectedResult<stubs::Result> {
+    return std::unexpected{Error{
+        .code = ErrorCode::kInternal,  // reminder: it's hardcoded in the expectation to not to bother with format
+        .data = std::nullopt,
+        .message = "Error message",
+    }};
+  };
+
+  stubs::Context ctx{};
+  std::string buf;
+
+  Server<stubs::Context> srv;
+  srv.Bind<+handler>("example");
+  ASSERT_TRUE(srv.IsBound("example"));
+
+  const auto res = srv.Call(ctx, buf, R"({
+    "jsonrpc": "2.0",
+    "method": "example",
+    "params": {
+      "a": 1,
+      "b": 2,
+      "c": 3
+    },
+    "id": 1
+  })");
+  EXPECT_EQ(res, R"({"jsonrpc":"2.0","error":{"code":-32603,"message":"Error message"},"id":1})");
+}

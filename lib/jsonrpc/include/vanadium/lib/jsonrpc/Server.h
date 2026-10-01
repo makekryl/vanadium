@@ -22,10 +22,15 @@ class Server {
   template <auto Fn>
   struct RequestHandlerTraits;
 
-  template <typename TParams, typename TResult, TResult (*Fn)(TContext&, const TParams&)>
+  template <typename TParams, typename TResult, ExpectedResult<TResult> (*Fn)(TContext&, const TParams&)>
   struct RequestHandlerTraits<Fn> {
     using Params = TParams;
     using Result = TResult;
+  };
+  template <typename TParams, void (*Fn)(TContext&, const TParams&)>
+  struct RequestHandlerTraits<Fn> {
+    using Params = TParams;
+    using Result = void;
   };
 
   template <auto HandlerFn>
@@ -117,7 +122,7 @@ class Server {
       invoke_handler();
       return std::monostate{};
     } else {
-      const std::expected<Result, Error> result = invoke_handler();
+      const std::expected<Result, Error>& result = invoke_handler();
       if (!result.has_value()) {
         return GenericResponse{.id = std::move(req_id), .error = std::move(result.error())};
       }

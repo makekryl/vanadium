@@ -7,7 +7,7 @@ namespace vanadium::lserver {  // todo: change namespace
 namespace rpc {
 
 template <typename T>
-using ExpectedResult = std::expected<T, lib::jsonrpc::Error>;
+using ExpectedResult = lib::jsonrpc::ExpectedResult<T>;
 
 template <glz::string_literal Name, typename Params, typename Result>
 struct Method {

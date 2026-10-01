@@ -87,6 +87,9 @@ struct Error final {
   // NOLINTEND(readability-identifier-naming)
 };
 
+template <typename T>
+using ExpectedResult = std::expected<T, Error>;
+
 //
 
 template <class Params>
