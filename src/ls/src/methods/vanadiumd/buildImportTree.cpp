@@ -1,4 +1,6 @@
 #include <cstddef>
+#include <format>
+#include <iterator>
 #include <optional>
 #include <string_view>
 #include <unordered_set>
@@ -42,6 +44,9 @@ bool VisitAllImports(core::Program* program, const core::ModuleDescriptor& modul
 std::string BuildImportTree(const lsp::TextDocumentIdentifierContainer&, const core::SourceFile& file, LsSessionRef) {
   std::string buf;
 
+  buf += file.module->name;
+  buf += "\n";
+
   std::size_t depth{1};
   const auto write_leftpad = [&] {
     for (std::size_t i = 0; i < depth; ++i) {
@@ -65,7 +70,7 @@ std::string BuildImportTree(const lsp::TextDocumentIdentifierContainer&, const c
 
       auto [_, inserted] = seen.insert(import);
       if (!inserted) {
-        return;
+        continue;
       }
 
       ++depth;
@@ -74,7 +79,8 @@ std::string BuildImportTree(const lsp::TextDocumentIdentifierContainer&, const c
         self(*imported_module);
       } else {
         write_leftpad();
-        buf += "<NOT FOUND>\n";
+        buf += import;
+        buf += " [NOT FOUND]\n";
       }
       --depth;
     }
@@ -89,6 +95,8 @@ std::string BuildImportTree(const lsp::TextDocumentIdentifierContainer&, const c
                     buf += "\n";
                     return true;
                   });
+
+  std::format_to(std::back_inserter(buf), "({} modules)", seen.size());
 
   return buf;
 }
