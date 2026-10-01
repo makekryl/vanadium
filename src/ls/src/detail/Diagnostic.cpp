@@ -12,6 +12,7 @@
 #include <LSProtocol.h>
 
 #include <vanadium/core/Program.h>
+#include <vanadium/lib/ArenaString.h>
 #include <vanadium/lint/Context.h>
 #include <vanadium/lint/Linter.h>
 
@@ -36,7 +37,7 @@ void CollectModuleDiagnostics(const core::SourceFile& file, std::vector<lsp::Dia
         .range = conv::ToLSPRange(import.declaration->parent->nrange, file.ast),
         .severity = lsp::DiagnosticSeverity::kError,
         .source = "vanadium",
-        .message = *d.arena.Alloc<std::string>(std::format("module '{}' not found", import_name)),
+        .message = lib::FormatStringToArena(d.arena, "module '{}' not found", import_name),
     });
   }
 
@@ -46,7 +47,7 @@ void CollectModuleDiagnostics(const core::SourceFile& file, std::vector<lsp::Dia
         .range = conv::ToLSPRange(ident->nrange, file.ast),
         .severity = lsp::DiagnosticSeverity::kError,
         .source = "vanadium",
-        .message = *d.arena.Alloc<std::string>(std::format("use of unknown symbol '{}'", ident->On(file.ast.src))),
+        .message = lib::FormatStringToArena(d.arena, "use of unknown symbol '{}'", ident->On(file.ast.src)),
         .data = {{
             {codeAction::kPayloadKeyUnresolved, 1},  // TODO: replace with bitmask when there will be more options
         }},

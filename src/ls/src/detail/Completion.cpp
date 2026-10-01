@@ -22,6 +22,7 @@
 #include <vanadium/core/TypeChecker.h>
 #include <vanadium/core/utils/SemanticUtils.h>
 #include <vanadium/lib/Arena.h>
+#include <vanadium/lib/ArenaString.h>
 #include <vanadium/lib/Metaprogramming.h>
 #include <vanadium/tooling/Solution.h>
 
@@ -228,7 +229,7 @@ lsp::CompletionList CollectCompletions(const lsp::CompletionParams& params, cons
       //     .textEdit =
       //         lsp::TextEdit{
       //             .range = conv::ToLSPRange(n->nrange, file.ast),
-      //             .newText = *d.arena.Alloc<std::string>(std::format("lengthof({})", file.Text(n))),
+      //             .newText = lib::FormatStringToArena(d.arena, "lengthof({})", file.Text(n)),
       //         },
       // });
     } else if (sym->Flags() & core::semantic::SymbolFlags::kImportedModule) {
@@ -264,7 +265,7 @@ lsp::CompletionList CollectCompletions(const lsp::CompletionParams& params, cons
             .label = name,
             .kind = lsp::CompletionItemKind::kProperty,
             .sortText = "0",
-            .insertText = *d.arena.Alloc<std::string>(std::format("{} := ", name)),
+            .insertText = lib::FormatStringToArena(d.arena, "{} := ", name),
         });
       }
     } else if (sym->Flags() & core::semantic::SymbolFlags::kList) {
@@ -309,7 +310,7 @@ lsp::CompletionList CollectCompletions(const lsp::CompletionParams& params, cons
               .label = name,
               .kind = lsp::CompletionItemKind::kProperty,
               .sortText = "1",
-              .insertText = *d.arena.Alloc<std::string>(std::format("{} := ", name)),
+              .insertText = lib::FormatStringToArena(d.arena, "{} := ", name),
           });
         }
       }
@@ -429,7 +430,7 @@ std::optional<lsp::CompletionItem> ResolveCompletionItem(const lsp::CompletionIt
                             .start = conv::ToLSPPosition(loc),
                             .end = conv::ToLSPPosition(loc),
                         },
-                    .newText = *d.arena.Alloc<std::string>(std::format("\nimport from {} all;\n", def.module)),
+                    .newText = lib::FormatStringToArena(d.arena, "\nimport from {} all;\n", def.module),
                 },
             }};
           },

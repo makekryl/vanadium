@@ -13,6 +13,7 @@
 #include <vanadium/core/Program.h>
 #include <vanadium/core/Semantic.h>
 #include <vanadium/core/TypeChecker.h>
+#include <vanadium/lib/ArenaString.h>
 
 #include "vanadium/ls/LanguageServerConv.h"
 #include "vanadium/ls/LanguageServerLogger.h"
@@ -43,7 +44,7 @@ lsp::CodeActionResult ProvideCodeActions(const lsp::CodeActionParams& params, co
           return true;
         }
 
-        const auto& replacement = *d.arena.Alloc<std::string>(std::format("\nimport from {} all;", module.name));
+        const auto& replacement = lib::FormatStringToArena(d.arena, "\nimport from {} all;", module.name);
 
         const ast::pos_t last_import_pos = detail::FindPositionAfterLastImport(file.ast);
         if (last_import_pos == ast::pos_t(-1)) {
@@ -52,7 +53,7 @@ lsp::CodeActionResult ProvideCodeActions(const lsp::CodeActionParams& params, co
         const auto loc = file.ast.lines.Translate(last_import_pos);
 
         actions.emplace_back(lsp::CodeAction{
-            .title = *d.arena.Alloc<std::string>(std::format("import module '{}' for symbol '{}'", module.name, text)),
+            .title = lib::FormatStringToArena(d.arena, "import module '{}' for symbol '{}'", module.name, text),
             .kind = lsp::CodeActionKind::kQuickfix,
             .isPreferred = true,
             .edit =

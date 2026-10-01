@@ -23,6 +23,7 @@
 #include <vanadium/core/TypeChecker.h>
 #include <vanadium/core/utils/ScopedNodeVisitor.h>
 #include <vanadium/core/utils/SemanticUtils.h>
+#include <vanadium/lib/ArenaString.h>
 #include <vanadium/tooling/Solution.h>
 
 #include "vanadium/ls/LanguageServerConv.h"
@@ -127,7 +128,7 @@ void ComputeInlayHint(const core::SourceFile& file, const core::semantic::Scope*
   const auto add_parameter_inlay_hint = [&](const ast::pos_t pos, std::string_view name) {
     out.emplace_back(lsp::InlayHint{
         .position = conv::ToLSPPosition(file.ast.lines.Translate(pos)),
-        .label = *arena.Alloc<std::string>(std::format("{} := ", name)),
+        .label = lib::FormatStringToArena(arena, "{} := ", name),
         .kind = lsp::InlayHintKind::kParameter,
         .data = InlayHintPayload::AsJson({
             .path = file.path,
