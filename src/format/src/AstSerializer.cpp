@@ -1097,11 +1097,17 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
       const auto* m = n->As<ast::nodes::ParenExpr>();
       return NewSequence(Sequence::Attribute::kGrouped, [&](auto& seq) {
         A(seq, "(");
-        A(seq, NewSequence(Sequence::Attribute::kIndented, [&](auto& eseq) {
-            A(eseq, PrintDirective::kSoftLine);
-            Join(eseq, m->list, {",", PrintDirective::kSpaceOrLine});
-          }));
-        A(seq, PrintDirective::kSoftLine);
+        if (!m->list.empty()) {
+          if (m->list.size() == 1) {
+            A(seq, S(m->list.front()));
+          } else {
+            A(seq, NewSequence(Sequence::Attribute::kIndented, [&](auto& eseq) {
+                A(eseq, PrintDirective::kSoftLine);
+                Join(eseq, m->list, {",", PrintDirective::kSpaceOrLine});
+              }));
+            A(seq, PrintDirective::kSoftLine);
+          }
+        }
         A(seq, ")");
       });
       break;
