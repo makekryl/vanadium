@@ -1,0 +1,35 @@
+module BinaryExpr {
+
+function f() {
+  return aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa + bbbbbbbbbbbbbbbbbbbbbbbbbbb;
+}
+
+function f() {
+  return aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa //
+    + bbbbbbbbbbbbbbbbbbbbbbbbbbb;
+}
+
+function f() {
+  return aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa + bbbbbbbbbbbbbbbbbbbbbbbbbbb + eeeeeeeeeeeeeeeeeeeeee;
+}
+
+function f() {
+  return aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa + bbbbbbbbbbbbbbbbbbbbbbbbbbb + eeeeeeeeeeeeeeeeeeeeee + dddddddddddddddddddddddddd;
+}
+
+function f() {
+  return aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa //
+    + bbbbbbbbbbbbbbbbbbbbbbbbbbb + eeeeeeeeeeeeeeeeeeeeee + dddddddddddddddddddddddddd;
+}
+
+function f() {
+  return aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa + bbbbbbbbbbbbbbbbbbbbbbbbbbb //
+    + eeeeeeeeeeeeeeeeeeeeee + dddddddddddddddddddddddddd;
+}
+
+function f() {
+  return aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa + bbbbbbbbbbbbbbbbbbbbbbbbbbb + //
+    eeeeeeeeeeeeeeeeeeeeee + dddddddddddddddddddddddddd;
+}
+
+}

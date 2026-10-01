@@ -1132,13 +1132,26 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::BinaryExpr: {
       const auto* m = n->As<ast::nodes::BinaryExpr>();
-      return NewSequence([&](auto& seq) {
-        const bool spacing = m->op.kind != ast::TokenKind::COLON && m->op.kind != ast::TokenKind::RANGE;
+      const auto attrs =
+          m->parent->nkind == ast::NodeKind::BinaryExpr ? Sequence::Attribute::kNone : Sequence::Attribute::kIndented;
+      return NewSequence(Sequence::Attribute::kGrouped | attrs, [&](auto& seq) {
+        const bool spacing = [&] -> bool {
+          switch (m->op.kind) {
+            case ast::TokenKind::COLON:
+            case ast::TokenKind::RANGE:
+              return false;
+            default:
+              return true;
+          }
+        }();
         A(seq, S(m->x));
         if (spacing) {
-          A(seq, PrintDirective::kSpace);
+          A(seq, PrintDirective::kSpaceOrLine);
         }
         A(seq, S(m->op));
+        if (const auto* lu = std::get_if<Comment>(&seq.units.back()); lu && lu->content.starts_with("//")) {
+          A(seq, PrintDirective::kHardLine);
+        }
         if (spacing) {
           A(seq, PrintDirective::kSpace);
         }
