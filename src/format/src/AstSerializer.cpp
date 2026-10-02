@@ -420,7 +420,6 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
         A(seq, S(m->kind));
         A(seq, PrintDirective::kSpace);
         A(seq, S(m->name));
-        A(seq, PrintDirective::kSpace);
         A(seq, PrintDirective::kHardLine);
         A(seq, "{");
         A(seq, NewSequence(Sequence::Attribute::kIndented, [&](auto& fseq) {
