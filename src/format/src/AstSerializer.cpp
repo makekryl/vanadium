@@ -279,7 +279,7 @@ class AstSerializer {
       seq->units.emplace_back((*imports_prep_)[i].second);
     }
 
-    if (module_defs_count > imports_prep_->size()) {
+    if (module_defs_count_ > imports_prep_->size()) {
       seq->units.emplace_back(PrintDirective::kHardLine);
       seq->units.emplace_back(PrintDirective::kHardLine);
     }
@@ -290,7 +290,7 @@ class AstSerializer {
   const ast::AST& ast_;
   std::optional<TokenWindow> tokens_;
   ast::pos_t last_comment_line_{0};
-  std::size_t module_defs_count{0};
+  std::size_t module_defs_count_{0};
   std::optional<std::vector<std::pair<const ast::nodes::ImportDecl*, Sequence*>>> imports_prep_;
   lib::Arena& arena_;
 };
@@ -362,7 +362,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
         auto* const impseq = NewSequence([](auto&) {});
         A(seq, impseq);
         if (!m->defs.empty()) {
-          module_defs_count = m->defs.size();
+          module_defs_count_ = m->defs.size();
           if (m->defs.front()->def->nkind != ast::NodeKind::ImportDecl) {
             A(seq, PrintDirective::kHardLine);
           }
