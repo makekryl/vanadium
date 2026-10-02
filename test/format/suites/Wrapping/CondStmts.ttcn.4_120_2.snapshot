@@ -1,5 +1,9 @@
 {
-    if (cond(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, cccccccccccccccccccccccccccccccccccccc)) {
+    if (cond(
+        aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,
+        bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb,
+        cccccccccccccccccccccccccccccccccccccc
+    )) {
         inner;
     }
     

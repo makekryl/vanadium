@@ -3,7 +3,8 @@ module BinaryExpr
 
 function f()
 {
-    return aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa + bbbbbbbbbbbbbbbbbbbbbbbbbbb;
+    return aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+        + bbbbbbbbbbbbbbbbbbbbbbbbbbb;
 }
 
 function f()
@@ -14,13 +15,15 @@ function f()
 
 function f()
 {
-    return aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa + bbbbbbbbbbbbbbbbbbbbbbbbbbb
+    return aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+        + bbbbbbbbbbbbbbbbbbbbbbbbbbb
         + eeeeeeeeeeeeeeeeeeeeee;
 }
 
 function f()
 {
-    return aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa + bbbbbbbbbbbbbbbbbbbbbbbbbbb
+    return aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+        + bbbbbbbbbbbbbbbbbbbbbbbbbbb
         + eeeeeeeeeeeeeeeeeeeeee
         + dddddddddddddddddddddddddd;
 }
@@ -43,7 +46,8 @@ function f()
 
 function f()
 {
-    return aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa + bbbbbbbbbbbbbbbbbbbbbbbbbbb
+    return aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+        + bbbbbbbbbbbbbbbbbbbbbbbbbbb
         +  //
          eeeeeeeeeeeeeeeeeeeeee
         + dddddddddddddddddddddddddd;

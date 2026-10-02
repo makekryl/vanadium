@@ -1,0 +1,8 @@
+module TemplateDecl 
+{
+
+template TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn := {
+  aaaaaaa := bbbbbbb
+};
+
+}

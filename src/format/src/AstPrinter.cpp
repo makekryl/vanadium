@@ -119,7 +119,7 @@ void SerialAstPrinter::AppendUnit(const Unit& cu, Wrap wrap) {
         if (seq->attributes & Sequence::Attribute::kGrouped) {
           children_wrap = Wrap::kAuto;
           const auto width = Width(*seq);
-          if (width > options_.print_width) {
+          if ((line_length_ + width) > options_.print_width) {
             children_wrap = Wrap::kEnabled;
           }
         }

@@ -1,0 +1,7 @@
+function f()
+{
+    var TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn := {
+        aaaaaaa := bbbbbbb,
+        ccccccccc := dddddddddddd
+    };
+}

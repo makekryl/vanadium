@@ -58,7 +58,14 @@ testcase TC(charstring pl_toSend) runs on MYCOMP
 //=========================================================================
 
 control {
-    var charstring vl_inputs[6] := { "HELLO WORLD!", "hello world", "Hello World!", "hello WORD!", "hELLO wORLD!", "helloworld!" };
+    var charstring vl_inputs[6] := {
+        "HELLO WORLD!",
+        "hello world",
+        "Hello World!",
+        "hello WORD!",
+        "hELLO wORLD!",
+        "helloworld!"
+    };
     
     var integer i, vl_noStrings := sizeof(vl_inputs);
     for (i := 0; i < vl_noStrings; i := i + 1) {

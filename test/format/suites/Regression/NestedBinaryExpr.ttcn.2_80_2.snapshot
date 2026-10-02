@@ -3,25 +3,30 @@ module NestedBinaryExpr
 
 function f()
 {
-  return ((aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa + bbbbbbbbbbbbbbbbbbbbbbbbbbb)
+  return ((aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+        + bbbbbbbbbbbbbbbbbbbbbbbbbbb)
       + (eeeeeeeeeeeeeeeeeeeeee * dddddddddddddddddddddddddd))
     / ccccccccccccccccccccccccccccccccccccc;
 }
 
 function f()
 {
-  return ((aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa + bbbbbbbbbbbbbbbbbbbbbbbbbbb)
+  return ((aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+        + bbbbbbbbbbbbbbbbbbbbbbbbbbb)
       + (eeeeeeeeeeeeeeeeeeeeee
-        mod (ssssssssssssssssssssssssssssssssssssss * jjjjjjjjjjjjjjjjjjjjjjjjjjjjj)
+        mod (ssssssssssssssssssssssssssssssssssssss
+          * jjjjjjjjjjjjjjjjjjjjjjjjjjjjj)
         * dddddddddddddddddddddddddd))
     / ccccccccccccccccccccccccccccccccccccc;
 }
 
 function f()
 {
-  return ((aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa + bbbbbbbbbbbbbbbbbbbbbbbbbbb)  //
+  return ((aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+        + bbbbbbbbbbbbbbbbbbbbbbbbbbb)  //
       + (eeeeeeeeeeeeeeeeeeeeee
-        mod (ssssssssssssssssssssssssssssssssssssss * jjjjjjjjjjjjjjjjjjjjjjjjjjjjj)
+        mod (ssssssssssssssssssssssssssssssssssssss
+          * jjjjjjjjjjjjjjjjjjjjjjjjjjjjj)
         * dddddddddddddddddddddddddd))
     / ccccccccccccccccccccccccccccccccccccc;
 }
