@@ -1,0 +1,14 @@
+{
+  if (cond(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, cccccccccccccccccccccccccccccccccccccc)) {
+    inner;
+  }
+
+  if (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa + bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb + cccccccccccccccccccccccccccccccccccccc) {
+    inner;
+  }
+
+  if (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa //
+   + bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb + cccccccccccccccccccccccccccccccccccccc) {
+    inner;
+  }
+}
