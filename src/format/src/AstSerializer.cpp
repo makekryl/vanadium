@@ -27,6 +27,10 @@ namespace {
 
 constexpr std::string_view kSuppressDirective = "// vanadium-fmt ignore";
 
+bool IsLineComment(std::string_view content) {
+  return content.starts_with("//");
+}
+
 const ast::Range& RangeOf(const ast::Token& tok) {
   return tok.range;
 }
@@ -1131,9 +1135,17 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
     case ast::NodeKind::BinaryExpr: {
       const auto* m = n->As<ast::nodes::BinaryExpr>();
-      const auto attrs =
-          m->parent->nkind == ast::NodeKind::BinaryExpr ? Sequence::Attribute::kNone : Sequence::Attribute::kIndented;
-      return NewSequence(Sequence::Attribute::kGrouped | attrs, [&](auto& seq) {
+      const bool is_in_parens = m->parent->nkind == ast::NodeKind::ParenExpr;
+      //
+      Sequence::Attribute attrs{};
+      if (!is_in_parens) {
+        attrs |= Sequence::Attribute::kGrouped;
+        if (m->parent->nkind != ast::NodeKind::BinaryExpr) {
+          attrs |= Sequence::Attribute::kIndented;
+        }
+      }
+      //
+      auto* rseq = NewSequence(attrs, [&](auto& seq) {
         const bool spacing = [&] -> bool {
           switch (m->op.kind) {
             case ast::TokenKind::COLON:
@@ -1144,19 +1156,29 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
           }
         }();
         A(seq, S(m->x));
-        if (spacing) {
-          A(seq, PrintDirective::kSpaceOrLine);
+        if (tokens_->Current().kind == ast::TokenKind::COMMENT && IsLineComment(tokens_->Current().On(ast_.src))) {
+          A(seq, PrintDirective::kHardLine);
+        } else if (spacing) {
+          A(seq, m->x->nkind == ast::NodeKind::ParenExpr ? PrintDirective::kSpace : PrintDirective::kSpaceOrLine);
         }
         A(seq, S(m->op));
-        if (const auto* lu = std::get_if<Comment>(&seq.units.back()); lu && lu->content.starts_with("//")) {
+        if (const auto* lu = std::get_if<Comment>(&seq.units.back()); lu && IsLineComment(lu->content)) {
           A(seq, PrintDirective::kHardLine);
-        }
-        if (spacing) {
+        } else if (spacing) {
           A(seq, PrintDirective::kSpace);
         }
         A(seq, S(m->y));
       });
-      break;
+      if (is_in_parens) {
+        return NewSequence(Sequence::Attribute::kGrouped, [&](auto& oseq) {
+          A(oseq, NewSequence(Sequence::Attribute::kIndented, [&](auto& tseq) {
+              A(tseq, PrintDirective::kSoftLine);
+              A(tseq, rseq);
+            }));
+          A(oseq, PrintDirective::kSoftLine);
+        });
+      }
+      return rseq;
     }
     case ast::NodeKind::UnaryExpr: {
       const auto* m = n->As<ast::nodes::UnaryExpr>();
