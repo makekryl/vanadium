@@ -512,7 +512,7 @@ lsp::HoverResult ProvideHover(const lsp::HoverParams& params, const core::Source
       .contents =
           lsp::MarkupContent{
               .kind = lsp::MarkupKind::kMarkdown,
-              .value = *d.arena.Alloc<std::string>(std::move(builder.Build())),
+              .value = d.arena.Take(builder.Build()),
           },
       .range = conv::ToLSPRange(cursor_node->nrange, file.ast),
   };

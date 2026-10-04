@@ -26,7 +26,7 @@ class Arena {
     auto* const p = AllocBuffer(sizeof(T), alignof(T));
     auto* const obj = new (p) T(std::forward<Args>(args)...);
     if constexpr (!std::is_trivially_destructible_v<T>) {
-      AddToCleanupList(obj, arena_destruct_object<T>);
+      Own(obj);
     }
     return obj;
   }
@@ -35,6 +35,18 @@ class Arena {
     auto* const buf = reinterpret_cast<char*>(AllocBuffer(length + 1, alignof(char)));
     buf[length] = 0;
     return {buf, length};
+  }
+
+  template <typename T>
+    requires(!std::is_trivially_destructible_v<T>)
+  void Own(T* obj) {
+    AddToCleanupList(obj, arena_destruct_object<T>);
+  }
+
+  template <typename T>
+    requires(!std::is_reference_v<T>)
+  T& Take(T&& v) {
+    return *Alloc<T>(std::forward<T>(v));
   }
 
   void Reset();

@@ -54,9 +54,8 @@ lsp::DocumentFormattingResult Format(const lsp::DocumentFormattingParams& params
     opts.tab_width = params.options.tabSize;
   }
 
-  const auto* formatted =
-      d.arena.Alloc<std::string>(format::PrintAst(file.ast, file.ast.root, d.arena, std::move(opts)));
-  return std::vector<lsp::TextEdit>{MinimalEdit(file, *formatted)};
+  const auto& formatted = d.arena.Take(format::PrintAst(file.ast, file.ast.root, d.arena, std::move(opts)));
+  return std::vector<lsp::TextEdit>{MinimalEdit(file, formatted)};
 }
 }  // namespace
 

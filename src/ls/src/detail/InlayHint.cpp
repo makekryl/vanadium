@@ -333,7 +333,7 @@ std::optional<lsp::InlayHint> ResolveInlayHint(const lsp::InlayHint& original_hi
         .value = std::get<std::string_view>(rendition.label),
         .location =
             lsp::Location{
-                .uri = *d.arena.Alloc<std::string>(PathToFileUri(d.solution, tgt_file->path)),
+                .uri = d.arena.Take(PathToFileUri(d.solution, tgt_file->path)),
                 .range = conv::ToLSPRange(range, tgt_file->ast),
             },
     }}};

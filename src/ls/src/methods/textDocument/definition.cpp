@@ -33,7 +33,7 @@ lsp::DefinitionResult ProvideDefinition(const lsp::DefinitionParams& params, con
       return nullptr;
     }
     return lsp::Location{
-        .uri = *d.arena.Alloc<std::string>(PathToFileUri(d.solution, module->sf->path)),
+        .uri = d.arena.Take(PathToFileUri(d.solution, module->sf->path)),
         .range = {},
     };
   }
@@ -45,12 +45,12 @@ lsp::DefinitionResult ProvideDefinition(const lsp::DefinitionParams& params, con
   if (const auto& provenance = provider_file->ast.GetProvenance(decl); provenance) {
     const auto& terminal_ep = provenance->front();
     return lsp::Location{
-        .uri = *d.arena.Alloc<std::string>(PathToFileUri(d.solution, terminal_ep.SourceFile()->path)),
+        .uri = d.arena.Take(PathToFileUri(d.solution, terminal_ep.SourceFile()->path)),
         .range = conv::ToLSPRange(terminal_ep.range, terminal_ep.SourceFile()->ast),
     };
   }
 
-  const auto& uri = *d.arena.Alloc<std::string>(PathToFileUri(d.solution, provider_file->path));
+  const auto& uri = d.arena.Take(PathToFileUri(d.solution, provider_file->path));
   return lsp::Location{
       .uri = uri,
       .range = conv::ToLSPRange(detail::GetReadableDefinition(decl)->nrange, provider_file->ast),

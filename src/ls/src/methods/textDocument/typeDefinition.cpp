@@ -42,7 +42,7 @@ lsp::TypeDefinitionResult ProvideTypeDefinition(const lsp::TypeDefinitionParams&
   const auto* type_file = ast::utils::SourceFileOf(type_decl);
 
   return lsp::Location{
-      .uri = *d.arena.Alloc<std::string>(PathToFileUri(d.solution, type_file->path)),
+      .uri = d.arena.Take(PathToFileUri(d.solution, type_file->path)),
       .range = conv::ToLSPRange(type_decl->nrange, type_file->ast),
   };
 }
