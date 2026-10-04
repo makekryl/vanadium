@@ -25,7 +25,7 @@ namespace vanadium::format {
 
 namespace {
 
-constexpr std::string_view kSuppressDirective = "// vanadium-fmt ignore";
+constexpr std::string_view kSuppressDirective = "// fmt ignore";
 
 bool IsLineComment(std::string_view content) {
   return content.starts_with("//");

@@ -3,6 +3,7 @@
 #include <fstream>
 #include <print>
 #include <sstream>
+#include <string_view>
 
 #include <argparse/argparse.hpp>
 
@@ -38,6 +39,8 @@ void WriteFile(const std::string& path, std::string_view content) {
     f << content;
   }
 }
+
+constexpr std::string_view kFileSkipDirective = "// fmt skip\n";
 }  // namespace
 
 namespace {
@@ -69,6 +72,10 @@ int main(int argc, char* argv[]) {
   if (!src) {
     std::println(stderr, "Failed to read '{}'", filepath);
     return 3;
+  }
+
+  if (src->starts_with(kFileSkipDirective)) {
+    return 0;
   }
 
   lib::Arena arena;
