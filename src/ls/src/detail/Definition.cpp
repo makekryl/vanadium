@@ -120,6 +120,7 @@ const ast::Node* GetReadableDefinition(const ast::Node* n) {
     READABLE_DEFINITION_CASE(FuncDecl, name)
     READABLE_DEFINITION_CASE(TemplateDecl, name)
     READABLE_DEFINITION_CASE(ComponentTypeDecl, name)
+    READABLE_DEFINITION_CASE(PortTypeDecl, name)
     READABLE_DEFINITION_CASE(StructTypeDecl, name)
     READABLE_DEFINITION_CASE(ClassTypeDecl, name)
     READABLE_DEFINITION_CASE(EnumTypeDecl, name)
