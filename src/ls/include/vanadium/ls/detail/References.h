@@ -6,9 +6,16 @@
 #include <vanadium/core/Program.h>
 #include <vanadium/lib/FunctionRef.h>
 
+#include "vanadium/ls/detail/Definition.h"
+
 namespace vanadium::ls::detail {
 
-void VisitLocalReferences(const core::SourceFile*, lsp::Position, bool include_decl,
-                          lib::Consumer<const ast::nodes::Ident*>);
+struct ReferencesVisitParams {
+  bool global_search;
+  bool include_declaration;
+};
 
-}
+void VisitReferences(const core::SourceFile*, SymbolSearchResult, ReferencesVisitParams,
+                     lib::Consumer<const core::SourceFile*, const ast::Node*>);
+
+}  // namespace vanadium::ls::detail

@@ -194,12 +194,24 @@ class Program {
     return true;
   }
 
+  bool VisitOwnAndDependentModules(std::predicate<const ModuleDescriptor&> auto visit) const {
+    if (!VisitOwnModules(visit)) {
+      return false;
+    }
+    for (const auto* ref : direct_dependents_) {
+      if (!ref->VisitOwnAndDependentModules(visit)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   bool VisitAccessibleModules(std::predicate<const ModuleDescriptor&> auto visit) const {
     if (!VisitOwnModules(visit)) {
       return false;
     }
-    for (const auto& ref : References()) {
-      if (!ref->VisitOwnModules(visit)) {
+    for (const auto* ref : References()) {
+      if (!ref->VisitAccessibleModules(visit)) {
         return false;
       }
     }
