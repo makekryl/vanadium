@@ -9,7 +9,6 @@ class Symbol;
 }  // namespace semantic
 
 namespace builtins {
-extern const semantic::Symbol kAnytype;
 extern const semantic::Symbol kBoolean;
 extern const semantic::Symbol kInteger;
 extern const semantic::Symbol kFloat;

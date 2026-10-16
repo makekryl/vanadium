@@ -1,0 +1,32 @@
+./AnytypeExtension.ttcn:
+  13:29: property 'c' does not exist on type 'record RecA'
+                               .c  // EXPECT_ERROR
+                                ~                 
+  12:20: expected value of type 'integer', got '<error-type>'
+                     + ant.RecA    // EXPECT_ERROR
+                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  14:24: property 'RecR' does not exist on type 'module AnytypeExtension {
+
+type record RecA { integer a }
+type record RecB { integer b }
+type record RecC { integer c }
+
+function f() {
+  var anytype ant;
+  var integer x := ant.RecA.a
+                 + ant.RecB.b
+                 + ant.RecC.c
+                 + ant.RecA    // EXPECT_ERROR
+                           .c  // EXPECT_ERROR
+                 + ant.RecR    // EXPECT_ERROR
+                           .r  // EXPECT_ERROR
+                 ;
+}
+
+} with {
+  extension "anytype'
+                     + ant.RecR    // EXPECT_ERROR
+                           ~~~~                   
+  14:20: expected value of type 'integer', got '<error-type>'
+                     + ant.RecR    // EXPECT_ERROR
+                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~

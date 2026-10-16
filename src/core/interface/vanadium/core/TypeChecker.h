@@ -71,6 +71,7 @@ struct InstantiatedType {
 namespace symbols {
 extern const semantic::Symbol kTypeError;
 extern const semantic::Symbol kVoidType;
+extern const semantic::Symbol kUncheckedType;
 extern const semantic::Symbol kInferType;
 extern const semantic::Symbol kVarargsType;
 extern const semantic::Symbol kAltstepType;

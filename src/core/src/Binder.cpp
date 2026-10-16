@@ -422,8 +422,6 @@ bool Binder::Inspect(const ast::Node* n) {
       const auto* m = n->As<ast::nodes::Module>();
 
       Scoped<false>(m, [&] {
-        Visit(m->defs);
-
         // TODO: PoC, refactor into WithParser
         if (m->with) {
           for (const auto* ws : m->with->list) {
@@ -440,16 +438,62 @@ bool Binder::Inspect(const ast::Node* n) {
             }
             wq.remove_prefix(kExtAnytype.length());
             //
+            // CLEANING THIS UP IS THE PRIORITY #1
+            auto* pseudostdecl = [&] {
+              auto* pseudostdecl_node = sf_.arena.Alloc<ast::nodes::StructTypeDecl>();
+              pseudostdecl_node->nrange = {};
+              pseudostdecl_node->parent = [&] {
+                auto* pseudodef = sf_.arena.Alloc<ast::nodes::Definition>();
+                pseudodef->nrange = {};
+                pseudodef->parent = const_cast<ast::nodes::Module*>(m);
+                pseudodef->def = pseudostdecl_node;
+                return pseudodef;
+              }();
+              //
+              auto& ident = pseudostdecl_node->name.emplace();
+              ident.nrange = {.begin = ws->value->nrange.begin + 1,
+                              .end = static_cast<ast::pos_t>(ws->value->nrange.begin + 1 + kExtAnytype.length())};
+              ident.parent = pseudostdecl_node;
+              //
+              pseudostdecl_node->kind.range = {};
+              pseudostdecl_node->kind.kind = ast::TokenKind::UNION;
+              //
+              return pseudostdecl_node;
+            }();
             for (const auto& tp : lib::DelimitedStringView<','>{wq}.range()) {
               const auto offset = tp.data() - sf_.src.data();
-              auto* ident = sf_.arena.Alloc<ast::nodes::Ident>();
-              ident->parent = ws->value;
-              ident->nrange = {.begin = static_cast<ast::pos_t>(offset),
-                               .end = static_cast<ast::pos_t>(offset + tp.length())};
-              BindReference(ident, externals_.Primary());
+              const ast::Range nrange{.begin = static_cast<ast::pos_t>(offset),
+                                      .end = static_cast<ast::pos_t>(offset + tp.length())};
+
+              pseudostdecl->fields.emplace_back([&] -> ast::nodes::Field* {
+                auto* pseudofield = sf_.arena.Alloc<ast::nodes::Field>();
+                pseudofield->nrange = {};
+                pseudofield->parent = pseudostdecl;
+                //
+                pseudofield->type = [&] {
+                  auto* pseudotype = sf_.arena.Alloc<ast::nodes::RefSpec>();
+                  pseudotype->nrange = {};
+                  pseudotype->parent = pseudofield;
+                  pseudotype->x = [&] {
+                    auto* pseudoident = sf_.arena.Alloc<ast::nodes::Ident>();
+                    pseudoident->nrange = nrange;
+                    pseudoident->parent = pseudotype;
+                    return pseudoident;
+                  }();
+                  return pseudotype;
+                }();
+                auto& pseudoname = pseudofield->name.emplace();
+                pseudoname.nrange = nrange;
+                pseudoname.parent = pseudofield;
+                //
+                return pseudofield;
+              }());
             }
+            Inspect(pseudostdecl->parent);  // lol
           }
         }
+
+        Visit(m->defs);
 
         if (m->name) {
           const auto name = Lit(std::addressof(*m->name));

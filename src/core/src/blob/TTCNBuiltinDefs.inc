@@ -9,10 +9,10 @@ type enumerated ___asn1_NULL_t {
   NULL
 }
 
-const anytype mtc_, system_;
-external function map_(in anytype a, in anytype b);
-external function unmap_(in anytype a, in anytype b);
-external function connect(in anytype a, in anytype b);
+const __unchecked_t mtc_, system_;
+external function map_(in __unchecked_t a, in __unchecked_t b);
+external function unmap_(in __unchecked_t a, in __unchecked_t b);
+external function connect(in __unchecked_t a, in __unchecked_t b);
 
 type class Timer {
   // The __start__ timer operation is used to indicate that a timer shall start running.
@@ -38,21 +38,21 @@ type class @abstract object {
 
 type class PortSuperbase {
   // The __send__ operation is used to place a message on an outgoing message port.
-  external function send(in anytype msg);
+  external function send(in __unchecked_t msg);
 
   // The __receive__ operation is used to receive a message from an incoming message port queue.
-  external function receive(in template anytype msg);
+  external function receive(in template __unchecked_t msg);
 
   // The __trigger__ operation is used to await a specific message on an incoming port queue.
-  external function trigger(in anytype msg);
+  external function trigger(in __unchecked_t msg);
 }
 
 type class ComponentSuperbase {
   // The __create__ operation is used to create test components.
-  create(in anytype par) {}
+  create(in __unchecked_t par) {}
 
   // The __start__ operation is used to associate a test behaviour to a test component, which is then being executed by that test component.
-  external function start(in anytype exec);
+  external function start(in __unchecked_t exec);
 
   // The __stop__ test behaviour operation is used to stop the execution of a test component by itself or by another test component.
   const __operation stop;
@@ -91,7 +91,7 @@ the value of the local verdict at the time when the test component was killed.
   const boolean killed;
 
   // The __call__ operation is used start a test behaviour on a test component and wait until that behaviour has terminated.
-  external function call(in anytype behaviour);
+  external function call(in __unchecked_t behaviour);
 }
 
 type class BuiltinTestcaseType {
@@ -100,7 +100,7 @@ type class BuiltinTestcaseType {
 const BuiltinTestcaseType testcase_;
 
 type __altstep_t default;
-external function activate(in anytype altstep_invocation) return __altstep_t;
+external function activate(in __unchecked_t altstep_invocation) return __altstep_t;
 
 /*
 The valueof operation allows to return the value specified within a template.
@@ -405,7 +405,7 @@ in assignment notation.
 * <custom string>: tool specific output
 */
 external function any2unistr(
-	in template anytype invalue,
+	in template __unchecked_t invalue,
 	in universal charstring format := ""
 ) return universal charstring
 
@@ -437,7 +437,7 @@ The __ispresent__ function is allowed for templates of all data types and return
 * the value __true__ if the data object reference fulfils the (present) template restriction as described in clause 15.8;
 * the value __false__ otherwise.
 */
-external function ispresent(in template anytype inpar) return boolean
+external function ispresent(in template __unchecked_t inpar) return boolean
 
 /*
 The __ischosen__ function is allowed for templates of all data types that are a union-field-reference or a type alternative of an
@@ -458,7 +458,7 @@ inpar are set to omit. The function shall return __false__ otherwise.
 
 The __null__ value assigned to default and component references shall be considered as concrete values.
 */
-external function isvalue(in template anytype inpar) return boolean
+external function isvalue(in template __unchecked_t inpar) return boolean
 
 /*
 The __isbound__ function is allowed for templates of all data types. The function shall return __true__, if inpar is at least partially
@@ -468,7 +468,7 @@ otherwise. Inaccessible fields (e.g. non-selected alternatives of __union__ type
 or subfields of non-selected __union__ fields) shall be considered as uninitialized, i.e. __isbound__ shall return for them __false__.
 The __null__ value assigned to default and component references shall be considered as concrete values.
 */
-external function isbound(in template anytype inpar) return boolean
+external function isbound(in template __unchecked_t inpar) return boolean
 
 /*
 The __istemplatekind__ function allows to examine if a template contains a certain kind of the matching mechanisms.
@@ -504,7 +504,7 @@ In all other cases the function returns __false__.
 
 */
 external function istemplatekind (
-	in template anytype invalue,
+	in template __unchecked_t invalue,
 	in charstring kind
 ) return boolean
 
@@ -554,7 +554,7 @@ Examples:
 ```
 */
 external function substr(
-	in template (present) anytype inpar,
+	in template (present) __unchecked_t inpar,
 	in integer index,
 	in integer count
 ) return input_string_or_sequence_type
@@ -594,10 +594,10 @@ Examples:
 ```
 */
 external function replace(
-	in anytype inparinpar,
+	in __unchecked_t inparinpar,
 	in integer index,
 	in integer len,
-	in anytype inparrepl
+	in __unchecked_t inparrepl
 ) return any_string_or_sequence_type
 
 /*
@@ -616,7 +616,7 @@ In addition to the general error causes in clause 16.1.2, error causes are:
 _inpar_).
 */
 external function encvalue(
-	in template (value) anytype inpar,
+	in template (value) __unchecked_t inpar,
 	in universal charstring encoding_info := "",
 	in universal charstring dynamic_encoding := ""
 ) return bitstring
@@ -644,7 +644,7 @@ enough bits.
 */
 external function decvalue(
 	inout bitstring encoded_value,
-	out anytype decoded_value,
+	out __unchecked_t decoded_value,
 	in universal charstring decoding_info := "",
 	in universal charstring dynamic_encoding := ""
 ) return integer
@@ -689,7 +689,7 @@ The specific semantics of this function are explained by the following TTCN-3 de
 ```
 */
 external function encvalue_unichar(
-	in template (value) anytype inpar,
+	in template (value) __unchecked_t inpar,
 	in charstring string_serialization := "UTF-8",
 	in universal charstring encoding_info := "",
 	in universal charstring dynamic_encoding := ""
@@ -740,7 +740,7 @@ The semantics of the function can be explained by the following TTCN-3 function:
 ```ttcn3
 	function decvalue_unichar (
 	            inout universal charstring encoded_value,
-	            out anytype decoded_value,
+	            out __unchecked_t decoded_value,
 	            in charstring string_encoding := "UTF-8",
 	            in universal charstring decoding_info := "",
 	            in universal charstring dynamic_encoding := "") return integer {
@@ -755,7 +755,7 @@ The semantics of the function can be explained by the following TTCN-3 function:
 */
 external function decvalue_unichar(
 	inout universal charstring encoded_value,
-	out anytype decoded_value,
+	out __unchecked_t decoded_value,
 	in charstring string_serialization:= "UTF-8",
 	in universal charstring decoding_info := "",
 	in universal charstring dynamic_encoding := ""
@@ -779,7 +779,7 @@ In addition to the general error causes in clause 16.1.2 of the TTCN-3 core lang
 _inpar_).
 */
 external function encvalue_o(
-	in template (value) anytype inpar,
+	in template (value) __unchecked_t inpar,
 	in universal charstring encoding_info := "",
 	in universal charstring dynamic_encoding := "",
 	out integer bit_length
@@ -809,7 +809,7 @@ enough octets.
 */
 external function decvalue_o(
     inout octetstring encoded_value,
-    out anytype decoded_value,
+    out __unchecked_t decoded_value,
     in universal charstring decoding_info := "",
     in universal charstring dynamic_encoding := ""
 ) return integer
@@ -919,9 +919,9 @@ external function setverdict(
 
 external function getverdict() return verdicttype
 
-external function log2str(in anytype v) return charstring
+external function log2str(in __unchecked_t v) return charstring
 
-external function ttcn2string(in anytype v) return charstring
+external function ttcn2string(in __unchecked_t v) return charstring
 
 /*
 Permutation is an operation for matching that shall be used only on values of *record of* and array types.
@@ -936,9 +936,9 @@ function generate() return RoI {
 }
 ```
 */
-external function permutation(in anytype v) return __infer_arg_t
+external function permutation(in __unchecked_t v) return __infer_arg_t
 
-external function subset(in anytype v) return __infer_arg_t
+external function subset(in __unchecked_t v) return __infer_arg_t
 
 
 /*

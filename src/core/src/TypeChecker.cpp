@@ -29,6 +29,9 @@ const semantic::Symbol kVoidType{"<void>", nullptr, semantic::SymbolFlags::kBuil
 
 const semantic::Symbol kNotUsed{"<->", nullptr, semantic::SymbolFlags::Value(semantic::SymbolFlags::kBuiltinType)};
 
+const semantic::Symbol kUncheckedType{
+    "<suppress>", nullptr,
+    semantic::SymbolFlags::Value(semantic::SymbolFlags::kBuiltinType | semantic::SymbolFlags::kAnonymous)};
 const semantic::Symbol kInferType{
     "<infer>", nullptr,
     semantic::SymbolFlags::Value(semantic::SymbolFlags::kBuiltinType | semantic::SymbolFlags::kAnonymous)};
@@ -192,11 +195,6 @@ class SelectorExprResolver {
     }
 
     if (!x_sym || x_sym == &symbols::kTypeError) {
-      return nullptr;
-    }
-
-    if (x_sym == &builtins::kAnytype) {
-      // TODO: if we get anytype, resolve to any visible type
       return nullptr;
     }
 
@@ -565,7 +563,7 @@ InstantiatedType DeduceCompositeLiteralType(const SourceFile* file, const semant
       }
 
       const auto* decl = parent_type->Declaration();
-      if (!decl) [[unlikely]] {  // anytype, etc.
+      if (!decl) [[unlikely]] {  // ???
         return InstantiatedType::None();
       }
       if (decl->nkind != ast::NodeKind::StructTypeDecl && decl->nkind != ast::NodeKind::StructSpec) {
@@ -1309,7 +1307,7 @@ class BasicTypeChecker {
 };
 
 void BasicTypeChecker::MatchTypes(const ast::Range& range, InstantiatedType actual, const InstantiatedType& expected) {
-  if (!expected || expected.sym == &symbols::kTypeError || expected.sym == &builtins::kAnytype) {
+  if (!expected || expected.sym == &symbols::kTypeError || expected.sym == &symbols::kUncheckedType) {
     return;
   }
 
