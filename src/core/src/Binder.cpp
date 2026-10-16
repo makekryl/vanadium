@@ -1045,6 +1045,16 @@ bool Binder::Inspect(const ast::Node* n) {
       return false;
     }
 
+    case ast::NodeKind::PortMapAttribute: {
+      const auto* m = n->As<ast::nodes::PortMapAttribute>();
+      if (!m->params->list.empty()) {
+        Scoped(m, [&] {
+          Visit(m->params);
+        });
+      }
+      return false;
+    }
+
     case ast::NodeKind::Ident: {
       const auto* m = n->As<ast::nodes::Ident>();
 
