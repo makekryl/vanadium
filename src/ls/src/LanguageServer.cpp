@@ -20,6 +20,7 @@
 #include "vanadium/ls/LanguageServerContext.h"
 #include "vanadium/ls/LanguageServerLogger.h"
 #include "vanadium/ls/LanguageServerMethods.h"
+#include "vanadium/ls/StatusReporter.h"
 
 namespace vanadium::ls {
 
@@ -107,6 +108,8 @@ void Serve(lserver::Transport& transport, std::size_t concurrency, std::size_t j
     }
 
     ctx->TemporaryArena().Reset();
+
+    ReportStatus(*ctx);
 
     const auto end_ts = std::chrono::steady_clock::now();
     VLS_INFO("   <--- ({} ms)", std::chrono::duration_cast<std::chrono::milliseconds>(end_ts - begin_ts).count());

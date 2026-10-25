@@ -5,6 +5,7 @@ import { LsClient } from './client';
 import { LazyOutputChannel, logger } from './logger';
 import { config } from './config';
 import { dumpTrace, showImportTree } from './sidechannel';
+import { createStatusItem } from './status';
 
 export let lsClient: LsClient | undefined;
 
@@ -74,19 +75,11 @@ async function initializeLanguageServer(context: vscode.ExtensionContext) {
   context.subscriptions.push(logger);
 
   lsClient = new LsClient(outputChannel, traceOutputChannel);
+  context.subscriptions.push(await lsClient.start(context));
 
   //
 
-  const statusItem = (() => {
-    const item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right);
-    item.text = `$(refresh) vanadiumd ${context.extension.packageJSON['version']}`;
-    item.tooltip = 'Restart vanadiumd TTCN-3 language server';
-    item.command = 'vanadiumd.restart';
-    if (context.extensionMode === vscode.ExtensionMode.Development) {
-      item.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
-    }
-    return item;
-  })();
+  const statusItem = createStatusItem(context, lsClient);
   context.subscriptions.push(statusItem);
 
   const isDocumentTargeted = (document?: vscode.TextDocument) =>
@@ -103,8 +96,6 @@ async function initializeLanguageServer(context: vscode.ExtensionContext) {
       }
     })
   );
-
-  context.subscriptions.push(await lsClient.start(context));
 
   context.subscriptions.push(
     vscode.workspace.onDidSaveTextDocument((document) => {
