@@ -19,6 +19,10 @@ namespace vanadium::ls::detail {
 namespace {
 const ast::nodes::Ident* GetDeclarationIdent(const core::semantic::Symbol* sym) {
   const auto* decl = sym->Declaration();
+  if (!decl) {
+    return nullptr;
+  }
+
   const auto* decl_name_ident = [&] -> const ast::Node* {
     switch (decl->nkind) {
       case ast::NodeKind::Declarator:
