@@ -49,6 +49,8 @@ class Arena {
     return *Alloc<T>(std::forward<T>(v));
   }
 
+  bool TryExtend(void* p, std::size_t additional_bytes);
+
   void Reset();
   void Release();
 

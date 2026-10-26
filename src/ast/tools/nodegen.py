@@ -213,9 +213,12 @@ def generate_nodes_descriptors(nodes: AstNodesDict) -> str:
       for field in node.fields:
         stored_type = field.typename
         if field.indirect:
-          stored_type = f"{stored_type}*"
-        if field.repeated:
-          stored_type = f"std::vector<{stored_type}>"  # TODO(maybe): span on arena
+          if field.repeated:
+            stored_type = f"NodeSpan<{stored_type}>"
+          else:
+            stored_type = f"{stored_type}*"
+        elif field.repeated:
+          stored_type = f"std::span<const {stored_type}>"
         if not field.indirect and field.optional:
           stored_type = f"std::optional<{stored_type}>"
 

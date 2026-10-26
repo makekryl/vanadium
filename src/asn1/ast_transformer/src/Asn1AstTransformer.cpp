@@ -21,6 +21,7 @@
 #include <vanadium/ast/OriginMap.h>
 #include <vanadium/ast/Scanner.h>
 #include <vanadium/lib/Arena.h>
+#include <vanadium/lib/ArenaVecAllocator.h>
 #include <vanadium/lib/FunctionRef.h>
 #include <vanadium/lib/ScopedValue.h>
 #include <vanadium/lib/StaticMap.h>
@@ -161,7 +162,7 @@ namespace {
 class AstTransformer {
  public:
   AstTransformer(const asn1p_t* ast, std::string_view src, lib::Arena& arena, Asn1pModuleProvider module_provider)
-      : ast_(ast), original_src_(src), arena_(arena), get_module_(std::move(module_provider)) {
+      : ast_(ast), original_src_(src), vec_alloc_(arena), arena_(arena), get_module_(std::move(module_provider)) {
     adjusted_src_.reserve(original_src_.length() + 256);
     adjusted_src_.append(original_src_);
   }
@@ -181,7 +182,7 @@ class AstTransformer {
     const auto* mod = TQ_FIRST(&(ast_->modules));
     return NewNode<ttcn_ast::RootNode>([&](ttcn_ast::RootNode& m) {
       m.nrange = {.begin = 0, .end = static_cast<ttcn_ast::pos_t>(original_src_.length())};
-      m.nodes.push_back(TransformModule(mod));
+      vec_alloc_.Bind(m.nodes).push_back(TransformModule(mod));
     });
   }
 
@@ -192,28 +193,32 @@ class AstTransformer {
 
       auto* const tok_public = arena_.Alloc<ttcn_ast::Token>(Tok(ttcn_ast::TokenKind::PUBLIC));
 
+      auto defs = vec_alloc_.Bind(m.defs);
       asn1p_xports_t* xp;
       TQ_FOR(xp, &(mod->imports), xp_next) {
         const auto& name_range = AppendSource(xp->fromModuleName);
-        m.defs.push_back(NewNode<ttcn_ast::nodes::Definition>([&](ttcn_ast::nodes::Definition& def) {
+        defs.push_back(NewNode<ttcn_ast::nodes::Definition>([&](ttcn_ast::nodes::Definition& def) {
           def.visibility = tok_public;
           def.def = NewNode<ttcn_ast::nodes::ImportDecl>([&](ttcn_ast::nodes::ImportDecl& impd) {
             EmplaceIdent(impd.module, name_range);
-            impd.list.emplace_back(NewNode<ttcn_ast::nodes::DefKindExpr>([&](ttcn_ast::nodes::DefKindExpr& dk) {
-              dk.kind = Tok(ttcn_ast::TokenKind::ALL);
-            }));
+            vec_alloc_.Bind(impd.list).emplace_back(
+                NewNode<ttcn_ast::nodes::DefKindExpr>([&](ttcn_ast::nodes::DefKindExpr& dk) {
+                  dk.kind = Tok(ttcn_ast::TokenKind::ALL);
+                }));
           });
         }));
-        m.defs.push_back(NewNode<ttcn_ast::nodes::Definition>([&](ttcn_ast::nodes::Definition& def) {
+        defs.push_back(NewNode<ttcn_ast::nodes::Definition>([&](ttcn_ast::nodes::Definition& def) {
           def.visibility = tok_public;
           def.def = NewNode<ttcn_ast::nodes::ImportDecl>([&](ttcn_ast::nodes::ImportDecl& impd) {
             EmplaceIdent(impd.module, name_range);
-            impd.list.emplace_back(NewNode<ttcn_ast::nodes::DefKindExpr>([&](ttcn_ast::nodes::DefKindExpr& dk) {
-              dk.kind = Tok(ttcn_ast::TokenKind::IMPORT);
-              dk.list.emplace_back(NewNode<ttcn_ast::nodes::Ident>([&](ttcn_ast::nodes::Ident& ident) {
-                ident.nrange = name_range;
-              }));
-            }));
+            vec_alloc_.Bind(impd.list).emplace_back(
+                NewNode<ttcn_ast::nodes::DefKindExpr>([&](ttcn_ast::nodes::DefKindExpr& dk) {
+                  dk.kind = Tok(ttcn_ast::TokenKind::IMPORT);
+                  vec_alloc_.Bind(dk.list).emplace_back(
+                      NewNode<ttcn_ast::nodes::Ident>([&](ttcn_ast::nodes::Ident& ident) {
+                        ident.nrange = name_range;
+                      }));
+                }));
           });
         }));
       }
@@ -221,7 +226,7 @@ class AstTransformer {
       asn1p_expr_t* tc;
       TQ_FOR(tc, &(mod->members), next) {
         if (auto* dn = TransformOutermostExpr(tc); dn != nullptr) {
-          m.defs.push_back(NewNode<ttcn_ast::nodes::Definition>([&](ttcn_ast::nodes::Definition& def) {
+          defs.push_back(NewNode<ttcn_ast::nodes::Definition>([&](ttcn_ast::nodes::Definition& def) {
             def.def = dn;
             dn->parent = &def;
           }));
@@ -301,8 +306,8 @@ class AstTransformer {
           RecordOrigin(&m, expr);
 
           m.fields = std::move(sspec->fields);
-          for (auto* f : m.fields) {
-            f->parent = &m;
+          for (const auto* f : m.fields) {
+            const_cast<ttcn_ast::nodes::Field*>(f)->parent = &m;
           }
         });
       }
@@ -484,7 +489,8 @@ class AstTransformer {
 
         return NewNode<ttcn_ast::nodes::StructSpec>([&](ttcn_ast::nodes::StructSpec& m) {
           m.kind = Tok(ttcn_ast::TokenKind::UNION);
-          m.fields.reserve(clsvals_expr->constraints->el_count);
+          auto m_fields = vec_alloc_.Bind(m.fields);
+          m_fields.reserve(clsvals_expr->constraints->el_count);
 
           const auto accept_row = [&](const ClassObjectRow& row) {
             if (row.name != selcomp.name) {
@@ -497,7 +503,7 @@ class AstTransformer {
               return AppendSource(ttcn_typename ? std::string(*ttcn_typename) : std::string(row.value));
             }();
 
-            if (std::ranges::any_of(m.fields, [&](const ttcn_ast::nodes::Field* fld) -> bool {
+            if (std::ranges::any_of(m_fields.view(), [&](const ttcn_ast::nodes::Field* fld) -> bool {
                   // comparing against ftyperange.String(range) because AppendSource also does token normalization
                   return fld->type->As<ttcn_ast::nodes::RefSpec>()->x->On(adjusted_src_) ==
                          ftyperange.String(adjusted_src_);
@@ -512,14 +518,14 @@ class AstTransformer {
             });
             //
             const auto field_expansion_point = MakeOriginExpansionPoint(clsvals_expr->module, row.range);
-            m.fields.emplace_back(NewNode<ttcn_ast::nodes::Field>([&](ttcn_ast::nodes::Field& f) {
+            m_fields.emplace_back(NewNode<ttcn_ast::nodes::Field>([&](ttcn_ast::nodes::Field& f) {
               EmplaceIdent(f.name, ftyperange);
               f.type = ftypenode;
               origins_.Put(&f, field_expansion_point);
             }));
             if (!std::islower(row.value[0])) {
               // god we have to keep two versions: one with 1st letter in lowercase and one not...
-              m.fields.emplace_back(NewNode<ttcn_ast::nodes::Field>([&](ttcn_ast::nodes::Field& f) {
+              m_fields.emplace_back(NewNode<ttcn_ast::nodes::Field>([&](ttcn_ast::nodes::Field& f) {
                 EmplaceIdent(f.name, AppendSource([&] -> std::string {
                                std::string lc_name(row.value);
                                lc_name[0] = std::tolower(lc_name[0]);
@@ -594,21 +600,24 @@ class AstTransformer {
       }
       m.kind = arena_.Alloc<ttcn_ast::Token>(Tok(ttcn_ast::TokenKind::CONST));
 
-      m.decls.push_back(NewNode<ttcn_ast::nodes::Declarator>([&](ttcn_ast::nodes::Declarator& d) {
+      vec_alloc_.Bind(m.decls).push_back(NewNode<ttcn_ast::nodes::Declarator>([&](ttcn_ast::nodes::Declarator& d) {
         EmplaceIdent(d.name, ConsumeRange(expr));
       }));
     });
   }
 
-  void TransformStructFields(const asn1p_expr_t* expr, std::vector<ttcn_ast::nodes::Field*>& fields) {
+  void TransformStructFields(const asn1p_expr_t* expr, ttcn_ast::NodeSpan<ttcn_ast::nodes::Field>& fields) {
+    assert(fields.empty());
+
     if (!compilerExtensions::eag_grouping) {
+      auto fields_alloc = vec_alloc_.Bind(fields);
       asn1p_expr_t* se;
       TQ_FOR(se, &(expr->members), next) {
         if (auto* dn = TransformComponent(se); dn) {
           if (se->eag_level.value > 0) {
             dn->optional = true;
           }
-          fields.push_back(dn);
+          fields_alloc.push_back(dn);
         }
       }
       return;
@@ -637,9 +646,10 @@ class AstTransformer {
 
     const asn1p_expr_t* se = TQ_FIRST(&(expr->members));
     ttcn_ast::pos_t se_right_scan_pos{0};  // scan for eag close token ]]
-    const auto transform_version = [&, pthis = this /* gcc bug WA */](
-                                       this auto&& self, std::uint16_t current_level,
-                                       std::vector<ttcn_ast::nodes::Field*>& current_fields) -> void {
+    const auto transform_version =
+        [&, pthis = this /* gcc bug WA */](
+            this auto&& self, std::uint16_t current_level,
+            lib::ArenaVecAllocator::BoundVec<const ttcn_ast::nodes::Field* const>&& current_fields) -> void {
       std::uint16_t current_ver = 0;
       while (se) {
         if (se->eag_level.value < current_level) {
@@ -659,7 +669,7 @@ class AstTransformer {
             f.optional = true;
             f.type = pthis->template NewNode<ttcn_ast::nodes::StructSpec>([&](ttcn_ast::nodes::StructSpec& m) {
               m.kind = Tok(ttcn_ast::TokenKind::RECORD);
-              self(se->eag_level.value, m.fields);  // <--
+              self(se->eag_level.value, vec_alloc_.Bind(m.fields));  // <--
             });
             //
             while (pthis->original_src_[se_right_scan_pos] != ']' &&
@@ -683,7 +693,7 @@ class AstTransformer {
         se = TQ_NEXT(se, next);
       }
     };
-    transform_version(0, fields);
+    transform_version(0, vec_alloc_.Bind(fields));
   }
 
   ttcn_ast::nodes::StructTypeDecl* TransformStruct(ttcn_ast::TokenKind kind /* RECORD/SET/UNION */,
@@ -710,12 +720,13 @@ class AstTransformer {
     return NewNode<ttcn_ast::nodes::EnumTypeDecl>([&](ttcn_ast::nodes::EnumTypeDecl& m) {
       EmplaceIdent(m.name, ConsumeRange(expr));
 
+      auto values = vec_alloc_.Bind(m.values);
       asn1p_expr_t* member;
       TQ_FOR(member, &(expr->members), next) {
         if (member->expr_type != A1TC_UNIVERVAL) {
           continue;
         }
-        m.values.push_back(NewNode<ttcn_ast::nodes::Ident>([&](ttcn_ast::nodes::Ident& iv) {
+        values.push_back(NewNode<ttcn_ast::nodes::Ident>([&](ttcn_ast::nodes::Ident& iv) {
           iv.nrange = ConsumeRange(member);
           RecordOrigin(&iv, member);
         }));
@@ -726,12 +737,13 @@ class AstTransformer {
 
   ttcn_ast::nodes::EnumSpec* TransformInnerEnumeration(const asn1p_expr_t* expr) {
     return NewNode<ttcn_ast::nodes::EnumSpec>([&](ttcn_ast::nodes::EnumSpec& m) {
+      auto values = vec_alloc_.Bind(m.values);
       asn1p_expr_t* member;
       TQ_FOR(member, &(expr->members), next) {
         if (member->expr_type != A1TC_UNIVERVAL) {
           continue;
         }
-        m.values.push_back(NewNode<ttcn_ast::nodes::Ident>([&](ttcn_ast::nodes::Ident& iv) {
+        values.push_back(NewNode<ttcn_ast::nodes::Ident>([&](ttcn_ast::nodes::Ident& iv) {
           iv.nrange = ConsumeRange(member);
           RecordOrigin(&iv, member);
         }));
@@ -1096,6 +1108,7 @@ class AstTransformer {
   std::string_view original_src_;
   std::vector<TransformedAsn1Ast::TransformationError> errors_;
   ttcn_ast::OriginMap origins_;
+  lib::ArenaVecAllocator vec_alloc_;
   lib::Arena& arena_;
   Asn1pModuleProvider get_module_;
 

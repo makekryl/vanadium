@@ -85,6 +85,14 @@ void Arena::AddToCleanupList(void* obj, CleanupFunc cleanup) {
   node->next = std::exchange(cleanup_list_, node);
 }
 
+bool Arena::TryExtend(void* p, std::size_t additional_bytes) {
+  if (p == active_->pos && ((active_->pos + additional_bytes) < active_->end)) {
+    active_->pos += additional_bytes;
+    return true;
+  }
+  return false;
+}
+
 void Arena::Reset() {
   if (active_ == nullptr) [[unlikely]] {
     return;

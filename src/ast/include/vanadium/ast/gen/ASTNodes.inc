@@ -7,7 +7,7 @@ struct LanguageSpec : TypeSpec {
 
   LanguageSpec() : TypeSpec(NodeKind::LanguageSpec) {}
 
-  std::vector<Token> list;
+  std::span<const Token> list;
 
   void Accept(NodeInspector) const {
   }
@@ -33,7 +33,7 @@ struct ArrayExpr : Expr {
 
   ArrayExpr() : Expr(NodeKind::ArrayExpr) {}
 
-  std::vector<Expr*> list;
+  NodeSpan<Expr> list;
 
   void Accept(NodeInspector inspector) const {
     for (const auto* n : list) {
@@ -47,7 +47,7 @@ struct ParenExpr : Expr {
 
   ParenExpr() : Expr(NodeKind::ParenExpr) {}
 
-  std::vector<Expr*> list;
+  NodeSpan<Expr> list;
 
   void Accept(NodeInspector inspector) const {
     for (const auto* n : list) {
@@ -87,7 +87,7 @@ struct EnumSpec : TypeSpec {
 
   EnumSpec() : TypeSpec(NodeKind::EnumSpec) {}
 
-  std::vector<Expr*> values;
+  NodeSpan<Expr> values;
 
   void Accept(NodeInspector inspector) const {
     for (const auto* n : values) {
@@ -148,7 +148,7 @@ struct BlockStmt : Stmt {
 
   BlockStmt() : Stmt(NodeKind::BlockStmt) {}
 
-  std::vector<Stmt*> stmts;
+  NodeSpan<Stmt> stmts;
 
   void Accept(NodeInspector inspector) const {
     for (const auto* n : stmts) {
@@ -193,7 +193,7 @@ struct WithStmt : Stmt {
 
   Token kind;
   bool overrides{false};
-  std::vector<Expr*> list;
+  NodeSpan<Expr> list;
   Expr* value;
 
   void Accept(NodeInspector inspector) const {
@@ -237,7 +237,7 @@ struct DefKindExpr : Expr {
   DefKindExpr() : Expr(NodeKind::DefKindExpr) {}
 
   Token kind;
-  std::vector<Expr*> list;
+  NodeSpan<Expr> list;
 
   void Accept(NodeInspector inspector) const {
     for (const auto* n : list) {
@@ -252,7 +252,7 @@ struct ExceptExpr : Expr {
   ExceptExpr() : Expr(NodeKind::ExceptExpr) {}
 
   Expr* x;
-  std::vector<Expr*> list;
+  NodeSpan<Expr> list;
 
   void Accept(NodeInspector inspector) const {
     Inspect(x, inspector);
@@ -365,7 +365,7 @@ struct PortAttribute : Node {
   PortAttribute() : Node(NodeKind::PortAttribute) {}
 
   Token kind;
-  std::vector<Expr*> types;
+  NodeSpan<Expr> types;
 
   void Accept(NodeInspector inspector) const {
     for (const auto* n : types) {
@@ -425,7 +425,7 @@ struct CompositeLiteral : Expr {
 
   CompositeLiteral() : Expr(NodeKind::CompositeLiteral) {}
 
-  std::vector<Expr*> list;
+  NodeSpan<Expr> list;
 
   void Accept(NodeInspector inspector) const {
     for (const auto* n : list) {
@@ -752,7 +752,7 @@ struct CaseClause : Node {
 
   CaseClause() : Node(NodeKind::CaseClause) {}
 
-  std::vector<Expr*> cond;
+  NodeSpan<Expr> cond;
   BlockStmt* body;
 
   void Accept(NodeInspector inspector) const {
@@ -791,7 +791,7 @@ struct WithSpec : TypeSpec {
 
   WithSpec() : TypeSpec(NodeKind::WithSpec) {}
 
-  std::vector<WithStmt*> list;
+  NodeSpan<WithStmt> list;
 
   void Accept(NodeInspector inspector) const {
     for (const auto* n : list) {
@@ -805,7 +805,7 @@ struct TypePars : Node {
 
   TypePars() : Node(NodeKind::TypePars) {}
 
-  std::vector<TypePar*> list;
+  NodeSpan<TypePar> list;
 
   void Accept(NodeInspector inspector) const {
     for (const auto* n : list) {
@@ -820,8 +820,8 @@ struct RedirectExpr : Expr {
   RedirectExpr() : Expr(NodeKind::RedirectExpr) {}
 
   Expr* x{nullptr};
-  std::vector<Expr*> value;
-  std::vector<Expr*> param;
+  NodeSpan<Expr> value;
+  NodeSpan<Expr> param;
   Expr* sender{nullptr};
   RedirectToIndex* to_index{nullptr};
   Expr* timestamp{nullptr};
@@ -874,7 +874,7 @@ struct FormalPars : Node {
 
   FormalPars() : Node(NodeKind::FormalPars) {}
 
-  std::vector<FormalPar*> list;
+  NodeSpan<FormalPar> list;
 
   void Accept(NodeInspector inspector) const {
     for (const auto* n : list) {
@@ -890,7 +890,7 @@ struct SelectStmt : Stmt {
 
   bool is_union{false};
   Expr* tag;
-  std::vector<CaseClause*> clauses;
+  NodeSpan<CaseClause> clauses;
 
   void Accept(NodeInspector inspector) const {
     Inspect(tag, inspector);
@@ -907,7 +907,7 @@ struct Module : Node {
 
   std::optional<Ident> name;
   LanguageSpec* language{nullptr};
-  std::vector<Definition*> defs;
+  NodeSpan<Definition> defs;
   WithSpec* with{nullptr};
 
   void Accept(NodeInspector inspector) const {
@@ -935,7 +935,7 @@ struct ValueDecl : Decl {
   RestrictionSpec* restriction{nullptr};
   Token* modif{nullptr};
   Expr* type;
-  std::vector<Declarator*> decls;
+  NodeSpan<Declarator> decls;
   WithSpec* with{nullptr};
 
   void Accept(NodeInspector inspector) const {
@@ -959,7 +959,7 @@ struct ImportDecl : Decl {
 
   std::optional<Ident> module;
   LanguageSpec* language{nullptr};
-  std::vector<DefKindExpr*> list;
+  NodeSpan<DefKindExpr> list;
   WithSpec* with{nullptr};
 
   void Accept(NodeInspector inspector) const {
@@ -984,7 +984,7 @@ struct GroupDecl : Decl {
   GroupDecl() : Decl(NodeKind::GroupDecl) {}
 
   std::optional<Ident> name;
-  std::vector<Definition*> defs;
+  NodeSpan<Definition> defs;
   WithSpec* with{nullptr};
 
   void Accept(NodeInspector inspector) const {
@@ -1027,11 +1027,11 @@ struct ClassTypeDecl : Decl {
   Token kind;
   Token* modif{nullptr};
   std::optional<Ident> name;
-  std::vector<Expr*> extends;
+  NodeSpan<Expr> extends;
   RunsOnSpec* runs_on{nullptr};
   MtcSpec* mtc{nullptr};
   SystemSpec* system{nullptr};
-  std::vector<Definition*> defs;
+  NodeSpan<Definition> defs;
   WithSpec* with{nullptr};
 
   void Accept(NodeInspector inspector) const {
@@ -1142,7 +1142,7 @@ struct EnumTypeDecl : Decl {
 
   std::optional<Ident> name;
   TypePars* pars{nullptr};
-  std::vector<Expr*> values;
+  NodeSpan<Expr> values;
   WithSpec* with{nullptr};
 
   void Accept(NodeInspector inspector) const {
@@ -1170,7 +1170,7 @@ struct PortTypeDecl : Decl {
   TypePars* pars{nullptr};
   Token kind;
   bool realtime{false};
-  std::vector<Node*> attrs;
+  NodeSpan<Node> attrs;
   WithSpec* with{nullptr};
 
   void Accept(NodeInspector inspector) const {
@@ -1196,7 +1196,7 @@ struct ComponentTypeDecl : Decl {
 
   std::optional<Ident> name;
   TypePars* pars{nullptr};
-  std::vector<Expr*> extends;
+  NodeSpan<Expr> extends;
   BlockStmt* body;
   WithSpec* with{nullptr};
 
@@ -1436,7 +1436,7 @@ struct ModuleParameterGroup : Decl {
 
   ModuleParameterGroup() : Decl(NodeKind::ModuleParameterGroup) {}
 
-  std::vector<ValueDecl*> decls;
+  NodeSpan<ValueDecl> decls;
   WithSpec* with{nullptr};
 
   void Accept(NodeInspector inspector) const {
@@ -1455,7 +1455,7 @@ struct StructSpec : TypeSpec {
   StructSpec() : TypeSpec(NodeKind::StructSpec) {}
 
   Token kind;
-  std::vector<Field*> fields;
+  NodeSpan<Field> fields;
 
   void Accept(NodeInspector inspector) const {
     for (const auto* n : fields) {
@@ -1486,7 +1486,7 @@ struct StructTypeDecl : Decl {
   StructTypeDecl() : Decl(NodeKind::StructTypeDecl) {}
 
   Token kind;
-  std::vector<Field*> fields;
+  NodeSpan<Field> fields;
   std::optional<Ident> name;
   TypePars* pars{nullptr};
   WithSpec* with{nullptr};

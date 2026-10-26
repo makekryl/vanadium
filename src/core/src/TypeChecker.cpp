@@ -570,7 +570,7 @@ InstantiatedType DeduceCompositeLiteralType(const SourceFile* file, const semant
         return InstantiatedType::None();
       }
 
-      const auto& fields = *ast::utils::GetStructFields(decl);
+      const auto fields = *ast::utils::GetStructFields(decl);
 
       const auto param_index = std::ranges::find(cl->list, n) - cl->list.begin();
       if (param_index >= std::ssize(fields)) {
@@ -798,19 +798,18 @@ InstantiatedType DeduceExpectedType(const SourceFile* file, const semantic::Scop
       }
       const auto* decl = type->Declaration();
 
-      const auto* fields_ptr = ast::utils::GetStructFields(decl);
-      if (!fields_ptr) {
+      const auto fields = ast::utils::GetStructFields(decl);
+      if (!fields) {
         break;
       }
-      const auto& fields = *fields_ptr;
 
       const auto idx = std::ranges::find(cl->list, n) - cl->list.begin();
-      if (idx >= std::ssize(fields)) {
+      if (idx >= std::ssize(*fields)) {
         return InstantiatedType::None();
       }
 
       const auto* fields_file = ast::utils::SourceFileOf(decl);
-      return type.Derive(ResolveTypeSpecSymbol(fields_file, fields[idx]->type));
+      return type.Derive(ResolveTypeSpecSymbol(fields_file, (*fields)[idx]->type));
     }
     case ast::NodeKind::TemplateDecl: {
       const auto* m = parent->As<ast::nodes::TemplateDecl>();
@@ -1401,9 +1400,9 @@ void BasicTypeChecker::MatchTypes(const ast::Range& range, InstantiatedType actu
 }
 
 template <ast::IsNode TParamDescriptorNode, BasicTypeChecker::ArgumentsTypeCheckOptions Options = {}>
-void BasicTypeChecker::CheckArguments(std::span<const ast::nodes::Expr* const> args, const ast::Range& args_range,
+void BasicTypeChecker::CheckArguments(ast::NodeSpan<ast::nodes::Expr> args, const ast::Range& args_range,
                                       const SourceFile* params_file, const semantic::Symbol* subject_type_sym,
-                                      std::span<const TParamDescriptorNode* const> params,
+                                      ast::NodeSpan<TParamDescriptorNode> params,
                                       std::predicate<const TParamDescriptorNode*> auto is_param_required,
                                       TemplateRestrictionKind inherited_restriction_kind) {
   const auto args_count = args.size();
@@ -1935,7 +1934,7 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, InstantiatedTyp
         Introspect(m);
         break;
       }
-      const auto& fields = *ast::utils::GetStructFields(record_decl);
+      const auto fields = *ast::utils::GetStructFields(record_decl);
 
       const auto* record_file = ast::utils::SourceFileOf(record_decl);
 
@@ -2462,7 +2461,7 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
 
     case ast::NodeKind::EnumTypeDecl:
     case ast::NodeKind::EnumSpec: {
-      const auto inspect_enum_values = [&](const std::vector<ast::nodes::Expr*>& values) {
+      const auto inspect_enum_values = [&](ast::NodeSpan<ast::nodes::Expr> values) {
         for (const auto* value : values) {
           // TODO: check value duplication
           if (value->nkind != ast::NodeKind::CallExpr) {

@@ -19,10 +19,10 @@ struct RootNode : Node {
   RootNode() : Node(NodeKind::RootNode) {}
 
   core::SourceFile* file{nullptr};
-  std::vector<Node*> nodes;
+  NodeSpan<Node> nodes;
 
   void Accept(NodeInspector inspector) const {
-    for (auto* node : nodes) {
+    for (const auto* node : nodes) {
       Inspect(node, inspector);
     }
   }

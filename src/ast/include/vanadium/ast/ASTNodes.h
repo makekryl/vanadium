@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <span>
 #include <string_view>
 #include <type_traits>
 
@@ -322,6 +323,10 @@ struct Node;
 
 template <typename T>
 concept IsNode = std::is_base_of_v<Node, T>;
+
+template <typename T>
+  requires IsNode<T>
+using NodeSpan = std::span<const T* const>;
 
 struct Node {
   Node(NodeKind nkind_) : nkind(nkind_) {}

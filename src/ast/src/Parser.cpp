@@ -208,27 +208,29 @@ inline void ExtendByIncorporatedNode(Node* n, Node* x) {
 }
 }  // namespace
 
-Parser::Parser(lib::Arena& arena, std::string_view src) : scanner_(src), src_(src), arena_(&arena) {}
+Parser::Parser(lib::Arena& arena, std::string_view src) : vec_alloc_(arena), scanner_(src), src_(src), arena_(&arena) {}
 
 RootNode* Parser::ParseRoot() {
   return NewNode<RootNode>([&](auto& root) {
-    tok_ = Peek(1).kind;
-    while (tok_ != TokenKind::kEOF) {
-      auto* node = Parse();
-      node->parent = &root;
-      root.nodes.push_back(node);
-      if (tok_ != TokenKind::kEOF && !kTokTopLevel.contains(tok_)) {
-        EmitError(Peek(1).range, std::format("unexpected '{}' token", magic_enum::enum_name(tok_)));
-        while (scanner_.Scan().kind != TokenKind::kEOF) {
-          // eat all tokens to calculate remaining line offsets
-          ;
+    vec_alloc_.Fill(root.nodes, [&](auto& nodes) {
+      tok_ = Peek(1).kind;
+      while (tok_ != TokenKind::kEOF) {
+        auto* node = Parse();
+        node->parent = &root;
+        nodes.push_back(node);
+        if (tok_ != TokenKind::kEOF && !kTokTopLevel.contains(tok_)) {
+          EmitError(Peek(1).range, std::format("unexpected '{}' token", magic_enum::enum_name(tok_)));
+          while (scanner_.Scan().kind != TokenKind::kEOF) {
+            // eat all tokens to calculate remaining line offsets
+            ;
+          }
+          break;
         }
-        break;
+        if (tok_ == TokenKind::SEMICOLON) {
+          Consume();
+        }
       }
-      if (tok_ == TokenKind::SEMICOLON) {
-        Consume();
-      }
-    }
+    });
   });
 }
 
@@ -307,11 +309,13 @@ nodes::Module* Parser::ParseModule() {
       m.language = ParseLanguageSpec();
     }
     Expect(TokenKind::LBRACE);
-    while (tok_ != TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
-      auto* r = ParseDefinition();
-      m.defs.emplace_back(r);
-      ExpectSemiAfter(r);
-    }
+    vec_alloc_.Fill(m.defs, [&](auto& defs) {
+      while (tok_ != TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
+        auto* r = ParseDefinition();
+        defs.emplace_back(r);
+        ExpectSemiAfter(r);
+      }
+    });
     Expect(TokenKind::RBRACE);
     m.with = ParseWith();
   });
@@ -388,14 +392,16 @@ nodes::Decl* Parser::ParseModulePar() {
   if (tok_ == TokenKind::LBRACE) {
     auto* ret = NewNode<nodes::ModuleParameterGroup>([&](auto& mpg) {
       Consume();  // LBrace
-      while (tok_ != TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
-        mpg.decls.push_back(NewNode<nodes::ValueDecl>([&](auto& vd) {
-          vd.restriction = ParseRestrictionSpec();
-          vd.type = ParseTypeRef();
-          vd.decls = ParseDeclList();
-          ExpectSemi();
-        }));
-      }
+      vec_alloc_.Fill(mpg.decls, [&](auto& mpg_decls) {
+        while (tok_ != TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
+          mpg_decls.push_back(NewNode<nodes::ValueDecl>([&](auto& vd) {
+            vd.restriction = ParseRestrictionSpec();
+            vd.type = ParseTypeRef();
+            vd.decls = ParseDeclList();
+            ExpectSemi();
+          }));
+        }
+      });
       Expect(TokenKind::RBRACE);
       mpg.with = ParseWith();
     });
@@ -445,21 +451,23 @@ nodes::ImportDecl* Parser::ParseImport() {
             });
             ExtendByIncorporatedNode(z, z->As<nodes::ExceptExpr>()->x);
           }
-          dk.list = {z};
+          vec_alloc_.Bind(dk.list).push_back(z);
         });
-        d.list = {y};
+        vec_alloc_.Bind(d.list).push_back(y);
         break;
       }
       case TokenKind::LBRACE:
         ConsumeInvariant(TokenKind::LBRACE);
-        while (tok_ != TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
-          d.list.push_back(ParseImportStmt());
-          if (tok_ == TokenKind::RBRACE) {
-            MaybeExpectSemi();
-          } else {
-            ExpectSemi();
+        vec_alloc_.Fill(d.list, [&](auto& dlist) {
+          while (tok_ != TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
+            dlist.push_back(ParseImportStmt());
+            if (tok_ == TokenKind::RBRACE) {
+              MaybeExpectSemi();
+            } else {
+              ExpectSemi();
+            }
           }
-        }
+        });
         Expect(TokenKind::RBRACE);
         break;
       default:
@@ -491,7 +499,7 @@ nodes::DefKindExpr* Parser::ParseImportStmt() {
               ee.list = ParseRefList();
             });
           }
-          dk.list = {y};
+          vec_alloc_.Bind(dk.list).push_back(y);
         } else {
           dk.list = ParseRefList();
         }
@@ -510,7 +518,7 @@ nodes::DefKindExpr* Parser::ParseImportStmt() {
               Expect(TokenKind::RBRACE);
             });
           }
-          dk.list.push_back(y);
+          vec_alloc_.Bind(dk.list).push_back(y);
           if (tok_ != TokenKind::COMMA) {
             break;
           }
@@ -520,7 +528,7 @@ nodes::DefKindExpr* Parser::ParseImportStmt() {
       }
       case TokenKind::IMPORT:
         dk.kind = Consume();
-        dk.list.push_back(ParseExpectedIdent(TokenKind::ALL));
+        vec_alloc_.Bind(dk.list).push_back(ParseExpectedIdent(TokenKind::ALL));
         break;
       default:
         EmitErrorExpected("import definition qualifier");
@@ -530,14 +538,14 @@ nodes::DefKindExpr* Parser::ParseImportStmt() {
   });
 }
 
-std::vector<nodes::Expr*> Parser::ParseExceptStmts() {
-  std::vector<nodes::Expr*> v;
-  while (tok_ != TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
-    auto* r = ParseExceptStmt();
-    v.push_back(r);
-    ExpectSemiAfter(r);
-  }
-  return v;
+NodeSpan<nodes::Expr> Parser::ParseExceptStmts() {
+  return vec_alloc_.Make<nodes::Expr*>([&](auto& v) {
+    while (tok_ != TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
+      auto* r = ParseExceptStmt();
+      v.push_back(r);
+      ExpectSemiAfter(r);
+    }
+  });
 }
 
 nodes::DefKindExpr* Parser::ParseExceptStmt() {
@@ -561,7 +569,7 @@ nodes::DefKindExpr* Parser::ParseExceptStmt() {
     }
 
     if (tok_ == TokenKind::ALL) {
-      dk.list.push_back(ParseAnyIdent());
+      vec_alloc_.Bind(dk.list).push_back(ParseAnyIdent());
     } else {
       dk.list = ParseRefList();
     }
@@ -573,11 +581,13 @@ nodes::GroupDecl* Parser::ParseGroup() {
     ConsumeInvariant(TokenKind::GROUP);
     ParseName(g.name);
     Expect(TokenKind::LBRACE);
-    while (tok_ != TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
-      auto* r = ParseDefinition();
-      g.defs.emplace_back(r);
-      ExpectSemiAfter(r);
-    }
+    vec_alloc_.Fill(g.defs, [&](auto& defs) {
+      while (tok_ != TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
+        auto* r = ParseDefinition();
+        defs.emplace_back(r);
+        ExpectSemiAfter(r);
+      }
+    });
     Expect(TokenKind::RBRACE);
     g.with = ParseWith();
   });
@@ -595,13 +605,15 @@ nodes::FriendDecl* Parser::ParseFriend() {
 nodes::LanguageSpec* Parser::ParseLanguageSpec() {
   return NewNode<nodes::LanguageSpec>([&](auto& s) {
     ConsumeInvariant(TokenKind::LANGUAGE);
-    while (true) {
-      s.list.push_back(Expect(TokenKind::STRING));
-      if (tok_ != TokenKind::COMMA) {
-        break;
+    vec_alloc_.Fill(s.list, [&](auto& list) {
+      while (true) {
+        list.push_back(Expect(TokenKind::STRING));
+        if (tok_ != TokenKind::COMMA) {
+          break;
+        }
+        Consume();
       }
-      Consume();
-    }
+    });
   });
 }
 
@@ -683,11 +695,13 @@ nodes::PortTypeDecl* Parser::ParsePortTypeDecl() {
     }
 
     Expect(TokenKind::LBRACE);
-    while (tok_ != TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
-      auto* r = ParsePortAttribute();
-      ptd.attrs.push_back(r);
-      ExpectSemiAfter(r);
-    }
+    vec_alloc_.Fill(ptd.attrs, [&](auto& v) {
+      while (tok_ != TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
+        auto* r = ParsePortAttribute();
+        v.push_back(r);
+        ExpectSemiAfter(r);
+      }
+    });
     Expect(TokenKind::RBRACE);
     ptd.with = ParseWith();
   });
@@ -745,13 +759,15 @@ nodes::StructTypeDecl* Parser::ParseStructTypeDecl() {
     }
     if (tok_ == TokenKind::LBRACE) [[likely]] {
       ConsumeInvariant(TokenKind::LBRACE);
-      while (tok_ != TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
-        s.fields.push_back(ParseField());
-        if (tok_ != TokenKind::COMMA) {
-          break;
+      vec_alloc_.Fill(s.fields, [&](auto& fields) {
+        while (tok_ != TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
+          fields.push_back(ParseField());
+          if (tok_ != TokenKind::COMMA) {
+            break;
+          }
+          Consume();
         }
-        Consume();
-      }
+      });
       Expect(TokenKind::RBRACE);
     } else {
       Expect(TokenKind::LBRACE);
@@ -788,11 +804,13 @@ nodes::ClassTypeDecl* Parser::ParseClassTypeDecl() {
       ctd.system = ParseSystem();
     }
     Expect(TokenKind::LBRACE);
-    while (tok_ != TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
-      auto* r = ParseDefinition();
-      ctd.defs.push_back(r);
-      ExpectSemiAfter(r);
-    }
+    vec_alloc_.Fill(ctd.defs, [&](auto& defs) {
+      while (tok_ != TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
+        auto* r = ParseDefinition();
+        defs.push_back(r);
+        ExpectSemiAfter(r);
+      }
+    });
     Expect(TokenKind::RBRACE);
     ctd.with = ParseWith();
 
@@ -822,13 +840,15 @@ nodes::EnumTypeDecl* Parser::ParseEnumTypeDecl() {
     }
     if (tok_ == TokenKind::LBRACE) {
       ConsumeInvariant(TokenKind::LBRACE);
-      while (tok_ != TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
-        etd.values.push_back(ParseEnumValue());
-        if (tok_ != TokenKind::COMMA) {
-          break;
+      vec_alloc_.Fill(etd.values, [&](auto& values) {
+        while (tok_ != TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
+          values.push_back(ParseEnumValue());
+          if (tok_ != TokenKind::COMMA) {
+            break;
+          }
+          Consume();
         }
-        Consume();
-      }
+      });
       Expect(TokenKind::RBRACE);
       etd.with = ParseWith();
     } else {
@@ -945,13 +965,15 @@ nodes::StructSpec* Parser::ParseStructSpec() {
   return NewNode<nodes::StructSpec>([&](auto& ss) {
     ss.kind = Consume();  // KindTok
     Expect(TokenKind::LBRACE);
-    while (tok_ != TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
-      ss.fields.push_back(ParseField());
-      if (tok_ != TokenKind::COMMA) {
-        break;
+    vec_alloc_.Fill(ss.fields, [&](auto& fields) {
+      while (tok_ != TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
+        fields.push_back(ParseField());
+        if (tok_ != TokenKind::COMMA) {
+          break;
+        }
+        Consume();
       }
-      Consume();
-    }
+    });
     Expect(TokenKind::RBRACE);
   });
 }
@@ -970,13 +992,15 @@ nodes::EnumSpec* Parser::ParseEnumSpec() {
   return NewNode<nodes::EnumSpec>([&](auto& es) {
     Consume();  // Tok
     Expect(TokenKind::LBRACE);
-    while (tok_ != TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
-      es.values.push_back(ParseEnumValue());
-      if (tok_ != TokenKind::COMMA) {
-        break;
+    vec_alloc_.Fill(es.values, [&](auto& values) {
+      while (tok_ != TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
+        values.push_back(ParseEnumValue());
+        if (tok_ != TokenKind::COMMA) {
+          break;
+        }
+        Consume();
       }
-      Consume();
-    }
+    });
     Expect(TokenKind::RBRACE);
   });
 }
@@ -1089,14 +1113,14 @@ nodes::RestrictionSpec* Parser::ParseRestrictionSpec() {
   }
 }
 
-std::vector<nodes::Declarator*> Parser::ParseDeclList() {
-  std::vector<nodes::Declarator*> v;
-  v.push_back(ParseDeclarator());
-  while (tok_ == TokenKind::COMMA) {
-    Consume();
+NodeSpan<nodes::Declarator> Parser::ParseDeclList() {
+  return vec_alloc_.Make<nodes::Declarator*>([&](auto& v) {
     v.push_back(ParseDeclarator());
-  }
-  return v;
+    while (tok_ == TokenKind::COMMA) {
+      Consume();
+      v.push_back(ParseDeclarator());
+    }
+  });
 }
 
 nodes::Declarator* Parser::ParseDeclarator() {
@@ -1246,13 +1270,15 @@ nodes::ReturnSpec* Parser::ParseReturn() {
 nodes::FormalPars* Parser::ParseFormalPars() {
   return NewNode<nodes::FormalPars>([&](auto& fp) {
     Expect(TokenKind::LPAREN);
-    while (tok_ != TokenKind::RPAREN) {
-      fp.list.push_back(ParseFormalPar());
-      if (tok_ == TokenKind::RPAREN) {
-        break;
+    vec_alloc_.Fill(fp.list, [&](auto& list) {
+      while (tok_ != TokenKind::RPAREN) {
+        list.push_back(ParseFormalPar());
+        if (tok_ == TokenKind::RPAREN) {
+          break;
+        }
+        Consume();
       }
-      Consume();
-    }
+    });
     Expect(TokenKind::RPAREN);
   });
 }
@@ -1287,13 +1313,15 @@ nodes::FormalPar* Parser::ParseFormalPar() {
 nodes::TypePars* Parser::ParseTypeFormalPars() {
   return NewNode<nodes::TypePars>([&](auto& p) {
     Expect(TokenKind::GT);
-    while (tok_ != TokenKind::GT) {
-      p.list.push_back(ParseTypeFormalPar());
-      if (tok_ != TokenKind::COMMA) {
-        break;
+    vec_alloc_.Fill(p.list, [&](auto& list) {
+      while (tok_ != TokenKind::GT) {
+        list.push_back(ParseTypeFormalPar());
+        if (tok_ != TokenKind::COMMA) {
+          break;
+        }
+        Consume();
       }
-      Consume();
-    }
+    });
     Expect(TokenKind::GT);
   });
 }
@@ -1323,11 +1351,13 @@ nodes::TypePar* Parser::ParseTypeFormalPar() {
 
 nodes::ArrayExpr* Parser::ParseArrayExpr() {
   return NewNode<nodes::ArrayExpr>([&](auto& m) {
-    while (tok_ == TokenKind::LBRACK) {
-      Consume();
-      m.list.emplace_back(ParseExpr());
-      Expect(TokenKind::RBRACK);
-    }
+    vec_alloc_.Fill(m.list, [&](auto& list) {
+      while (tok_ == TokenKind::LBRACK) {
+        Consume();
+        list.emplace_back(ParseExpr());
+        Expect(TokenKind::RBRACK);
+      }
+    });
   });
 }
 
@@ -1409,10 +1439,12 @@ nodes::WithSpec* Parser::ParseWith() {
   return NewNode<nodes::WithSpec>([&](auto& w) {
     Consume();  // tok
     Expect(TokenKind::LBRACE);
-    while (tok_ != TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
-      w.list.emplace_back(ParseWithStmt());
-      MaybeExpectSemi();
-    }
+    vec_alloc_.Fill(w.list, [&](auto& list) {
+      while (tok_ != TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
+        list.emplace_back(ParseWithStmt());
+        MaybeExpectSemi();
+      }
+    });
     Expect(TokenKind::RBRACE);
   });
 }
@@ -1452,13 +1484,15 @@ nodes::WithStmt* Parser::ParseWithStmt() {
 
     if (tok_ == TokenKind::LPAREN) {
       Consume();
-      while (true) {
-        s.list.push_back(ParseWithQualifier());
-        if (tok_ != TokenKind::COMMA) {
-          break;
+      vec_alloc_.Fill(s.list, [&](auto& list) {
+        while (true) {
+          list.push_back(ParseWithQualifier());
+          if (tok_ != TokenKind::COMMA) {
+            break;
+          }
+          Consume();
         }
-        Consume();
-      }
+      });
       Expect(TokenKind::RPAREN);
     }
 
@@ -1511,7 +1545,7 @@ nodes::Expr* Parser::ParseWithQualifier() {
             Expect(TokenKind::RBRACE);
           });
         }
-        p.list.push_back(y);
+        vec_alloc_.Bind(p.list).push_back(y);
       });
     }
     default:
@@ -1521,16 +1555,16 @@ nodes::Expr* Parser::ParseWithQualifier() {
   }
 }
 
-std::vector<nodes::Expr*> Parser::ParseRefList() {
-  std::vector<nodes::Expr*> v;
-  while (true) {
-    v.push_back(ParseTypeRef());
-    if (tok_ != TokenKind::COMMA) {
-      break;
+NodeSpan<nodes::Expr> Parser::ParseRefList() {
+  return vec_alloc_.Make<nodes::Expr*>([&](auto& v) {
+    while (true) {
+      v.push_back(ParseTypeRef());
+      if (tok_ != TokenKind::COMMA) {
+        break;
+      }
+      Consume();
     }
-    Consume();
-  }
-  return v;
+  });
 }
 
 nodes::Expr* Parser::ParseTypeRef() {
@@ -1666,11 +1700,13 @@ nodes::BlockStmt* Parser::ParseBlockStmt() {
   }
   return NewNode<nodes::BlockStmt>([&](auto& s) {
     Expect(TokenKind::LBRACE);
-    while (tok_ != TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
-      auto* r = ParseStmt();
-      s.stmts.push_back(r);
-      ExpectSemiAfter(r);
-    }
+    vec_alloc_.Fill(s.stmts, [&](auto& stmts) {
+      while (tok_ != TokenKind::RBRACE && tok_ != TokenKind::kEOF) {
+        auto* r = ParseStmt();
+        stmts.push_back(r);
+        ExpectSemiAfter(r);
+      }
+    });
     Expect(TokenKind::RBRACE);
   });
 }
@@ -1801,9 +1837,11 @@ nodes::SelectStmt* Parser::ParseSelect() {
     }
 
     Expect(TokenKind::LBRACE);
-    while (tok_ == TokenKind::CASE) {
-      s.clauses.push_back(ParseCaseClause());
-    }
+    vec_alloc_.Fill(s.clauses, [&](auto& clauses) {
+      while (tok_ == TokenKind::CASE) {
+        clauses.push_back(ParseCaseClause());
+      }
+    });
     Expect(TokenKind::RBRACE);
   });
 }
@@ -2221,7 +2259,7 @@ nodes::CallExpr* Parser::ParseCallExpr(nodes::Expr* x) {
             if (tok_ == TokenKind::REDIR) {
               x = ParseRedirect(x);
             }
-            pe.list.push_back(x);
+            vec_alloc_.Bind(pe.list).push_back(x);
             break;
           }
           default:
@@ -2298,14 +2336,14 @@ nodes::RedirectExpr* Parser::ParseRedirect(nodes::Expr* x) {
 }
 
 // ExprList ::= Expr { "," Expr }
-std::vector<nodes::Expr*> Parser::ParseExprList() {
-  std::vector<nodes::Expr*> v;
-  v.push_back(ParseExpr());
-  while (tok_ == TokenKind::COMMA) {
-    Consume();
+NodeSpan<nodes::Expr> Parser::ParseExprList() {
+  return vec_alloc_.Make<nodes::Expr*>([&](auto& v) {
     v.push_back(ParseExpr());
-  }
-  return v;
+    while (tok_ == TokenKind::COMMA) {
+      Consume();
+      v.push_back(ParseExpr());
+    }
+  });
 }
 
 nodes::Ident* Parser::ParseRef() {
@@ -2439,16 +2477,23 @@ nodes::DecodedExpr* Parser::ParseDecodedModifier() {
 nodes::ParenExpr* Parser::TryParseTypeParameters() {
   return NewNode<nodes::ParenExpr>([&](auto& pe) {
     Consume();  // LParen
-    while (tok_ != TokenKind::GT) {
-      auto* y = TryParseTypeParameter();
-      if (y == nullptr) {
-        return false;
+    bool retf = false;
+    vec_alloc_.Fill(pe.list, [&](auto& list) {
+      while (tok_ != TokenKind::GT) {
+        auto* y = TryParseTypeParameter();
+        if (y == nullptr) {
+          retf = true;  // todo: recheck TryParseTypeParameters
+          break;
+        }
+        list.push_back(y);
+        if (tok_ != TokenKind::COMMA) {
+          break;
+        }
+        Consume();
       }
-      pe.list.push_back(y);
-      if (tok_ != TokenKind::COMMA) {
-        break;
-      }
-      Consume();
+    });
+    if (retf) {
+      return false;
     }
     if (tok_ != TokenKind::GT) {
       return false;

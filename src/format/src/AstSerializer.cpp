@@ -104,7 +104,7 @@ class AstSerializer {
   }
 
   template <typename T, typename Serializer = std::nullptr_t>
-  void Join(Sequence& target, const std::vector<T>& items, std::initializer_list<Unit> separators,
+  void Join(Sequence& target, std::span<const T> items, std::initializer_list<Unit> separators,
             Serializer f_serialize = nullptr) {
     const auto serialize = [&](const T& item) {
       if constexpr (std::is_same_v<Serializer, std::nullptr_t>) {
@@ -140,7 +140,7 @@ class AstSerializer {
     }
   }
   template <typename T, typename Serializer = std::nullptr_t>
-  void Join(Sequence& target, const std::vector<T>& items, Unit separator, Serializer f_serialize = nullptr) {
+  void Join(Sequence& target, std::span<const T> items, Unit separator, Serializer f_serialize = nullptr) {
     Join(target, items, {separator}, f_serialize);
   }
 

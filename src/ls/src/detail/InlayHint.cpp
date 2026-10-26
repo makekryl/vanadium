@@ -187,23 +187,22 @@ void ComputeInlayHint(const core::SourceFile& file, const core::semantic::Scope*
     case ast::NodeKind::CompositeLiteral: {
       const auto* m = n->As<ast::nodes::CompositeLiteral>();
 
-      const auto* stfields_ptr = ast::utils::GetStructFields(tgt);
-      if (!stfields_ptr) [[unlikely]] {
+      const auto stfields = ast::utils::GetStructFields(tgt);
+      if (!stfields) [[unlikely]] {
         break;
       }
-      const auto& stfields = *stfields_ptr;
 
       const auto* stdecl_file = ast::utils::SourceFileOf(tgt);
 
       for (const auto& [idx, arg] : m->list | std::views::enumerate) {
-        if (idx >= std::ssize(stfields)) {
+        if (idx >= std::ssize(*stfields)) {
           break;
         }
         if (arg->nkind == ast::NodeKind::AssignmentExpr) {
           break;
         }
 
-        const auto& param_name_opt = stfields[idx]->name;
+        const auto& param_name_opt = (*stfields)[idx]->name;
         if (!param_name_opt) [[unlikely]] {
           break;
         }
@@ -372,11 +371,10 @@ std::optional<lsp::InlayHint> ResolveInlayHint(const lsp::InlayHint& original_hi
     case ast::NodeKind::CompositeLiteral: {
       const auto* m = container_node->As<ast::nodes::CompositeLiteral>();
 
-      const auto* stfields_ptr = ast::utils::GetStructFields(tgt);
-      if (!stfields_ptr) [[unlikely]] {
+      const auto stfields = ast::utils::GetStructFields(tgt);
+      if (!stfields) [[unlikely]] {
         break;
       }
-      const auto& stfields = *stfields_ptr;
 
       while (n->parent != m) {
         n = n->parent;
@@ -388,11 +386,11 @@ std::optional<lsp::InlayHint> ResolveInlayHint(const lsp::InlayHint& original_hi
       }
 
       const auto idx = it - m->list.begin();
-      if (idx >= std::ssize(stfields)) {  //
+      if (idx >= std::ssize(*stfields)) {  //
         return std::nullopt;
       }
 
-      const auto* field = stfields[idx];
+      const auto* field = (*stfields)[idx];
       if (!field->name) {
         return std::nullopt;
       }

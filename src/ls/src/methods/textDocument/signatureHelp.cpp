@@ -178,7 +178,7 @@ lsp::SignatureHelpResult ProvideSignatureHelp(const lsp::SignatureHelpParams& pa
       }
 
       const auto* stdecl = type->Declaration();
-      const auto& stfields = *ast::utils::GetStructFields(stdecl);
+      const auto stfields = *ast::utils::GetStructFields(stdecl);
       const auto* stdecl_file = ast::utils::SourceFileOf(stdecl);
 
       auto& label = *d.arena.Alloc<std::string>();

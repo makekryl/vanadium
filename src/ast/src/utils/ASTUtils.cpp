@@ -29,8 +29,8 @@ const Range& GetActualNameRange(const Node* n) {
 
 namespace {
 template <IsNode ConcreteNode>
-const ConcreteNode* BisectNodePos(const std::vector<ConcreteNode*>& list, pos_t pos) {
-  auto it = std::lower_bound(list.begin(), list.end(), pos, [](ConcreteNode* n, pos_t p) {
+const ConcreteNode* BisectNodePos(NodeSpan<ConcreteNode> list, pos_t pos) {
+  auto it = std::lower_bound(list.begin(), list.end(), pos, [](const ConcreteNode* n, pos_t p) {
     return n->nrange.begin <= p;
   });
 

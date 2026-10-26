@@ -4,6 +4,7 @@
 #include <type_traits>
 
 #include <vanadium/lib/Arena.h>
+#include <vanadium/lib/ArenaVecAllocator.h>
 #include <vanadium/lib/StaticSet.h>
 
 #include "vanadium/ast/AST.h"
@@ -39,7 +40,7 @@ class Parser {
   //
   nodes::ImportDecl* ParseImport();
   nodes::DefKindExpr* ParseImportStmt();
-  std::vector<nodes::Expr*> ParseExceptStmts();
+  NodeSpan<nodes::Expr> ParseExceptStmts();
   nodes::DefKindExpr* ParseExceptStmt();
   //
   nodes::GroupDecl* ParseGroup();
@@ -69,7 +70,7 @@ class Parser {
   nodes::TemplateDecl* ParseTemplateDecl();
   nodes::ValueDecl* ParseValueDecl();
   nodes::RestrictionSpec* ParseRestrictionSpec();
-  std::vector<nodes::Declarator*> ParseDeclList();
+  NodeSpan<nodes::Declarator> ParseDeclList();
   nodes::Declarator* ParseDeclarator();
   nodes::FuncDecl* ParseFuncDecl();
   nodes::FuncDecl* ParseExtFuncDecl();
@@ -94,7 +95,7 @@ class Parser {
   nodes::WithStmt* ParseWithStmt();
   nodes::Expr* ParseWithQualifier();
   //
-  std::vector<nodes::Expr*> ParseRefList();
+  NodeSpan<nodes::Expr> ParseRefList();
   nodes::Expr* ParseTypeRef();
   //
   nodes::Stmt* ParseStmt();
@@ -124,7 +125,7 @@ class Parser {
   nodes::LengthExpr* ParseLengthExpr(nodes::Expr* x);
   nodes::RedirectExpr* ParseRedirect(nodes::Expr* x);
   //
-  std::vector<nodes::Expr*> ParseExprList();
+  NodeSpan<nodes::Expr> ParseExprList();
   //
   nodes::Ident* ParseRef();
   nodes::ParenExpr* ParseParenExpr();
@@ -182,6 +183,7 @@ class Parser {
   } ext_state_;
 
   Node* last_node_{nullptr};
+  lib::ArenaVecAllocator vec_alloc_;
 
   bool seen_closing_brace_;
 

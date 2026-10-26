@@ -105,14 +105,14 @@ inline const nodes::ArrayExpr* GetArrayDef(const Node* n) {
   }
 }
 
-inline const std::vector<nodes::Field*>* GetStructFields(const Node* n) {
+inline std::optional<std::span<const nodes::Field* const>> GetStructFields(const Node* n) {
   switch (n->nkind) {
     case ast::NodeKind::StructTypeDecl:
-      return &n->As<ast::nodes::StructTypeDecl>()->fields;
+      return n->As<ast::nodes::StructTypeDecl>()->fields;
     case ast::NodeKind::StructSpec:
-      return &n->As<ast::nodes::StructSpec>()->fields;
+      return n->As<ast::nodes::StructSpec>()->fields;
     default:
-      return nullptr;
+      return std::nullopt;
   }
 }
 

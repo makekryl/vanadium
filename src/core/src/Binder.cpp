@@ -13,6 +13,7 @@
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/ASTTypes.h>
 #include <vanadium/ast/utils/ASTUtils.h>
+#include <vanadium/lib/ArenaVecAllocator.h>
 #include <vanadium/lib/Bitset.h>
 #include <vanadium/lib/DelimitedStringView.h>
 
@@ -115,7 +116,7 @@ class Binder {
   }
 
   template <ast::IsNode ConcreteNode>
-  void Visit(const std::vector<ConcreteNode*>& nodes) {
+  void Visit(ast::NodeSpan<ConcreteNode> nodes) {
     for (const auto* n : nodes) {
       Visit(n);
     }
@@ -238,8 +239,8 @@ class Binder {
 
   Symbol BindListSpec(std::string_view name, SymbolFlags::Value flags, const ast::nodes::ListSpec*);
   std::optional<Symbol> BindTypeSpec(std::string_view name, SymbolFlags::Value flags, const ast::nodes::TypeSpec*);
-  SymbolTable& BindFields(const std::vector<ast::nodes::Field*>&);
-  SymbolTable& BindEnumMembers(const std::vector<ast::nodes::Expr*>&);
+  SymbolTable& BindFields(ast::NodeSpan<ast::nodes::Field>);
+  SymbolTable& BindEnumMembers(ast::NodeSpan<ast::nodes::Expr>);
 
   std::unordered_multimap<std::string_view, ImportDescriptor> imports_;
 
@@ -460,12 +461,14 @@ bool Binder::Inspect(const ast::Node* n) {
               //
               return pseudostdecl_node;
             }();
+            lib::ArenaVecAllocator vecalloc{sf_.arena};
+            auto pseudostdecl_fields = vecalloc.Bind(pseudostdecl->fields);
             for (const auto& tp : lib::DelimitedStringView<','>{wq}.range()) {
               const auto offset = tp.data() - sf_.src.data();
               const ast::Range nrange{.begin = static_cast<ast::pos_t>(offset),
                                       .end = static_cast<ast::pos_t>(offset + tp.length())};
 
-              pseudostdecl->fields.emplace_back([&] -> ast::nodes::Field* {
+              pseudostdecl_fields.emplace_back([&] -> ast::nodes::Field* {
                 auto* pseudofield = sf_.arena.Alloc<ast::nodes::Field>();
                 pseudofield->nrange = {};
                 pseudofield->parent = pseudostdecl;
@@ -897,6 +900,8 @@ bool Binder::Inspect(const ast::Node* n) {
             auto* pseudoparams = sf_.arena.Alloc<ast::nodes::FormalPars>();
             pseudoparams->parent = pseudoctor;
             pseudoparams->nrange = {};
+            lib::ArenaVecAllocator vecalloc{sf_.arena};
+            auto pseudoparams_list = vecalloc.Bind(pseudoparams->list);
             //
             m->Accept([&](const ast::Node* cn) {
               if (cn->nkind == ast::NodeKind::Definition) {
@@ -905,7 +910,7 @@ bool Binder::Inspect(const ast::Node* n) {
               if (cn->nkind == ast::NodeKind::ValueDecl) {
                 const auto* cvd = cn->As<ast::nodes::ValueDecl>();
                 for (const auto* cd : cvd->decls) {
-                  pseudoparams->list.emplace_back([&] {
+                  pseudoparams_list.emplace_back([&] {
                     auto* pseudopar = sf_.arena.Alloc<ast::nodes::FormalPar>();
                     pseudopar->parent = pseudoctor;
                     pseudopar->nrange = cd->nrange;
@@ -1157,7 +1162,7 @@ std::optional<Symbol> Binder::BindTypeSpec(std::string_view name, SymbolFlags::V
   }
 }
 
-SymbolTable& Binder::BindFields(const std::vector<ast::nodes::Field*>& fields) {
+SymbolTable& Binder::BindFields(ast::NodeSpan<ast::nodes::Field> fields) {
   auto& members = NewSymbolTable();
   members.Reserve(fields.size());
   for (const auto* field : fields) {
@@ -1187,7 +1192,7 @@ SymbolTable& Binder::BindFields(const std::vector<ast::nodes::Field*>& fields) {
   return members;
 }
 
-SymbolTable& Binder::BindEnumMembers(const std::vector<ast::nodes::Expr*>& values) {
+SymbolTable& Binder::BindEnumMembers(ast::NodeSpan<ast::nodes::Expr> values) {
   auto& members = NewSymbolTable();
   members.Reserve(values.size());
   for (const auto* item : values) {
