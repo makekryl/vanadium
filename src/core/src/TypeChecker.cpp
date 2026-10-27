@@ -1299,6 +1299,28 @@ class BasicTypeChecker {
                       std::predicate<const TParamDescriptorNode*> auto is_param_required,
                       TemplateRestrictionKind inherited_restriction_kind = TemplateRestrictionKind::kNone);
 
+  void TryPromoteTemplateSymbolToValue(const ast::Node* n, InstantiatedType& itype) {
+    if (n->parent->nkind == ast::NodeKind::CallExpr) {
+      return;
+    }
+
+    // if it is not parametrized - we need to check if's OK to use this template without providing arguments
+    assert(itype->Flags() & semantic::SymbolFlags::kTemplate);
+
+    const auto* tdecl_node = itype->Declaration()->As<ast::nodes::TemplateDecl>();
+    if (tdecl_node->params && std::ranges::any_of(tdecl_node->params->list, [](const ast::nodes::FormalPar* param) {
+          return param->value == nullptr;
+        })) {
+      EmitError(TypeError{
+          .range = n->nrange,
+          .message = std::format("arguments required to reference parametrized definition `{}'", sf_.Text(n)),
+      });
+      return;
+    }
+    itype.sym = ResolveCallableReturnType(ast::utils::SourceFileOf(tdecl_node), tdecl_node).sym;
+    itype.is_instance = true;
+  }
+
   const semantic::Scope* scope_;
 
   SourceFile& sf_;
@@ -2025,6 +2047,11 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, InstantiatedTyp
       resulting_type.restriction |= resolution.restriction;
       resulting_type.is_instance = resolution.is_instance;
       //
+
+      if (resulting_type && (resulting_type->Flags() & semantic::SymbolFlags::kTemplate)) {
+        TryPromoteTemplateSymbolToValue(se, resulting_type);
+      }
+
       break;
     }
 
@@ -2113,19 +2140,8 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, InstantiatedTyp
         return rtype;
       }();
 
-      if (resulting_type && (m->parent->nkind != ast::NodeKind::CallExpr /* fun */) &&
-          (resulting_type->Flags() & semantic::SymbolFlags::kTemplate)) {
-        // we need to check if's OK to use this template without providing arguments
-        const auto* tdecl_node = resulting_type->Declaration()->As<ast::nodes::TemplateDecl>();
-        if (tdecl_node->params && std::ranges::any_of(tdecl_node->params->list, [](const ast::nodes::FormalPar* param) {
-              return param->value == nullptr;
-            })) {
-          EmitError(TypeError{
-              .range = m->nrange,
-              .message = std::format("arguments required to reference parametrized definition `{}'", sf_.Text(m)),
-          });
-        }
-        resulting_type.sym = ResolveCallableReturnType(ast::utils::SourceFileOf(tdecl_node), tdecl_node).sym;
+      if (resulting_type && (resulting_type->Flags() & semantic::SymbolFlags::kTemplate)) {
+        TryPromoteTemplateSymbolToValue(m, resulting_type);
       }
 
       break;
