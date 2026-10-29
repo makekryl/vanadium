@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <cstdint>
 #include <span>
 #include <string_view>
@@ -331,7 +332,7 @@ using NodeSpan = std::span<const T* const>;
 struct Node {
   Node(NodeKind nkind_) : nkind(nkind_) {}
 
-  Node* parent;
+  const Node* parent;
   Range nrange;
   const NodeKind nkind;
 
@@ -347,6 +348,9 @@ struct Node {
 
   template <IsNode DerivedNode>
   DerivedNode* As() {
+    if constexpr (requires { DerivedNode::kKind; }) {
+      assert(nkind == DerivedNode::kKind);
+    }
     return static_cast<DerivedNode*>(this);
   }
 

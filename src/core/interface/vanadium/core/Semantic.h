@@ -24,6 +24,7 @@ struct SemanticError {
     kClassCanBeExtendedByClassOnly,
     kCannotHaveAbstractFunctionInNonAbstractClass,
     kFileCanContainOnlyOneModule,
+    kWithParseError,  // TODO
   } type;
 };
 

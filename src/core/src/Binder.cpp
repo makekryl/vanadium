@@ -17,8 +17,10 @@
 #include <vanadium/lib/Bitset.h>
 #include <vanadium/lib/DelimitedStringView.h>
 
+#include "vanadium/core/AstCoBuilder.h"
 #include "vanadium/core/Program.h"
 #include "vanadium/core/Semantic.h"
+#include "vanadium/core/WithParser.h"
 
 namespace vanadium::core {
 namespace semantic {
@@ -423,78 +425,42 @@ bool Binder::Inspect(const ast::Node* n) {
       const auto* m = n->As<ast::nodes::Module>();
 
       Scoped<false>(m, [&] {
-        // TODO: PoC, refactor into WithParser
-        if (m->with) {
-          for (const auto* ws : m->with->list) {
-            if (ws->kind.kind != ast::TokenKind::EXTENSION || ws->value->nkind != ast::NodeKind::ValueLiteral ||
-                ws->value->As<ast::nodes::ValueLiteral>()->tok.kind != ast::TokenKind::STRING) {
-              continue;
-            }
-            std::string_view wq = Lit(ws->value);
-            wq.remove_prefix(1);  // "
-            wq.remove_suffix(1);  // "
-            constexpr std::string_view kExtAnytype{"anytype"};
-            if (!wq.starts_with(kExtAnytype)) {
-              continue;
-            }
-            wq.remove_prefix(kExtAnytype.length());
-            //
-            // CLEANING THIS UP IS THE PRIORITY #1
-            auto* pseudostdecl = [&] {
-              auto* pseudostdecl_node = sf_.arena.Alloc<ast::nodes::StructTypeDecl>();
-              pseudostdecl_node->nrange = {};
-              pseudostdecl_node->parent = [&] {
-                auto* pseudodef = sf_.arena.Alloc<ast::nodes::Definition>();
-                pseudodef->nrange = {};
-                pseudodef->parent = const_cast<ast::nodes::Module*>(m);
-                pseudodef->def = pseudostdecl_node;
-                return pseudodef;
-              }();
-              //
-              auto& ident = pseudostdecl_node->name.emplace();
-              ident.nrange = {.begin = ws->value->nrange.begin + 1,
-                              .end = static_cast<ast::pos_t>(ws->value->nrange.begin + 1 + kExtAnytype.length())};
-              ident.parent = pseudostdecl_node;
-              //
-              pseudostdecl_node->kind.range = {};
-              pseudostdecl_node->kind.kind = ast::TokenKind::UNION;
-              //
-              return pseudostdecl_node;
-            }();
-            lib::ArenaVecAllocator vecalloc{sf_.arena};
-            auto pseudostdecl_fields = vecalloc.Bind(pseudostdecl->fields);
-            for (const auto& tp : lib::DelimitedStringView<','>{wq}.range()) {
-              const auto offset = tp.data() - sf_.src.data();
-              const ast::Range nrange{.begin = static_cast<ast::pos_t>(offset),
-                                      .end = static_cast<ast::pos_t>(offset + tp.length())};
+        ParseModuleWithSpec(  //
+            sf_.ast, m->with,
+            {
+                .emit_error =
+                    [&](ast::Range range, std::string msg /* TODO */) {
+                      EmitError(SemanticError{
+                          .range = range,
+                          .type = SemanticError::Type::kWithParseError,
+                      });
+                    },
+                .accept_extension_anytype =
+                    [&](ast::Token anytype_tok, auto parse_anytype) {
+                      AstCoBuilder cobuilder{sf_.arena, m};
+                      auto* anytype_def = cobuilder.NewNode<ast::nodes::Definition>([&](auto& def) {
+                        auto* stdecl = cobuilder.NewNode<ast::nodes::StructTypeDecl>([&](auto& stdecl) {
+                          cobuilder.NewIdent(stdecl.name.emplace(), anytype_tok.range);  // anytype
+                        });
+                        def.def = stdecl;
 
-              pseudostdecl_fields.emplace_back([&] -> ast::nodes::Field* {
-                auto* pseudofield = sf_.arena.Alloc<ast::nodes::Field>();
-                pseudofield->nrange = {};
-                pseudofield->parent = pseudostdecl;
-                //
-                pseudofield->type = [&] {
-                  auto* pseudotype = sf_.arena.Alloc<ast::nodes::RefSpec>();
-                  pseudotype->nrange = {};
-                  pseudotype->parent = pseudofield;
-                  pseudotype->x = [&] {
-                    auto* pseudoident = sf_.arena.Alloc<ast::nodes::Ident>();
-                    pseudoident->nrange = nrange;
-                    pseudoident->parent = pseudotype;
-                    return pseudoident;
-                  }();
-                  return pseudotype;
-                }();
-                auto& pseudoname = pseudofield->name.emplace();
-                pseudoname.nrange = nrange;
-                pseudoname.parent = pseudofield;
-                //
-                return pseudofield;
-              }());
-            }
-            Inspect(pseudostdecl->parent);  // lol
-          }
-        }
+                        lib::ArenaVecAllocator vecalloc{sf_.arena};
+                        auto fields = vecalloc.Bind(stdecl->fields);
+                        parse_anytype({
+                            .accept_member =
+                                [&](ast::Token member_ident_tok) {
+                                  fields.emplace_back(cobuilder.NewNode<ast::nodes::Field>([&](auto& field) {
+                                    cobuilder.NewIdent(field.name.emplace(), member_ident_tok.range);
+                                    field.type = cobuilder.NewNode<ast::nodes::RefSpec>([&](auto& rs) {
+                                      rs.x = cobuilder.NewIdent(member_ident_tok.range);
+                                    });
+                                  }));
+                                },
+                        });
+                      });
+                      Inspect(anytype_def);  // lol
+                    },
+            });
 
         Visit(m->defs);
 
@@ -885,65 +851,40 @@ bool Binder::Inspect(const ast::Node* n) {
         });
 
         if (!hoisted_inner_names_.contains("create")) {
-          // TODO: refactor this mess
-          auto* pseudoctor = [&] {
-            auto* pseudowrapper = sf_.arena.Alloc<ast::nodes::Definition>();
-            pseudowrapper->parent = const_cast<ast::nodes::ClassTypeDecl*>(m);
-            pseudowrapper->nrange = {};
-            auto* pseudoctor_node = sf_.arena.Alloc<ast::nodes::ConstructorDecl>();
-            pseudoctor_node->parent = pseudowrapper;
-            pseudowrapper->def = pseudoctor_node;
-            return pseudoctor_node;
-          }();
-          pseudoctor->nrange = m->nrange;
-          pseudoctor->params = [&] {
-            auto* pseudoparams = sf_.arena.Alloc<ast::nodes::FormalPars>();
-            pseudoparams->parent = pseudoctor;
-            pseudoparams->nrange = {};
-            lib::ArenaVecAllocator vecalloc{sf_.arena};
-            auto pseudoparams_list = vecalloc.Bind(pseudoparams->list);
-            //
-            m->Accept([&](const ast::Node* cn) {
-              if (cn->nkind == ast::NodeKind::Definition) {
-                return true;
-              }
-              if (cn->nkind == ast::NodeKind::ValueDecl) {
-                const auto* cvd = cn->As<ast::nodes::ValueDecl>();
-                for (const auto* cd : cvd->decls) {
-                  pseudoparams_list.emplace_back([&] {
-                    auto* pseudopar = sf_.arena.Alloc<ast::nodes::FormalPar>();
-                    pseudopar->parent = pseudoctor;
-                    pseudopar->nrange = cd->nrange;
-
-                    pseudopar->arraydef = cd->arraydef;
-                    pseudopar->modif = cvd->modif;
-                    pseudopar->restriction = cvd->restriction;
-                    pseudopar->type = cvd->type;
-
-                    pseudopar->name.emplace();
-                    pseudopar->name->parent = cd->name->parent;
-                    pseudopar->name->nrange = cd->name->nrange;
-
-                    return pseudopar;
-                  }());
-                }
-              }
-              return false;
+          AstCoBuilder cobuilder{sf_.arena, m};
+          cobuilder.NewNode<ast::nodes::Definition>([&](auto& def) {
+            auto* ctordecl = cobuilder.NewNode<ast::nodes::ConstructorDecl>([&](auto& ctordecl) {
+              ctordecl.params = cobuilder.NewNode<ast::nodes::FormalPars>([&](auto& fpars) {
+                lib::ArenaVecAllocator vecalloc{sf_.arena};
+                auto fpars_list = vecalloc.Bind(fpars.list);
+                m->Accept([&](const ast::Node* cn) {
+                  if (cn->nkind == ast::NodeKind::Definition) {
+                    return true;
+                  }
+                  if (cn->nkind == ast::NodeKind::ValueDecl) {
+                    const auto* cvd = cn->As<ast::nodes::ValueDecl>();
+                    for (const auto* cd : cvd->decls) {
+                      fpars_list.emplace_back(cobuilder.NewNode<ast::nodes::FormalPar>([&](auto& fpar) {
+                        fpar.arraydef = cd->arraydef;
+                        fpar.modif = cvd->modif;
+                        fpar.restriction = cvd->restriction;
+                        fpar.type = cvd->type;
+                        cobuilder.NewIdent(fpar.name.emplace(), cd->name->nrange);
+                      }));
+                    }
+                  }
+                  return false;
+                });
+              });
+              ctordecl.body = cobuilder.NewNode<ast::nodes::BlockStmt>([&](auto&) {});
             });
-            //
-            return pseudoparams;
-          }();
-          pseudoctor->body = [&] {
-            auto* pseudobody = sf_.arena.Alloc<ast::nodes::BlockStmt>();
-            pseudobody->parent = pseudoctor;
-            pseudobody->nrange = {};
-            return pseudobody;
-          }();
-          AddSymbol({
-              "create",
-              pseudoctor,
-              SymbolFlags::kConstructorFunction,
-              scope_,
+            def.def = ctordecl;
+            AddSymbol({
+                "create",
+                ctordecl,
+                SymbolFlags::kConstructorFunction,
+                scope_,
+            });
           });
         }
 

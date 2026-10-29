@@ -4,6 +4,8 @@ add_library(vanadium_core STATIC
   src/TypeChecker.cpp
   src/Program.cpp
 
+  src/WithParser.cpp
+
   src/utils/SemanticUtils.cpp
 )
 
