@@ -1854,7 +1854,7 @@ nodes::CaseClause* Parser::ParseCaseClause() {
       Consume();  // TODO: add a special mark?
     } else {
       Expect(TokenKind::LPAREN);
-      c.cond = ParseExprList();
+      c.cond = ParseExprList(TokenKind::RPAREN);
       if (tok_ == TokenKind::RPAREN) [[likely]] {
         ConsumeInvariant(TokenKind::RPAREN);
       } else {
@@ -2263,7 +2263,7 @@ nodes::CallExpr* Parser::ParseCallExpr(nodes::Expr* x) {
             break;
           }
           default:
-            pe.list = ParseExprList();
+            pe.list = ParseExprList(TokenKind::RPAREN);
             break;
         }
       }
@@ -2336,11 +2336,15 @@ nodes::RedirectExpr* Parser::ParseRedirect(nodes::Expr* x) {
 }
 
 // ExprList ::= Expr { "," Expr }
-NodeSpan<nodes::Expr> Parser::ParseExprList() {
+NodeSpan<nodes::Expr> Parser::ParseExprList(TokenKind terminal) {
   return vec_alloc_.Make<nodes::Expr*>([&](auto& v) {
     v.push_back(ParseExpr());
     while (tok_ == TokenKind::COMMA) {
-      Consume();
+      auto comma_tok = Consume();
+      if (Peek(1).kind == terminal) [[unlikely]] {
+        EmitError(comma_tok.range, "trailing comma is not allowed");
+        break;
+      }
       v.push_back(ParseExpr());
     }
   });
@@ -2374,7 +2378,7 @@ nodes::Ident* Parser::ParseRef() {
 nodes::ParenExpr* Parser::ParseParenExpr() {
   return NewNode<nodes::ParenExpr>([&](auto& pe) {
     Expect(TokenKind::LPAREN);
-    pe.list = ParseExprList();
+    pe.list = ParseExprList(TokenKind::RPAREN);
     Expect(TokenKind::RPAREN);
   });
 }
@@ -2390,7 +2394,7 @@ nodes::CompositeLiteral* Parser::ParseCompositeLiteral() {
   return NewNode<nodes::CompositeLiteral>([&](auto& cl) {
     Expect(TokenKind::LBRACE);
     if (tok_ != TokenKind::RBRACE) {
-      cl.list = ParseExprList();
+      cl.list = ParseExprList(TokenKind::RBRACE);
     }
     Expect(TokenKind::RBRACE);
   });

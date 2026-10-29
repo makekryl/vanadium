@@ -125,7 +125,7 @@ class Parser {
   nodes::LengthExpr* ParseLengthExpr(nodes::Expr* x);
   nodes::RedirectExpr* ParseRedirect(nodes::Expr* x);
   //
-  NodeSpan<nodes::Expr> ParseExprList();
+  NodeSpan<nodes::Expr> ParseExprList(TokenKind terminal = TokenKind::kEOF);
   //
   nodes::Ident* ParseRef();
   nodes::ParenExpr* ParseParenExpr();
