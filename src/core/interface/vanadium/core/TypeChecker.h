@@ -21,7 +21,7 @@ namespace checker {
 
 // ES 201 873-1 [TTCN-3: Core Language], par. 15.8.1
 enum class TemplateRestrictionKind : std::uint8_t {
-  kNone = 0,
+  kNone = 0,  // (not a template)
 
   kOmit = 1 << 0,
   kValue = 1 << 1,

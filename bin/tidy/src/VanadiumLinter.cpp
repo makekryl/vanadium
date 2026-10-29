@@ -30,7 +30,7 @@ lint::Linter CreateLinter() {
   linter.RegisterRule<lint::rules::NoEmpty>();
   linter.RegisterRule<lint::rules::NoUnusedVars>();
   linter.RegisterRule<lint::rules::NoUnusedImports>();
-  // linter.RegisterRule<lint::rules::NoUnnecessaryValueof>();  // TODO: fix and re-enable
+  linter.RegisterRule<lint::rules::NoUnnecessaryValueof>();
   return linter;
 }
 
