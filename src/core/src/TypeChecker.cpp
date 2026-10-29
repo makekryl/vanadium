@@ -1315,7 +1315,6 @@ class BasicTypeChecker {
           .range = n->nrange,
           .message = std::format("arguments required to reference parametrized definition `{}'", sf_.Text(n)),
       });
-      return;
     }
     itype.sym = ResolveCallableReturnType(ast::utils::SourceFileOf(tdecl_node), tdecl_node).sym;
     itype.is_instance = true;
