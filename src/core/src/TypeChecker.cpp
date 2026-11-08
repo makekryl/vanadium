@@ -11,11 +11,13 @@
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/ASTTypes.h>
 #include <vanadium/ast/utils/ASTUtils.h>
+#include <vanadium/lib/ScopedValue.h>
 
 #include "vanadium/core/Builtins.h"
 #include "vanadium/core/BuiltinsSuperbases.h"
 #include "vanadium/core/Program.h"
 #include "vanadium/core/Semantic.h"
+#include "vanadium/core/WithParser.h"
 #include "vanadium/core/utils/ScopedNodeVisitor.h"
 #include "vanadium/core/utils/SemanticUtils.h"
 
@@ -1289,14 +1291,17 @@ class BasicTypeChecker {
 
   struct ArgumentsTypeCheckOptions {
     bool is_union{false};
-    bool allow_missing_fields{false};
   };
-
+  enum class ArgumentsCheckPolicy : std::uint8_t {
+    kRequireNone,
+    kRequireAll,
+    kRequireMandatory,
+  };
   template <ast::IsNode TParamDescriptorNode, ArgumentsTypeCheckOptions Options>
   void CheckArguments(std::span<const ast::nodes::Expr* const> args, const ast::Range& args_range,
                       const SourceFile* params_file, const semantic::Symbol* subject_type_sym,
-                      std::span<const TParamDescriptorNode* const> params,
-                      std::predicate<const TParamDescriptorNode*> auto is_param_required,
+                      std::span<const TParamDescriptorNode* const> params, ArgumentsCheckPolicy arguments_policy,
+                      std::predicate<const TParamDescriptorNode*> auto is_param_mandatory,
                       TemplateRestrictionKind inherited_restriction_kind = TemplateRestrictionKind::kNone);
 
   void TryPromoteTemplateSymbolToValue(const ast::Node* n, InstantiatedType& itype) {
@@ -1319,6 +1324,14 @@ class BasicTypeChecker {
     itype.sym = ResolveCallableReturnType(ast::utils::SourceFileOf(tdecl_node), tdecl_node).sym;
     itype.is_instance = true;
   }
+
+  struct State {
+    enum class TemplateDeclOmitMode : std::uint8_t {
+      kNotInTemplateDecl,
+      kUseImplicitOmit,
+      kUseExplicitOmit,
+    } template_decl_omit_mode = TemplateDeclOmitMode::kNotInTemplateDecl;
+  } state_{};
 
   const semantic::Scope* scope_;
 
@@ -1423,29 +1436,19 @@ void BasicTypeChecker::MatchTypes(const ast::Range& range, InstantiatedType actu
 template <ast::IsNode TParamDescriptorNode, BasicTypeChecker::ArgumentsTypeCheckOptions Options = {}>
 void BasicTypeChecker::CheckArguments(ast::NodeSpan<ast::nodes::Expr> args, const ast::Range& args_range,
                                       const SourceFile* params_file, const semantic::Symbol* subject_type_sym,
-                                      ast::NodeSpan<TParamDescriptorNode> params,
-                                      std::predicate<const TParamDescriptorNode*> auto is_param_required,
+                                      ast::NodeSpan<TParamDescriptorNode> params, ArgumentsCheckPolicy arguments_policy,
+                                      std::predicate<const TParamDescriptorNode*> auto is_param_mandatory,
                                       TemplateRestrictionKind inherited_restriction_kind) {
   const auto args_count = args.size();
-
-  const auto minimal_args_cnt = static_cast<std::size_t>(std::ranges::count_if(params, is_param_required));
   const auto maximal_args_cnt = params.size();
 
-  if constexpr (!Options.is_union) {
-    if ((!Options.allow_missing_fields && (args_count < minimal_args_cnt)) || args_count > maximal_args_cnt) {
-      EmitError(TypeError{
-              .range = (args_count < minimal_args_cnt) ?
-                  ast::Range{
-                      .begin = args_range.end - 1,
-                      .end = args_range.end,  // closing paren
-                  } : args_range,
-              .message = std::format("{} arguments expected, {} provided", minimal_args_cnt, args_count),
-          });
-    }
-  }
+  std::size_t provided_mandatory_args{0};
 
   const auto check_argument = [&](const TParamDescriptorNode* param, const ast::Node* n) {
     const auto expected_type = [&] -> InstantiatedType {
+      if (is_param_mandatory(param)) {
+        ++provided_mandatory_args;
+      }
       if constexpr (std::is_same_v<TParamDescriptorNode, ast::nodes::Field>) {
         auto restype = ResolveDeclarationType(params_file, param);
         restype.restriction |= inherited_restriction_kind;
@@ -1568,7 +1571,7 @@ void BasicTypeChecker::CheckArguments(ast::NodeSpan<ast::nodes::Expr> args, cons
         break;
       }
       default: {
-        if (seen_named_argument && !Options.is_union) {
+        if (!Options.is_union && seen_named_argument) {
           EmitError(TypeError{
               .range = argnode->nrange,
               .message = "positional arguments cannot follow named ones",
@@ -1590,6 +1593,48 @@ void BasicTypeChecker::CheckArguments(ast::NodeSpan<ast::nodes::Expr> args, cons
           .range = args_range,
           .message = std::format("exactly one named argument is expected in union"),
       });
+    }
+  } else {
+    const auto minimal_args_cnt = [&]() -> std::size_t {
+      switch (arguments_policy) {
+        case ArgumentsCheckPolicy::kRequireNone:
+          return 0;
+        case ArgumentsCheckPolicy::kRequireAll:
+          return maximal_args_cnt;
+        case ArgumentsCheckPolicy::kRequireMandatory:
+          return std::ranges::count_if(params, is_param_mandatory);
+      }
+    }();
+    if (args_count > maximal_args_cnt) {
+      EmitError(TypeError{
+          .range =
+              ast::Range{
+                  .begin = args[maximal_args_cnt]->nrange.begin,
+                  .end = args.back()->nrange.end,
+              },
+          .message = std::format("too many arguments: at most {} arguments expected, {} provided", maximal_args_cnt,
+                                 args_count),
+      });
+    } else {
+      const ast::Range end_range{
+          .begin = args_range.end - 1,
+          .end = args_range.end,  // closing paren
+      };
+      if (minimal_args_cnt == maximal_args_cnt) {
+        if (args_count < minimal_args_cnt) {
+          EmitError(TypeError{
+              .range = end_range,
+              .message = std::format("too few arguments: at least {} arguments expected, {} provided", minimal_args_cnt,
+                                     args_count),
+          });
+        }
+      } else if (provided_mandatory_args < minimal_args_cnt) {
+        EmitError(TypeError{
+            .range = end_range,
+            .message = std::format("too few mandatory arguments: at least {} arguments expected, {} provided",
+                                   minimal_args_cnt, provided_mandatory_args),
+        });
+      }
     }
   }
 }
@@ -1646,6 +1691,7 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, InstantiatedTyp
       }
 
       CheckArguments<ast::nodes::FormalPar>(m->args->list, m->args->nrange, callee_file, callee_sym, params->list,
+                                            ArgumentsCheckPolicy::kRequireMandatory,
                                             [](const ast::nodes::FormalPar* param) {
                                               return param->value == nullptr;
                                             });
@@ -1961,14 +2007,23 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, InstantiatedTyp
 
       if (record_sym->Flags() & semantic::SymbolFlags::kUnion) {
         CheckArguments<ast::nodes::Field, {.is_union = true}>(
-            m->list, m->nrange, record_file, record_sym, fields,
+            m->list, m->nrange, record_file, record_sym, fields, ArgumentsCheckPolicy::kRequireMandatory,
             [](const auto*) {
               return false;
             },
             desired_type.restriction);
       } else {
-        CheckArguments<ast::nodes::Field, {.allow_missing_fields = true}>(
-            m->list, m->nrange, record_file, record_sym, fields,
+        const auto policy = [&] -> ArgumentsCheckPolicy {
+          switch (state_.template_decl_omit_mode) {
+            case State::TemplateDeclOmitMode::kNotInTemplateDecl:
+            case State::TemplateDeclOmitMode::kUseImplicitOmit:
+              return ArgumentsCheckPolicy::kRequireMandatory;
+            case State::TemplateDeclOmitMode::kUseExplicitOmit:
+              return ArgumentsCheckPolicy::kRequireAll;
+          };
+        }();
+        CheckArguments<ast::nodes::Field>(
+            m->list, m->nrange, record_file, record_sym, fields, policy,
             [](const ast::nodes::Field* field) {
               return !field->optional;
             },
@@ -2304,6 +2359,26 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
 
     case ast::NodeKind::TemplateDecl: {
       const auto* m = n->As<ast::nodes::TemplateDecl>();
+
+      State::TemplateDeclOmitMode omit_mode{State::TemplateDeclOmitMode::kUseExplicitOmit};
+      ParseTemplateWithSpec(  //
+          sf_.ast, m->with,
+          {
+              .emit_error =
+                  [&](auto range, std::string&& message) {
+                    EmitError(TypeError{.range = std::move(range), .message = std::move(message)});
+                  },
+              .accept_optional =
+                  [&](const auto& parse_optional) {
+                    parse_optional({
+                        .implicit_omit =
+                            [&] {
+                              omit_mode = State::TemplateDeclOmitMode::kUseImplicitOmit;
+                            },
+                    });
+                  },
+          });
+      lib::ScopedValue guard{state_.template_decl_omit_mode, omit_mode};
 
       if (m->params) {
         Visit(m->params);

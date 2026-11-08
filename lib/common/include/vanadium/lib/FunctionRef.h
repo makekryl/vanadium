@@ -24,7 +24,7 @@ class FunctionRef<TReturn(TParams...)> final {
   }
 
   TReturn operator()(TParams... arg) const {
-    return (*vptr_)(instance_, arg...);
+    return (*vptr_)(instance_, std::forward<TParams>(arg)...);
   }
 
   template <class T, TReturn (T::*TMethod)(TParams...)>

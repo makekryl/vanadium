@@ -1,0 +1,30 @@
+module ImplicitOmit {
+
+type record MyRecord {
+  integer a,
+  integer b optional,
+  integer c
+}
+
+template MyRecord t1 := {
+  a := 1,
+  b := 2,
+  c := 3
+};
+template MyRecord t2 := {
+  a := 1,
+  c := 3
+};  // EXPECT_ERROR
+template MyRecord t3 := {
+  a := 1,
+  c := 3
+} with { optional "implicit omit" };
+template MyRecord t4 := {
+  a := 1,
+  b := 2
+} with { optional "implicit omit" };  // EXPECT_ERROR
+template MyRecord t5 := {
+  b := 2
+} with { optional "implicit omit" };  // EXPECT_ERROR
+
+}

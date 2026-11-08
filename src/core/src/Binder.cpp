@@ -429,7 +429,7 @@ bool Binder::Inspect(const ast::Node* n) {
             sf_.ast, m->with,
             {
                 .emit_error =
-                    [&](ast::Range range, std::string msg /* TODO */) {
+                    [&](ast::Range range, std::string&& msg /* TODO */) {
                       EmitError(SemanticError{
                           .range = range,
                           .type = SemanticError::Type::kWithParseError,

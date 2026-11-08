@@ -35,7 +35,7 @@
   47:10: expected value of type 'float', got 'integer'
         y := 2   // EXPECT_ERROR
              ~                  
-  49:25: 2 arguments expected, 0 provided
+  49:25: too few arguments: at least 2 arguments expected, 0 provided
       clz := MyClass.create();  // EXPECT_ERROR
                             ~                  
   54:10: expected value of type 'integer', got 'float'
@@ -44,7 +44,7 @@
   55:10: expected value of type 'float', got 'integer'
         y := 2     // EXPECT_ERROR
              ~                    
-  57:15: 2 arguments expected, 0 provided
+  57:15: too few arguments: at least 2 arguments expected, 0 provided
       clz.memberf();  // EXPECT_ERROR
                   ~                  
   59:7: property 'non_existent_member_func' does not exist on type 'class MyClass'

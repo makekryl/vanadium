@@ -4,17 +4,27 @@
 #include <format>
 #include <string_view>
 
+#include <magic_enum/magic_enum.hpp>
+
 #include <vanadium/ast/ASTNodes.h>
-
-#include "vanadium/ast/ASTTypes.h"
-#include "vanadium/ast/Scanner.h"
-#include "vanadium/lib/FunctionRef.h"
-
-#include "magic_enum/magic_enum.hpp"
+#include <vanadium/ast/ASTTypes.h>
+#include <vanadium/ast/Scanner.h>
+#include <vanadium/lib/FunctionRef.h>
 
 namespace vanadium::core {
 
 namespace {
+std::pair<std::string_view, ast::Range> UnboxValueStrLiteral(const ast::AST& ast, const ast::nodes::Expr* expr) {
+  const auto* vl = expr->As<ast::nodes::ValueLiteral>();
+  assert(vl->tok.kind == ast::TokenKind::STRING);
+  //
+  auto range = vl->tok.range;
+  range.begin += 1;  // "
+  range.end -= 1;    // "
+  //
+  return {ast.Text(range), range};
+}
+
 class WithStmtStrValueScanner {
  public:
   WithStmtStrValueScanner(const ast::AST& ast, const ast::nodes::Expr* expr,
@@ -81,10 +91,6 @@ void ParseModuleWithSpec(const ast::AST& ast, const ast::nodes::WithSpec* ws,
     return;
   }
 
-  const auto lit = [&ast](const ast::Token& tok) -> std::string_view {
-    return ast.Text(tok);
-  };
-
   for (const auto* stmt : ws->list) {
     switch (stmt->kind.kind) {
       case ast::TokenKind::EXTENSION: {
@@ -94,16 +100,16 @@ void ParseModuleWithSpec(const ast::AST& ast, const ast::nodes::WithSpec* ws,
           consumer.emit_error(extension_type_tok.range, "expected extension name");
           break;
         }
-        const auto extension_type = lit(extension_type_tok);
+        const auto extension_type = ast.Text(extension_type_tok);
         if ("anytype" == extension_type) {
           consumer.accept_extension_anytype(
-              extension_type_tok, [&](const ModuleWithAttributesConsumer::ExtensionAnytypeConsumer& consumer) {
+              extension_type_tok, [&](const ModuleWithAttributesConsumer::ExtensionAnytypeConsumer& anytype_consumer) {
                 while (true) {
                   const auto ident_tok = scanner.Expect(ast::TokenKind::IDENT);
                   if (!ident_tok) {
                     break;
                   }
-                  consumer.accept_member(*ident_tok);
+                  anytype_consumer.accept_member(*ident_tok);
                   if (scanner.Peek() != ast::TokenKind::COMMA) {
                     break;
                   }
@@ -115,6 +121,35 @@ void ParseModuleWithSpec(const ast::AST& ast, const ast::nodes::WithSpec* ws,
           // TODO(compiler): reject unknown
           break;
         }
+        break;
+      }
+      default:
+        // TODO(compiler): reject unknown
+        break;
+    }
+  }
+}
+
+void ParseTemplateWithSpec(const ast::AST& ast, const ast::nodes::WithSpec* ws,
+                           const TemplateWithAttributesConsumer& consumer) {
+  if (!ws) {
+    return;
+  }
+
+  for (const auto* stmt : ws->list) {
+    switch (stmt->kind.kind) {
+      case ast::TokenKind::OPTIONAL: {
+        consumer.accept_optional([&](const TemplateWithAttributesConsumer::OptionalConsumer& optional_consumer) {
+          const auto& [value, range] = UnboxValueStrLiteral(ast, stmt->value);
+          // per standard "implicit omit" or "explicit omit" verbatim, without whitespace
+          if ("implicit omit" == value) {
+            optional_consumer.implicit_omit();
+          } else if ("explicit omit" == value) {
+            // TODO: when 'with { optional "implicit omit" }' is supported module-wide, use template-wide explicit omit
+          } else {
+            consumer.emit_error(range, "'implicit omit' or 'explicit omit' expected");
+          }
+        });
         break;
       }
       default:

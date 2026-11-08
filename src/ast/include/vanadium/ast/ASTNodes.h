@@ -355,8 +355,8 @@ struct Node {
   }
 
   template <IsNode DerivedNode>
-  DerivedNode* Maybe() {
-    return nkind == DerivedNode::kKind ? static_cast<DerivedNode*>(this) : nullptr;
+  const DerivedNode* Maybe() const {
+    return nkind == DerivedNode::kKind ? static_cast<const DerivedNode*>(this) : nullptr;
   }
 
   template <IsNode DerivedNode>

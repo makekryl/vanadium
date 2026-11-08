@@ -1,0 +1,10 @@
+./ImplicitOmit.ttcn:
+  17:1: too few arguments: at least 3 arguments expected, 2 provided
+    };  // EXPECT_ERROR
+    ~                  
+  25:1: too few mandatory arguments: at least 2 arguments expected, 1 provided
+    } with { optional "implicit omit" };  // EXPECT_ERROR
+    ~                                                    
+  28:1: too few mandatory arguments: at least 2 arguments expected, 0 provided
+    } with { optional "implicit omit" };  // EXPECT_ERROR
+    ~                                                    

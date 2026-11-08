@@ -11,7 +11,7 @@ namespace vanadium::core::semantic::utils {
 std::string_view GetReadableTypeName(const SourceFile* sf, const semantic::Symbol* sym) {
   const auto lit = [&](const ast::Range& range) -> std::string_view {
     // kinda ASN.1 translation tax
-    if (range.end >= range.begin) {
+    if (range.end >= range.begin && range.Length() <= 32) {
       return sf->Text(range);
     }
     return sym->GetName();
