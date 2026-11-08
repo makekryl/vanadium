@@ -2,8 +2,6 @@
 #include <iterator>
 #include <ranges>
 
-#include <magic_enum/magic_enum.hpp>
-
 #include <LSProtocol.h>
 #include <LSProtocolEx.h>
 
@@ -11,6 +9,7 @@
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/ASTTypes.h>
 #include <vanadium/ast/utils/ASTUtils.h>
+#include <vanadium/ast/utils/Formatters.h>
 #include <vanadium/core/Program.h>
 #include <vanadium/core/Semantic.h>
 
@@ -504,7 +503,7 @@ lsp::HoverResult ProvideHover(const lsp::HoverParams& params, const core::Source
 
         break;
       }
-      builder.WriteText(std::format("TODO: provide hover details for '{}'", magic_enum::enum_name(decl->nkind)));
+      builder.WriteText(std::format("TODO: provide hover details for '{}'", decl->nkind));
       break;
   }
 

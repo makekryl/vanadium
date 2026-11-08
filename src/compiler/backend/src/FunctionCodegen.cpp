@@ -9,8 +9,6 @@
 #include <variant>
 #include <vector>
 
-#include <magic_enum/magic_enum.hpp>
-
 #include <llvm/IR/Argument.h>
 #include <llvm/IR/Attributes.h>
 #include <llvm/IR/BasicBlock.h>
@@ -29,6 +27,7 @@
 
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/utils/ASTUtils.h>
+#include <vanadium/ast/utils/Formatters.h>
 #include <vanadium/core/Builtins.h>
 #include <vanadium/core/Program.h>
 #include <vanadium/core/Semantic.h>
@@ -591,7 +590,7 @@ void FunctionCodegen::CodegenStmt(const ast::nodes::Stmt* n) {
     }
 
     default: {
-      std::println("Codegen(Stmt) fail at NodeKind::{}", magic_enum::enum_name(n->nkind));
+      std::println("Codegen(Stmt) fail at NodeKind::{}", n->nkind);
       break;
     }
   }
@@ -620,7 +619,7 @@ void FunctionCodegen::CodegenDecl(const ast::nodes::Decl* n) {
     }
 
     default: {
-      std::println("Codegen(Decl) fail at NodeKind::{}", magic_enum::enum_name(n->nkind));
+      std::println("Codegen(Decl) fail at NodeKind::{}", n->nkind);
       break;
     }
   }
@@ -771,7 +770,7 @@ RtSlot FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, RtSlot dest) {
         }
 
         default:
-          VANADIUM_DEBUG_ERROR("ValueLiteral unhandled token kind: {}", magic_enum::enum_name(m->tok.kind));
+          VANADIUM_DEBUG_ERROR("ValueLiteral unhandled token kind: {}", m->tok.kind);
           break;
       }
       break;
@@ -797,7 +796,7 @@ RtSlot FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, RtSlot dest) {
             return u_.builder.CreateCall(u_.rt.boolt.ne_f, {vx, vy});
           //
           default:
-            VANADIUM_DEBUG_ERROR("Unhandled BinaryExpr bool op = {}", magic_enum::enum_name(m->op.kind));
+            VANADIUM_DEBUG_ERROR("Unhandled BinaryExpr bool op = {}", m->op.kind);
             break;
         }
       } else if (sym == &core::builtins::kInteger) {
@@ -838,7 +837,7 @@ RtSlot FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, RtSlot dest) {
           case ast::TokenKind::DIV:
             return ret_trivial(u_.builder.CreateCall(u_.rt.integer.div_f, {vx, vy}));
           default:
-            VANADIUM_DEBUG_ERROR("Unhandled BinaryExpr int op = {}", magic_enum::enum_name(m->op.kind));
+            VANADIUM_DEBUG_ERROR("Unhandled BinaryExpr int op = {}", m->op.kind);
             break;
         }
       } else if (sym == &core::builtins::kFloat) {
@@ -868,7 +867,7 @@ RtSlot FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, RtSlot dest) {
           case ast::TokenKind::DIV:
             return ret_trivial(u_.builder.CreateCall(u_.rt.floatt.div_f, {vx, vy}));
           default:
-            VANADIUM_DEBUG_ERROR("Unhandled BinaryExpr int op = {}", magic_enum::enum_name(m->op.kind));
+            VANADIUM_DEBUG_ERROR("Unhandled BinaryExpr int op = {}", m->op.kind);
             break;
         }
       } else {
@@ -919,7 +918,7 @@ RtSlot FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, RtSlot dest) {
             break;
           }
           default: {
-            VANADIUM_DEBUG_ERROR("Unhandled BinaryExpr str operation = {}", magic_enum::enum_name(m->op.kind));
+            VANADIUM_DEBUG_ERROR("Unhandled BinaryExpr str operation = {}", m->op.kind);
             break;
           }
         }
@@ -945,7 +944,7 @@ RtSlot FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, RtSlot dest) {
           case ast::TokenKind::SUB:
             return ret_trivial(u_.builder.CreateCall(u_.rt.integer.neg_f, {vx}));
           default:
-            VANADIUM_DEBUG_ERROR("Unhandled UnaryExpr int op = {}", magic_enum::enum_name(m->op.kind));
+            VANADIUM_DEBUG_ERROR("Unhandled UnaryExpr int op = {}", m->op.kind);
             break;
         }
       } else if (sym == &core::builtins::kFloat) {
@@ -954,7 +953,7 @@ RtSlot FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, RtSlot dest) {
           case ast::TokenKind::SUB:
             return ret_trivial(u_.builder.CreateCall(u_.rt.floatt.neg_f, {vx}));
           default:
-            VANADIUM_DEBUG_ERROR("Unhandled UnaryExpr int op = {}", magic_enum::enum_name(m->op.kind));
+            VANADIUM_DEBUG_ERROR("Unhandled UnaryExpr int op = {}", m->op.kind);
             break;
         }
       } else {
@@ -968,7 +967,7 @@ RtSlot FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, RtSlot dest) {
             break;
           }
           default: {
-            VANADIUM_DEBUG_ERROR("Unhandled UnaryExpr str operation = {}", magic_enum::enum_name(m->op.kind));
+            VANADIUM_DEBUG_ERROR("Unhandled UnaryExpr str operation = {}", m->op.kind);
             break;
           }
         }
@@ -1183,7 +1182,7 @@ RtSlot FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, RtSlot dest) {
       }
       for (const auto& [idx, argnode] : m->args->list | std::views::enumerate) {
         auto* av = prepare_argument(u_.WrapValue(CodegenExpr(argnode).Unwrap()));
-        VANADIUM_DEBUG_ASSERT(av != nullptr, "Unknown argument expr type: {}", magic_enum::enum_name(argnode->nkind));
+        VANADIUM_DEBUG_ASSERT(av != nullptr, "Unknown argument expr type: {}", argnode->nkind);
         if (!callee->getAttributes().hasParamAttr((does_return ? 1 : 0) + idx, kGenericArgAttr)) {
           args.push_back(av);
         } else {
@@ -1227,7 +1226,7 @@ RtSlot FunctionCodegen::CodegenExpr(const ast::nodes::Expr* expr, RtSlot dest) {
     }
 
     default: {
-      VANADIUM_DEBUG_ERROR("Codegen(Expr) fail at NodeKind::{}", magic_enum::enum_name(expr->nkind));
+      VANADIUM_DEBUG_ERROR("Codegen(Expr) fail at NodeKind::{}", expr->nkind);
       break;
     }
   }
@@ -1247,7 +1246,7 @@ void CodegenFunction(CodegenUnit& u, const core::semantic::Symbol* sym) {
       FunctionCodegen(u).Generate(sym, n->As<ast::nodes::ControlPart>());
       break;
     default:
-      VANADIUM_DEBUG_ERROR("Unhandled node: {}", magic_enum::enum_name(n->nkind));
+      VANADIUM_DEBUG_ERROR("Unhandled node: {}", n->nkind);
       break;
   }
 }

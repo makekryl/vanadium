@@ -12,11 +12,10 @@
 #include <variant>
 #include <vector>
 
-#include <magic_enum/magic_enum.hpp>
-
 #include <vanadium/ast/AST.h>
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/Scanner.h>
+#include <vanadium/ast/utils/Formatters.h>
 #include <vanadium/lib/Arena.h>
 #include <vanadium/lib/Assert.h>
 #include <vanadium/lib/Metaprogramming.h>
@@ -1850,7 +1849,7 @@ Unit AstSerializer::S(const ast::Node* n) {  // NOLINT(readability-function-size
     }
 
     default: {
-      VANADIUM_DEBUG_ASSERT(false, "Unhandled node '{}'", magic_enum::enum_name(n->nkind));
+      VANADIUM_DEBUG_ASSERT(false, "Unhandled node '{}'", n->nkind);
       return S_AsIs(n);
     }
   }

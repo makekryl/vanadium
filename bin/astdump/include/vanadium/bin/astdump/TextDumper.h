@@ -13,7 +13,7 @@
 #include <vanadium/ast/ASTDumper.h>
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/ASTTypes.h>
-#include <vanadium/ast/defs/magic_enum_defs.h>
+#include <vanadium/ast/utils/Formatters.h>
 #include <vanadium/lib/AnsiColors.h>
 
 class TextASTDumper {
@@ -90,7 +90,7 @@ inline void vanadium::ast::Dumper<TextASTDumper>::Dump(std::string_view name, co
   if (tok.range.Length() > 0) {
     impl_.WriteValue(tok.On(impl_.ast_.src));
   } else {
-    impl_.WriteValue(std::format("::{}", magic_enum::enum_name(TokenKind(tok.kind)), int(tok.kind)));
+    impl_.WriteValue(std::format("::{}", tok.kind));
   }
 }
 

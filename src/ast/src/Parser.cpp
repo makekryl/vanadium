@@ -5,15 +5,13 @@
 #include <format>
 #include <utility>
 
-#include <magic_enum/magic_enum.hpp>
-
 #include <vanadium/lib/ScopedValue.h>
 #include <vanadium/lib/StaticSet.h>
 
 #include "vanadium/ast/AST.h"
 #include "vanadium/ast/ASTNodes.h"
 #include "vanadium/ast/Scanner.h"
-#include "vanadium/ast/defs/magic_enum_defs.h"
+#include "vanadium/ast/utils/Formatters.h"
 
 namespace vanadium::ast {
 namespace parser {
@@ -219,7 +217,7 @@ RootNode* Parser::ParseRoot() {
         node->parent = &root;
         nodes.push_back(node);
         if (tok_ != TokenKind::kEOF && !kTokTopLevel.contains(tok_)) {
-          EmitError(Peek(1).range, std::format("unexpected '{}' token", magic_enum::enum_name(tok_)));
+          EmitError(Peek(1).range, std::format("unexpected '{}' token", tok_));
           while (scanner_.Scan().kind != TokenKind::kEOF) {
             // eat all tokens to calculate remaining line offsets
             ;
@@ -2634,7 +2632,7 @@ std::string_view Parser::Lit(std::uint8_t i) {
 
 Token Parser::Expect(TokenKind expected) {
   if (tok_ != expected) [[unlikely]] {
-    EmitErrorExpected(magic_enum::enum_name(expected));
+    EmitErrorExpected(utils::TokenKindToString(expected));
     return {};
   }
   return Consume();

@@ -9,7 +9,6 @@
 #include <variant>
 
 #include <glaze/json.hpp>
-#include <magic_enum/magic_enum.hpp>
 
 #include <LSProtocol.h>
 
@@ -17,6 +16,7 @@
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/ASTTypes.h>
 #include <vanadium/ast/utils/ASTUtils.h>
+#include <vanadium/ast/utils/Formatters.h>
 #include <vanadium/core/Program.h>
 #include <vanadium/core/Semantic.h>
 #include <vanadium/core/TypeChecker.h>
@@ -160,8 +160,7 @@ lsp::CompletionList CollectCompletions(const lsp::CompletionParams& params, cons
 
   const auto* n = detail::FindNode(&file, params.position);
 
-  VLS_WARN("--- compl:: n={}, parent={}, grandparent={}", magic_enum::enum_name(n->nkind),
-           magic_enum::enum_name(n->parent->nkind), magic_enum::enum_name(n->parent->parent->nkind));
+  VLS_WARN("--- compl:: n={}, parent={}, grandparent={}", n->nkind, n->parent->nkind, n->parent->parent->nkind);
 
   const core::semantic::Scope* scope = core::semantic::utils::FindScope(file.module->scope, n);
 

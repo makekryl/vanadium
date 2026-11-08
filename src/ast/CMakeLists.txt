@@ -1,8 +1,9 @@
 add_library(vanadium_ast STATIC
-  src/ASTInspector.cpp
-  src/utils/ASTUtils.cpp
   src/Parser.cpp
   src/Scanner.cpp
+  src/ASTInspector.cpp
+  src/utils/ASTUtils.cpp
+  src/utils/Formatters.cpp
 )
 
 target_include_directories(vanadium_ast PUBLIC

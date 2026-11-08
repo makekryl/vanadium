@@ -4,11 +4,10 @@
 #include <format>
 #include <string_view>
 
-#include <magic_enum/magic_enum.hpp>
-
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/ASTTypes.h>
 #include <vanadium/ast/Scanner.h>
+#include <vanadium/ast/utils/Formatters.h>
 #include <vanadium/lib/FunctionRef.h>
 
 namespace vanadium::core {
@@ -53,7 +52,7 @@ class WithStmtStrValueScanner {
   std::optional<ast::Token> Expect(ast::TokenKind kind) {
     auto tok = Scan();
     if (tok.kind != kind) {
-      emit_error_(tok.range, std::format("expected {}", magic_enum::enum_name(kind)));
+      emit_error_(tok.range, std::format("expected {}", kind));
       return std::nullopt;
     }
     return tok;

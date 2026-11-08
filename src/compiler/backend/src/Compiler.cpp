@@ -10,6 +10,7 @@
 #include <llvm/IR/Module.h>
 #include <llvm/Support/raw_ostream.h>
 
+#include <vanadium/ast/utils/Formatters.h>
 #include <vanadium/core/Program.h>
 #include <vanadium/core/Semantic.h>
 #include <vanadium/lib/Assert.h>
@@ -33,7 +34,7 @@ void CompileUnit(CodegenUnit& u) {
           CodegenStructural(u, &sym, n->As<ast::nodes::StructTypeDecl>());
           break;
         default:
-          VANADIUM_DEBUG_ERROR("Unhandled type node: {}", magic_enum::enum_name(n->nkind));
+          VANADIUM_DEBUG_ERROR("Unhandled type node: {}", n->nkind);
           break;
       }
     } else if (sym.Flags() & core::semantic::SymbolFlags::kFunction) {
