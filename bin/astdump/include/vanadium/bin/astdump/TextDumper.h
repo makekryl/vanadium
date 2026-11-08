@@ -108,7 +108,7 @@ inline void vanadium::ast::Dumper<TextASTDumper>::Dump(std::string_view name,
 
 template <>
 template <typename T>
-inline void vanadium::ast::Dumper<TextASTDumper>::Dump(std::string_view name, const std::vector<T>& v) {
+inline void vanadium::ast::Dumper<TextASTDumper>::Dump(std::string_view name, NodeSpan<T> v) {
   if (v.empty()) {
     return;
   }
