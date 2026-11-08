@@ -1326,6 +1326,7 @@ class BasicTypeChecker {
   }
 
   struct State {
+    bool is_in_call_expr = false;
     enum class TemplateDeclOmitMode : std::uint8_t {
       kNotInTemplateDecl,
       kUseImplicitOmit,
@@ -1643,6 +1644,8 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, InstantiatedTyp
   InstantiatedType resulting_type{};
   switch (n->nkind) {
     case ast::NodeKind::CallExpr: {
+      lib::ScopedValue state_guard{state_.is_in_call_expr, true};
+
       const auto* m = n->As<ast::nodes::CallExpr>();
       const auto* callee_sym = CheckType(m->fun).sym;
       if (!callee_sym || callee_sym == &symbols::kTypeError) {
@@ -2014,8 +2017,13 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, InstantiatedTyp
             desired_type.restriction);
       } else {
         const auto policy = [&] -> ArgumentsCheckPolicy {
+          if (state_.is_in_call_expr) {
+            // f({})
+            return ArgumentsCheckPolicy::kRequireAll;
+          }
           switch (state_.template_decl_omit_mode) {
             case State::TemplateDeclOmitMode::kNotInTemplateDecl:
+              return ArgumentsCheckPolicy::kRequireNone;
             case State::TemplateDeclOmitMode::kUseImplicitOmit:
               return ArgumentsCheckPolicy::kRequireMandatory;
             case State::TemplateDeclOmitMode::kUseExplicitOmit:

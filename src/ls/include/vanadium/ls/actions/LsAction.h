@@ -17,7 +17,7 @@ concept CanResolveDiagnostic = requires {
         std::declval<const lsp::CodeActionParams&>(),   //
         std::declval<const lsp::Diagnostic&>(),         //
         std::declval<const core::SourceFile&>(),        //
-        std::declval<LsSessionRef>()                    //
+        std::declval<LsSessionRef&>()                   //
     )
   } -> std::same_as<void>;
 };

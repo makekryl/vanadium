@@ -1,0 +1,22 @@
+./ImplicitOmitPitfalls.ttcn:
+  14:11: too few arguments: at least 3 arguments expected, 0 provided
+      x := f({}),  // EXPECT_ERROR
+              ~                   
+  15:11: too few arguments: at least 3 arguments expected, 0 provided
+      y := f({}),  // EXPECT_ERROR
+              ~                   
+  16:11: too few arguments: at least 3 arguments expected, 0 provided
+      z := f({})   // EXPECT_ERROR
+              ~                   
+  20:11: too few arguments: at least 3 arguments expected, 0 provided
+      x := f({}),  // EXPECT_ERROR
+              ~                   
+  21:11: too few arguments: at least 3 arguments expected, 0 provided
+      y := f({}),  // EXPECT_ERROR
+              ~                   
+  22:11: too few arguments: at least 3 arguments expected, 0 provided
+      z := f({})   // EXPECT_ERROR
+              ~                   
+  26:6: too few arguments: at least 3 arguments expected, 0 provided
+      f({});  // EXPECT_ERROR
+         ~                   

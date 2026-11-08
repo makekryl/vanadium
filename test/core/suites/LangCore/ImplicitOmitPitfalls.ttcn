@@ -1,0 +1,29 @@
+module ImplicitOmitPitfalls {
+
+type record Rec {
+  integer x optional,
+  integer y optional,
+  integer z optional
+}
+
+function f(template Rec r) return integer {
+  return 1;
+}
+
+template Rec t_Rec_ExplicitOmit := {
+  x := f({}),  // EXPECT_ERROR
+  y := f({}),  // EXPECT_ERROR
+  z := f({})   // EXPECT_ERROR
+}
+
+template Rec t_Rec_ImplicitOmit := {
+  x := f({}),  // EXPECT_ERROR
+  y := f({}),  // EXPECT_ERROR
+  z := f({})   // EXPECT_ERROR
+} with { optional "implicit omit" }
+
+function g() {
+  f({});  // EXPECT_ERROR
+}
+
+}

@@ -1,3 +1,5 @@
+#include "vanadium/ls/actions/UnresolvedSymbolLookup.h"
+
 #include <string_view>
 
 #include <vanadium/ast/utils/ASTUtils.h>
@@ -7,7 +9,6 @@
 #include <vanadium/lib/Metaprogramming.h>
 
 #include "vanadium/ls/LanguageServerConv.h"
-#include "vanadium/ls/actions/UnresolvedSymbolLookup.h"
 #include "vanadium/ls/detail/CodeAction.h"
 #include "vanadium/ls/detail/Helpers.h"
 
@@ -32,7 +33,7 @@ void LookupMissingImport(const core::Program& program, std::string_view symbol_n
 
 void UnresolvedSymbolLookup::ResolveDiagnostic(std::vector<lsp::CodeAction>& result,
                                                const lsp::CodeActionParams& params, const lsp::Diagnostic& diag,
-                                               const core::SourceFile& file, LsSessionRef d) {
+                                               const core::SourceFile& file, LsSessionRef& d) {
   if (!diag.data || !diag.data->is_object() || !diag.data->contains(detail::codeAction::kPayloadKeyUnresolved)) {
     return;
   }

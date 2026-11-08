@@ -14,7 +14,7 @@
 namespace vanadium::ls::actions {
 
 void LintAutofix::ResolveDiagnostic(std::vector<lsp::CodeAction>& result, const lsp::CodeActionParams& params,
-                                    const lsp::Diagnostic& diag, const core::SourceFile& file, LsSessionRef d) {
+                                    const lsp::Diagnostic& diag, const core::SourceFile& file, LsSessionRef&) {
   if (!diag.data || !diag.data->is_object()) {
     return;
   }
