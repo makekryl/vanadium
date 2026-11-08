@@ -16,6 +16,10 @@ namespace vanadium::core {
 namespace {
 std::pair<std::string_view, ast::Range> UnboxValueStrLiteral(const ast::AST& ast, const ast::nodes::Expr* expr) {
   const auto* vl = expr->As<ast::nodes::ValueLiteral>();
+  if (vl->tok.kind != ast::TokenKind::STRING) {
+    // (lsp) broken AST
+    return {"", {}};
+  }
   assert(vl->tok.kind == ast::TokenKind::STRING);
   //
   auto range = vl->tok.range;
