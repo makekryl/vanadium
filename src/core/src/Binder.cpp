@@ -1082,9 +1082,17 @@ Symbol Binder::BindListSpec(std::string_view name, SymbolFlags::Value flags, con
 std::optional<Symbol> Binder::BindTypeSpec(std::string_view name, SymbolFlags::Value flags,
                                            const ast::nodes::TypeSpec* spec) {
   switch (spec->nkind) {
-    case ast::NodeKind::StructSpec:
-      return Symbol{name, spec, SymbolFlags::Value(flags | SymbolFlags::kStructuralType),
-                    &BindFields(spec->As<ast::nodes::StructSpec>()->fields)};
+    case ast::NodeKind::StructSpec: {
+      const auto* m = spec->As<ast::nodes::StructSpec>();
+      const auto kind_flag =
+          m->kind.kind == ast::TokenKind::UNION ? SymbolFlags::kUnionStructuralType : SymbolFlags::kStructuralType;
+      return Symbol{
+          name,
+          spec,
+          SymbolFlags::Value(flags | kind_flag),
+          &BindFields(m->fields),
+      };
+    }
     case ast::NodeKind::EnumSpec: {
       const auto* m = spec->As<ast::nodes::EnumSpec>();
       for (const auto* val : m->values) {
