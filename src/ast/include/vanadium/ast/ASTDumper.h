@@ -21,7 +21,7 @@ class Dumper {
   void Dump(std::string_view, const vanadium::ast::nodes::Ident&) {}
 
   template <typename T>
-  void Dump(std::string_view name, const std::vector<T>& v);
+  void Dump(std::string_view name, NodeSpan<T> v);
 
   void DumpPresence(std::string_view);
 
