@@ -14,85 +14,34 @@
 #include <vanadium/core/Semantic.h>
 #include <vanadium/core/TypeChecker.h>
 #include <vanadium/lib/ArenaString.h>
+#include <vanadium/lib/Metaprogramming.h>
 
-#include "vanadium/ls/LanguageServerConv.h"
 #include "vanadium/ls/LanguageServerLogger.h"
-#include "vanadium/ls/detail/Helpers.h"
+#include "vanadium/ls/actions/LintAutofix.h"
+#include "vanadium/ls/actions/LsAction.h"
+#include "vanadium/ls/actions/UnresolvedSymbolLookup.h"
 
 namespace vanadium::ls::detail {
 
+using Actions = mp::Typelist<         //
+    actions::UnresolvedSymbolLookup,  //
+    actions::LintAutofix              //
+    >;
+
 lsp::CodeActionResult ProvideCodeActions(const lsp::CodeActionParams& params, const core::SourceFile& file,
                                          LsSessionRef d) {
-  std::vector<lsp::CodeAction> actions;
-
+  std::vector<lsp::CodeAction> result;
   for (const auto& diag : params.context.diagnostics) {
-    if (!diag.data) {
-      continue;
+    if (diag.data) {
+      VLS_DEBUG("CA data='{}'", diag.data->dump().value());
     }
-    const auto& data = *diag.data;
-    VLS_DEBUG("CA data='{}'", data.dump().value());
-    if (data.contains(codeAction::kPayloadKeyUnresolved)) {  // TODO: extract to shared constant
-      const auto* n = ast::utils::GetNodeAt(file.ast, file.ast.lines.GetPosition(ast::Location{
-                                                          .line = diag.range.start.line,
-                                                          .column = diag.range.start.character + 1,
-                                                      }));
-      const auto text = n->On(file.ast.src);
-
-      file.program->VisitAccessibleModules([&](const core::ModuleDescriptor& module) {
-        if (module.scope->ResolveDirect(text) == nullptr) {
-          // continue search
-          return true;
-        }
-
-        const auto& replacement = lib::FormatStringToArena(d.arena, "\nimport from {} all;", module.name);
-
-        const ast::pos_t last_import_pos = detail::FindPositionAfterLastImport(file.ast);
-        if (last_import_pos == ast::pos_t(-1)) {
-          return false;
-        }
-        const auto loc = file.ast.lines.Translate(last_import_pos);
-
-        actions.emplace_back(lsp::CodeAction{
-            .title = lib::FormatStringToArena(d.arena, "import module '{}' for symbol '{}'", module.name, text),
-            .kind = lsp::CodeActionKind::kQuickfix,
-            .isPreferred = true,
-            .edit =
-                lsp::WorkspaceEdit{
-                    .changes = {{{
-                        params.textDocument.uri,
-                        {lsp::TextEdit{
-                            .range = lsp::Range{.start = conv::ToLSPPosition(loc), .end = conv::ToLSPPosition(loc)},
-                            .newText = replacement,
-                        }},
-                    }}},
-                },
-        });
-
-        return false;
-      });
-    } else if (data.contains(codeAction::kPayloadKeyAutofix)) {  // TODO: extract to shared constant
-      const auto& af_data = data[codeAction::kPayloadKeyAutofix];
-      actions.emplace_back(
-          lsp::CodeAction{
-              .title = af_data["title"].as<std::string_view>(),
-              .kind = lsp::CodeActionKind::kQuickfix,
-              .isPreferred = true,
-              .edit =
-                  lsp::WorkspaceEdit{
-                      .changes = {{{params.textDocument.uri,
-                                    {lsp::TextEdit{
-                                        .range = lsp::Range{.start = conv::ToLSPPosition(file.ast.lines.Translate(
-                                                                af_data["range"][0].as<int>())),
-                                                            .end = conv::ToLSPPosition(file.ast.lines.Translate(
-                                                                af_data["range"][1].as<int>()))},
-                                        .newText = af_data["replacement"].as<std::string_view>(),
-                                    }}}}},
-                  },
-          });
-    }
+    Actions::Apply([&]<typename A>() {
+      if constexpr (actions::CanResolveDiagnostic<A>) {
+        A::ResolveDiagnostic(result, params, diag, file, d);
+      }
+    });
   }
-
-  return actions;
+  return result;
 }
 
 }  // namespace vanadium::ls::detail

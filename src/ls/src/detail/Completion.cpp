@@ -98,6 +98,7 @@ void CollectVisibleSymbols(CompletionContext& ctx, std::string_view order) {
       }
       ctx.items.emplace_back(lsp::CompletionItem{
           .label = name,
+          // .detail = "V",
           .labelDetails =
               lsp::CompletionItemLabelDetails{
                   // .detail = core::checker::utils::GetReadableTypeName(&sym), // <-- TODO: obtain type
