@@ -5,13 +5,12 @@
 #include <iterator>
 #include <string_view>
 
-#include <magic_enum/magic_enum.hpp>
-
 #include <LSProtocol.h>
 
 #include <vanadium/ast/ASTNodes.h>
 #include <vanadium/ast/ASTTypes.h>
 #include <vanadium/ast/utils/ASTUtils.h>
+#include <vanadium/ast/utils/Formatters.h>
 #include <vanadium/core/Program.h>
 #include <vanadium/core/Semantic.h>
 #include <vanadium/core/TypeChecker.h>
@@ -131,7 +130,7 @@ void AddMissingArguments::ResolveDiagnostic(std::vector<lsp::CodeAction>& result
       const auto* pe = n->As<ast::nodes::ParenExpr>();
       const auto* pars = core::checker::utils::ResolveCallableParams(&file, scope, pe);
       if (!pars) {
-        VLS_WARN("{} failed to get pars, parent nkind={}", __FILE__, magic_enum::enum_name(n->parent->nkind));
+        VLS_WARN("{} failed to get pars, parent nkind={}", __FILE__, n->parent->nkind);
         break;
       }
       const auto& pars_file = *ast::utils::SourceFileOf(pars);
@@ -166,7 +165,7 @@ void AddMissingArguments::ResolveDiagnostic(std::vector<lsp::CodeAction>& result
       break;
     }
     default:
-      VLS_WARN("{} unsupported node {}", __FILE__, magic_enum::enum_name(n->nkind));
+      VLS_WARN("{} unsupported node {}", __FILE__, n->nkind);
       break;
   }
 
