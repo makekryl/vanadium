@@ -2,9 +2,50 @@
 
 #include "vanadium/lib/Bitset.h"
 
+namespace {
+
 using namespace vanadium::lib;
 
-TEST(BitsetTest, DefaultConstructedIsEmpty) {
+class BitsetTest : public ::testing::Test {
+ protected:
+  static constexpr std::size_t kHeapSize = (Bitset::kCellBits * 1024) + 3;
+
+  static void SetPattern(Bitset& bs) {
+    if (bs.Size() == 0) {
+      return;
+    }
+
+    bs.Set(0);
+    bs.Set(bs.Size() / 2);
+    bs.Set(bs.Size() - 1);
+
+    if (bs.Size() > Bitset::kCellBits) {
+      bs.Set(Bitset::kCellBits - 1);
+      bs.Set(Bitset::kCellBits);
+    }
+  }
+
+  static void ExpectEqual(const Bitset& lhs, const Bitset& rhs) {
+    ASSERT_EQ(lhs.Size(), rhs.Size());
+
+    for (std::size_t i = 0; i < lhs.Size(); ++i) {
+      EXPECT_EQ(lhs.Get(i), rhs.Get(i)) << "Bit index: " << i;
+    }
+
+    EXPECT_EQ(lhs.ActiveCount(), rhs.ActiveCount());
+    EXPECT_EQ(lhs.InactiveCount(), rhs.InactiveCount());
+    EXPECT_EQ(lhs.All(), rhs.All());
+  }
+
+  static void ExpectEmpty(const Bitset& bs) {
+    EXPECT_EQ(bs.Size(), 0);
+    EXPECT_EQ(bs.ActiveCount(), 0);
+    EXPECT_EQ(bs.InactiveCount(), 0);
+    EXPECT_TRUE(bs.All());
+  }
+};
+
+TEST_F(BitsetTest, DefaultConstructedIsEmpty) {
   Bitset bs;
 
   EXPECT_EQ(bs.Size(), 0);
@@ -13,7 +54,7 @@ TEST(BitsetTest, DefaultConstructedIsEmpty) {
   EXPECT_TRUE(bs.All());
 }
 
-TEST(BitsetTest, ConstructWithSize) {
+TEST_F(BitsetTest, ConstructWithSize) {
   Bitset bs(60);
 
   EXPECT_EQ(bs.Size(), 60);
@@ -22,7 +63,7 @@ TEST(BitsetTest, ConstructWithSize) {
   EXPECT_FALSE(bs.All());
 }
 
-TEST(BitsetTest, ConstructWithSizeMulticell) {
+TEST_F(BitsetTest, ConstructWithSizeMulticell) {
   Bitset bs(70);
 
   EXPECT_EQ(bs.Size(), 70);
@@ -31,7 +72,7 @@ TEST(BitsetTest, ConstructWithSizeMulticell) {
   EXPECT_FALSE(bs.All());
 }
 
-TEST(BitsetTest, SetAndGetSingleBit) {
+TEST_F(BitsetTest, SetAndGetSingleBit) {
   Bitset bs(10);
   ASSERT_FALSE(bs.Get(3));
   ASSERT_EQ(bs.ActiveCount(), 0);
@@ -41,7 +82,7 @@ TEST(BitsetTest, SetAndGetSingleBit) {
   EXPECT_EQ(bs.ActiveCount(), 1);
 }
 
-TEST(BitsetTest, ClearBit) {
+TEST_F(BitsetTest, ClearBit) {
   Bitset bs(10);
   ASSERT_FALSE(bs.Get(5));
   ASSERT_EQ(bs.ActiveCount(), 0);
@@ -55,7 +96,7 @@ TEST(BitsetTest, ClearBit) {
   EXPECT_EQ(bs.ActiveCount(), 0);
 }
 
-TEST(BitsetTest, Multicell) {
+TEST_F(BitsetTest, Multicell) {
   constexpr std::size_t kSize = Bitset::kCellBits + 5;
   Bitset bs(kSize);
 
@@ -74,7 +115,7 @@ TEST(BitsetTest, Multicell) {
   EXPECT_EQ(bs.ActiveCount(), 4);
 }
 
-TEST(BitsetTest, And) {
+TEST_F(BitsetTest, And) {
   Bitset a(8);
   Bitset b(8);
 
@@ -93,7 +134,7 @@ TEST(BitsetTest, And) {
   EXPECT_EQ(a.ActiveCount(), 1);
 }
 
-TEST(BitsetTest, Or) {
+TEST_F(BitsetTest, Or) {
   Bitset a(8);
   Bitset b(8);
 
@@ -107,7 +148,7 @@ TEST(BitsetTest, Or) {
   EXPECT_EQ(a.ActiveCount(), 2);
 }
 
-TEST(BitsetTest, Flip) {
+TEST_F(BitsetTest, Flip) {
   Bitset bs(7);
 
   bs.Set(1);
@@ -133,7 +174,7 @@ TEST(BitsetTest, Flip) {
   EXPECT_FALSE(bs.All());
 }
 
-TEST(BitsetTest, Reset) {
+TEST_F(BitsetTest, Reset) {
   Bitset bs(20);
 
   bs.Set(5);
@@ -145,7 +186,7 @@ TEST(BitsetTest, Reset) {
   EXPECT_EQ(bs.InactiveCount(), 20);
 }
 
-TEST(BitsetTest, All) {
+TEST_F(BitsetTest, All) {
   Bitset bs(5);
 
   for (std::size_t i = 0; i < 5; ++i) {
@@ -154,3 +195,191 @@ TEST(BitsetTest, All) {
 
   EXPECT_TRUE(bs.All());
 }
+
+TEST_F(BitsetTest, CopyConstructSmall) {
+  Bitset original(60);
+  SetPattern(original);
+
+  Bitset copy(original);
+
+  ExpectEqual(copy, original);
+
+  original.Reset();
+
+  EXPECT_EQ(copy.ActiveCount(), 3);
+}
+
+TEST_F(BitsetTest, CopyConstructHeap) {
+  Bitset original(kHeapSize);
+  SetPattern(original);
+
+  Bitset copy(original);
+
+  ExpectEqual(copy, original);
+
+  original.Reset();
+
+  EXPECT_GT(copy.ActiveCount(), 0);
+}
+
+TEST_F(BitsetTest, CopyAssignSmall) {
+  Bitset original(60);
+  SetPattern(original);
+
+  Bitset copy;
+  copy = original;
+
+  ExpectEqual(copy, original);
+
+  original.Reset();
+
+  EXPECT_EQ(copy.ActiveCount(), 3);
+}
+
+TEST_F(BitsetTest, CopyAssignHeap) {
+  Bitset original(kHeapSize);
+  SetPattern(original);
+
+  Bitset copy;
+  copy = original;
+
+  ExpectEqual(copy, original);
+
+  original.Reset();
+
+  EXPECT_GT(copy.ActiveCount(), 0);
+}
+
+TEST_F(BitsetTest, CopyAssignAcrossStorageTypes) {
+  Bitset small(60);
+  Bitset large(kHeapSize);
+
+  SetPattern(small);
+  SetPattern(large);
+
+  // sso -> heap
+  Bitset heap_destination(kHeapSize);
+  heap_destination = small;
+  ExpectEqual(heap_destination, small);
+
+  // heap -> sso
+  Bitset small_destination(60);
+  small_destination = large;
+  ExpectEqual(small_destination, large);
+}
+
+TEST_F(BitsetTest, MoveConstructSmall) {
+  Bitset original(60);
+  SetPattern(original);
+
+  Bitset expected(original);
+  Bitset moved(std::move(original));
+
+  ExpectEqual(moved, expected);
+  ExpectEmpty(original);
+}
+
+TEST_F(BitsetTest, MoveConstructHeap) {
+  Bitset original(kHeapSize);
+  SetPattern(original);
+
+  Bitset expected(original);
+  Bitset moved(std::move(original));
+
+  ExpectEqual(moved, expected);
+  ExpectEmpty(original);
+}
+
+TEST_F(BitsetTest, MoveAssignSmallToSmall) {
+  Bitset original(60);
+  SetPattern(original);
+
+  Bitset expected(original);
+  Bitset destination(30);
+
+  destination = std::move(original);
+
+  ExpectEqual(destination, expected);
+  ExpectEmpty(original);
+}
+
+TEST_F(BitsetTest, MoveAssignSmallToHeap) {
+  Bitset original(60);
+  SetPattern(original);
+
+  Bitset expected(original);
+  Bitset destination(kHeapSize);
+
+  destination = std::move(original);
+
+  ExpectEqual(destination, expected);
+  ExpectEmpty(original);
+}
+
+TEST_F(BitsetTest, MoveAssignHeapToSmall) {
+  Bitset original(kHeapSize);
+  SetPattern(original);
+
+  Bitset expected(original);
+  Bitset destination(60);
+
+  destination = std::move(original);
+
+  ExpectEqual(destination, expected);
+  ExpectEmpty(original);
+}
+
+TEST_F(BitsetTest, MoveAssignHeapToHeap) {
+  Bitset original(kHeapSize);
+  SetPattern(original);
+
+  Bitset expected(original);
+  Bitset destination(kHeapSize);
+
+  destination.Set(100);
+
+  destination = std::move(original);
+
+  ExpectEqual(destination, expected);
+  ExpectEmpty(original);
+}
+
+TEST_F(BitsetTest, FlipMulticell) {
+  Bitset bs(kHeapSize);
+
+  bs.Set(0);
+  bs.Set(Bitset::kCellBits - 1);
+  bs.Set(Bitset::kCellBits);
+  bs.Set(kHeapSize - 1);
+
+  bs.Flip();
+
+  EXPECT_EQ(bs.ActiveCount(), kHeapSize - 4);
+  EXPECT_EQ(bs.InactiveCount(), 4);
+
+  EXPECT_FALSE(bs.Get(0));
+  EXPECT_FALSE(bs.Get(Bitset::kCellBits - 1));
+  EXPECT_FALSE(bs.Get(Bitset::kCellBits));
+  EXPECT_FALSE(bs.Get(kHeapSize - 1));
+
+  bs.Flip();
+
+  EXPECT_EQ(bs.ActiveCount(), 4);
+  EXPECT_TRUE(bs.Get(0));
+  EXPECT_TRUE(bs.Get(Bitset::kCellBits - 1));
+  EXPECT_TRUE(bs.Get(Bitset::kCellBits));
+  EXPECT_TRUE(bs.Get(kHeapSize - 1));
+}
+
+TEST_F(BitsetTest, ResetHeapStorage) {
+  Bitset bs(kHeapSize);
+  SetPattern(bs);
+
+  bs.Reset();
+
+  EXPECT_EQ(bs.ActiveCount(), 0);
+  EXPECT_EQ(bs.InactiveCount(), kHeapSize);
+  EXPECT_FALSE(bs.All());
+}
+
+}  // namespace

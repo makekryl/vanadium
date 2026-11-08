@@ -12,8 +12,8 @@ TEST(HeapArrayTest, DefaultInitialization) {
 
   HeapArray<int> arr(kSize);
 
-  ASSERT_EQ(arr.Size(), kSize);
-  for (std::size_t i = 0; i < arr.Size(); ++i) {
+  ASSERT_EQ(arr.size(), kSize);
+  for (std::size_t i = 0; i < arr.size(); ++i) {
     EXPECT_EQ(arr[i], 0);
   }
 }
@@ -38,8 +38,8 @@ TEST(HeapArrayTest, CopyConstructor) {
 
   HeapArray<int> copy(original);
 
-  EXPECT_EQ(copy.Size(), original.Size());
-  for (std::size_t i = 0; i < original.Size(); ++i) {
+  EXPECT_EQ(copy.size(), original.size());
+  for (std::size_t i = 0; i < original.size(); ++i) {
     EXPECT_EQ(copy[i], original[i]);
   }
 
@@ -58,7 +58,7 @@ TEST(HeapArrayTest, MoveConstructor) {
 
   auto moved = std::move(original);
 
-  EXPECT_EQ(moved.Size(), kSize);
+  EXPECT_EQ(moved.size(), kSize);
   EXPECT_EQ(moved[0], 7);
   EXPECT_EQ(moved[1], 8);
 
@@ -76,8 +76,8 @@ TEST(HeapArrayTest, CopyAssignment) {
   HeapArray<int> b(1);
   b = a;
 
-  EXPECT_EQ(b.Size(), kSize);
-  for (std::size_t i = 0; i < b.Size(); ++i) {
+  EXPECT_EQ(b.size(), kSize);
+  for (std::size_t i = 0; i < b.size(); ++i) {
     EXPECT_EQ(b[i], a[i]);
   }
 
@@ -95,7 +95,7 @@ TEST(HeapArrayTest, MoveAssignment) {
   HeapArray<int> b(1);
   b = std::move(a);
 
-  EXPECT_EQ(b.Size(), kSize);
+  EXPECT_EQ(b.size(), kSize);
   EXPECT_EQ(b[0], 5);
   EXPECT_EQ(b[1], 6);
 }
