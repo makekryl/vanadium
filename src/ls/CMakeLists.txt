@@ -7,6 +7,7 @@ add_library(vanadium_ls STATIC
   src/LanguageServerClientMessaging.cpp
   src/StatusReporter.cpp
   #
+  src/actions/AddMissingArguments.cpp
   src/actions/UnresolvedSymbolLookup.cpp
   src/actions/LintAutofix.cpp
   #

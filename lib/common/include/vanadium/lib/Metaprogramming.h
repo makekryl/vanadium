@@ -31,4 +31,7 @@ concept Invocable = std::is_invocable_r_v<R, F, Args...>;
 template <typename F, typename... Args>
 concept Consumer = Invocable<F, void, Args...>;
 
+template <typename F, typename... Args>
+concept Predicate = std::is_invocable_r_v<bool, F, Args...>;
+
 }  // namespace mp

@@ -17,6 +17,7 @@
 #include <vanadium/lib/Metaprogramming.h>
 
 #include "vanadium/ls/LanguageServerLogger.h"
+#include "vanadium/ls/actions/AddMissingArguments.h"
 #include "vanadium/ls/actions/LintAutofix.h"
 #include "vanadium/ls/actions/LsAction.h"
 #include "vanadium/ls/actions/UnresolvedSymbolLookup.h"
@@ -25,7 +26,8 @@ namespace vanadium::ls::detail {
 
 using Actions = mp::Typelist<         //
     actions::UnresolvedSymbolLookup,  //
-    actions::LintAutofix              //
+    actions::LintAutofix,             //
+    actions::AddMissingArguments      //
     >;
 
 lsp::CodeActionResult ProvideCodeActions(const lsp::CodeActionParams& params, const core::SourceFile& file,

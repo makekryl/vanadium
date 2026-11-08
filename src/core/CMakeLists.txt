@@ -7,6 +7,7 @@ add_library(vanadium_core STATIC
   src/WithParser.cpp
 
   src/utils/SemanticUtils.cpp
+  src/utils/WithUtils.cpp
 )
 
 target_include_directories(vanadium_core PUBLIC
