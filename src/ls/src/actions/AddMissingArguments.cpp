@@ -60,7 +60,7 @@ ast::pos_t FindInsertionPos(const core::SourceFile& file, ast::pos_t start, ast:
     }
     ++pos;
   }
-  return pos;
+  return pos - 1;
 }
 
 template <ast::IsNode TParamDescriptorNode, ast::IsNode TArgContainerNode>
