@@ -1,0 +1,15 @@
+module TemplateModification {
+
+type record Rec {
+  integer x,
+  integer y,
+  integer z
+}
+
+template Rec t_Rec_base := {
+}  // EXPECT_ERROR
+
+template Rec t_Rec_derived modifies t_Rec_base := {
+}
+
+}

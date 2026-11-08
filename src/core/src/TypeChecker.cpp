@@ -1327,11 +1327,12 @@ class BasicTypeChecker {
 
   struct State {
     bool is_in_call_expr = false;
-    enum class TemplateDeclOmitMode : std::uint8_t {
+    enum class TemplateDeclArgcheckPolicy : std::uint8_t {
       kNotInTemplateDecl,
+      kAnyNumberOfArguments,
       kUseImplicitOmit,
       kUseExplicitOmit,
-    } template_decl_omit_mode = TemplateDeclOmitMode::kNotInTemplateDecl;
+    } template_decl_argcheck_policy = TemplateDeclArgcheckPolicy::kNotInTemplateDecl;
   } state_{};
 
   const semantic::Scope* scope_;
@@ -2021,12 +2022,13 @@ InstantiatedType BasicTypeChecker::CheckType(const ast::Node* n, InstantiatedTyp
             // f({})
             return ArgumentsCheckPolicy::kRequireAll;
           }
-          switch (state_.template_decl_omit_mode) {
-            case State::TemplateDeclOmitMode::kNotInTemplateDecl:
+          switch (state_.template_decl_argcheck_policy) {
+            case State::TemplateDeclArgcheckPolicy::kNotInTemplateDecl:
+            case State::TemplateDeclArgcheckPolicy::kAnyNumberOfArguments:
               return ArgumentsCheckPolicy::kRequireNone;
-            case State::TemplateDeclOmitMode::kUseImplicitOmit:
+            case State::TemplateDeclArgcheckPolicy::kUseImplicitOmit:
               return ArgumentsCheckPolicy::kRequireMandatory;
-            case State::TemplateDeclOmitMode::kUseExplicitOmit:
+            case State::TemplateDeclArgcheckPolicy::kUseExplicitOmit:
               return ArgumentsCheckPolicy::kRequireAll;
           };
         }();
@@ -2368,7 +2370,7 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
     case ast::NodeKind::TemplateDecl: {
       const auto* m = n->As<ast::nodes::TemplateDecl>();
 
-      State::TemplateDeclOmitMode omit_mode{State::TemplateDeclOmitMode::kUseExplicitOmit};
+      State::TemplateDeclArgcheckPolicy own_argcheck_policy{State::TemplateDeclArgcheckPolicy::kUseExplicitOmit};
       ParseTemplateWithSpec(  //
           sf_.ast, m->with,
           {
@@ -2381,12 +2383,16 @@ bool BasicTypeChecker::Inspect(const ast::Node* n) {
                     parse_optional({
                         .implicit_omit =
                             [&] {
-                              omit_mode = State::TemplateDeclOmitMode::kUseImplicitOmit;
+                              own_argcheck_policy = State::TemplateDeclArgcheckPolicy::kUseImplicitOmit;
                             },
                     });
                   },
           });
-      lib::ScopedValue guard{state_.template_decl_omit_mode, omit_mode};
+      if (m->base) {
+        // the base template is already checked to be filled
+        own_argcheck_policy = State::TemplateDeclArgcheckPolicy::kAnyNumberOfArguments;
+      }
+      lib::ScopedValue guard{state_.template_decl_argcheck_policy, own_argcheck_policy};
 
       if (m->params) {
         Visit(m->params);

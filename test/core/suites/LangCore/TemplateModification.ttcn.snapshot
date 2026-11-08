@@ -1,0 +1,4 @@
+./TemplateModification.ttcn:
+  10:1: too few arguments: at least 3 arguments expected, 0 provided
+    }  // EXPECT_ERROR
+    ~                 
