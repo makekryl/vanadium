@@ -669,7 +669,7 @@ class AstTransformer {
             f.optional = true;
             f.type = pthis->template NewNode<ttcn_ast::nodes::StructSpec>([&](ttcn_ast::nodes::StructSpec& m) {
               m.kind = Tok(ttcn_ast::TokenKind::RECORD);
-              self(se->eag_level.value, vec_alloc_.Bind(m.fields));  // <--
+              self(se->eag_level.value, pthis->vec_alloc_.Bind(m.fields));  // <--
             });
             //
             while (pthis->original_src_[se_right_scan_pos] != ']' &&
